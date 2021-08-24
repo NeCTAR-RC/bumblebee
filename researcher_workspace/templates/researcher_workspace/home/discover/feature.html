@@ -1,0 +1,31 @@
+{% load group_filters %}
+<div class="div-flex">
+    <div style="flex: 60%">
+        <h3>{{ feature.name }}{% if feature.beta or feature.closed_beta %} <small>(This feature is in Beta)</small>{% endif %}</h3>
+        <p>{{ feature.description|safe }}</p>
+    </div>
+    <div class="div-flex" style="flex: 40%; align-items: center;">
+        {% if project_already_has_feature %}
+        <h5>Your project has access</h5>
+        {% endif %}
+        {% if feature.closed_beta and not user|has_group:"Closed Beta User" or not feature.currently_available %}
+            {% if not project_already_has_feature %}
+                <h5>This feature is coming soon, keep an eye out for updates</h5>
+            {% endif %}
+        {% elif requestable %}
+        <form action="{% url 'request_feature_access' feature.app_name %}" method="post">
+            {% csrf_token %}
+            {% if request_form %}
+            <div>{{ request_form }}</div>
+            {% endif %}
+            {% if previously_requested %}
+            <input type="submit" value="Amend Access Request" title="Amend your existing access request to request the options selected above">
+            {% else %}
+            <input type="submit" value="Request Access" title="Request access to this feature">
+            {% endif %}
+        </form>
+        {% elif not project_already_has_feature %}
+        <h5>This feature has been requested, and is pending approval</h5>
+        {% endif %}
+    </div>
+</div>

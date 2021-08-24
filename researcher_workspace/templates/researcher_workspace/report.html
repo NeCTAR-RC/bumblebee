@@ -1,0 +1,72 @@
+{% extends 'common/base.html' %}
+{% load mathfilters %}
+
+{% block breadcrumb %}
+<li itemprop="itemListElement" itemscope="" itemtype="http://schema.org/ListItem">
+    <a href="{% url 'report' %}#Report" itemprop="item" title="Report">
+        <span itemprop="name">Report</span>
+    </a>
+    <meta content="2" itemprop="position" />
+</li>
+{% endblock breadcrumb %}
+
+{% block content %}
+
+    <div class="tabbed-nav" data-tabbed="" id="nav">
+        <div class="full-width">
+            <nav role="tablist">
+                <a href="{% url 'home' %}#Do" role="tab">Do</a>
+                <a href="{% url 'home' %}#Discover" role="tab">Discover</a>
+                <a href="{% url 'learn' %}#Learn" role="tab">Learn</a>
+                <a href="{% url 'report' %}#Report" role="tab">Report</a>
+                <a href="{% url 'help' %}?from_home=true#Help" data-current="" role="tab">Help</a>
+            </nav>
+        </div>
+        <div class="tab" id="Report" role="tabpanel">
+            <section>
+                <h2>Graph of number of Linux Researcher Desktops over time</h2>
+                    <div id="linux-data" style="height: 400px;"></div>
+            </section>
+            <section>
+                <h2>Graph of number of Windows Researcher Desktops over time</h2>
+                    <div id="windows-data" style="height: 400px;"></div>
+            </section>
+        </div>
+    </div>
+{% endblock %}
+
+{% block script %}
+    {{ block.super }}
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+{% for operating_system, vm_info in user_vm_info.items %}
+    <script type="text/javascript">
+        // Load google charts
+        google.charts.load('current', {'packages':['corechart']});
+        google.charts.setOnLoadCallback(drawChart);
+
+        // Draw the chart and set the chart values
+        function drawChart() {
+            var os_vm_data = new google.visualization.DataTable();
+            os_vm_data.addColumn('date', 'Date');
+            os_vm_data.addColumn('number', 'Number of {{ operating_system|title }} Researcher Desktops');
+
+            os_vm_data.addRows([
+        {% for date_obj in vm_info %}
+            [new Date({{date_obj.date.year}}, {{date_obj.date.month|sub:1}}, {{date_obj.date.day}}, {{date_obj.date.hour}}, {{date_obj.date.minute}}, {{date_obj.date.second}}), {{date_obj.count}}],
+        {% endfor %}
+        ]);
+            var options = {
+                title:'Number of {{ operating_system|title }} Desktops over time',
+                height:400,
+                legend: {position: 'bottom'},
+                chartArea: {
+                    width: '85%'
+                }
+            };
+
+            var chart = new google.visualization.LineChart(document.getElementById('{{ operating_system }}-data'));
+            chart.draw(os_vm_data, options);
+        }
+    </script>
+{% endfor %}
+{% endblock script %}

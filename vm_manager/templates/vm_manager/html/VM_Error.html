@@ -1,0 +1,35 @@
+<p>{{ operating_system.capitalize }} {{ requesting_feature }} Error</p>
+<p>
+    Your {{ operating_system.capitalize }} {{ requesting_feature }} has thrown an error. Support have been notified and will work on stopping
+    this from happening again.
+</p>
+<p>
+    Please contact support for assistance by using the button below, or delete your {{ requesting_feature }} and launch a new one.
+</p>
+<div class="div-flex">
+    <div style="flex: 50%;">
+        <a class="button-small" target="_blank" href="http://go.unimelb.edu.au/kr96">
+            Contact Support
+        </a>
+    </div>
+    <div style="flex: 50%;">
+        <a class="button-small warning" data-modal-target="{{ app_name }}-{{ operating_system }}-delete-modal" href="#">
+            DELETE
+        </a>
+    </div>
+</div>
+<div class="modal__dialog" id="{{ app_name }}-{{ operating_system }}-delete-modal">
+    <h2>
+        Confirm Deleting Your {{ operating_system.capitalize }} {{ requesting_feature }}
+    </h2>
+    <p>
+        Please confirm your selection. Once a {{ requesting_feature }} has been deleted it is not recoverable.
+    </p>
+    <div>
+        <button class="button-small warning"
+                title="Delete {{ operating_system.capitalize }} {{ requesting_feature }}"
+                onclick="delete_{{ app_name }}_{{ operating_system.capitalize }}(this)">
+            DELETE
+        </button>
+    </div>
+</div>

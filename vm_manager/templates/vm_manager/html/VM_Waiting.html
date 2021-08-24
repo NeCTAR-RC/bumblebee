@@ -1,0 +1,11 @@
+{% load mathfilters %}
+<p>
+    <a class="button button-main disabled">
+        Please wait <span id="{{ app_name }}-{{ operating_system }}-time">
+        {{ what_to_show|intdiv:60 }}:{{ what_to_show|mod:60|stringformat:"02d" }}</span> for your {{ requesting_feature }} to be ready
+    </a>
+</p>
+<p>
+    The timer on the button will count down until your {{ operating_system.capitalize }} {{ requesting_feature }} is ready to launch,
+    at which point the page will auto-refresh. There is no need to refresh the page manually.
+</p>

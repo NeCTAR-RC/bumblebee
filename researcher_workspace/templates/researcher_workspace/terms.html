@@ -1,0 +1,35 @@
+{% extends 'common/base.html' %}
+
+{% block breadcrumb %}
+<li itemprop="itemListElement" itemscope="" itemtype="http://schema.org/ListItem">
+    <a href="{% url 'terms' %}" itemprop="item" title="Terms of Service">
+        <span itemprop="name">Terms of Service</span>
+    </a>
+    <meta content="2" itemprop="position" />
+</li>
+{% endblock breadcrumb %}
+
+{% block content %}
+
+    <h2>Terms of Service</h2>
+    <p>
+        This is a trial service to provide easy access to the Melbourne Research
+        Cloud. Over the next few months, we will be monitoring the service and collecting feedback to assess the
+        viability of a production service. During this beta phase, Researcher Desktops should not be considered
+        production-ready. The service is intended for the exclusive use of the University of Melbourne researchers,
+        including Academic continuing and fixed term staff, and graduate researchers (PhD and Masters by Research).
+        This excludes professional and honorary staff, and all non-RHD students.
+    </p>
+    <p>
+        You may use the Researcher Desktop to support your research activities when you need more computation
+        resource than you currently have and you want to work with a familiar operating system, or you need a
+        computer that can run calculations 24x7, or you need short-term access to an operating system or compute
+        configuration that you don’t have.
+    </p>
+    <p>
+        By logging in to this service, you are confirming that you are eligible to use the service and that you
+        will comply with The University’s <a href="https://gateway.research.unimelb.edu.au/resources/platforms-infrastructure-and-equipment/research-computing-services/images/RCS-TOS-20200211.pdf"
+           target="_blank">Terms of Service</a>
+    </p>
+
+{% endblock %}

@@ -1,0 +1,10 @@
+{% extends "admin/change_form.html" %}
+{% load i18n admin_urls %}
+{% block submit_buttons_bottom %}
+    {% if original.status == "VM_Error" %}
+    <div class="submit-row">
+        <input type="submit" value="Remove Error" name="_set_vm_okay">
+    </div>
+    {% endif %}
+    {{ block.super }}
+{% endblock %}

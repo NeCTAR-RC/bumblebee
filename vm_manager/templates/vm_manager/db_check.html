@@ -1,0 +1,53 @@
+{% extends 'common/base.html' %}
+{% load data_as_table %}
+{% block content %}
+
+<h2>Deleted Instances</h2>
+<table>
+    <thead>
+    <tr>
+        <th>id</th>
+        <th>name</th>
+        <th>environment</th>
+    </tr>
+    </thead>
+    {{ deleted_instances|print_2d_list_in_table_body }}
+</table>
+
+<h2>Deleted Volumes</h2>
+<table>
+    <thead>
+    <tr>
+        <th>id</th>
+        <th>name</th>
+        <th>environment</th>
+    </tr>
+    </thead>
+    {{ deleted_volumes|print_2d_list_in_table_body }}
+</table>
+
+<h2>Missing Instances</h2>
+<table>
+    <thead>
+    <tr>
+        <th>id</th>
+        <th>name</th>
+        <th>environment</th>
+    </tr>
+    </thead>
+    {{ missing_instances|print_2d_list_in_table_body }}
+</table>
+
+<h2>Missing Volumes</h2>
+<table>
+    <thead>
+    <tr>
+        <th>id</th>
+        <th>name</th>
+        <th>environment</th>
+    </tr>
+    </thead>
+    {{ missing_volumes|print_2d_list_in_table_body }}
+</table>
+
+{% endblock %}

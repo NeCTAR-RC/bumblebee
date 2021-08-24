@@ -1,0 +1,23 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block extrastyle %}
+
+<style type="text/css">
+    body:before {
+        display: block;
+        line-height: 35px;
+        text-align: center;
+        font-weight: bold;
+        text-transform: uppercase;
+        color: white;
+        content: "{{ ENVIRONMENT_NAME }}";
+        background-color: {{ ENVIRONMENT_COLOR }};
+    }
+</style>
+
+{% endblock %}
+
+{% block extrahead %}
+    <link rel="shortcut icon" href="{% static 'images/favicon.ico' %}" />
+{% endblock %}

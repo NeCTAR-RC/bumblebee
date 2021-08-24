@@ -1,0 +1,89 @@
+{% extends 'researcher_workspace/staff/user_search.html' %}
+{% load class_tag %}
+{% load data_as_table %}
+{% block breadcrumb %}
+{{ block.super }}
+<li itemprop="itemListElement" itemscope="" itemtype="http://schema.org/ListItem">
+    <a href="{% url 'user_search_details' username=user_details.uid %}?{{ request.GET.urlencode }}" itemprop="item" title="Details">
+        <span itemprop="name">Details</span>
+    </a>
+    <meta content="4" itemprop="position" />
+</li>
+{% endblock breadcrumb %}
+{% block content %}
+<h2>User Details</h2>
+{% if not user_does_not_exist or is_user %}
+<div>
+    {% if is_user and user.is_superuser %}
+        <a href="{% url 'admin:auth_user_change' object_id=is_user %}">See user on admin console</a>
+    {% endif %}
+    <h3>User ARO status</h3>
+    {% if api_user.courses and api_user.courses.course %}
+        {% for course in api_user.courses.course %}
+            {% if course.category_level_type == "Post Graduate" and course.category_type != "Masters (Coursework)" and course.stage_type == "Admitted" %}
+                <p>Student is RHD</p>
+            {% endif %}
+        {% endfor %}
+    {% endif %}
+    {% if "Academic" in api_user.group_type or aro_whitelisted %}
+        <p>User can be ARO</p>
+    {% else %}
+        <p>User is ineligible to be an ARO, unless added to the whitelist below</p>
+    {% endif %}
+    {% if user.is_staff %}
+        {% if aro_whitelisted %}
+            <table>
+                <tr>
+                    <td>User whitelisted by:</td>
+                    <td>{{ aro_whitelisted.permission_granted_by }}</td>
+                </tr>
+                <tr>
+                    <td>User whitelisted because:</td>
+                    <td>{{ aro_whitelisted.comment }}</td>
+                </tr>
+                <tr>
+                    <td>User whitelisted on:</td>
+                    <td>{{ aro_whitelisted.created }}</td>
+                </tr>
+            </table>
+            <form method="POST">
+                {% csrf_token %}
+                <input type="hidden" name="add_or_delete" value="delete">
+                <button type="submit" class="button-small">Remove user from ARO whitelist</button>
+            </form>
+        {% else %}
+            <form method="POST">
+                {% csrf_token %}
+                <input type="hidden" name="add_or_delete" value="add">
+                <label for="aro_whitelist_comment">Comments:</label>
+                <input id="aro_whitelist_comment" type="text" name="aro_whitelist_comment">
+                <button type="submit" class="button-small">Add user to ARO whitelist</button>
+            </form>
+        {% endif %}
+    {% endif %}
+</div>
+{% endif %}
+{% if user_does_not_exist %}
+    <h3>No user exists in LDAP with that username</h3>
+{% else %}
+<div>
+    <h3>LDAP User Details</h3>
+    <table>
+        {% for field in user_fields %}
+        <tr>
+            <td>{{ field }}</td>
+            <td>{{ user_details|get_attr:field }}</a></td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+<div>
+    <h3>BOOMI API User Details</h3>
+    {% if api_user %}
+        {{ api_user|print_data_as_html_table }}
+    {% else %}
+        <p>No results returned by BOOMI</p>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock content %}

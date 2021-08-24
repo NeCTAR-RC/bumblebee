@@ -1,0 +1,52 @@
+{% extends 'researcher_workspace/staff/user_search_base.html' %}
+{% load class_tag %}
+{% block breadcrumb %}
+{{ block.super }}
+<li itemprop="itemListElement" itemscope="" itemtype="http://schema.org/ListItem">
+    <a href="{% url 'user_search' %}?{{ request.GET.urlencode }}" itemprop="item" title="User Search">
+        <span itemprop="name">User Search</span>
+    </a>
+    <meta content="3" itemprop="position" />
+</li>
+{% endblock breadcrumb %}
+{% block content %}
+    {{ block.super }}
+    {% if users %}
+    {% with num_results=users|length %}
+    <div>
+        Found {{ num_results }} result{% if num_results > 1 %}s{% endif %}.
+        {% if num_results == 1000 %}
+        Results have been truncated, you may need to try using more specific search criteria.
+        {% endif%}
+    </div>
+    {% endwith %}
+    <table class="zebra">
+        <thead>
+        <tr>
+            <th>Username</th>
+            <th>Email</th>
+            <th>Common Name</th>
+            <th>Given Name</th>
+            <th>Surname</th>
+            <th>Role</th>
+            <th>Department</th>
+        </tr>
+        </thead>
+        <tbody>
+    {% for user in users %}
+        <tr>
+            <td><a href="{% url 'user_search_details' username=user.uid %}?{{ request.GET.urlencode }}">{{ user.uid }}</a></td>
+            <td>{{ user.mail }}</td>
+            <td>{{ user.commonName }}</td>
+            <td>{{ user.givenName }}</td>
+            <td>{{ user.surname }}</td>
+            <td>{{ user.auEduPersonType }}</td>
+            <td>{{ user.department }}</td>
+        </tr>
+    {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>No results matched your search criteria</p>
+    {% endif %}
+{% endblock %}

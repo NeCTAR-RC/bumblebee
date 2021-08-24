@@ -1,0 +1,12 @@
+<div class="feature col">
+  <div class="feature-icon bg-primary bg-gradient">
+    <i class="fas fa-ubuntu fa-7x"></i>
+  </div>
+  <h2>{{ requesting_feature }}</h2>
+  <p>Paragraph of text beneath the heading to explain the heading. We'll add onto it with another sentence and probably just keep going until we run out of words.</p>
+  <form action="{% url 'specialty_resources:launch_vm' %}" method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" class="btn btn-primary">Create a {{ requesting_feature }}</button>
+  </form>
+</div>

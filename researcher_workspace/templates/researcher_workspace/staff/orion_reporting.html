@@ -1,0 +1,164 @@
+{% extends 'common/base.html' %}
+{% load mathfilters %}
+
+{% block breadcrumb %}
+<li itemprop="itemListElement" itemscope="" itemtype="http://schema.org/ListItem">
+    <a href="{% url 'orion_report' %}" itemprop="item" title="Orion Report">
+        <span itemprop="name">Orion Report</span>
+    </a>
+    <meta content="2" itemprop="position" />
+</li>
+{% endblock breadcrumb %}
+
+{% block content %}
+    <section>
+        <h2>Orion Reporting</h2>
+        <form method="POST">
+            {% csrf_token %}
+            <p>
+                <label for="reporting_months">Number of months to report on:</label>
+                <input type="number" value="6" min="1" name="reporting_months" id="reporting_months"/>
+                <p class="helptext">This is inclusive of the current month so far</p>
+            </p>
+            <button type="submit" class="button-small">Download as csv</button>
+        </form>
+    </section>
+    <section>
+        <h2>Number of Researcher Desktops</h2>
+        <table>
+            <thead>
+            <tr>
+                <th>Operating System</th>
+                <th>Count</th>
+            </tr>
+            </thead>
+            <tbody>
+        {% for operating_system, os_count in vm_count.items %}
+            <tr>
+                <td>{{ operating_system|title }}</td>
+                <td>{{ os_count }}</td>
+            </tr>
+        {% endfor %}
+            </tbody>
+        </table>
+    </section>
+    <section>
+        <h2>Graph of number of Linux Researcher Desktops over time</h2>
+        <div id="linux-data" style="height: 400px;"></div>
+    </section>
+    <section>
+        <h2>Graph of number of Linux Researcher Desktop resizes over time</h2>
+        <div id="linux-resizes" style="height: 400px;"></div>
+    </section>
+    <section>
+        <h2>Graph of number of Linux Researcher Desktop errors per day</h2>
+        <div id="linux-errors" style="height: 400px;"></div>
+    </section>
+
+    <section>
+        <h2>Graph of number of Windows Researcher Desktops over time</h2>
+        <div id="windows-data" style="height: 400px;"></div>
+    </section>
+    <section>
+        <h2>Graph of number of Windows Researcher Desktop resizes over time</h2>
+        <div id="windows-resizes" style="height: 400px;"></div>
+    </section>
+    <section>
+        <h2>Graph of number of Windows Researcher Desktop errors per day</h2>
+        <div id="windows-errors" style="height: 400px;"></div>
+    </section>
+
+{% endblock content %}
+
+{% block script %}
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+{% for operating_system, os_info in vm_info.items %}
+    <script type="text/javascript">
+        // Load google charts
+        google.charts.load('current', {'packages':['corechart']});
+        google.charts.setOnLoadCallback(drawChart);
+
+        // Draw the chart and set the chart values
+        function drawChart() {
+            var os_data = new google.visualization.DataTable();
+            os_data.addColumn('date', 'Date');
+            os_data.addColumn('number', 'Number of {{ operating_system|title }} Researcher Desktops');
+
+            os_data.addRows([
+        {% for date_obj in os_info.vm_count %}
+            [new Date({{date_obj.date.year}}, {{date_obj.date.month|sub:1}}, {{date_obj.date.day}}, {{date_obj.date.hour}}, {{date_obj.date.minute}}, {{date_obj.date.second}}), {{date_obj.count}}],
+        {% endfor %}
+        ]);
+            var options = {
+                title:'Number of {{ operating_system|title }} Desktops over time',
+                height:400,
+                legend: {position: 'bottom'},
+                chartArea: {
+                    width: '85%'
+                }
+            };
+
+            var chart = new google.visualization.LineChart(document.getElementById('{{ operating_system }}-data'));
+            chart.draw(os_data, options);
+        }
+    </script>
+    <script type="text/javascript">
+        // Load google charts
+        google.charts.load('current', {'packages':['corechart']});
+        google.charts.setOnLoadCallback(drawChart);
+
+        // Draw the chart and set the chart values
+        function drawChart() {
+            var os_resizes = new google.visualization.DataTable();
+            os_resizes.addColumn('date', 'Date');
+            os_resizes.addColumn('number', 'Number of {{ operating_system|title }} resizes');
+
+            os_resizes.addRows([
+        {% for date_obj in os_info.resizes %}
+            [new Date({{date_obj.date.year}}, {{date_obj.date.month|sub:1}}, {{date_obj.date.day}}, {{date_obj.date.hour}}, {{date_obj.date.minute}}, {{date_obj.date.second}}), {{date_obj.count}}],
+        {% endfor %}
+        ]);
+            var options = {
+                title:'Number of {{ operating_system|title }} Desktop resizes over time',
+                height:400,
+                legend: {position: 'bottom'},
+                chartArea: {
+                    width: '85%'
+                }
+            };
+
+            var chart = new google.visualization.LineChart(document.getElementById('{{ operating_system }}-resizes'));
+            chart.draw(os_resizes, options);
+        }
+    </script>
+    <script type="text/javascript">
+        // Load google charts
+        google.charts.load('current', {'packages':['corechart']});
+        google.charts.setOnLoadCallback(drawChart);
+
+        // Draw the chart and set the chart values
+        function drawChart() {
+            var os_errors = new google.visualization.DataTable();
+            os_errors.addColumn('date', 'Date');
+            os_errors.addColumn('number', 'Number of Errors');
+
+            os_errors.addRows([
+        {% for date_obj in os_info.error_dates %}
+            [new Date({{date_obj.date.year}}, {{date_obj.date.month|sub:1}}, {{date_obj.date.day}}), {{date_obj.errored_count}}],
+        {% endfor %}
+        ]);
+            var options = {
+                title:'Number of {{ operating_system|title }} Desktop errors per day',
+                height:400,
+                legend: {position: 'bottom'},
+                chartArea: {
+                    width: '85%'
+                }
+            };
+
+            var chart = new google.visualization.ScatterChart(document.getElementById('{{ operating_system }}-errors'));
+            chart.draw(os_errors, options);
+        }
+    </script>
+{% endfor %}
+{% endblock script %}

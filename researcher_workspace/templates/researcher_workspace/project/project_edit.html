@@ -1,0 +1,15 @@
+{% extends 'researcher_workspace/project/project_form_base.html' %}
+
+{% block breadcrumb %}
+{{ block.super }}
+<li itemprop="itemListElement" itemscope="" itemtype="http://schema.org/ListItem">
+    <a href="{% url 'project_edit' form.instance.id %}" itemprop="item" title="Edit Project">
+        <span itemprop="name">Edit Project</span>
+    </a>
+    <meta content="3" itemprop="position" />
+</li>
+{% endblock breadcrumb %}
+
+{% block form_title %}Edit your project{% endblock%}
+
+{% block form_submit_url %}{% url 'project_edit' form.instance.id %}{% endblock %}

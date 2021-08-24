@@ -1,0 +1,9 @@
+{% extends 'common/base.html' %}
+{% block title %}Page not found{% endblock %}
+
+{% block h1 %}Page not found{% endblock %}
+
+{% block content %}
+    <p>Sorry: the requested page could not be found.</p>
+    <p>You can return to the <a href="{% url 'index' %}">home page</a> and continue your work</p>
+{% endblock %}

@@ -1,0 +1,141 @@
+{% extends 'common/base.html' %}
+{% load static %}
+{% load active_link %}
+
+{% block content %}
+    {% load mathfilters %}
+    {% if user.is_authenticated %}
+
+    <ul class="nav nav-pills mb-3" id="pills-tab" role="tablist">
+      <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="pills-do-tab" data-bs-toggle="pill" data-bs-target="#pills-do" type="button" role="tab" aria-controls="pills-do" aria-selected="true">Do</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="pills-discover-tab" data-bs-toggle="pill" data-bs-target="#pills-discover" type="button" role="tab" aria-controls="pills-discover" aria-selected="false">Discover</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="pills-learn-tab" data-bs-toggle="pill" data-bs-target="#pills-learn" type="button" role="tab" aria-controls="pills-learn" aria-selected="false">Learn</button>
+      </li>
+    </ul>
+    
+
+    <div class="tab-content" id="pills-tabContent">
+      <div class="tab-pane fade show active" id="pills-do" role="tabpanel" aria-labelledby="pills-home-tab">
+
+        {% if projects %}
+        <form action="{% url 'home' %}" method="post">
+        {% csrf_token %}
+
+          <div class="container">
+            <div class="row justify-content-center">
+
+              <div class="col-2">
+                <label for="project_selection">Choose project</label>
+              </div>
+
+              <div class="col-2">
+                <select id="project_selection" class="form-select" name="project">
+                {% for project in projects %}
+                  <option value="{{ project.id }}" {% if not project.ARO_approval %} disabled="disabled" {% elif project == selected_project %} selected="selected" {% endif %}>{{ project.title }}{% if not project.ARO_approval %} --- Pending approval by the project's ARO{% endif %}
+                  </option>
+                {% endfor %}
+                </select>
+              </div>
+
+              <div class="col">
+                <button type="button" class="btn btn-primary" {% if selected_project %}href="#" onclick="this.closest('form').submit();return false;"{% else %}disabled="disabled"{% endif %} title="Switch to Selected Project">
+                  <span class="btn-label"><i class="fas fa-sync-alt"></i></span> Switch
+                </button>
+
+                {% if selected_project %}
+                <a class="btn btn-primary" href="{% url 'project_edit' selected_project.id %}" role="button" title="Edit Current Project">
+                  <span class="btn-label"><i class="fas fa-edit"></i></span> Edit
+                </a>
+                {% endif %}
+                <a class="btn btn-primary" href="{% url 'new_project' %}" role="button" title="Add New Project">
+                  <span class="btn-label"><i class="fas fa-plus"></i></span> Add
+                </a>
+                <a class="btn btn-primary" href="{% url 'projects' %}" role="button" title="View List of Projects">
+                  <span class="btn-label"><i class="fas fa-list"></i></span> List
+                </a>
+              </div>
+            </div> <!-- row -->
+          </div>
+        </form>
+        {% else %}
+          <a class="btn btn-primary" href="{% url 'new_project' %}" role="button" title="Add New Project">
+            <span class="btn-label"><i class="fas fa-plus"></i></span> Add
+          </a>
+          <a class="btn btn-primary" href="{% url 'projects' %}" role="button" title="View List of Projects">
+            <span class="btn-label"><i class="fas fa-list"></i></span> List
+          </a>
+        {% endif %}
+
+        <div class="container px-4 py-5" id="featured-3">
+          <h2 class="pb-2 border-bottom">Columns with icons</h2>
+          <div class="row g-4 py-5 row-cols-1 row-cols-lg-3">
+          {% for module in modules %}
+            {{ module }}
+          {% empty %}
+            {% if selected_project %}
+            <div>
+              <h3>You don't have access to any features</h3>
+              <p>    
+                This project doesn't currently have access to any of the wonderful features of our service.
+                Click on the <a href="/#Discover">Discover</a> tab above to get access to some of our great features.
+              </p>
+            </div>
+            {% elif projects %}
+            <div>
+              <h3>Your project(s) are pending approval by their ARO</h3>
+              <p>
+                You can't access a project until we have received approval from the project's nominated ARO.
+                The ARO specified in your project will be notified, and we will approve your project as
+                soon as we receive confirmation from them.
+              </p>
+            </div>
+            {% else %}
+            <div>
+              <h3>You don't have a project yet</h3>
+              <p>
+                Please click the "Add New Project" button above to create a project. Once you have a project
+                you can start adding features to it in the "Discover" tab.
+              </p>
+            </div>
+            {% endif %}
+          {% endfor %}
+          </div>
+        </div>
+
+  </div>
+
+  <div class="tab-pane fade" id="pills-discover" role="tabpanel" aria-labelledby="pills-discover-tab">
+
+            <section>
+                <h2>Discover the features Orion provides!</h2>
+                {% if selected_project %}
+                <h3>Currently selected project: {{ selected_project.title }}</h3>
+                <hr>
+                {{ discover_features|join:"<hr>" }}
+                {% else %}
+                <p>Create a project on the <a href="/#Do">Do</a> tab before requesting features here.</p>
+                {% endif %}
+            </section>
+            <section>
+                <h2>Discover the services Research Computing Services provides!</h2>
+                <hr>
+                {{ discover_services|join:"<hr>" }}
+            </section>
+
+  </div>
+
+    {% endif %}
+
+{% endblock content %}
+{% block script %}
+    <script>
+    {% for script in scripts %}
+        {{ script }}
+    {% endfor %}
+    </script>
+{% endblock script %}

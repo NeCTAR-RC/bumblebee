@@ -1,0 +1,28 @@
+{% extends "admin/delete_confirmation.html" %}
+{% block extrahead %}
+    {{ block.super }}
+    <script type="text/javascript">
+        var beenClicked = false;
+        function admin_delete_vm(tag) {
+            if (!beenClicked) {
+                beenClicked = true;
+                tag.disabled = true;
+                window.location.href = "{% url 'vm_manager:admin_delete_vm' object.id %}";
+            }
+        }
+    </script>
+{% endblock %}
+{% block content %}
+    <p>You are about to delete {{ deleted_objects|first }}</p>
+    <p>Are you sure you want to delete this Researcher Desktop?</p>
+    <p>Clicking confirm will delete the instance and volume from OpenStack, and mark the Researcher Desktop as deleted in the database
+    (<span style="color:red">there is no confirmation modal</span>).</p>
+    <br/>
+    <button class="button"
+            title="Delete {{ object.user }}'s Researcher Desktop"
+            onclick="admin_delete_vm(this)"
+            style="background-color:#ba2121">
+        DELETE
+    </button>
+    <button class="button cancel-link">No, take me back</button>
+{% endblock %}

@@ -1,0 +1,26 @@
+{% extends 'researcher_workspace/staff/user_search_base.html' %}
+{% load class_tag %}
+{% block breadcrumb %}
+<li itemprop="itemListElement" itemscope="" itemtype="http://schema.org/ListItem">
+    <a href="{% url 'staff_home' %}" itemprop="item" title="Staff Home">
+        <span itemprop="name">Staff Home</span>
+    </a>
+    <meta content="2" itemprop="position" />
+</li>
+{% endblock breadcrumb %}
+{% block content %}
+    {{ block.super }}
+    <h2>View Report of Researcher Desktops or Users:</h2>
+    <div class="div-flex">
+        <div style="flex: 50%;">
+            <a class="button" href="{% url 'orion_report' %}">
+                <span class="small" data-icon="devices"></span> Orion Report
+            </a>
+        </div>
+        <div style="flex: 50%;">
+            <a class="button" href="{% url 'user_search' %}">
+                <span class="small" data-icon="profile"></span> User Reporting and Search
+            </a>
+        </div>
+    </div>
+{% endblock %}

@@ -1,0 +1,69 @@
+{% extends 'common/base.html' %}
+
+{% block breadcrumb %}
+<li itemprop="itemListElement" itemscope="" itemtype="http://schema.org/ListItem">
+    <a href="{% url 'learn' %}#Learn" itemprop="item" title="Learn">
+        <span itemprop="name">Learn</span>
+    </a>
+    <meta content="2" itemprop="position" />
+</li>
+{% endblock breadcrumb %}
+
+{% block content %}
+    <div class="tabbed-nav" data-tabbed="" id="nav">
+        <div class="full-width">
+            <nav role="tablist">
+                <a href="{% url 'home' %}#Do" role="tab">Do</a>
+                <a href="{% url 'home' %}#Discover" role="tab">Discover</a>
+                <a href="{% url 'learn' %}#Learn" role="tab">Learn</a>
+                <a href="{% url 'report' %}#Report" role="tab">Report</a>
+                <a href="{% url 'help' %}?from_home=true#Help" data-current="" role="tab">Help</a>
+            </nav>
+        </div>
+        <div class="tab" id="Learn" role="tabpanel" style="display: none;">
+            <section>
+                <h2>Learn more about the features Orion provides!</h2>
+
+                <h3>Researcher Desktop</h3>
+                <ul class="accordion">
+                    <li>
+                        <span class="accordion__title">Tutorial Videos</span>
+                        <div class="accordion__hidden">
+                            <h4>How to create and delete a Researcher Workspace:</h4>
+                            <p><iframe width="420" height="315" src="https://www.youtube.com/embed/1w0xdiLEujI"></iframe></p>
+                            <h4>How to connect to a Windows Researcher Workspace:</h4>
+                            <p><iframe width="420" height="315" src="https://www.youtube.com/embed/nji6_m0FCVk"></iframe></p>
+                            <h4>How to connect to a Linux Researcher Workspace:</h4>
+                            <p><iframe width="420" height="315" src="https://www.youtube.com/embed/Fn2uXY3XpHQ"></iframe></p>
+                            <h4>Shelving and unshelving a Researcher Workspace:</h4>
+                            <p><iframe width="420" height="315" src="https://www.youtube.com/embed/hvqDvHPG5iM"></iframe></p>
+                            <h4>Boosting a Researcher Workspace:</h4>
+                            <p><iframe width="420" height="315" src="https://www.youtube.com/embed/mCMU0PItghY"></iframe></p>
+                        </div>
+                    </li>
+                </ul>
+
+                <h3>TCAT</h3>
+                <p>Coming Soon!</p>
+
+                <h3>R Shiny</h3>
+                <p>Coming Soon!</p>
+            </section>
+            <section>
+                <h2>Learn more about the services Research Computing Services provides!</h2>
+
+                <h3>Research Computing Services' homepage</h3>
+                <p><a href="https://research.unimelb.edu.au/facilities-and-resources/research-infrastructure/research-computing-services">RCS homepage</a></p>
+
+                <h3>Learn more about high performance computing (HPC) with Spartan</h3>
+                <p><a href="https://dashboard.hpc.unimelb.edu.au/">Spartan Documentation</a></p>
+
+                <h3>Learn more about cloud computing with the MRC</h3>
+                <p><a href="https://docs.cloud.unimelb.edu.au/">MRC Documentation</a> </p>
+
+                <h3>Learn more about data storage and management with DST</h3>
+                <p><a href="https://wiki-rcs.unimelb.edu.au/display/RCS/Data+Services">DST Documentation</a> </p>
+           </section>
+        </div>
+    </div>
+{% endblock content %}

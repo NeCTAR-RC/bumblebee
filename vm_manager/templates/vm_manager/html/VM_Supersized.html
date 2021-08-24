@@ -1,0 +1,74 @@
+{% extends 'vm_manager/html/VM_Okay_base.html' %}
+
+{% block supersize_message %}
+    <p>
+    Your {{ operating_system.capitalize }} {{ requesting_feature }} is set to resize back
+    to the default size after 11:59 pm on {{ what_to_show.expires }}.
+    </p>
+    <p>
+    Please check the options below if you would like to extend the expiration.
+    </p>
+{% endblock supersize_message %}
+{% block buttons %}
+<div>
+    Switch back to the default size of your {{ requesting_feature }}.
+</div>
+<a class="button" data-modal-target="{{ app_name }}-{{ operating_system }}-downsize-modal" href="#"
+title="Switch back to the default size of your {{ requesting_feature }}">
+    Downsize my {{ operating_system.capitalize }} {{ requesting_feature }} <sup>(BETA)</sup>
+</a>
+<div> Extend your boosted period by seven days.
+    Can only be done when the expiration date is less than one week from today.
+</div>
+<button class="button" title="Extend your boosted period by seven days"
+data-modal-target="{{ app_name }}-{{ operating_system }}-extend-modal" show-button="{{ what_to_show.is_eligible }}">
+    Extend The Expiration
+</button>
+
+{% endblock buttons %}
+
+{% block modals %}
+<div class="modal__dialog" id="{{ app_name }}-{{ operating_system }}-downsize-modal">
+    <h2>
+        Confirm Downsizing Your {{ operating_system.capitalize }} {{ requesting_feature }}
+    </h2>
+    <p>
+        Please save any work and close the connection to your {{ requesting_feature }} before downsizing it.
+    </p>
+    <p>
+        Your {{ requesting_feature }} will be unreachable for five minutes while downsizing.
+    </p>
+    <p>
+        Please confirm your selection.
+    </p>
+    <div>
+        <button class="button-small"
+                title="Downsize {{ operating_system.capitalize }} {{ requesting_feature }}"
+                onclick="downsize_{{ app_name }}_{{ operating_system.capitalize }}(this)">
+            DOWNSIZE
+        </button>
+    </div>
+</div>
+
+<div class="modal__dialog" id="{{ app_name }}-{{ operating_system }}-extend-modal">
+    <h2>
+        Extend the Expiration of Your Boosted {{ operating_system.capitalize }} {{ requesting_feature }}
+    </h2>
+    <p>
+        This will extend the expiration by seven days.
+    </p>
+    <p>
+        The current expiration date is {{ what_to_show.expires }}
+    </p>
+    <p>
+        The new expiration date will be {{ what_to_show.extended_expiration }}
+    </p>
+    <div>
+        <button class="button-small"
+                title="Extend {{ operating_system.capitalize }} {{ requesting_feature }}"
+                onclick="extend_{{ app_name }}_{{ operating_system.capitalize }}(this)">
+            EXTEND
+        </button>
+    </div>
+</div>
+{% endblock modals %}

@@ -1,0 +1,208 @@
+{% extends 'common/base.html' %}
+
+{% block content %}
+
+    {% if request.GET.from_home %}
+        <div class="tabbed-nav" data-tabbed="" id="nav">
+            <div class="full-width">
+                <nav role="tablist">
+                    <a href="{% url 'home' %}#Do" role="tab">Do</a>
+                    <a href="{% url 'home' %}#Discover" role="tab">Discover</a>
+                    <a href="{% url 'learn' %}#Learn" role="tab">Learn</a>
+                    <a href="{% url 'report' %}#Report" role="tab">Report</a>
+                    <a href="{% url 'help' %}?from_home=true#Help" data-current="" role="tab">Help</a>
+                </nav>
+            </div>
+            <div class="tab" id="Help" role="tabpanel">
+                <section>
+    {% endif %}
+    <h2>Get Help or Contact Us</h2>
+    <p>If you have issues on the site or with a Remote Desktop please consult the FAQs below, and if you can't find an
+        answer then please submit a ticket, checking the "Research Desktop" option, on
+        <a target="_blank" href="http://go.unimelb.edu.au/kr96">Service Now</a>
+        or call us on x40999
+    </p>
+    <h4>For more information on how to use the various features of the site, check the
+        <a href="{% url 'learn' %}#Learn">Learn</a> tab, or the FAQs below.</h4>
+    <p>The <a href="{% url 'learn' %}#Learn">Learn</a> tab has video tutorials on how to use the Researcher Desktop, as
+    well as links to documentation on the various services Research Computing Services provides</p>
+    <h2>FAQs</h2>
+    <ul class="accordion">
+        <li>
+            <span class="accordion__title">General FAQ</span>
+            <div class="accordion__hidden">
+                <dl class="FAQ">
+                    <dt>How do I reboot my Researcher Desktop?</dt>
+                    <dd>
+                        You can reboot your Researcher Desktop in two ways:
+                        <ul>
+                            <li>
+                                <b>Soft reboot;</b> You can log into your Researcher Desktop and reboot it as you would a regular
+                                laptop/desktop through clicking 'Power Off', 'Restart'
+                            </li>
+                            <li>
+                                <b>Hard reboot;</b> Hard rebooting is the process of shutting down the Researcher
+                                Desktop and restarting it after the power has been completely turned off. This clears
+                                the Researcher Desktop's RAM and can be used as a way to reset the system when
+                                required. You can hard reboot your Researcher Desktop by clicking the "Reboot my Researcher Desktop"
+                                button on the website
+                            </li>
+                        </ul>
+                    </dd>
+                    <dt>My Researcher Desktop has shut down. How can I restart it?</dt>
+                    <dd>
+                        If your Researcher Desktop shuts down the website will detect this, and if you refresh the
+                        website it will replace the "Open Researcher Desktop" button with a "Start my Researcher Desktop" button.
+                        Clicking this will start your Researcher Desktop back up again. Once your Researcher Desktop has rebooted
+                        successfully you will be able to access it again
+                    </dd>
+                    <dt>Why and how should I boost my Researcher Desktop?</dt>
+                    <dd>
+                        <b>Why:</b> When you require more computation power (more cores and RAM) to carry out your
+                        research activities you can boost your Researcher Desktop from the standard compute flavour
+                        (4 cores and 16GB RAM) to the boosted compute flavour (16 cores and 64GB RAM)
+                    </dd>
+                    <dd>
+                        <b>How:</b> You can boost your Researcher Desktop by clicking on the "Options" drop-down on
+                        the website and clicking the "Boost my Researcher Desktop" button
+                    </dd>
+                    <dt>Why and how should I shelve my Researcher Desktop?</dt>
+                    <dd>
+                        <b>Why:</b> If you are not going to use your Researcher Desktop actively for a period of
+                        time and you would like to preserve the state of your Researcher Desktop, instead of deleting
+                        it you can shelve your Researcher Desktop. This saves the state of the Researcher Desktop to
+                        disk and frees the resources to be available for other researchers, and helps us keep this
+                        service available to everyone. The saved state can then later be un-shelved to load your
+                        Researcher Desktop back to the state it was in before shelving
+                    </dd>
+                    <dd>
+                        <b>How:</b> You can shelve your Researcher Desktop by simply clicking the "Shelve my Researcher Desktop" button
+                        on the website. You can get your Researcher Desktop back by clicking the "Unshelve my Researcher Desktop"
+                        button, which will relaunch the Researcher Desktop with all your previous data
+                    </dd>
+                    <dt>What are vCPUs with respect to my Researcher Desktop?</dt>
+                    <dd>
+                        A vCPU represents a portion or share of the underlying, physical CPU that is assigned to a
+                        particular Researcher Desktop. Researcher Desktops are launched in Melbourne Research Cloud where
+                        the physical cores are hyper-threaded at 1:2 ratio and each logical core is oversubscribed.
+                        Hence a 4 vCPU Researcher Desktop is a single physical core machine.
+                    </dd>
+                </dl>
+            </div>
+        </li>
+        <li>
+            <span class="accordion__title">Windows Desktop FAQ</span>
+            <div class="accordion__hidden">
+                <dl class="FAQ">
+                    <dt>How do I open and use the RDP file to access my Researcher Desktop?</dt>
+                    <dd><a target="_blank" href="{{kba_url}}KB0023060">Answer discussed in the KBA here</a></dd>
+                    <dt>When should I download an RDP file?</dt>
+                    <dd>
+                        An RDP file is associated with a specific Windows Researcher Desktop.
+                        You should download a new RDP file every time you create a new Windows Researcher Desktop.
+                        You may use the same RDP file to access your Windows Researcher Desktop until you
+                        create a new Windows Researcher Desktop. But you can download a new file whenever you like
+                    </dd>
+                    <dt>How do I access the Software Center in my Researcher Desktop?</dt>
+                    <dd>
+                        The University's Software Center is pre-installed in the Researcher Desktop.
+                        You can search Software Center in the taskbar to open the application
+                    </dd>
+                    <dt>Can I install software applications on my Researcher Desktop?</dt>
+                    <dd>
+                        Yes, you can install software applications on your Researcher Desktop just like your
+                        desktop/laptop
+                    </dd>
+                    <dt>Can I mount department shares on my Researcher Desktop?</dt>
+                    <dd>
+                        Yes, you can. Open File Explorer and go to Network, you will see a prompt ("Network discovery is turned off…").
+                        You'll need to turn on Network discovery to see devices on the network that are sharing files.
+                        To turn it on, select the <i>Network discovery is turned off banner,</i> then select Turn on network
+                        discovery and file sharing. Mapping a network drive is discussed in the KBA
+                        <a target="_blank" href="{{kba_url}}KB0012771">here</a>
+                    </dd>
+                    <dt>Can I use OneDrive on my Researcher Desktop?</dt>
+                    <dd>
+                        Yes, OneDrive is the recommended method of transferring files to your Researcher Desktop.
+                        Simply open the OneDrive application by searching OneDrive in the taskbar and
+                        follow the prompts to sync your OneDrive account
+                    </dd>
+                </dl>
+            </div>
+        </li>
+        <li>
+            <span class="accordion__title">Linux Desktop FAQ</span>
+            <div class="accordion__hidden">
+                <dl class="FAQ">
+                    <dt>How do I connect to my Researcher Desktop?</dt>
+                    <dd>To connect to your Researcher Desktop, simply launch one with the "Create A Linux Researcher Desktop" button,
+                    wait for it to finish building, and click on the "Open Linux Researcher Desktop" button; a new tab
+                    should open with a GUI connection to your Researcher Desktop</dd>
+                    <dt>How do I SSH/SCP to my Researcher Desktop?</dt>
+                    <dd><a target="_blank" href="{{kba_url}}KB0022174">Answer discussed in the KBA here</a></dd>
+                {% comment %}
+                    {# don't display this until the information in the KBA is corrected #}
+                    {# ToDo: the information in this KBA is outdated, but I also don't want to update it until I have fastx3.1 running #}
+                    <dt>How do I use the clipboard in my Researcher Desktop?</dt>
+                    <dd><a target="_blank" href="{{kba_url}}KB0022193">Answer discussed in the KBA here</a></dd>
+                {% endcomment %}
+                    <dt>How do I copy files to/from my Researcher Desktop?</dt>
+                    <dd><a target="_blank" href="{{kba_url}}KB0022192">Answer discussed in the KBA here</a></dd>
+                    <dt>How do I install software from the University's Linux SOE repository
+                        (including site-licensed software)?</dt>
+                    <dd><a target="_blank" href="{{kba_url}}KB0017828">Answer discussed in the KBA here</a></dd>
+                    <dt>Can I share access to my Researcher Desktop?</dt>
+                    <dd>This is not currently actively supported, but to give others access, you need to run the
+                        following commands in the terminal on your Researcher Desktop:
+                        <div class="codeblock">
+                            <div>/usr/local/bin/accessctl -u [username]@[domain]</div>
+                            <div>/usr/sbin/usermod -a -G sudo `echo [username]`</div>
+                            <div>sudo -u [username] /bin/true</div>
+                        </div>
+                        Even with this, the second user's experience will not be the same as yours, as a lot of
+                        tailoring has been done to refine your experience on Researcher Desktop</dd>
+                    <dt>Can I use OneDrive on my Researcher Desktop?</dt>
+                    <dd>Yes, OneDrive is the recommended method of transferring files to your Researcher Desktop. It is
+                        accessed through a program called ExpandDrive, which is documented
+                        <a target="_blank" href="{{kba_url}}KB0022192">in this KBA</a></dd>
+                    <dt>Can I mount department shares on my Researcher Desktop?</dt>
+                    <dd>Yes, the university's departmental network shares are automatically mounted on the Researcher
+                        Desktop just like your desktop/laptop. The shares you have access to are based on your login.
+                        This is located in the 'Shares' folder from your home folder. i.e. ~/Shares</dd>
+                {% comment %}
+                    <dt>Window scaling</dt>
+                    <dd>{# TODO: Answer this #}</dd>
+                {% endcomment %}
+                </dl>
+            </div>
+        </li>
+        <li>
+            <span class="accordion__title">Licensed Software FAQ</span>
+            <div class="accordion__hidden">
+                <dl class="FAQ">
+                    <dt>What software is available on Researcher Desktop?</dt>
+                    <dd>A full list of available software is being collated, but the software available includes:
+                        <ul>
+                            <li>A full office suite (Word, Excel, etc (or the LibreOffice equivalent on Linux
+                                Researcher Desktops))</li>
+                            <li>MatLab</li>
+                            <li>Jupyter</li>
+                            <li>RStudio</li>
+                            <li>Software Centre, so you can install any other applications you require</li>
+                        </ul>
+                    </dd>
+                    <dt>How do I request access to STATA, SAS, ArcGIS, Nvivo, etc?</dt>
+                    <dd>In built support for these software suites is being investigated.
+                        For now you can get assistance setting them up manually by raising a ticket on
+                        <a target="_blank" href="http://go.unimelb.edu.au/kr96">Service Now</a>
+                    </dd>
+                </dl>
+            </div>
+        </li>
+    </ul>
+    {% if request.GET.from_home %}
+                </section>
+            </div>
+        </div>
+    {% endif %}
+{% endblock %}

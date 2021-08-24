@@ -1,0 +1,53 @@
+{% extends 'common/base.html' %}
+
+{% block breadcrumb %}
+<li itemprop="itemListElement" itemscope="" itemtype="http://schema.org/ListItem">
+    <a href="{% url 'projects' %}" itemprop="item" title="Projects">
+        <span itemprop="name">Projects</span>
+    </a>
+    <meta content="2" itemprop="position" />
+</li>
+{% endblock breadcrumb %}
+
+{% block content %}
+    <div><a class="button-small" style="float:right" href="{% url 'new_project' %}">New Project</a></div>
+    <h2>You have these current projects:</h2>
+    {% for project in user_projects %}
+        <div>
+            <h3>{{ project.title }}</h3>
+            <table class="zebra">
+                <tr><td>Description</td><td>{{ project.description }}</td></tr>
+                <tr><td>Proposed on</td><td>{{ project.created }}</td></tr>
+        {% if project.ARO_approval %}
+                <tr><td>Status</td><td>Accepted</td></tr>
+        {% elif project.ARO_approval is null %}
+                <tr><td>Status</td><td>Pending approval by the ARO</td></tr>
+        {% else %}
+                <tr><td>Status</td><td>Rejected by the ARO</td></tr>
+        {% endif %}
+                <tr><td>Features</td>
+                    <td>
+                        <p>This project has access to these features:</p>
+                        <ul>
+                        {% for feature in project.permissions.all %}
+                            <li>{{ feature }}</li>
+                        {% empty %}
+                            <li>This project doesn't have access to any features yet</li>
+                        {% endfor %}
+                        </ul>
+                    </td>
+                </tr>
+            </table>
+        {% if not project.ARO_approval is False %}
+            <a href="{% url 'project_edit' project.id %}" class="button-small">Edit Project</a>
+        {% else %}
+            <p>This project cannot be edited, as it has been rejected by the ARO.</p>
+        {% endif %}
+        </div>
+        {% if not forloop.last %}
+        <hr>
+        {% endif %}
+    {% empty %}
+        <div>You don't have any proposed projects yet</div>
+    {% endfor %}
+{% endblock %}

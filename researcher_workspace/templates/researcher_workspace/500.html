@@ -1,0 +1,9 @@
+{% extends 'common/base.html' %}
+{% block title %}Server Error{% endblock %}
+
+{% block h1 %}Server Error{% endblock %}
+
+{% block content %}
+    <p>Internal Server Error</p>
+    <p>Return to the <a href="{% url 'index' %}">home page</a>, or if the problem persists <a href="{% url 'help' %}">contact us</a> for support</p>
+{% endblock %}

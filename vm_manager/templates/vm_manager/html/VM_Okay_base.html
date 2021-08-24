@@ -1,0 +1,144 @@
+<div>
+    <a class="button button-main cta" href="{{ what_to_show.url }}" target="_blank">
+        Open {{ operating_system.capitalize }} {{ requesting_feature }}
+    </a>
+    {% if operating_system == "windows" %}
+        <div style="margin-bottom:20px"><a href="https://unimelb.service-now.com/research?id=kb_article&article=KB0023060" target="_blank" title="How do I use RDP to access my Windows {{ requesting_feature }}?"><div class="small" data-icon="info-outline"></div></a></div>
+    {% endif %}
+</div>
+
+{% block supersize_message %}
+{% endblock supersize_message %}
+
+{%  if buttons_to_display %}
+<ul class="accordion">
+    <li>
+        <span class="accordion__title">Options</span>
+        <div class="accordion__hidden">
+            {% if "REBOOT_BUTTON" in buttons_to_display %}
+            <a class="button soft" data-modal-target="{{ app_name }}-{{ operating_system }}-reboot-modal" href="#">
+                Reboot my {{ operating_system.capitalize }} {{ requesting_feature }}
+            </a>
+           {% endif %}
+
+            {% if "SHELVE_BUTTON" in buttons_to_display %}
+            <a class="button soft" data-modal-target="{{ app_name }}-{{ operating_system }}-shelve-modal" href="#">
+                Shelve my {{ operating_system.capitalize }} {{ requesting_feature }} <sup>(BETA)</sup>
+            </a>
+            {% endif %}
+
+            {% if "DELETE_BUTTON" in buttons_to_display %}
+            <a class="button warning" data-modal-target="{{ app_name }}-{{ operating_system }}-delete-modal" href="#">
+                Delete my {{ operating_system.capitalize }} {{ requesting_feature }}
+            </a>
+            {% endif %}
+            {% block buttons %}
+            {% endblock buttons %}
+            {% if "BOOST_BUTTON" in buttons_to_display %}
+            <table class="zebra">
+                <thead>
+                    <tr>
+                        <th scope="col"></th>
+                        <th scope="col"> Default {{ requesting_feature }} </th>
+                        <th scope="col"> Boosted {{ requesting_feature }} </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td> vCPU </td>
+                        <td> 4 vCPU Cores </td>
+                        <td> 16 vCPU Cores </td>
+                    </tr>
+                    <tr>
+                        <td> RAM </td>
+                        <td> 16 GB </td>
+                        <td> 64 GB </td>
+                    </tr>
+                </tbody>
+            </table>
+            {% endif %}
+        </div>
+    </li>
+</ul>
+{% endif %}
+
+{% if "REBOOT_BUTTON" in buttons_to_display %}
+<div class="modal__dialog" id="{{ app_name }}-{{ operating_system }}-reboot-modal">
+    <h2>
+        Confirm Rebooting Your {{ operating_system.capitalize }} {{ requesting_feature }}
+    </h2>
+    <p>
+        Please save any work and close the connection to your {{ requesting_feature }} before rebooting it.
+    </p>
+    <p>
+        Your {{ requesting_feature }} will be unreachable for three minutes while it reboots.
+    </p>
+    <p>
+        <b>Note</b>: A soft reboot is a request to the operating system to reboot itself and is the safer option. A hard
+        reboot is a power cycle for the machine, and should only be used as a last resort, as it can on rare occasions
+        cause serious file system damage.
+    </p>
+    <p>
+        Please confirm your selection.
+    </p>
+    <div>
+        <button class="button-small warning"
+                title="Soft Reboot {{ operating_system.capitalize }} {{ requesting_feature }}"
+                onclick="reboot_{{ app_name }}_{{ operating_system.capitalize }}_soft(this)">
+            SOFT REBOOT
+        </button>
+        <span></span>
+        <button class="button-small warning" style="margin-left:15px"
+                title="Hard Reboot {{ operating_system.capitalize }} {{ requesting_feature }}"
+                onclick="reboot_{{ app_name }}_{{ operating_system.capitalize }}_hard(this)">
+            HARD REBOOT
+        </button>
+    </div>
+</div>
+{% endif %}
+
+{% if "SHELVE_BUTTON" in buttons_to_display %}
+<div class="modal__dialog" id="{{ app_name }}-{{ operating_system }}-shelve-modal">
+    <h2>
+        Confirm Shelving Your {{ operating_system.capitalize }} {{ requesting_feature }}
+    </h2>
+    <p>
+        Shelving your {{ requesting_feature }} will put it in a suspended state, where it is no longer consuming cloud
+        resources. A shelved {{ requesting_feature }} can quickly be unshelved to get back to the state it was before shelving.
+    </p>
+    <p>
+        Please save any work and close the connection to your {{ requesting_feature }} before shelving it.
+    </p>
+    <p>
+        Please confirm your selection.
+    </p>
+    <div>
+        <button class="button-small soft"
+                title="Shelve {{ operating_system.capitalize }} {{ requesting_feature }}"
+                onclick="shelve_{{ app_name }}_{{ operating_system.capitalize }}(this)">
+            SHELVE
+        </button>
+    </div>
+</div>
+{% endif %}
+
+{% if "DELETE_BUTTON" in buttons_to_display %}
+<div class="modal__dialog" id="{{ app_name }}-{{ operating_system }}-delete-modal">
+    <h2>
+        Confirm Deleting Your {{ operating_system.capitalize }} {{ requesting_feature }}
+    </h2>
+    <p>
+        Please confirm your selection. Once a {{ requesting_feature }} has been deleted it is not recoverable.
+    </p>
+    <div>
+        <button class="button-small warning"
+                title="Delete {{ operating_system.capitalize }} {{ requesting_feature }}"
+                onclick="delete_{{ app_name }}_{{ operating_system.capitalize }}(this)">
+            DELETE
+        </button>
+    </div>
+</div>
+{% endif %}
+
+{% block modals %}
+{% endblock modals %}

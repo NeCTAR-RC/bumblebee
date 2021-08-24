@@ -1,0 +1,26 @@
+{% extends 'common/base.html' %}
+{% load class_tag %}
+{% block breadcrumb %}
+<li itemprop="itemListElement" itemscope="" itemtype="http://schema.org/ListItem">
+    <a href="{% url 'user_search' %}" itemprop="item" title="User Report">
+        <span itemprop="name">User Report</span>
+    </a>
+    <meta content="2" itemprop="position" />
+</li>
+{% endblock breadcrumb %}
+{% block content %}
+<h2>Search for a user:</h2>
+<span class="smallform">
+    <form action="{% url 'user_search' %}" method="get">
+        {{ form.as_span }}
+        <input type="submit" value="Submit">
+    </form>
+    <span class="infobox">
+        If you can't find the result you're looking for, try adding a * as a wildcard.
+        E.g. search for "dav*" to match both "David" and "Dave".
+        Or try using the "Common Name" field instead of "Given Name", though it will require wrapping the search term
+        in wildcards as described above. "Common Name" is a field on the user,
+        which sometimes has values inconsistent with the user's "Given Name" and "Surname" fields.
+    </span>
+</span>
+{% endblock content %}

@@ -1,0 +1,82 @@
+{% extends 'researcher_workspace/staff/user_search_base.html' %}
+{% load mathfilters %}
+{% block breadcrumb %}
+{{ block.super }}
+{% endblock breadcrumb %}
+{% block content %}
+{{ block.super }}
+<section>
+    <h2>Graph of number of 'Active' users over time</h2>
+    <div><small>'Active' refers to users who are marked as 'Active' in the database. This is a permission that classifies
+    whether a user is allowed to log into the site or not</small></div>
+    <div id="usage-linechart" style="height: 400px;"></div>
+</section>
+<section>
+    <h2>Table of 'Active' users</h2>
+    <form method="POST">{% csrf_token %}<button type="submit" class="button-small">Download as csv</button></form>
+    <table>
+        <thead>
+        <tr>
+            <th>Name</th>
+            <th>Username</th>
+            <th>Department</th>
+            <th>Role</th>
+            <th>Email</th>
+            <th>Date Joined</th>
+        </tr>
+        </thead>
+        <tbody>
+    {% for user in users %}
+        <tr>
+            <td><a href="{% url 'admin:auth_user_change' object_id=user.id %}">{{user.name}}</a></td>
+            <td>{{user.username}}</td>
+            <td>{{user.department}}</td>
+            <td>{{user.person_type}}</td>
+            <td>{{user.email}}</td>
+            <td>{{user.date_joined.date}}</td>
+        </tr>
+    {% endfor %}
+        </tbody>
+    </table>
+</section>
+{% endblock content %}
+{% block script %}
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <script type="text/javascript">
+        // Load google charts
+        google.charts.load('current', {'packages':['corechart']});
+        google.charts.setOnLoadCallback(drawChart);
+
+        // Draw the chart and set the chart values
+        function drawChart() {
+            var data = new google.visualization.DataTable();
+            data.addColumn('date', 'Date Joined');
+            data.addColumn('number', 'Number of Users');
+
+            data.addRows([
+        {% for user in users %}
+            [new Date({{user.date_joined.year}}, {{user.date_joined.month|sub:1}}, {{user.date_joined.day}}), {{user.num}}],
+        {% endfor %}
+        ]);
+
+        var options = {
+            title:'Number of users over time',
+            height:400,
+            legend: {position: 'bottom'},
+            chartArea: {
+                width: '85%'
+            },
+            hAxis: {
+                viewWindow: {
+                    min: new Date({{first_date.year}}, {{first_date.month|sub:2}}, {{first_date.day}}),
+                    max: new Date({{last_date.year}}, {{last_date.month}}, {{last_date.day}})
+                }
+            }
+        };
+
+        var chart = new google.visualization.LineChart(document.getElementById('usage-linechart'));
+        chart.draw(data, options);
+
+        }
+    </script>
+{% endblock script %}
