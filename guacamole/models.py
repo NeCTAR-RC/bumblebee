@@ -268,7 +268,7 @@ class GuacamoleUser(models.Model):
         on_delete=models.CASCADE)
     password_hash = models.CharField(max_length=32)
     password_salt = models.CharField(max_length=32, blank=True, null=True)
-    password_date = models.DateTimeField()
+    password_date = models.DateTimeField(auto_now_add=True, blank=True)
     disabled = models.BooleanField(default=False)
     expired = models.BooleanField(default=False)
     access_window_start = models.TimeField(blank=True, null=True)
