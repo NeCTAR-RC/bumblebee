@@ -128,7 +128,7 @@ def _create_instance(user, vm_info, volume):
     launch_result = n.nova.servers.create(
         name=hostname, image="", flavor=vm_info['flavor'],
         userdata=user_data_script, security_groups=vm_info['security_groups'],
-        key_name=settings.KEYNAME, block_device_mapping_v1=None,
+        key_name=settings.OS_KEYNAME, block_device_mapping_v1=None,
         block_device_mapping_v2=block_device_mapping,
         nics=n.VM_PARAMS["list_net"],
         availability_zone=n.VM_PARAMS["availability_zone_server"],

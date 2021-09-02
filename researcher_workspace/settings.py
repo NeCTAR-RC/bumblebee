@@ -261,7 +261,7 @@ SECRET_KEY = ''
 OS_APPLICATION_CREDENTIAL_ID = ''
 OS_APPLICATION_CREDENTIAL_SECRET = ''
 
-KEYNAME = ''
+OS_KEYNAME = ''
 ENVIRONMENT_NAME = ''
 ENVIRONMENT_COLOR = ''
 NOTIFY_URL = ''
@@ -292,7 +292,7 @@ try:
     # OpenStack Settings
     _assert_not_empty(OS_APPLICATION_CREDENTIAL_ID, 'OS_APPLICATION_CREDENTIAL_ID')
     _assert_not_empty(OS_APPLICATION_CREDENTIAL_SECRET, 'OS_APPLICATION_CREDENTIAL_SECRET')
-    _assert_not_empty(KEYNAME, 'KEYNAME')
+    _assert_not_empty(KEYNAME, 'OS_KEYNAME')
 
     # Researcher Desktop Settings
     _assert_not_empty(ENVIRONMENT_NAME, 'ENVIRONMENT_NAME')
