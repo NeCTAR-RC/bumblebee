@@ -28,10 +28,66 @@ entity_type = (
     ('USER_GROUP', 'USER_GROUP'))
 
 
+class GuacamoleEntity(models.Model):
+    entity_id = models.AutoField(primary_key=True)
+    name = models.CharField(max_length=128)
+    type = models.CharField(max_length=10)
+
+    class Meta:
+        managed = False
+        db_table = 'guacamole_entity'
+        unique_together = (('type', 'name'),)
+
+
+class GuacamoleUser(models.Model):
+    user_id = models.AutoField(primary_key=True)
+    entity = models.OneToOneField(
+        GuacamoleEntity,
+        on_delete=models.CASCADE,)
+    password_hash = models.CharField(max_length=32)
+    password_salt = models.CharField(max_length=32, blank=True, null=True)
+    password_date = models.DateTimeField(auto_now_add=True, blank=True)
+    disabled = models.BooleanField(default=False)
+    expired = models.BooleanField(default=False)
+    access_window_start = models.TimeField(blank=True, null=True)
+    access_window_end = models.TimeField(blank=True, null=True)
+    valid_from = models.DateField(blank=True, null=True)
+    valid_until = models.DateField(blank=True, null=True)
+    timezone = models.CharField(max_length=64, blank=True, null=True)
+    full_name = models.CharField(max_length=256, blank=True, null=True)
+    email_address = models.CharField(max_length=256, blank=True, null=True)
+    organization = models.CharField(max_length=256, blank=True, null=True)
+    organizational_role = models.CharField(
+        max_length=256, blank=True, null=True)
+
+    class Meta:
+        managed = False
+        db_table = 'guacamole_user'
+
+class GuacamoleConnectionGroup(models.Model):
+    connection_group_id = models.AutoField(primary_key=True)
+    parent = models.ForeignKey(
+        'self',
+        on_delete=models.CASCADE,
+        blank=True, null=True)
+    connection_group_name = models.CharField(max_length=128)
+    type = GuacamoleConnectionGroupTypeField(
+        choices=connection_group_type,
+        default='ORGANIZATIONAL')
+    max_connections = models.IntegerField(blank=True, null=True)
+    max_connections_per_user = models.IntegerField(blank=True, null=True)
+    enable_session_affinity = models.BooleanField(default=False)
+
+    class Meta:
+        managed = False
+        db_table = 'guacamole_connection_group'
+        unique_together = (('connection_group_name', 'parent'),)
+
+
 class GuacamoleConnection(models.Model):
     connection_id = models.AutoField(primary_key=True)
     connection_name = models.CharField(max_length=128)
-    parent = models.ForeignKey('GuacamoleConnectionGroup',
+    parent = models.ForeignKey(GuacamoleConnectionGroup,
         on_delete=models.CASCADE,
         blank=True, null=True)
     protocol = models.CharField(max_length=32, default='rdp')
@@ -64,26 +120,6 @@ class GuacamoleConnectionAttribute(models.Model):
         unique_together = (('connection', 'attribute_name'),)
 
 
-class GuacamoleConnectionGroup(models.Model):
-    connection_group_id = models.AutoField(primary_key=True)
-    parent = models.ForeignKey(
-        'self',
-        on_delete=models.CASCADE,
-        blank=True, null=True)
-    connection_group_name = models.CharField(max_length=128)
-    type = GuacamoleConnectionGroupTypeField(
-        choices=connection_group_type,
-        default='ORGANIZATIONAL')
-    max_connections = models.IntegerField(blank=True, null=True)
-    max_connections_per_user = models.IntegerField(blank=True, null=True)
-    enable_session_affinity = models.BooleanField(default=False)
-
-    class Meta:
-        managed = False
-        db_table = 'guacamole_connection_group'
-        unique_together = (('connection_group_name', 'parent'),)
-
-
 class GuacamoleConnectionGroupAttribute(models.Model):
     connection_group = models.OneToOneField(
         GuacamoleConnectionGroup,
@@ -100,12 +136,13 @@ class GuacamoleConnectionGroupAttribute(models.Model):
 
 class GuacamoleConnectionGroupPermission(models.Model):
     entity = models.OneToOneField(
-        'GuacamoleEntity',
+        GuacamoleEntity,
         on_delete=models.CASCADE,
         primary_key=True)
     connection_group = models.ForeignKey(
         GuacamoleConnectionGroup,
-        on_delete=models.CASCADE)
+        on_delete=models.CASCADE,
+        blank=True, null=True)
     permission = GuacamoleObjectPermissionTypeField(
         choices=object_permission_type,
         default='READ')
@@ -116,10 +153,24 @@ class GuacamoleConnectionGroupPermission(models.Model):
         unique_together = (('entity', 'connection_group', 'permission'),)
 
 
+class GuacamoleSharingProfile(models.Model):
+    sharing_profile_id = models.AutoField(primary_key=True)
+    sharing_profile_name = models.CharField(max_length=128)
+    primary_connection = models.ForeignKey(
+        GuacamoleConnection,
+        on_delete=models.CASCADE,
+        blank=True, null=True)
+
+    class Meta:
+        managed = False
+        db_table = 'guacamole_sharing_profile'
+        unique_together = (('sharing_profile_name', 'primary_connection'),)
+
+
 class GuacamoleConnectionHistory(models.Model):
     history_id = models.AutoField(primary_key=True)
     user = models.ForeignKey(
-        'GuacamoleUser',
+        GuacamoleUser,
         on_delete=models.CASCADE,
         blank=True, null=True)
     username = models.CharField(max_length=128)
@@ -130,7 +181,7 @@ class GuacamoleConnectionHistory(models.Model):
         blank=True, null=True)
     connection_name = models.CharField(max_length=128)
     sharing_profile = models.ForeignKey(
-        'GuacamoleSharingProfile',
+        GuacamoleSharingProfile,
         on_delete=models.CASCADE,
         blank=True, null=True)
     sharing_profile_name = models.CharField(
@@ -159,45 +210,22 @@ class GuacamoleConnectionParameter(models.Model):
 
 class GuacamoleConnectionPermission(models.Model):
     entity = models.OneToOneField(
-        'GuacamoleEntity',
+        GuacamoleEntity,
         on_delete=models.CASCADE,
         primary_key=True)
     connection = models.ForeignKey(
         GuacamoleConnection,
-        on_delete=models.CASCADE)
+        on_delete=models.CASCADE,
+        blank=True, null=True)
     permission = GuacamoleObjectPermissionTypeField(
         choices=object_permission_type,
         default='READ')
-
 
     class Meta:
         managed = False
         db_table = 'guacamole_connection_permission'
         unique_together = (('entity', 'connection', 'permission'),)
 
-
-class GuacamoleEntity(models.Model):
-    entity_id = models.AutoField(primary_key=True)
-    name = models.CharField(max_length=128)
-    type = models.CharField(max_length=10)
-
-    class Meta:
-        managed = False
-        db_table = 'guacamole_entity'
-        unique_together = (('type', 'name'),)
-
-
-class GuacamoleSharingProfile(models.Model):
-    sharing_profile_id = models.AutoField(primary_key=True)
-    sharing_profile_name = models.CharField(max_length=128)
-    primary_connection = models.ForeignKey(
-        GuacamoleConnection,
-        on_delete=models.CASCADE)
-
-    class Meta:
-        managed = False
-        db_table = 'guacamole_sharing_profile'
-        unique_together = (('sharing_profile_name', 'primary_connection'),)
 
 
 class GuacamoleSharingProfileAttribute(models.Model):
@@ -235,7 +263,8 @@ class GuacamoleSharingProfilePermission(models.Model):
         primary_key=True)
     sharing_profile = models.ForeignKey(
         GuacamoleSharingProfile,
-        on_delete=models.CASCADE)
+        on_delete=models.CASCADE,
+        blank=True, null=True)
     permission = GuacamoleObjectPermissionTypeField(
         choices=object_permission_type,
         default='READ')
@@ -261,32 +290,6 @@ class GuacamoleSystemPermission(models.Model):
         unique_together = (('entity', 'permission'),)
 
 
-class GuacamoleUser(models.Model):
-    user_id = models.AutoField(primary_key=True)
-    entity = models.OneToOneField(
-        GuacamoleEntity,
-        on_delete=models.CASCADE)
-    password_hash = models.CharField(max_length=32)
-    password_salt = models.CharField(max_length=32, blank=True, null=True)
-    password_date = models.DateTimeField(auto_now_add=True, blank=True)
-    disabled = models.BooleanField(default=False)
-    expired = models.BooleanField(default=False)
-    access_window_start = models.TimeField(blank=True, null=True)
-    access_window_end = models.TimeField(blank=True, null=True)
-    valid_from = models.DateField(blank=True, null=True)
-    valid_until = models.DateField(blank=True, null=True)
-    timezone = models.CharField(max_length=64, blank=True, null=True)
-    full_name = models.CharField(max_length=256, blank=True, null=True)
-    email_address = models.CharField(max_length=256, blank=True, null=True)
-    organization = models.CharField(max_length=256, blank=True, null=True)
-    organizational_role = models.CharField(
-        max_length=256, blank=True, null=True)
-
-    class Meta:
-        managed = False
-        db_table = 'guacamole_user'
-
-
 class GuacamoleUserAttribute(models.Model):
     user = models.OneToOneField(
         GuacamoleUser,
@@ -305,7 +308,8 @@ class GuacamoleUserGroup(models.Model):
     user_group_id = models.AutoField(primary_key=True)
     entity = models.OneToOneField(
         GuacamoleEntity,
-        on_delete=models.CASCADE)
+        on_delete=models.CASCADE,
+        blank=True, null=True)
     disabled = models.BooleanField(default=False)
 
     class Meta:
@@ -325,8 +329,10 @@ class GuacamoleUserGroupAttribute(models.Model):
 
 
 class GuacamoleUserGroupMember(models.Model):
-    user_group = models.OneToOneField(GuacamoleUserGroup, on_delete=models.CASCADE, primary_key=True)
-    member_entity = models.ForeignKey(GuacamoleEntity, on_delete=models.CASCADE)
+    user_group = models.OneToOneField(GuacamoleUserGroup,
+        on_delete=models.CASCADE, primary_key=True)
+    member_entity = models.ForeignKey(GuacamoleEntity,
+        on_delete=models.CASCADE, blank=True, null=True)
 
     class Meta:
         managed = False
@@ -335,8 +341,11 @@ class GuacamoleUserGroupMember(models.Model):
 
 
 class GuacamoleUserGroupPermission(models.Model):
-    entity = models.OneToOneField(GuacamoleEntity, on_delete=models.CASCADE, primary_key=True)
-    affected_user_group = models.ForeignKey(GuacamoleUserGroup, on_delete=models.CASCADE)
+    entity = models.OneToOneField(GuacamoleEntity,
+            on_delete=models.CASCADE, primary_key=True)
+    affected_user_group = models.ForeignKey(GuacamoleUserGroup,
+            on_delete=models.CASCADE,
+            blank=True, null=True)
     permission = GuacamoleObjectPermissionTypeField(
         choices=object_permission_type,
         default='READ')
@@ -349,7 +358,8 @@ class GuacamoleUserGroupPermission(models.Model):
 
 class GuacamoleUserHistory(models.Model):
     history_id = models.AutoField(primary_key=True)
-    user = models.ForeignKey(GuacamoleUser, on_delete=models.CASCADE, blank=True, null=True)
+    user = models.ForeignKey(GuacamoleUser, on_delete=models.CASCADE,
+        blank=True, null=True)
     username = models.CharField(max_length=128)
     remote_host = models.CharField(max_length=256, blank=True, null=True)
     start_date = models.DateTimeField()
@@ -362,7 +372,8 @@ class GuacamoleUserHistory(models.Model):
 
 class GuacamoleUserPasswordHistory(models.Model):
     password_history_id = models.AutoField(primary_key=True)
-    user = models.ForeignKey(GuacamoleUser, on_delete=models.CASCADE)
+    user = models.ForeignKey(GuacamoleUser, on_delete=models.CASCADE,
+        blank=True, null=True)
     password_hash = models.CharField(max_length=32)
     password_salt = models.CharField(max_length=32, blank=True, null=True)
     password_date = models.DateTimeField()
@@ -373,8 +384,11 @@ class GuacamoleUserPasswordHistory(models.Model):
 
 
 class GuacamoleUserPermission(models.Model):
-    entity = models.OneToOneField(GuacamoleEntity, on_delete=models.CASCADE, primary_key=True)
-    affected_user = models.ForeignKey(GuacamoleUser, on_delete=models.CASCADE)
+    entity = models.OneToOneField(GuacamoleEntity,
+        on_delete=models.CASCADE, primary_key=True)
+    affected_user = models.ForeignKey(GuacamoleUser,
+        on_delete=models.CASCADE,
+        blank=True, null=True)
     permission = GuacamoleObjectPermissionTypeField(
         choices=object_permission_type,
         default='READ')

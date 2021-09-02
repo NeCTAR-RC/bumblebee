@@ -44,12 +44,12 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'compressor',
+    'guacamole',
     'researcher_workspace',
     'mathfilters',
     'django_rq',
     'researcher_desktop',
     'specialty_resources',
-    'guacamole',
 ]
 
 MIDDLEWARE = [
@@ -155,7 +155,8 @@ LOGOUT_REDIRECT_URL = reverse_lazy('index')
 OS_AUTH_URL = "https://keystone.rc.nectar.org.au:5000/v3/"
 OS_AUTH_TYPE = 'v3applicationcredential'
 OS_AVAILABILITY_ZONE = 'melbourne-qh2'
-OS_NETWORK = 'researcher-desktop'
+OS_NETWORK = 'bumblebee'
+OS_SECGROUPS = ['bumblebee']
 
 # See:
 # http://www.webforefront.com/django/setupdjangologging.html
@@ -292,7 +293,7 @@ try:
     # OpenStack Settings
     _assert_not_empty(OS_APPLICATION_CREDENTIAL_ID, 'OS_APPLICATION_CREDENTIAL_ID')
     _assert_not_empty(OS_APPLICATION_CREDENTIAL_SECRET, 'OS_APPLICATION_CREDENTIAL_SECRET')
-    _assert_not_empty(KEYNAME, 'OS_KEYNAME')
+    _assert_not_empty(OS_KEYNAME, 'OS_KEYNAME')
 
     # Researcher Desktop Settings
     _assert_not_empty(ENVIRONMENT_NAME, 'ENVIRONMENT_NAME')

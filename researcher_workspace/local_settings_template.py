@@ -35,7 +35,9 @@ OS_APPLICATION_CREDENTIAL_ID = ""  # ¡Change!
 OS_APPLICATION_CREDENTIAL_SECRET = ""  # ¡Change!
 
 # OpenStack Key you have access
-KEYNAME = ""  # ¡Change!
+OS_KEYNAME = ""  # ¡Change!
+OS_NETWORK = ""  # ¡Change!
+OS_SECGROUPS = []  # ¡Change!
 
 ### Researcher Desktop Settings
 

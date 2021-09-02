@@ -2,36 +2,34 @@
 {% block buttons %}
 {% if "BOOST_BUTTON" in buttons_to_display %}
 <div>
-    You can temporarily increase the size of your {{ requesting_feature }} by clicking the button below.
+  You can temporarily increase the size of your {{ requesting_feature }} by clicking the button below.
 </div>
-<a class="button" data-modal-target="{{ app_name }}-{{ operating_system }}-supersize-modal" href="#">
-    Boost my {{ operating_system.capitalize }} {{ requesting_feature }} <sup>(BETA)</sup>
-</a>
+<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#{{ app_name }}-{{ operating_system }}-supersize-modal">
+  Boost my {{ operating_system.capitalize }} {{ requesting_feature }}
+</button>
 {% endif %}
 {% endblock buttons %}
 
 {% block modals %}
 {% if "BOOST_BUTTON" in buttons_to_display %}
-<div class="modal__dialog" id="{{ app_name }}-{{ operating_system }}-supersize-modal">
-    <h2>
-        Confirm Boosting Your {{ operating_system.capitalize }} {{ requesting_feature }}
-    </h2>
-    <p>
-        Please save any work and close the connection to your {{ requesting_feature }} before boosting it.
-    </p>
-    <p>
-        Your {{ requesting_feature }} will be unreachable for five minutes while boosting.
-    </p>
-    <p>
-        Please confirm your selection.
-    </p>
-    <div>
-        <button class="button-small"
-                title="Boost {{ operating_system.capitalize }} {{ requesting_feature }}"
-                onclick="supersize_{{ app_name }}_{{ operating_system.capitalize }}(this)">
-            BOOST
-        </button>
+<div class="modal fade" id="{{ app_name }}-{{ operating_system }}-supersize-modal" tabindex="-1" aria-labelledby="{{ app_name }}-{{ operating_system }}-supersize-modal-label" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="{{ app_name }}-{{ operating_system }}-supersize-modal-label">Confirm</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p>Please save any work and close the connection to your {{ requesting_feature }} before boosting it.</p>
+        <p>Your {{ requesting_feature }} will be unreachable for five minutes while boosting.</p>
+        <p>Please confirm your selection.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-danger" onclick="supersize_{{ app_name }}_{{ operating_system.capitalize }}(this)">Boost</button>
+      </div>
     </div>
+  </div>
 </div>
 {% endif %}
 {% endblock modals %}

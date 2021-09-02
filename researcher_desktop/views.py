@@ -1,5 +1,6 @@
 import logging
 
+from django.conf import settings
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.http import HttpResponse, HttpResponseRedirect, Http404
 from django.urls import reverse
@@ -40,17 +41,9 @@ def launch_vm(request, operating_system):
     vm_info['flavor'] = researcher_desktop_vm_info.DEFAULT_FLAVOR
     vm_info['source_volume'] = researcher_desktop_vm_info.SOURCE_VOLUME[operating_system]
     vm_info['operating_system'] = operating_system
-    if operating_system == LINUX:
-        vm_info['user_data_script'] = user_data_ubuntu\
+    vm_info['user_data_script'] = user_data_ubuntu\
                 .replace(NOTIFY_VM_PATH_PLACEHOLDER, reverse('researcher_desktop:notify_vm'))
-        vm_info['security_groups'] = ['icmp', 'ssh', 'rdp']
-    elif operating_system == WINDOWS:
-        vm_info['user_data_script'] = user_data_windows\
-            .replace(NOTIFY_VM_PATH_PLACEHOLDER, reverse('researcher_desktop:notify_vm'))
-        vm_info['security_groups'] = ['icmp', 'ssh', 'rdp']
-    else:
-        raise ArithmeticError  # code will never get here
-
+    vm_info['security_groups'] = settings.OS_SECGROUPS
     logger.info(request.user) 
     vm_man_views.launch_vm(request.user, vm_info, researcher_desktop_vm_info.FEATURE)
     return redirect_home(request)

@@ -15,7 +15,7 @@ from vm_manager.constants import ERROR, ACTIVE, SHUTDOWN, VERIFY_RESIZE, RESIZE,
 
 from vm_manager.utils.utils import get_nectar
 
-from guacamole import models as guac_models
+from guacamole.models import GuacamoleConnection, GuacamoleConnectionParameter, GuacamoleConnectionPermission, GuacamoleEntity
 from guacamole import utils as guac_utils
 
 logger = logging.getLogger(__name__)
@@ -163,7 +163,8 @@ class InstanceManager(models.Manager):
 class Instance(CloudResource):
     boot_volume = models.ForeignKey(Volume, on_delete=models.PROTECT, )
     ip_address = models.GenericIPAddressField(null=True, blank=True)
-    guac_connection = models.ForeignKey(guac_models.GuacamoleConnection, on_delete=models.CASCADE, null=True, blank=True)
+    guac_connection = models.ForeignKey(GuacamoleConnection,
+        on_delete=models.SET_NULL, null=True, blank=True)
 
     objects = InstanceManager()
 
@@ -178,9 +179,9 @@ class Instance(CloudResource):
                 self.save()
             return self.ip_address
 
-    def get_guac_connection(self):
+    def create_guac_connection(self):
         params = [
-            ('hostname', self.ip_address),
+            ('hostname', self.get_ip_addr()),
             ('port', '3389'),
             ('username', 'ubuntu'),
             ('password', 'Nectar1!'),
@@ -190,21 +191,21 @@ class Instance(CloudResource):
 
         connection_params = []
         for k, v in params:
-            guac_models.GuacamoleConnectionParameter.objects.get_or_create(
+            GuacamoleConnectionParameter.objects.get_or_create(
                 connection=self.guac_connection,
                 parameter_name=k,
                 parameter_value=v)
 
-        entity, _ = guac_models.GuacamoleEntity.objects.get_or_create(
+        entity, _ = GuacamoleEntity.objects.get_or_create(
             name=self.user.username)
 
-        guac_models.GuacamoleConnectionPermission.objects.get_or_create(
+        gmodel = GuacamoleConnectionPermission.objects.get_or_create(
             entity=entity,
             connection=self.guac_connection,
             permission='READ')
 
     def get_url(self):
-        self.get_guac_connection()
+        self.create_guac_connection()
         return guac_utils.get_direct_url(self.guac_connection)
 
     def get_status(self):
