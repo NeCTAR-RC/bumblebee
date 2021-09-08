@@ -15,7 +15,7 @@ from operator import itemgetter
 from vm_manager.models import VMStatus, Instance, Resize
 
 from vm_manager.constants import VM_ERROR, VM_OKAY, VM_WAITING, VM_SHELVED, NO_VM, VM_SHUTDOWN, \
-    VM_SUPERSIZED, VM_DELETED, VM_CREATING, VM_MISSING, VM_RESIZING, WINDOWS, LAUNCH_WAIT_SECONDS, \
+    VM_SUPERSIZED, VM_DELETED, VM_CREATING, VM_MISSING, VM_RESIZING, LAUNCH_WAIT_SECONDS, \
     CLOUD_INIT_FINISHED, CLOUD_INIT_STARTED, REBOOT_WAIT_SECONDS, RESIZE_WAIT_SECONDS, SHELVE_WAIT_SECONDS
 
 from vm_manager.constants import SCRIPT_ERROR, SCRIPT_OKAY
@@ -238,15 +238,19 @@ def get_vm_state(user, operating_system, requesting_feature):
 def render_vm(request, user, operating_system, requesting_feature, buttons_to_display):
     state, what_to_show, vm_id = get_vm_state(user, operating_system, requesting_feature)
     app_name = requesting_feature.app_name
-    if (state == VM_OKAY or state == VM_SUPERSIZED) and operating_system == WINDOWS:
-        what_to_show['url'] = reverse(app_name + ':get_rdp_file', args=[vm_id])
+
+    #if (state == VM_OKAY or state == VM_SUPERSIZED)
+    #    what_to_show['url'] = reverse(app_name + ':get_rdp_file', args=[vm_id])
+
     if state == VM_SUPERSIZED and what_to_show["is_eligible"]:
         messages.info(request, format_html(f'Your {str(operating_system).capitalize()} vm is set to resize '
                   f'back to the default size on {what_to_show["expires"]}'))
+
     vm_module = loader.render_to_string(f'vm_manager/html/{state}.html',
                 {'what_to_show': what_to_show, 'operating_system': operating_system, 'vm_id': vm_id,
                  "buttons_to_display": buttons_to_display, "app_name": app_name,
                  "requesting_feature": requesting_feature}, request)
+
     script = loader.render_to_string(f'vm_manager/javascript/{state}.js',
                 {'what_to_show': what_to_show, 'operating_system': operating_system, 'vm_id': vm_id,
                  "buttons_to_display": buttons_to_display, "app_name": app_name,

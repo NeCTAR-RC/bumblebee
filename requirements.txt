@@ -18,3 +18,4 @@ pandas
 xlsxwriter
 django_compressor
 django-libsass
+crispy-bootstrap5

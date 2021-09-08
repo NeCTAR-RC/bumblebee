@@ -59,7 +59,6 @@ GUACAMOLE_URL = ""  # ¡Change!
 
 # Volume Names on the OpenStack tenancy for different Desktops
 LINUX_IMAGE_NAME = ""  # ¡Change!
-WINDOWS_IMAGE_NAME = ""  # ¡Change!
 
 # MySQL backend settings
 # DATABASES = {

@@ -10,7 +10,7 @@ from django.urls import reverse
 from researcher_workspace.settings import ENVIRONMENT_NAME
 
 from vm_manager.constants import HOSTNAME_PLACEHOLDER, HOSTNAME_URL_PLACEHOLDER, \
-    USERNAME_PLACEHOLDER, VOLUME_CREATION_TIMEOUT, DOMAIN_PLACEHOLDER, NO_VM, VM_OKAY, LINUX, WINDOWS
+    USERNAME_PLACEHOLDER, VOLUME_CREATION_TIMEOUT, DOMAIN_PLACEHOLDER, NO_VM, VM_OKAY, LINUX
 from vm_manager.utils.utils import get_nectar, generate_server_name, generate_hostname, generate_hostname_url,\
     get_domain
 from vm_manager.models import Instance, Volume, VMStatus

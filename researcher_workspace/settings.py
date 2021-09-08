@@ -43,6 +43,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'crispy_forms',
+    'crispy_bootstrap5',
     'compressor',
     'guacamole',
     'researcher_workspace',
@@ -148,6 +150,9 @@ STATICFILES_DIRS = [
 COMPRESS_PRECOMPILERS = (
     ('text/x-scss', 'django_libsass.SassCompiler'),
 )
+
+CRISPY_ALLOWED_TEMPLATE_PACKS = 'bootstrap5'
+CRISPY_TEMPLATE_PACK = 'bootstrap5'
 
 LOGIN_REDIRECT_URL = reverse_lazy('home')
 LOGOUT_REDIRECT_URL = reverse_lazy('index')
@@ -269,7 +274,6 @@ NOTIFY_URL = ''
 SITE_URL = ''
 GUACAMOLE_URL = ''
 LINUX_IMAGE_NAME = ''
-WINDOWS_IMAGE_NAME = ''
 ALLOCATION_ID = ''
 
 from researcher_workspace.local_settings import *
@@ -302,7 +306,6 @@ try:
     _assert_not_empty(SITE_URL, 'SITE_URL')
     _assert_not_empty(GUACAMOLE_URL, 'GUACAMOLE_URL')
     _assert_not_empty(LINUX_IMAGE_NAME, 'LINUX_IMAGE_NAME')
-    _assert_not_empty(WINDOWS_IMAGE_NAME, 'WINDOWS_IMAGE_NAME')
 
     # Auth Settings
     _assert_not_empty(OIDC_SERVER_URL, 'OIDC_SERVER_URL')

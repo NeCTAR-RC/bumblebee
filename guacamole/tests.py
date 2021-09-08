@@ -1,8 +1,8 @@
 from django.test import TestCase
 
-from guac_auth.models import GuacamoleUser, GuacamoleConnection
-from guac_auth.models import GuacamoleConnectionPermission
-from guac_auth.utils import quick_rdp, quick_rdp_destroy
+from guacamole.models import GuacamoleUser, GuacamoleConnection
+from guacamole.models import GuacamoleConnectionPermission
+from guacamole.utils import quick_rdp, quick_rdp_destroy
 
 
 class SimpleTestCase(TestCase):

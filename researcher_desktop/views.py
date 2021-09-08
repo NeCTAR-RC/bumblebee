@@ -12,7 +12,7 @@ from researcher_desktop.utils.user_data_windows import user_data_windows
 from researcher_desktop.utils.utils import get_vm_info
 from vm_manager import views as vm_man_views
 from researcher_workspace.utils import not_support_staff, redirect_home
-from vm_manager.constants import LINUX, WINDOWS, REBOOT_BUTTON, SHELVE_BUTTON, DELETE_BUTTON, BOOST_BUTTON
+from vm_manager.constants import LINUX, REBOOT_BUTTON, SHELVE_BUTTON, DELETE_BUTTON, BOOST_BUTTON
 
 logger = logging.getLogger(__name__)
 
@@ -75,7 +75,7 @@ def unshelve_vm(request, operating_system):
     vm_info['source_volume'] = researcher_desktop_vm_info.SOURCE_VOLUME[operating_system]
     vm_info['operating_system'] = operating_system
     vm_info['user_data_script'] = ""
-    vm_info['security_groups'] = ['icmp', 'ssh', 'rdp']
+    vm_info['security_groups'] = settings.OS_SECGROUPS
     vm_man_views.unshelve_vm(request.user, vm_info, researcher_desktop_vm_info.FEATURE)
     return redirect_home(request)
 

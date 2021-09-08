@@ -39,15 +39,15 @@ def quick_rdp_conn(username, password, hostname):
         parameter_name='username',
         parameter_value=username)
 
-    GuacamoleConnectionParameter.objects.create(
-        connection=conn,
-        parameter_name='password',
-        parameter_value=password)
+    #GuacamoleConnectionParameter.objects.create(
+    #    connection=conn,
+    #    parameter_name='password',
+    #    parameter_value=password)
 
-    GuacamoleConnectionParameter.objects.create(
-        connection=conn,
-        parameter_name='hostname',
-        parameter_value=hostname)
+    #GuacamoleConnectionParameter.objects.create(
+    #    connection=conn,
+    #    parameter_name='hostname',
+    #    parameter_value=hostname)
 
     return conn
 

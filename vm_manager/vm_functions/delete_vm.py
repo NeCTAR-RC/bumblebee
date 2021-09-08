@@ -25,6 +25,7 @@ def delete_vm_worker(instance):
 
     if instance.guac_connection:
         instance.guac_connection.delete()
+        instance.save()
 
     n = get_nectar()
     try:

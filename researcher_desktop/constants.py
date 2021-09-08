@@ -1,10 +1,9 @@
-from researcher_workspace.settings import LINUX_IMAGE_NAME, WINDOWS_IMAGE_NAME
-from vm_manager.constants import LINUX, WINDOWS
+from researcher_workspace.settings import LINUX_IMAGE_NAME
+from vm_manager.constants import LINUX
 
 # Dictionary of image names for vm_manager
 IMAGE_NAME = {
     LINUX: LINUX_IMAGE_NAME,
-    WINDOWS: WINDOWS_IMAGE_NAME
 }
 
 BIG_FLAVOR = "m3.xxlarge"

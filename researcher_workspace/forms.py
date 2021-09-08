@@ -1,6 +1,12 @@
 from django import forms
 from django.utils.safestring import mark_safe
 
+from crispy_forms.bootstrap import InlineRadios
+from crispy_forms.helper import FormHelper
+from crispy_forms.layout import Layout, Fieldset, ButtonHolder, Submit
+
+from crispy_bootstrap5.bootstrap5 import FloatingField
+
 from .models import Project
 from .utils.FoR_codes import FOR_CODE_CHOICES
 
@@ -55,7 +61,7 @@ class CustomRadioSelect(forms.RadioSelect):
     option_template_name = "researcher_workspace/forms/widgets/custom_radio_select_options.html" # A copy of django/forms/widgets/input_option.html
 
 
-class ProjectForm(DivModelForm):
+class ProjectForm(forms.ModelForm):
     class Meta:
         model = Project
         fields = ['title', 'description', 'FoR_code', 'FoR_code2', 'ARO', 'sensitive_data', 'additional_comments']
@@ -67,13 +73,13 @@ class ProjectForm(DivModelForm):
                   '<a href="https://www.abs.gov.au/AUSSTATS/abs@.nsf/Lookup/1297.0Main+Features12020?OpenDocument"'
                   ' target="_blank">Australian Bureau of Statistics website</a>.',
     )
-    FoR_code.widget.option_template_name = "researcher_workspace/forms/widgets/FoR_code_select_option.html"
-    FoR_code.widget.attrs['class'] = 'alt'
+    #FoR_code.widget.option_template_name = "researcher_workspace/forms/widgets/FoR_code_select_option.html"
+    #FoR_code.widget.attrs['class'] = 'alt'
     FoR_code2 = forms.ChoiceField(choices=FOR_CODE_CHOICES, required=False,
                                   label="Optional second Field of Research Code"
     )
-    FoR_code2.widget.option_template_name = "researcher_workspace/forms/widgets/FoR_code_select_option.html"
-    FoR_code2.widget.attrs['class'] = 'alt'
+    #FoR_code2.widget.option_template_name = "researcher_workspace/forms/widgets/FoR_code_select_option.html"
+    #FoR_code2.widget.attrs['class'] = 'alt'
     ARO = forms.EmailField(label="Accountable Resource Owner (ARO)", help_text=
         '<div class="small">Please enter the email address of the project\'s ARO</div>'
         '<ul style="padding-bottom:0;">'
@@ -98,7 +104,18 @@ class ProjectForm(DivModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['additional_comments'].help_text = "For any project related requests"
-
+        self.helper = FormHelper()
+        self.helper.form_tag = False
+        self.helper.add_input(Submit('submit', 'Submit'))
+        self.helper.layout = Layout(
+          FloatingField('title'),
+          FloatingField('description', css_class='ch-100'),
+          FloatingField('FoR_code'),
+          FloatingField('FoR_code2'),
+          FloatingField('ARO'),
+          InlineRadios('sensitive_data'),
+          FloatingField('additional_comments', css_class='ch-100'),
+        )
 
 class PermissionRequestForm(forms.Form):
     feature_options = forms.MultipleChoiceField(label='Options', choices=(), widget=forms.CheckboxSelectMultiple)

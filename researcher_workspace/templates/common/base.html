@@ -28,75 +28,74 @@
   </head>
 
   <body class="bg-light">
-
+  
+    <!-- navbar -->
     <nav class="navbar navbar-expand-md navbar-dark bg-dark" id="navbar-main">
-    <div class="container">
-      <a class="navbar-brand" href="{% url 'index' %}">Bumblebee</a>
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavDropdown" aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
-        <span class="navbar-toggler-icon"></span>
-      </button>
-
-      <div class="collapse navbar-collapse" id="navbarNavDropdown">
-        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-          <li class="nav-item {% active_link 'desktop_description' %}">
-	    <a class="nav-link" href="{% url 'desktop_description' %}">Desktop Description</a>
-	  </li>
-          <li class="nav-item {% active_link 'terms' %}">
-	    <a class="nav-link" href="{% url 'terms' %}">Terms of Service</a>
-	  </li>
-          <li class="nav-item {% active_link 'help' %}">
-	    <a class="nav-link" href="{% url 'help' %}">Get Help or Contact Us</a>
-	  </li>
-        </ul>
-
-        <ul class="navbar-nav">
-        {% if user.is_authenticated %}
-        {% load group_filters %}
-          {% if user.is_staff and user.is_superuser %}
+      <div class="container">
+        <a class="navbar-brand" href="{% url 'index' %}">Bumblebee</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavDropdown" aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+  
+        <div class="collapse navbar-collapse" id="navbarNavDropdown">
+          <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+            <li class="nav-item {% active_link 'desktop_description' %}">
+  	          <a class="nav-link" href="{% url 'desktop_description' %}">Desktop Description</a>
+            </li>
+            <li class="nav-item {% active_link 'terms' %}">
+              <a class="nav-link" href="{% url 'terms' %}">Terms of Service</a>
+            </li>
+            <li class="nav-item {% active_link 'help' %}">
+              <a class="nav-link" href="{% url 'help' %}">Get Help or Contact Us</a>
+            </li>
+          </ul>
+  
+          <ul class="navbar-nav">
+          {% if user.is_authenticated %}
+          {% load group_filters %}
+            {% if user.is_staff and user.is_superuser %}
+              <li class="nav-item">
+  	            <a class="nav-link" href="{% url "admin:index" %}">Administer site</a>
+              </li>
+            {% endif %}
+            {% if user.is_staff or user|has_group:'Support Staff' %}
+              <li class="nav-item {% active_link 'orion_report' %}">
+                <a class="nav-link" href="{% url 'orion_report' %}">Orion Reporting</a>
+  	          </li>
+              <li class="nav-item {% active_link 'user_search' %}">
+                <a class="nav-link" href="{% url 'user_search' %}">User Reporting and Search</a>
+  	          </li>
+            {% endif %}
+  
+          <div class="dropdown">
+            <a href="#" class="d-block text-decoration-none dropdown-toggle nav-link" id="dropdownUser1" data-bs-toggle="dropdown" aria-expanded="false">
+              <img src="{{ user|gravatar:50 }}" alt="{{ user.email }}" width="32" height="32" class="rounded-circle">
+              <span class="navbar-text ps-2">{{ user.email }}</span>
+            </a>
+            <ul class="dropdown-menu text-small" aria-labelledby="dropdownUser1">
+              <li><a class="dropdown-item" href="#">New project...</a></li>
+              <li><a class="dropdown-item" href="#">Settings</a></li>
+              <li><a class="dropdown-item" href="#">Profile</a></li>
+              <li><hr class="dropdown-divider"></li>
+              <form class="form-inline my-2 my-lg-0" action="{% url 'oidc_logout' %}" method="post">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-link dropdown-item">Log out</button>
+              </form>
+            </ul>
+          </div>
+          {% else %}
             <li class="nav-item">
-	      <a class="nav-link" href="{% url "admin:index" %}">Administer site</a>
-	    </li>
+  	        <a class="btn btn-primary" href="{% url 'login' %}" role="button">Log in</a>
+  	      </li>
           {% endif %}
-          {% if user.is_staff or user|has_group:'Support Staff' %}
-            <li class="nav-item {% active_link 'orion_report' %}">
-              <a class="nav-link" href="{% url 'orion_report' %}">Orion Reporting</a>
-	    </li>
-            <li class="nav-item {% active_link 'user_search' %}">
-              <a class="nav-link" href="{% url 'user_search' %}">User Reporting and Search</a>
-	    </li>
-          {% endif %}
-
-        <span class="navbar-text px-2">
-          {{ user.email }}
-        </span>	    
-
-        <div class="dropdown px-2">
-          <a href="#" class="d-block link-dark text-decoration-none dropdown-toggle" id="dropdownUser1" data-bs-toggle="dropdown" aria-expanded="false">
-            <img src="{{ user|gravatar:50 }}" alt="{{ user.email }}" width="32" height="32" class="rounded-circle">
-          </a>
-          <ul class="dropdown-menu text-small" aria-labelledby="dropdownUser1">
-            <li><a class="dropdown-item" href="#">New project...</a></li>
-            <li><a class="dropdown-item" href="#">Settings</a></li>
-            <li><a class="dropdown-item" href="#">Profile</a></li>
-            <li><hr class="dropdown-divider"></li>
-            <form class="form-inline my-2 my-lg-0" action="{% url 'oidc_logout' %}" method="post">
-              {% csrf_token %}
-              <button type="submit" class="btn btn-link dropdown-item">Log out</button>
-            </form>
-	    
           </ul>
         </div>
-        {% else %}
-          <li class="nav-item">
-	    <a class="btn btn-primary" href="{% url 'login' %}" role="button">Log in</a>
-	  </li>
-        {% endif %}
-	</ul>
       </div>
-    </div>
     </nav>
+    <!-- /navbar -->
 
     <main role="main" class="main container">
+
       {% if user.is_authenticated %}
         {# only show the warning header if the user is a super user. #}
         {% if user.is_superuser %}
@@ -114,7 +113,7 @@
       {% block content %}
       {% endblock content %}
 
-    </main><!-- /.container -->
+    </main>
 
     {% block script %}
     {% endblock script %}

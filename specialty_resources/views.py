@@ -14,7 +14,7 @@ from specialty_resources.forms import SpecialtyResourcesCreationForm
 from specialty_resources.utils.utils import get_vm_info
 from vm_manager import views as vm_man_views
 from researcher_workspace.utils import not_support_staff, redirect_home
-from vm_manager.constants import LINUX, WINDOWS, DELETE_BUTTON, NO_VM, REBOOT_BUTTON
+from vm_manager.constants import LINUX, DELETE_BUTTON, NO_VM, REBOOT_BUTTON
 from vm_manager.models import VMStatus
 
 logger = logging.getLogger(__name__)
@@ -66,10 +66,6 @@ def launch_vm(request):
             vm_info['user_data_script'] = user_data_ubuntu\
                     .replace(NOTIFY_VM_PATH_PLACEHOLDER, reverse('specialty_resources:notify_vm'))
             vm_info['security_groups'] = ['ssh-int', 'https-int', 'fastx', ]
-        elif operating_system == WINDOWS:
-            vm_info['user_data_script'] = user_data_windows\
-                .replace(NOTIFY_VM_PATH_PLACEHOLDER, reverse('specialty_resources:notify_vm'))
-            vm_info['security_groups'] = ['ssh-int', 'https-int', 'rdp-int']
         else:
             raise ArithmeticError  # code will never get here
 

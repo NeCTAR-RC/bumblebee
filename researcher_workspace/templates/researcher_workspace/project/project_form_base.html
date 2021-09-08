@@ -1,22 +1,9 @@
 {% extends 'researcher_workspace/project/project_list.html' %}
+{% load crispy_forms_tags %}
 
 {% block content %}
 <h2>{% block form_title %}{% endblock %}</h2>
 <form action="{% block form_submit_url %}{% endblock %}" method="post">
-    {% csrf_token %}
-    <fieldset>{{ form.as_div }}</fieldset>
-    <input type="submit" value="Submit">
-    <button class="button warning" onclick="javascript:history.back(); return false;">Cancel</button>
+  {% crispy form %}
 </form>
 {% endblock %}
-
-{% block script %}
-    <script type="text/javascript">
-        var req_fields = {{ required_fields|safe }};
-        for(i = 0; i < req_fields.length; i++){
-            document.querySelectorAll('label[for="id_' + req_fields[i] + '"]').forEach(x=>x.setAttribute('data-required', 'true'));
-            document.querySelectorAll('label[for="id_' + req_fields[i] + '_0"]').forEach(x=>x.setAttribute('data-required', 'true'));
-        };
-        document.querySelectorAll('label > span').forEach(x=>x.parentElement.removeAttribute('data-required'));
-    </script>
-{% endblock script %}

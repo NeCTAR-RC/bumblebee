@@ -66,10 +66,11 @@ class GuacamoleUser(models.Model):
 
 class GuacamoleConnectionGroup(models.Model):
     connection_group_id = models.AutoField(primary_key=True)
-    parent = models.ForeignKey(
-        'self',
-        on_delete=models.CASCADE,
-        blank=True, null=True)
+    parent_id = models.IntegerField(blank=True, null=True)
+    #parent = models.ForeignKey(
+    #    'self',
+    #    on_delete=models.CASCADE,
+    #    blank=True, null=True)
     connection_group_name = models.CharField(max_length=128)
     type = GuacamoleConnectionGroupTypeField(
         choices=connection_group_type,
@@ -81,15 +82,16 @@ class GuacamoleConnectionGroup(models.Model):
     class Meta:
         managed = False
         db_table = 'guacamole_connection_group'
-        unique_together = (('connection_group_name', 'parent'),)
+        unique_together = (('connection_group_name', 'parent_id'),)
 
 
 class GuacamoleConnection(models.Model):
     connection_id = models.AutoField(primary_key=True)
     connection_name = models.CharField(max_length=128)
-    parent = models.ForeignKey(GuacamoleConnectionGroup,
-        on_delete=models.CASCADE,
-        blank=True, null=True)
+    parent_id = models.IntegerField(blank=True, null=True)
+    #parent = models.ForeignKey(GuacamoleConnectionGroup,
+    #    on_delete=models.CASCADE,
+    #    blank=True, null=True)
     protocol = models.CharField(max_length=32, default='rdp')
     proxy_port = models.IntegerField(blank=True, null=True)
     proxy_hostname = models.CharField(max_length=512, blank=True, null=True)
@@ -103,7 +105,7 @@ class GuacamoleConnection(models.Model):
     class Meta:
         managed = False
         db_table = 'guacamole_connection'
-        unique_together = (('connection_name', 'parent'),)
+        unique_together = (('connection_name', 'parent_id'),)
 
 
 class GuacamoleConnectionAttribute(models.Model):

@@ -11,7 +11,7 @@ from django.http import HttpResponse, HttpResponseRedirect, Http404
 from django.shortcuts import render
 from operator import itemgetter
 
-from vm_manager.constants import LINUX, WINDOWS  # ToDo: Maybe this should be removed and the reporting be refactored
+from vm_manager.constants import LINUX # ToDo: Maybe this should be removed and the reporting be refactored
 from researcher_workspace.utils import offset_month_and_year
 from vm_manager.models import Instance, Resize, Volume
 from vm_manager.utils.utils import get_nectar

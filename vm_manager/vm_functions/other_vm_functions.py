@@ -7,7 +7,7 @@ from django.http import Http404
 from novaclient.v2.servers import REBOOT_HARD, REBOOT_SOFT
 
 from vm_manager.constants import IP_PLACEHOLDER, USERNAME_PLACEHOLDER, DOMAIN_PLACEHOLDER, \
-    REBOOT_CONFIRM_WAIT_SECONDS, WINDOWS
+    REBOOT_CONFIRM_WAIT_SECONDS
 from vm_manager.models import Instance, VMStatus
 from vm_manager.utils.RDP_file import rdp_file
 from vm_manager.utils.utils import get_nectar, get_domain
@@ -46,10 +46,6 @@ def check_power_state(instance, requesting_feature):
 
 def get_rdp_file(user, vm_id, requesting_feature):
     instance = Instance.objects.get_instance_by_untrusted_vm_id(vm_id, user, requesting_feature)
-    if instance.boot_volume.operating_system != WINDOWS:
-        logger.error(f"Trying to get an RDP file for a non windows ({instance.boot_volume.operating_system}) vm with "
-                     f"vm_id: {vm_id}, called by {user}")
-        raise Http404
     rdp_info = rdp_file.replace(IP_PLACEHOLDER, instance.get_url())\
         .replace(USERNAME_PLACEHOLDER, user.username).replace(DOMAIN_PLACEHOLDER, get_domain(user))
     return rdp_info

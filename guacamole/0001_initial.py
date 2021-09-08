@@ -5,6 +5,7 @@ from django.db import migrations, models
 import django.db.models.deletion
 import guacamole.fields
 
+print(settings.DATABASES)
 
 
 class Migration(migrations.Migration):
@@ -32,7 +33,7 @@ class Migration(migrations.Migration):
             ],
             options={
                 'db_table': 'guacamole_connection',
-                'managed': False,
+                'managed': settings.RUNNING_TESTS,
             },
         ),
         migrations.CreateModel(
@@ -48,7 +49,7 @@ class Migration(migrations.Migration):
             ],
             options={
                 'db_table': 'guacamole_connection_group',
-                'managed': False,
+                'managed': settings.RUNNING_TESTS,
             },
         ),
         migrations.CreateModel(
@@ -64,7 +65,7 @@ class Migration(migrations.Migration):
             ],
             options={
                 'db_table': 'guacamole_connection_history',
-                'managed': False,
+                'managed': settings.RUNNING_TESTS,
             },
         ),
         migrations.CreateModel(
@@ -76,7 +77,7 @@ class Migration(migrations.Migration):
             ],
             options={
                 'db_table': 'guacamole_entity',
-                'managed': False,
+                'managed': settings.RUNNING_TESTS,
             },
         ),
         migrations.CreateModel(
@@ -87,7 +88,7 @@ class Migration(migrations.Migration):
             ],
             options={
                 'db_table': 'guacamole_sharing_profile',
-                'managed': False,
+                'managed': settings.RUNNING_TESTS,
             },
         ),
         migrations.CreateModel(
@@ -111,7 +112,7 @@ class Migration(migrations.Migration):
             ],
             options={
                 'db_table': 'guacamole_user',
-                'managed': False,
+                'managed': settings.RUNNING_TESTS,
             },
         ),
         migrations.CreateModel(
@@ -122,7 +123,7 @@ class Migration(migrations.Migration):
             ],
             options={
                 'db_table': 'guacamole_user_group',
-                'managed': False,
+                'managed': settings.RUNNING_TESTS,
             },
         ),
         migrations.CreateModel(
@@ -136,7 +137,7 @@ class Migration(migrations.Migration):
             ],
             options={
                 'db_table': 'guacamole_user_history',
-                'managed': False,
+                'managed': settings.RUNNING_TESTS,
             },
         ),
         migrations.CreateModel(
@@ -149,7 +150,7 @@ class Migration(migrations.Migration):
             ],
             options={
                 'db_table': 'guacamole_user_password_history',
-                'managed': False,
+                'managed': settings.RUNNING_TESTS,
             },
         ),
         migrations.CreateModel(
@@ -161,7 +162,7 @@ class Migration(migrations.Migration):
             ],
             options={
                 'db_table': 'guacamole_connection_attribute',
-                'managed': False,
+                'managed': settings.RUNNING_TESTS,
             },
         ),
         migrations.CreateModel(
@@ -173,7 +174,7 @@ class Migration(migrations.Migration):
             ],
             options={
                 'db_table': 'guacamole_connection_group_attribute',
-                'managed': False,
+                'managed': settings.RUNNING_TESTS,
             },
         ),
         migrations.CreateModel(
@@ -184,7 +185,7 @@ class Migration(migrations.Migration):
             ],
             options={
                 'db_table': 'guacamole_connection_group_permission',
-                'managed': False,
+                'managed': settings.RUNNING_TESTS,
             },
         ),
         migrations.CreateModel(
@@ -196,7 +197,7 @@ class Migration(migrations.Migration):
             ],
             options={
                 'db_table': 'guacamole_connection_parameter',
-                'managed': False,
+                'managed': settings.RUNNING_TESTS,
             },
         ),
         migrations.CreateModel(
@@ -207,7 +208,7 @@ class Migration(migrations.Migration):
             ],
             options={
                 'db_table': 'guacamole_connection_permission',
-                'managed': False,
+                'managed': settings.RUNNING_TESTS,
             },
         ),
         migrations.CreateModel(
@@ -219,7 +220,7 @@ class Migration(migrations.Migration):
             ],
             options={
                 'db_table': 'guacamole_sharing_profile_attribute',
-                'managed': False,
+                'managed': settings.RUNNING_TESTS,
             },
         ),
         migrations.CreateModel(
@@ -231,7 +232,7 @@ class Migration(migrations.Migration):
             ],
             options={
                 'db_table': 'guacamole_sharing_profile_parameter',
-                'managed': False,
+                'managed': settings.RUNNING_TESTS,
             },
         ),
         migrations.CreateModel(
@@ -242,7 +243,7 @@ class Migration(migrations.Migration):
             ],
             options={
                 'db_table': 'guacamole_sharing_profile_permission',
-                'managed': False,
+                'managed': settings.RUNNING_TESTS,
             },
         ),
         migrations.CreateModel(
@@ -253,7 +254,7 @@ class Migration(migrations.Migration):
             ],
             options={
                 'db_table': 'guacamole_system_permission',
-                'managed': False,
+                'managed': settings.RUNNING_TESTS,
             },
         ),
         migrations.CreateModel(
@@ -265,7 +266,7 @@ class Migration(migrations.Migration):
             ],
             options={
                 'db_table': 'guacamole_user_attribute',
-                'managed': False,
+                'managed': settings.RUNNING_TESTS,
             },
         ),
         migrations.CreateModel(
@@ -277,7 +278,7 @@ class Migration(migrations.Migration):
             ],
             options={
                 'db_table': 'guacamole_user_group_attribute',
-                'managed': False,
+                'managed': settings.RUNNING_TESTS,
             },
         ),
         migrations.CreateModel(
@@ -287,7 +288,7 @@ class Migration(migrations.Migration):
             ],
             options={
                 'db_table': 'guacamole_user_group_member',
-                'managed': False,
+                'managed': settings.RUNNING_TESTS,
             },
         ),
         migrations.CreateModel(
@@ -298,7 +299,7 @@ class Migration(migrations.Migration):
             ],
             options={
                 'db_table': 'guacamole_user_group_permission',
-                'managed': False,
+                'managed': settings.RUNNING_TESTS,
             },
         ),
         migrations.CreateModel(
@@ -309,171 +310,12 @@ class Migration(migrations.Migration):
             ],
             options={
                 'db_table': 'guacamole_user_permission',
-                'managed': False,
+                'managed': settings.RUNNING_TESTS,
             },
         ),
     ]
 
-    if settings.DATABASES['default']['ENGINE'] == 'django.db.backends.sqlite3':
-        operations.append(
-            migrations.RunSQL("""
-CREATE TABLE guacamole_connection_group (
-  connection_group_id   integer      NOT NULL PRIMARY KEY AUTOINCREMENT,
-  parent_id             integer,
-  connection_group_name varchar(128) NOT NULL,
-  type                  text NOT NULL,
-  max_connections          integer,
-  max_connections_per_user integer,
-  enable_session_affinity  boolean NOT NULL DEFAULT 0,
-  UNIQUE (connection_group_name, parent_id)
-);
-CREATE TABLE guacamole_connection (
-  connection_id       integer      NOT NULL PRIMARY KEY AUTOINCREMENT,
-  connection_name     varchar(128) NOT NULL,
-  parent_id           integer,
-  protocol            varchar(32)  NOT NULL,
-  proxy_port              integer,
-  proxy_hostname          varchar(512),
-  proxy_encryption_method text,
-  max_connections          integer,
-  max_connections_per_user integer,
-  connection_weight        integer,
-  failover_only            boolean NOT NULL DEFAULT 0,
-  UNIQUE (connection_name, parent_id)
-);
-CREATE TABLE guacamole_entity (
-  entity_id     integer            NOT NULL PRIMARY KEY AUTOINCREMENT,
-  name          varchar(128)       NOT NULL,
-  type          text NOT NULL,
-  UNIQUE (type, name)
-);
-CREATE TABLE guacamole_user (
-  user_id       integer      NOT NULL PRIMARY KEY AUTOINCREMENT,
-  entity_id     integer      NOT NULL,
-  password_hash binary(32)   NOT NULL,
-  password_salt binary(32),
-  password_date datetime     NOT NULL,
-  disabled      boolean      NOT NULL DEFAULT 0,
-  expired       boolean      NOT NULL DEFAULT 0,
-  access_window_start    TIME,
-  access_window_end      TIME,
-  valid_from  DATE,
-  valid_until DATE,
-  timezone VARCHAR(64),
-  full_name           VARCHAR(256),
-  email_address       VARCHAR(256),
-  organization        VARCHAR(256),
-  organizational_role VARCHAR(256),
-  UNIQUE (entity_id)
-);
-CREATE TABLE guacamole_user_group (
-  user_group_id integer      NOT NULL PRIMARY KEY AUTOINCREMENT,
-  entity_id     integer      NOT NULL,
-  disabled      boolean      NOT NULL DEFAULT 0,
-  UNIQUE (entity_id)
-);
-CREATE TABLE guacamole_user_group_member (
-  user_group_id    integer     NOT NULL,
-  member_entity_id integer     NOT NULL,
-  PRIMARY KEY (user_group_id, member_entity_id)
-);
-CREATE TABLE guacamole_sharing_profile (
-  sharing_profile_id    integer      NOT NULL PRIMARY KEY AUTOINCREMENT,
-  sharing_profile_name  varchar(128) NOT NULL,
-  primary_connection_id integer      NOT NULL,
-  UNIQUE (sharing_profile_name, primary_connection_id)
-);
-CREATE TABLE guacamole_connection_parameter (
-  connection_id   integer       NOT NULL,
-  parameter_name  varchar(128)  NOT NULL,
-  parameter_value varchar(4096) NOT NULL,
-  PRIMARY KEY (connection_id,parameter_name)
-);
-CREATE TABLE guacamole_sharing_profile_parameter (
-  sharing_profile_id integer       NOT NULL,
-  parameter_name     varchar(128)  NOT NULL,
-  parameter_value    varchar(4096) NOT NULL,
-  PRIMARY KEY (sharing_profile_id, parameter_name)
-);
-CREATE TABLE guacamole_user_attribute (
-  user_id         integer       NOT NULL,
-  attribute_name  varchar(128)  NOT NULL,
-  attribute_value varchar(4096) NOT NULL,
-  PRIMARY KEY (user_id, attribute_name)
-);
-CREATE TABLE guacamole_user_group_attribute (
-  user_group_id   integer       NOT NULL,
-  attribute_name  varchar(128)  NOT NULL,
-  attribute_value varchar(4096) NOT NULL,
-  PRIMARY KEY (user_group_id, attribute_name)
-);
-CREATE TABLE guacamole_connection_attribute (
-  connection_id   integer       NOT NULL,
-  attribute_name  varchar(128)  NOT NULL,
-  attribute_value varchar(4096) NOT NULL,
-  PRIMARY KEY (connection_id, attribute_name)
-);
-CREATE TABLE guacamole_connection_group_attribute (
-  connection_group_id integer       NOT NULL,
-  attribute_name      varchar(128)  NOT NULL,
-  attribute_value     varchar(4096) NOT NULL,
-  PRIMARY KEY (connection_group_id, attribute_name)
-);
-CREATE TABLE guacamole_sharing_profile_attribute (
-  sharing_profile_id integer       NOT NULL,
-  attribute_name     varchar(128)  NOT NULL,
-  attribute_value    varchar(4096) NOT NULL,
-  PRIMARY KEY (sharing_profile_id, attribute_name)
-);
-CREATE TABLE guacamole_connection_permission (
-  entity_id     integer NOT NULL,
-  connection_id integer NOT NULL,
-  permission    text NOT NULL,
-  PRIMARY KEY (entity_id,connection_id,permission)
-);
-CREATE TABLE guacamole_connection_group_permission (
-  entity_id           integer NOT NULL,
-  connection_group_id integer NOT NULL,
-  permission          text NOT NULL,
-  PRIMARY KEY (entity_id,connection_group_id,permission)
-);
-CREATE TABLE guacamole_user_group_permission (
-  entity_id              integer NOT NULL,
-  affected_user_group_id integer NOT NULL,
-  permission             text NOT NULL,
-  PRIMARY KEY (entity_id, affected_user_group_id, permission)
-);
-CREATE TABLE guacamole_connection_history (
-  history_id           integer      NOT NULL PRIMARY KEY AUTOINCREMENT,
-  user_id              integer      DEFAULT NULL,
-  username             varchar(128) NOT NULL,
-  remote_host          varchar(256) DEFAULT NULL,
-  connection_id        integer      DEFAULT NULL,
-  connection_name      varchar(128) NOT NULL,
-  sharing_profile_id   integer      DEFAULT NULL,
-  sharing_profile_name varchar(128) DEFAULT NULL,
-  start_date           datetime     NOT NULL,
-  end_date             datetime     DEFAULT NULL
-);
-CREATE TABLE guacamole_user_history (
-  history_id           integer      NOT NULL PRIMARY KEY AUTOINCREMENT,
-  user_id              integer      DEFAULT NULL,
-  username             varchar(128) NOT NULL,
-  remote_host          varchar(256) DEFAULT NULL,
-  start_date           datetime     NOT NULL,
-  end_date             datetime     DEFAULT NULL
-);
-CREATE TABLE guacamole_user_password_history (
-  password_history_id integer NOT NULL PRIMARY KEY AUTOINCREMENT,
-  user_id             integer NOT NULL,
-  password_hash binary(32) NOT NULL,
-  password_salt binary(32),
-  password_date datetime   NOT NULL
-);
-"""))
-
-    #if not settings.RUNNING_TESTS:
-    if False:
+    if not settings.RUNNING_TESTS:
         operations.append(
             migrations.RunSQL("""
 CREATE TABLE `guacamole_connection_group` (
@@ -940,3 +782,6 @@ CREATE TABLE guacamole_user_password_history (
     REFERENCES `guacamole_user` (`user_id`) ON DELETE CASCADE
 
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;"""))
+
+
+

@@ -1,5 +1,4 @@
 LINUX = "linux"
-WINDOWS = "windows"
 
 SCRIPT_ERROR = 0
 SCRIPT_OKAY = 1
