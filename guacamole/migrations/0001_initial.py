@@ -437,6 +437,23 @@ CREATE TABLE guacamole_connection_group_permission (
   permission          text NOT NULL,
   PRIMARY KEY (entity_id,connection_group_id,permission)
 );
+CREATE TABLE guacamole_sharing_profile_permission (
+  entity_id          integer NOT NULL,
+  sharing_profile_id integer NOT NULL,
+  permission         text NOT NULL,
+  PRIMARY KEY (entity_id,sharing_profile_id,permission)
+);
+CREATE TABLE guacamole_system_permission (
+  entity_id  int(11) NOT NULL,
+  permission text NOT NULL,
+  PRIMARY KEY (entity_id,permission)
+);
+CREATE TABLE guacamole_user_permission (
+  entity_id        int(11) NOT NULL,
+  affected_user_id int(11) NOT NULL,
+  permission       text NOT NULL,
+  PRIMARY KEY (entity_id,affected_user_id,permission)
+);
 CREATE TABLE guacamole_user_group_permission (
   entity_id              integer NOT NULL,
   affected_user_group_id integer NOT NULL,
