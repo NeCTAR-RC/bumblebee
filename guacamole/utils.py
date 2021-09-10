@@ -52,19 +52,20 @@ def quick_rdp_conn(username, password, hostname):
     return conn
 
 
-def quick_guac_user(username):
+def quick_guac_user(username, password):
     """
     Make a GuacamoleUser with the passed parameters; return said GuacamoleUser.
     Hash password, and salt with random data.
     """
     # MMmm, salt.  Must be 32 bytes.  We must hash with the uppercase,
     # hexadecimal, string representation of the binary.
-    salt = bytearray(random.getrandbits(8) for _ in xrange(32))
+    salt = bytearray(random.getrandbits(8) for _ in range(32))
     salt_hex = ''.join('{:02X}'.format(x) for x in salt)
 
     # "The salt is appended to the password prior to hashing."
     # http://guac-dev.org/doc/gug/jdbc-auth.html#jdbc-auth-schema-users
-    password_hash = hashlib.sha256(password + salt_hex).digest()
+    message = (password + salt_hex).encode()
+    password_hash = hashlib.sha256(message).digest()
 
     return GuacamoleUser.objects.create(
         username=username,
