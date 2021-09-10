@@ -3,6 +3,7 @@
 __pycache__/
 *.py[cod]
 *.egg-info/
+.eggs/
 
 # Unit test / coverage reports
 htmlcov/
