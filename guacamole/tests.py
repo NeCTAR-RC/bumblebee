@@ -1,6 +1,7 @@
 from django.test import TestCase
 
 from guacamole.models import GuacamoleUser, GuacamoleConnection
+from guacamole.models import GuacamoleConnectionParameter
 from guacamole.models import GuacamoleConnectionPermission
 from guacamole.utils import quick_rdp, quick_rdp_destroy
 
@@ -26,18 +27,21 @@ class SimpleTestCase(TestCase):
             password="passwerd",
             hostname="some.windows.host")
 
-        self.assertEquals(gcp.user.username, "guacman")
+        self.assertEquals(gcp.entity.name, "guacman")
         self.assertEquals(gcp.connection.protocol, "rdp")
         self.assertEquals(gcp.permission, "READ")
 
-        hostname_parameter = gcp.connection.parameters.get(
-            parameter_name='hostname')
+        def get_parameter(connection, name):
+            try:
+                return GuacamoleConnectionParameter.objects.filter(
+                    connection=connection,
+                    parameter_name=name).get()
+            except GuacamoleConnectionParameter.DoesNotExist:
+                return None
 
-        username_parameter = gcp.connection.parameters.get(
-            parameter_name='username')
-
-        password_parameter = gcp.connection.parameters.get(
-            parameter_name='password')
+        hostname_parameter = get_parameter(gcp.connection, 'hostname')
+        username_parameter = get_parameter(gcp.connection, 'username')
+        password_parameter = get_parameter(gcp.connection, 'password')
 
         self.assertEquals(
             hostname_parameter.parameter_value,
