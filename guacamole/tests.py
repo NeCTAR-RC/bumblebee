@@ -26,7 +26,7 @@ class SimpleTestCase(TestCase):
             password="passwerd",
             hostname="some.windows.host")
 
-        self.assertEquals(gcp.user.username, "guacman")
+        self.assertEquals(gcp.entity.name, "guacman")
         self.assertEquals(gcp.connection.protocol, "rdp")
         self.assertEquals(gcp.permission, "READ")
 
