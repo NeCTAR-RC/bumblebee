@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "1ef3f2a5_8171c9bb",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1000157
+      },
+      "writtenOn": "2021-09-13T02:38:55Z",
+      "side": 1,
+      "message": "After checking the precedent of the unit tests in both nectar-dashboard and horizon/openstack-dashboard, the test/settings.py file should not include a local_settings.py.  (So this is the right way ... modulo tidyups.) ",
+      "revId": "ea61ae4cc09d98798148d8947f975f386c6fc56e",
+      "serverId": "f182a8af-62ca-4ceb-ab81-14f8fec9c6c5"
+    }
+  ]
+}
