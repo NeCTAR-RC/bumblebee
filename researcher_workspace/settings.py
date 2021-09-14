@@ -51,7 +51,6 @@ INSTALLED_APPS = [
     'mathfilters',
     'django_rq',
     'researcher_desktop',
-    'specialty_resources',
 ]
 
 MIDDLEWARE = [
