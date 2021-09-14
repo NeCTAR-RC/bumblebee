@@ -5,8 +5,6 @@ from django.db import migrations, models
 import django.db.models.deletion
 import guacamole.fields
 
-print(settings.DATABASES)
-
 
 class Migration(migrations.Migration):
 

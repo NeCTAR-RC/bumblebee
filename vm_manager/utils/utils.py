@@ -86,7 +86,7 @@ def generate_server_name(username, operating_system):
 
 
 def generate_hostname_url(hostname_id, operating_system) -> str:
-    return f"{generate_hostname(hostname_id, operating_system)}.desktop.cloud.unimelb.edu.au"
+    return f"{generate_hostname(hostname_id, operating_system)}"
 
 
 def generate_hostname(hostname_id, operating_system) -> str:

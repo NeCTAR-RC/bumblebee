@@ -52,30 +52,39 @@ def _create_volume(user, vm_info, requesting_feature):
     n = get_nectar()
     name = generate_server_name(user.username, operating_system)
 
-    volume_result = n.cinder.volumes.create(source_volid=vm_info['source_volume'], size=n.VM_PARAMS["size"],
-                                            name=name, metadata=n.VM_PARAMS["metadata_volume"],
-                                            availability_zone=n.VM_PARAMS["availability_zone_volume"])
+    volume_result = n.cinder.volumes.create(
+        source_volid=vm_info['source_volume'],
+        size=n.VM_PARAMS["size"],
+        name=name, metadata=n.VM_PARAMS["metadata_volume"],
+        availability_zone=n.VM_PARAMS["availability_zone_volume"])
     n.cinder.volumes.set_bootable(volume=volume_result, flag=True)
 
     # Create record in DB
-    volume = Volume(id=volume_result.id, user=user, image=vm_info['source_volume'], requesting_feature=requesting_feature,
-                    operating_system=operating_system, flavor=vm_info['flavor'])
+    volume = Volume(
+        id=volume_result.id, user=user,
+        image=vm_info['source_volume'],
+        requesting_feature=requesting_feature,
+        operating_system=operating_system,
+        flavor=vm_info['flavor'])
     volume.save()
 
     # Add the volume's hostname to the volume's metadata on openstack
-    n.cinder.volumes.set_metadata(volume=volume_result,
-                                  metadata={'hostname': generate_hostname(volume.hostname_id, operating_system),
-                                            'allow_user': user.username + re.search("@.*", user.email).group(),
-                                            'environment': ENVIRONMENT_NAME,
-                                            'requesting_feature': requesting_feature.name,
-                                            })
+    n.cinder.volumes.set_metadata(
+        volume=volume_result,
+        metadata={
+            'hostname': generate_hostname(volume.hostname_id, operating_system),
+            'allow_user': user.username + re.search("@.*", user.email).group(),
+            'environment': ENVIRONMENT_NAME,
+            'requesting_feature': requesting_feature.name,
+        })
     return volume
 
 
 def wait_to_create_instance(user, vm_info, volume, start_time, requesting_feature):
     n = get_nectar()
     openstack_volume = n.cinder.volumes.get(volume_id=volume.id)
-    logger.info(f'second: {datetime.now(timezone.utc)-start_time}; volume status:{openstack_volume.status}')
+    logger.info(f"Volume created in {datetime.now(timezone.utc)-start_time}s; "
+                f"volume status is {openstack_volume.status}")
     operating_system = vm_info['operating_system']
 
     if openstack_volume.status == 'available':
@@ -90,6 +99,7 @@ def wait_to_create_instance(user, vm_info, volume, start_time, requesting_featur
         volume.shelved = False
         volume.save()
         return
+
     if datetime.now(timezone.utc)-start_time > timedelta(seconds=VOLUME_CREATION_TIMEOUT):
         logger.error(f"Volume took too long to create: user:{user} operating_system:{operating_system} volume:{volume}"
             f" volume.status:{openstack_volume.status} start_time:{start_time} datetime.now:{datetime.now(timezone.utc)}")

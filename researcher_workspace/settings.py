@@ -239,13 +239,12 @@ LOGGING = {
 # to the local_settings.py
 MESSAGE_LEVEL = message_constants.INFO
 
-# The following maps the message classes to the UoM css classes defined at:
-#   https://web.unimelb.edu.au/components/notices/
 MESSAGE_TAGS = {
-    messages.INFO: 'notice--info',
-    messages.SUCCESS: 'notice--success',
-    messages.WARNING: 'notice--warning',
-    messages.ERROR: 'notice--danger',
+    messages.DEBUG: 'alert-info',
+    messages.INFO: 'alert-info',
+    messages.SUCCESS: 'alert-success',
+    messages.WARNING: 'alert-warning',
+    messages.ERROR: 'alert-danger',
 }
 
 # https://docs.djangoproject.com/en/2.2/ref/settings/#internal-ips
@@ -319,7 +318,6 @@ except Exception as e:
 
 # Expand settings based on DEBUG override from local_settings.py
 if DEBUG:
-    logger.info('DEBUG is True')
     MESSAGE_LEVEL = message_constants.DEBUG
 
     PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
@@ -330,8 +328,6 @@ if DEBUG:
 
     # Email content is displayed on the console
     EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-else:
-    logger.info('DEBUG is False')
 
 RQ_QUEUES = {
     'default': {

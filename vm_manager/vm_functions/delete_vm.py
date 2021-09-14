@@ -24,7 +24,8 @@ def delete_vm_worker(instance):
                 f"for user {instance.user.username}")
 
     if instance.guac_connection:
-        instance.guac_connection.delete()
+        GuacamoleConnection.objects.filter(instance=instance).delete()
+        instance.guac_connection = None
         instance.save()
 
     n = get_nectar()
@@ -78,8 +79,8 @@ def _delete_volume_once_instance_is_deleted(instance, instance_deletion_retries)
     n = get_nectar()
     try:
         my_instance = n.nova.servers.get(instance.id)
-        if settings.DEBUG:
-            print('retries: ', instance_deletion_retries, '; openstack instance:', my_instance)
+        logger.debug(f"Instance delete status is retries: {instance_deletion_retries} "
+                     f"openstack instance: {my_instance}")
     except novaclient.exceptions.NotFound:
         logger.info(f"Instance {instance.id} successfully deleted, we can delete the volume now!")
         instance.deleted = datetime.now(timezone.utc)
@@ -117,6 +118,5 @@ def _delete_volume(volume):
     delete_result = str(n.cinder.volumes.delete(volume.id))
     volume.deleted = datetime.now(timezone.utc)
     volume.save()
-    if settings.DEBUG:
-        print(delete_result)
+    logger.debug(f"Delete result is {delete_result}")
     return
