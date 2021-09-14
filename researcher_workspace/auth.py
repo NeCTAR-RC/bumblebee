@@ -3,7 +3,6 @@ from guacamole import models as guac_models
 
 class NectarAuthBackend(OIDCAuthenticationBackend):
     def create_user(self, claims):
-        print('creating user')
         user = super(NectarAuthBackend, self).create_user(claims)
         user.first_name = claims.get('given_name', '')
         user.last_name = claims.get('family_name', '')

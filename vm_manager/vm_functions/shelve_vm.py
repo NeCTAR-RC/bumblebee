@@ -35,10 +35,11 @@ def _confirm_instance_deleted(instance, instance_deletion_retries, requesting_fe
     n = get_nectar()
     try:
         my_instance = n.nova.servers.get(instance.id)
-        if settings.DEBUG:
-            print('retries: ', instance_deletion_retries, '; openstack instance:', my_instance)
+        logger.debug(f"Instance delete status is retries: {instance_deletion_retries} "
+                     f"openstack instance: {my_instance}")
     except novaclient.exceptions.NotFound:
-        logger.info(f"Instance {instance.id} successfully deleted, we can mark the volume as shelved now!")
+        logger.info(f"Instance {instance.id} successfully deleted, "
+                    f"we can mark the volume as shelved now!")
         instance.deleted = datetime.now(timezone.utc)
         instance.save()
         volume = instance.boot_volume

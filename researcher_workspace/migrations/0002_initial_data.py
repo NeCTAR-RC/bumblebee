@@ -44,7 +44,6 @@ def add_feature_data(apps, schema_editor):
     Feature = apps.get_model('researcher_workspace', 'Feature')
     for feature_dict in features:
         feature = Feature.objects.get_or_create(name=feature_dict['name'])[0]
-        print(feature)
         for key, value in feature_dict.items():
             setattr(feature, key, value)
         feature.save()

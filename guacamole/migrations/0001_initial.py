@@ -6,7 +6,6 @@ import django.db.models.deletion
 import guacamole.fields
 
 
-
 class Migration(migrations.Migration):
 
     initial = True
@@ -488,9 +487,7 @@ CREATE TABLE guacamole_user_password_history (
   password_date datetime   NOT NULL
 );
 """))
-
-    #if not settings.RUNNING_TESTS:
-    if False:
+    elif settings.DATABASES['default']['ENGINE'] == 'django.db.backends.mysql':
         operations.append(
             migrations.RunSQL("""
 CREATE TABLE `guacamole_connection_group` (
@@ -957,3 +954,6 @@ CREATE TABLE guacamole_user_password_history (
     REFERENCES `guacamole_user` (`user_id`) ON DELETE CASCADE
 
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;"""))
+    else:
+        raise Exception("No Guacamole schema support for: %s",
+                        settings.DATABASES['default']['ENGINE'])

@@ -11,7 +11,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('researcher_workspace', '0003_auto_20210812_1117'),
-#        ('guacamole', '0001_initial'),
+        ('guacamole', '0001_initial'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 

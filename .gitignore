@@ -21,6 +21,11 @@ __pycache__/
 local_settings.py
 
 .env
-sqlite3.db
+db.sqlite3
 
 static/CACHE
+
+
+### Editors ###
+*.swp
+.vscode/
