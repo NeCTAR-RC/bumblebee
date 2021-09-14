@@ -43,8 +43,10 @@ def launch_vm(user, vm_info, requesting_feature) -> str:
         logger.error(error_message)
         return error_message
 
-    vm_status = VMStatus(user=user, requesting_feature=requesting_feature, operating_system=operating_system, status=VM_CREATING,
-                         wait_time=datetime.now(timezone.utc) + timedelta(seconds=LAUNCH_WAIT_SECONDS))
+    vm_status = VMStatus(
+        user=user, requesting_feature=requesting_feature,
+        operating_system=operating_system, status=VM_CREATING,
+        wait_time=datetime.now(timezone.utc) + timedelta(seconds=LAUNCH_WAIT_SECONDS))
     vm_status.save()
 
     # Check for race condition in previous statements and delete duplicate VMStatus
@@ -57,7 +59,8 @@ def launch_vm(user, vm_info, requesting_feature) -> str:
         return error_message
 
     queue = django_rq.get_queue('default')
-    queue.enqueue(launch_vm_worker, user=user, vm_info=vm_info, requesting_feature=requesting_feature)
+    queue.enqueue(launch_vm_worker, user=user, vm_info=vm_info,
+                  requesting_feature=requesting_feature)
 
     return str(vm_status)
 
@@ -65,11 +68,13 @@ def launch_vm(user, vm_info, requesting_feature) -> str:
 def delete_vm(user, vm_id, requesting_feature) -> str:
     vm_status = VMStatus.objects.get_vm_status_by_untrusted_vm_id(vm_id, user, requesting_feature)
     if (not vm_status) or vm_status.status == NO_VM:
-        error_message = f"No VMStatus found with that vm_id or vm already marked as deleted {user} {vm_id} {vm_status}"
+        error_message = (f"No VMStatus found with that vm_id or vm already "
+                         f"marked as deleted {user} {vm_id} {vm_status}")
         logger.error(error_message)
         return error_message
-    logger.info(f"Changing the VMStatus of {vm_id} from {vm_status.status} to {VM_DELETED} and Mark for Deletion is set"
-                f" on the Instance and Volume {vm_status.instance.boot_volume.id}")
+    logger.info(f"Changing the VMStatus of {vm_id} from {vm_status.status} to "
+                f"{VM_DELETED} and Mark for Deletion is set "
+                f"on the Instance and Volume {vm_status.instance.boot_volume.id}")
     vm_status.status = VM_DELETED
     vm_status.save()
     vm_status.instance.set_marked_for_deletion()
@@ -92,8 +97,8 @@ def admin_delete_vm(request, vm_id):
         error_message = f"No VMStatus found with that vm_id when trying to admin delete Instance {vm_id}"
         logger.error(error_message)
         return error_message
-    logger.info(f"Performing Admin delete on {vm_id} Mark for Deletion is set"
-                f" on the Instance and Volume {vm_status.instance.boot_volume.id}")
+    logger.info(f"Performing Admin delete on {vm_id} Mark for Deletion is set "
+                f"on the Instance and Volume {vm_status.instance.boot_volume.id}")
     vm_status.status = VM_DELETED
     vm_status.save()
     vm_status.instance.set_marked_for_deletion()
@@ -113,8 +118,8 @@ def shelve_vm(user, vm_id, requesting_feature) -> str:
         logger.error(error_message)
         return error_message
 
-    logger.info(f"Changing the VMStatus of {vm_id} from {vm_status.status} to {VM_WAITING} and Mark for Deletion is set"
-                f" on the Instance")
+    logger.info(f"Changing the VMStatus of {vm_id} from {vm_status.status} to "
+                f"{VM_WAITING} and Mark for Deletion is set on the Instance")
     vm_status.wait_time = datetime.now(timezone.utc) + timedelta(seconds=SHELVE_WAIT_SECONDS)
     vm_status.status = VM_WAITING
     vm_status.save()
@@ -131,7 +136,8 @@ def unshelve_vm(user, vm_info, requesting_feature) -> str:
 
     vm_status = VMStatus.objects.get_latest_vm_status(user, operating_system, requesting_feature)
     if not vm_status or vm_status.status != VM_SHELVED:
-        error_message = f"A VMStatus for {user} and {operating_system} is in the wrong state. VM cannot be unshelved"
+        error_message = (f"VM Status for {user} and {operating_system} is in the wrong state. "
+                         f"VM cannot be unshelved")
         logger.error(error_message)
         return error_message
 
@@ -195,7 +201,7 @@ def downsize_vm(user, vm_id, requesting_feature) -> str:
 
 def get_vm_state(user, operating_system, requesting_feature):
     vm_status = VMStatus.objects.get_latest_vm_status(user, operating_system, requesting_feature)
-    logger.debug("Status: %s", str(vm_status))
+    logger.debug(f"VM Status: {vm_status}")
     if (not vm_status) or (vm_status.status == VM_DELETED):
         return NO_VM, "No VM", None
     if vm_status.status == VM_ERROR:
@@ -220,8 +226,9 @@ def get_vm_state(user, operating_system, requesting_feature):
     if vm_status.instance.check_shutdown_status():
         return VM_SHUTDOWN, "VM Shutdown", vm_status.instance.id
     if not vm_status.instance.check_active_or_resize_statuses():
-        vm_status.instance.error("Error at Openstack level. Status:" + vm_status.instance.get_status())
-        return VM_ERROR, "Error at Openstack level", vm_status.instance.id
+        instance_status = vm_status.instance.get_status()
+        vm_status.instance.error(f"Error at OpenStack level. Status: {instance_status}")
+        return VM_ERROR, "Error at OpenStack level", vm_status.instance.id
     if vm_status.status == VM_OKAY:
         return VM_OKAY, {'url': vm_status.instance.get_url()}, vm_status.instance.id
     if vm_status.status == VM_SUPERSIZED:

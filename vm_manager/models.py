@@ -185,8 +185,8 @@ class Instance(CloudResource):
             ('port', '3389'),
             ('username', 'ubuntu'),
             ('password', 'Nectar1!'),
-            ('security', 'any'),
-            ('disable-auth', 'true'),
+#            ('security', 'any'),
+#            ('disable-auth', 'true'),
         ]
 
         connection_params = []
@@ -205,6 +205,7 @@ class Instance(CloudResource):
             permission='READ')
 
     def get_url(self):
+        # TODO: Set some sort of error if no guac connection set
         self.create_guac_connection()
         return guac_utils.get_direct_url(self.guac_connection)
 
