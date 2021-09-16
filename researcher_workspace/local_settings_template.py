@@ -57,8 +57,19 @@ SITE_URL = ""  # ¡Change!
 # e.g https://<server>/guacamole
 GUACAMOLE_URL = ""  # ¡Change!
 
-# Volume Names on the OpenStack tenancy for different Desktops
-LINUX_IMAGE_NAME = ""  # ¡Change!
+# Details of the "bootstrap" desktop types.  These are used to populate
+# table in the bootstrap migration.  After that, the desktop types can
+# be modified via the database; e.g. using the Django admin UI, or via
+# a (hypothetical) REST API.
+# DESKTOP_TYPES = [
+#    {
+#        'name': "linux",
+#        'image_name': "<glance image name>",
+#        'description': "Generic Linux",
+#        'default_flavor_name': "<flavor_name>",
+#        'big_flavor_name': "<flavor_name>"
+#    },
+#]
 
 # MySQL backend settings
 # DATABASES = {
@@ -81,7 +92,16 @@ TEST_CLOUD = False
 # Settings specific to Test Cloud
 
 if TEST_CLOUD:
-    LINUX_IMAGE_NAME = ""
+# DESKTOP_TYPES = [
+#    {
+#        'name': "linux",
+#        'image_name': "<glance image name>",
+#        'description': "Generic Linux",
+#        'default_flavor_name': "<flavor_name>",
+#        'big_flavor_name': "<flavor_name>"
+#    },
+#]
+
     ENVIRONMENT_NAME = ""
     ENVIRONMENT_COLOR = "#2eb67d"
 
