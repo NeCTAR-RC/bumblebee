@@ -271,7 +271,8 @@ ENVIRONMENT_COLOR = ''
 NOTIFY_URL = ''
 SITE_URL = ''
 GUACAMOLE_URL = ''
-LINUX_IMAGE_NAME = ''
+DESKTOP_TYPES = []
+
 ALLOCATION_ID = ''
 
 from researcher_workspace.local_settings import *
@@ -303,7 +304,7 @@ try:
     _assert_not_empty(NOTIFY_URL, 'NOTIFY_URL')
     _assert_not_empty(SITE_URL, 'SITE_URL')
     _assert_not_empty(GUACAMOLE_URL, 'GUACAMOLE_URL')
-    _assert_not_empty(LINUX_IMAGE_NAME, 'LINUX_IMAGE_NAME')
+    _assert_not_empty(DESKTOP_TYPES, 'DESKTOP_TYPES')
 
     # Auth Settings
     _assert_not_empty(OIDC_SERVER_URL, 'OIDC_SERVER_URL')

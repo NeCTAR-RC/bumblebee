@@ -1,13 +1,3 @@
-from researcher_workspace.settings import LINUX_IMAGE_NAME
-from vm_manager.constants import LINUX
-
-# Dictionary of image names for vm_manager
-IMAGE_NAME = {
-    LINUX: LINUX_IMAGE_NAME,
-}
-
-BIG_FLAVOR = "m3.xxlarge"
-DEFAULT_FLAVOR = "m3.medium"
 
 SUPERSIZE_FLAVOR = "big_flavor"
 DEFAULTSIZE_FLAVOR = "default_flavor"

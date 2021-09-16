@@ -273,7 +273,6 @@ ENVIRONMENT_COLOR = 'nada'
 NOTIFY_URL = 'http://notify'
 SITE_URL = 'http://site'
 GUACAMOLE_URL = 'http://guacamole'
-LINUX_IMAGE_NAME = 'image'
 ALLOCATION_ID = '12345'
 
 logger = logging.getLogger(__name__)
