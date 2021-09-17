@@ -10,7 +10,7 @@ from researcher_desktop.constants import NOTIFY_VM_PATH_PLACEHOLDER
 from researcher_desktop.utils.user_data_ubuntu import user_data_ubuntu
 from researcher_desktop.utils.user_data_windows import user_data_windows
 from researcher_desktop.utils.utils import get_vm_info
-from researcher_desktop.utils.utils import desktop_type_names
+from researcher_desktop.utils.utils import desktop_type_ids
 from vm_manager import views as vm_man_views
 from researcher_workspace.utils import not_support_staff, redirect_home
 from vm_manager.constants import LINUX, REBOOT_BUTTON, SHELVE_BUTTON, DELETE_BUTTON, BOOST_BUTTON
@@ -22,7 +22,7 @@ def render_modules(request):
     researcher_desktop_vm_info = get_vm_info()
     feature_modules = []
     feature_scripts = []
-    for desktop_type in desktop_type_names():
+    for desktop_type in desktop_type_ids():
         feature_module, feature_script = vm_man_views.render_vm(
             request, request.user, desktop_type,
             researcher_desktop_vm_info.FEATURE,
@@ -34,7 +34,7 @@ def render_modules(request):
 @login_required(login_url='login')
 @user_passes_test(test_func=not_support_staff, login_url='staff_home', redirect_field_name=None)  # Only need to stop support staff creating vms, as they can't use any other function if they don't have a vm
 def launch_vm(request, desktop):
-    if desktop not in desktop_type_names():
+    if desktop not in desktop_type_ids():
         logger.error(f"Unrecognised desktop ({desktop}) was requested by {request.user}")
         raise Http404
 
@@ -68,7 +68,7 @@ def shelve_vm(request, vm_id):
 
 @login_required(login_url='login')
 def unshelve_vm(request, desktop):
-    if desktop not in desktop_type_names():
+    if desktop not in desktop_type_ids():
         logger.error(f"Unrecognised desktop ({desktop}) was requested by {request.user}")
         raise Http404
 
@@ -140,12 +140,12 @@ def notify_vm(request):
 
 def rd_report(reporting_months):
     return vm_man_views.vm_report_for_csv(reporting_months,
-                                          desktop_type_names())
+                                          desktop_type_ids())
 
 
 def rd_report_page():
     rd_report_page_info = {'vm_count': {}, 'vm_info': {}}
-    for desktop in desktop_type_names():
+    for desktop in desktop_type_ids():
         desktop_info = vm_man_views.vm_report_for_page(desktop)
         rd_report_page_info['vm_count'].update(desktop_info['vm_count'])
         rd_report_page_info['vm_info'].update(desktop_info['vm_info'])

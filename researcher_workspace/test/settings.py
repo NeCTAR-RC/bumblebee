@@ -286,3 +286,21 @@ RQ_QUEUES = {
     },
 }
 
+DESKTOP_TYPES = [
+    {
+        'id': "ubuntu",
+        'image_name': "NeCTAR Ubuntu 20.04 LTS (Focal) Virtual Desktop",
+        'name': "Generic Linux (Ubuntu)",
+        'description': "Better than sliced bread",
+        'default_flavor_name': "m3.medium",
+        'big_flavor_name': "m3.xxlarge"
+    },
+    {
+        'id': "centos",
+        'image_name': "NeCTAR Ubuntu 20.04 LTS (Focal) Virtual Desktop",
+        'name': "CentOS 7",
+        'description': "Sliced bread",
+        'default_flavor_name': "m3.medium",
+        'big_flavor_name': "m3.xxlarge"
+    },
+]

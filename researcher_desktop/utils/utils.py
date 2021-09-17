@@ -10,8 +10,8 @@ class VMInfo(object):
         flavor_list = n.nova.flavors.list()
         self.DESKTOPS = {}
         for dt in DesktopType.objects.filter(enabled=True):
-            self.DESKTOPS[dt.name] = {
-                'name': dt.name,
+            self.DESKTOPS[dt.id] = {
+                'name': dt.id,   # Change this to 'id'
                 'default_flavor': find_flavor(flavor_list,
                                               dt.default_flavor_name),
                 'big_flavor': find_flavor(flavor_list,
@@ -38,6 +38,6 @@ def find_flavor(flavor_list, flavor_name):
     raise Exception('Could not find flavor: ' + flavor_name)
 
 
-def desktop_type_names():
+def desktop_type_ids():
     return DesktopType.objects.filter(enabled=True) \
-                              .values_list('name', flat=True)
+                              .values_list('id', flat=True)

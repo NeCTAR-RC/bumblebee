@@ -20,3 +20,4 @@ xlsxwriter
 django_compressor
 django-libsass
 crispy-bootstrap5
+Pillow

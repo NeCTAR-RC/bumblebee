@@ -2,7 +2,7 @@
 
 from django.db import migrations
 
-from researcher_workspace.settings import DESKTOP_TYPES
+from django.conf import settings
 
 
 class Migration(migrations.Migration):
@@ -10,7 +10,7 @@ class Migration(migrations.Migration):
     def addDesktopTypes(apps, schema_editor):
         DesktopType = apps.get_model('researcher_desktop', 'DesktopType')
         # Populate with sensible defaults from the settings.
-        for desktop_type in DESKTOP_TYPES:
+        for desktop_type in settings.DESKTOP_TYPES:
             DesktopType.objects.create(**desktop_type)
 
     def removeDesktopTypes(apps, schema_editor):
