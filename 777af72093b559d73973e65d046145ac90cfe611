@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "0e66a373_7db4162e",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1000157
+      },
+      "writtenOn": "2021-09-17T01:27:59Z",
+      "side": 1,
+      "message": "I\u0027ll fix the 0002 bootstrap, etc",
+      "revId": "777af72093b559d73973e65d046145ac90cfe611",
+      "serverId": "f182a8af-62ca-4ceb-ab81-14f8fec9c6c5"
+    }
+  ]
+}
