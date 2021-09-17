@@ -210,27 +210,28 @@ def get_vm_state(user, operating_system, requesting_feature):
         else:
             return VM_MISSING, "VM has Errored", None
     curr_time = datetime.now(timezone.utc)
-    if vm_status.wait_time > curr_time:  # We have to wait longer
-        return VM_WAITING, str(ceil((vm_status.wait_time - curr_time).seconds)), None
-    if vm_status.status == VM_WAITING and vm_status.wait_time < curr_time:  # Status is still VM_Waiting but time is up
-        if vm_status.instance:
-            vm_status.error(f"VM {vm_status.instance.id} not ready at {vm_status.wait_time} timeout")
-            return VM_ERROR, "VM Not Ready", vm_status.instance.id
-        else:
-            vm_status.status = VM_ERROR
-            vm_status.save()
-            logger.error(f"VM is missing at timeout {vm_status.id}, {user}, {operating_system}")
-            return VM_MISSING, "VM has Errored", None
+    if vm_status.status == VM_WAITING:
+        if vm_status.wait_time > curr_time:
+            return VM_WAITING, str(ceil((vm_status.wait_time - curr_time).seconds)), None
+        else: # Time up waiting
+            if vm_status.instance:
+                vm_status.error(f"VM {vm_status.instance.id} not ready at {vm_status.wait_time} timeout")
+                return VM_ERROR, "VM Not Ready", vm_status.instance.id
+            else:
+                vm_status.status = VM_ERROR
+                vm_status.save()
+                logger.error(f"VM is missing at timeout {vm_status.id}, {user}, {operating_system}")
+                return VM_MISSING, "VM has Errored", None
     if vm_status.status == VM_SHELVED:
         return VM_SHELVED, "VM SHELVED", vm_status.instance.id
     if vm_status.instance.check_shutdown_status():
         return VM_SHUTDOWN, "VM Shutdown", vm_status.instance.id
+    if vm_status.status == VM_OKAY:
+        return VM_OKAY, {'url': vm_status.instance.get_url()}, vm_status.instance.id
     if not vm_status.instance.check_active_or_resize_statuses():
         instance_status = vm_status.instance.get_status()
         vm_status.instance.error(f"Error at OpenStack level. Status: {instance_status}")
         return VM_ERROR, "Error at OpenStack level", vm_status.instance.id
-    if vm_status.status == VM_OKAY:
-        return VM_OKAY, {'url': vm_status.instance.get_url()}, vm_status.instance.id
     if vm_status.status == VM_SUPERSIZED:
         resize = Resize.objects.get_latest_resize(vm_status.instance)
         return VM_SUPERSIZED, {'url': vm_status.instance.get_url(),
@@ -254,14 +255,19 @@ def render_vm(request, user, operating_system, requesting_feature, buttons_to_di
                   f'back to the default size on {what_to_show["expires"]}'))
 
     vm_module = loader.render_to_string(f'vm_manager/html/{state}.html',
-                {'what_to_show': what_to_show, 'operating_system': operating_system, 'vm_id': vm_id,
-                 "buttons_to_display": buttons_to_display, "app_name": app_name,
-                 "requesting_feature": requesting_feature}, request)
+                {'what_to_show': what_to_show,
+                 'operating_system': operating_system,
+                 'vm_id': vm_id,
+                 "buttons_to_display": buttons_to_display,
+                 "app_name": app_name,
+                 "requesting_feature": requesting_feature,
+                 "VM_WAITING": VM_WAITING}, request)
 
     script = loader.render_to_string(f'vm_manager/javascript/{state}.js',
                 {'what_to_show': what_to_show, 'operating_system': operating_system, 'vm_id': vm_id,
                  "buttons_to_display": buttons_to_display, "app_name": app_name,
-                 "requesting_feature": requesting_feature}, request)
+                 "requesting_feature": requesting_feature,
+                 "VM_WAITING": VM_WAITING}, request)
     return vm_module, script
 
 
