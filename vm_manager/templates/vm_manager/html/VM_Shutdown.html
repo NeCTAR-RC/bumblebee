@@ -5,13 +5,13 @@
     N.B. You don't need to shut down your {{ requesting_feature }} to exit your session, just close the tab/window.
 </p>
 <p>
-    <a class="button-small soft" data-modal-target="{{ app_name }}-{{ operating_system }}-reboot-modal" href="#">
-        Start my {{ operating_system.capitalize }} {{ requesting_feature }}
+    <a class="button-small soft" data-modal-target="{{ app_name }}-{{ desktop_type.id }}-reboot-modal" href="#">
+        Start my {{ desktop_type.id }} {{ requesting_feature }}
     </a>
 </p>
-<div class="modal__dialog" id="{{ app_name }}-{{ operating_system }}-reboot-modal">
+<div class="modal__dialog" id="{{ app_name }}-{{ desktop_type.id }}-reboot-modal">
     <h2>
-        Confirm Starting Your {{ operating_system.capitalize }} {{ requesting_feature }}
+        Confirm Starting Your {{ desktop_type.id }} {{ requesting_feature }}
     </h2>
     <p>
         Your {{ requesting_feature }} will be unreachable for three minutes while it boots.
@@ -21,8 +21,8 @@
     </p>
     <div>
         <button class="button-small warning"
-                title="Start {{ operating_system.capitalize }} {{ requesting_feature }}"
-                onclick="reboot_{{ app_name }}_{{ operating_system.capitalize }}(this)">
+                title="Start {{ desktop_type.id }} {{ requesting_feature }}"
+                onclick="reboot_{{ app_name }}_{{ desktop_type.id }}(this)">
             START
         </button>
     </div>

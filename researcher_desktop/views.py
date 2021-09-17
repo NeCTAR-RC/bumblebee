@@ -9,7 +9,7 @@ from researcher_workspace.models import Feature
 from researcher_desktop.constants import NOTIFY_VM_PATH_PLACEHOLDER
 from researcher_desktop.utils.user_data_ubuntu import user_data_ubuntu
 from researcher_desktop.utils.utils import get_vm_info
-from researcher_desktop.utils.utils import desktop_type_ids
+from researcher_desktop.utils.utils import get_desktop_types
 from vm_manager import views as vm_man_views
 from researcher_workspace.utils import not_support_staff, redirect_home
 from vm_manager.constants import LINUX, REBOOT_BUTTON, SHELVE_BUTTON, DELETE_BUTTON, BOOST_BUTTON
@@ -18,13 +18,13 @@ logger = logging.getLogger(__name__)
 
 
 def render_modules(request):
-    researcher_desktop_vm_info = get_vm_info()
+    catalog = get_vm_info()
     feature_modules = []
     feature_scripts = []
-    for desktop_type in desktop_type_ids():
+    for desktop_type in get_desktop_types():
         feature_module, feature_script = vm_man_views.render_vm(
             request, request.user, desktop_type,
-            researcher_desktop_vm_info.FEATURE,
+            catalog.FEATURE,
             [REBOOT_BUTTON, SHELVE_BUTTON, DELETE_BUTTON, BOOST_BUTTON])
         feature_modules.append(feature_module)
         feature_scripts.append(feature_script)
@@ -33,7 +33,8 @@ def render_modules(request):
 @login_required(login_url='login')
 @user_passes_test(test_func=not_support_staff, login_url='staff_home', redirect_field_name=None)  # Only need to stop support staff creating vms, as they can't use any other function if they don't have a vm
 def launch_vm(request, desktop):
-    if desktop not in desktop_type_ids():
+    desktop_type_ids = [d.id for d in get_desktop_types()]
+    if desktop not in desktop_type_ids:
         logger.error(f"Unrecognised desktop ({desktop}) was requested by {request.user}")
         raise Http404
 

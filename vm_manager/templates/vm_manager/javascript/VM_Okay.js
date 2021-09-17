@@ -1,7 +1,7 @@
 {% block script %}
 var beenClicked = false;
 {% if "DELETE_BUTTON" in buttons_to_display %}
-function delete_{{ app_name }}_{{ operating_system.capitalize }}(tag) {
+function delete_{{ app_name }}_{{ desktop_type.id }}(tag) {
     if (!beenClicked) {
         beenClicked = true;
         tag.disabled = true;
@@ -13,7 +13,7 @@ function delete_{{ app_name }}_{{ operating_system.capitalize }}(tag) {
 {% endif %}
 
 {% if "REBOOT_BUTTON" in buttons_to_display %}
-function reboot_{{ app_name }}_{{ operating_system.capitalize }}_hard(tag) {
+function reboot_{{ app_name }}_{{ desktop_type.id }}_hard(tag) {
     if (!beenClicked) {
         beenClicked = true;
         tag.disabled = true;
@@ -23,7 +23,7 @@ function reboot_{{ app_name }}_{{ operating_system.capitalize }}_hard(tag) {
     }
 }
 
-function reboot_{{ app_name }}_{{ operating_system.capitalize }}_soft(tag) {
+function reboot_{{ app_name }}_{{ desktop_type.id }}_soft(tag) {
     if (!beenClicked) {
         beenClicked = true;
         tag.disabled = true;
@@ -35,7 +35,7 @@ function reboot_{{ app_name }}_{{ operating_system.capitalize }}_soft(tag) {
 {% endif %}
 
 {% if "SHELVE_BUTTON" in buttons_to_display %}
-function shelve_{{ app_name }}_{{ operating_system.capitalize }}(tag) {
+function shelve_{{ app_name }}_{{ desktop_type.id }}(tag) {
     if (!beenClicked) {
         beenClicked = true;
         tag.disabled = true;
@@ -47,7 +47,7 @@ function shelve_{{ app_name }}_{{ operating_system.capitalize }}(tag) {
 {% endif %}
 
 {% if "BOOST_BUTTON" in buttons_to_display %}
-function supersize_{{ app_name }}_{{ operating_system.capitalize }}(tag) {
+function supersize_{{ app_name }}_{{ desktop_type.id }}(tag) {
     if (!beenClicked) {
         beenClicked = true;
         tag.disabled = true;

@@ -1,12 +1,12 @@
 <div class="feature col">
   <div class="feature-icon">
-    <i class="fab fa-{{ operating_system }} fa-7x"></i>
+    {{ desktop_type.logo }}
   </div>
-  <h2>{{ operating_system.capitalize }}</h2>
-  <p>Paragraph of text beneath the heading to explain the heading. We'll add onto it with another sentence and probably just keep going until we run out of words.</p>
-  <button class="btn btn-primary" title="Launch {{ operating_system.capitalize }} {{ requesting_feature }}"
-    onclick="launch_{{ app_name }}_{{ operating_system.capitalize }}(this)">
-    Create a {{ operating_system.capitalize }} {{ requesting_feature }}
+  <h2>{{ desktop_type.name }}</h2>
+  <p>{{ desktop_type.description }}</p>
+  <button class="btn btn-primary" title="Launch {{ desktop_type.name }}"
+    onclick="launch_{{ app_name }}_{{ desktop_type.id }}(this)">
+    Create a {{ desktop_type.name }} {{ requesting_feature }}
   </button>
 </div>
 

@@ -12,6 +12,8 @@ from django.urls import reverse
 from django.utils.html import format_html
 from operator import itemgetter
 
+from researcher_desktop.models import DesktopType
+
 from vm_manager.models import VMStatus, Instance, Resize
 
 from vm_manager.constants import VM_ERROR, VM_OKAY, VM_WAITING, VM_SHELVED, NO_VM, VM_SHUTDOWN, \
@@ -199,16 +201,19 @@ def downsize_vm(user, vm_id, requesting_feature) -> str:
     return str(vm_status)
 
 
-def get_vm_state(user, operating_system, requesting_feature):
-    vm_status = VMStatus.objects.get_latest_vm_status(user, operating_system, requesting_feature)
+def get_vm_state(user, desktop_type, requesting_feature):
+    vm_status = VMStatus.objects.get_latest_vm_status(user, desktop_type, requesting_feature)
     logger.debug(f"VM Status: {vm_status}")
+
     if (not vm_status) or (vm_status.status == VM_DELETED):
         return NO_VM, "No VM", None
+
     if vm_status.status == VM_ERROR:
         if vm_status.instance:
             return VM_ERROR, "VM has Errored", vm_status.instance.id
         else:
             return VM_MISSING, "VM has Errored", None
+
     curr_time = datetime.now(timezone.utc)
     if vm_status.status == VM_WAITING:
         if vm_status.wait_time > curr_time:
@@ -220,18 +225,23 @@ def get_vm_state(user, operating_system, requesting_feature):
             else:
                 vm_status.status = VM_ERROR
                 vm_status.save()
-                logger.error(f"VM is missing at timeout {vm_status.id}, {user}, {operating_system}")
+                logger.error(f"VM is missing at timeout {vm_status.id}, {user}, {desktop_type}")
                 return VM_MISSING, "VM has Errored", None
+
     if vm_status.status == VM_SHELVED:
         return VM_SHELVED, "VM SHELVED", vm_status.instance.id
+
     if vm_status.instance.check_shutdown_status():
         return VM_SHUTDOWN, "VM Shutdown", vm_status.instance.id
+
     if vm_status.status == VM_OKAY:
         return VM_OKAY, {'url': vm_status.instance.get_url()}, vm_status.instance.id
+
     if not vm_status.instance.check_active_or_resize_statuses():
         instance_status = vm_status.instance.get_status()
         vm_status.instance.error(f"Error at OpenStack level. Status: {instance_status}")
         return VM_ERROR, "Error at OpenStack level", vm_status.instance.id
+
     if vm_status.status == VM_SUPERSIZED:
         resize = Resize.objects.get_latest_resize(vm_status.instance)
         return VM_SUPERSIZED, {'url': vm_status.instance.get_url(),
@@ -239,35 +249,35 @@ def get_vm_state(user, operating_system, requesting_feature):
                                'expires': resize.expires,
                                'extended_expiration': calculate_supersize_expiration_date(resize.expires)},\
             vm_status.instance.id
-    logger.error(f"get_vm_state for to an unhandled state for {user} requesting {operating_system}")
+    logger.error(f"get_vm_state for to an unhandled state for {user} requesting {desktop_type}")
     raise NotImplementedError
 
 
-def render_vm(request, user, operating_system, requesting_feature, buttons_to_display):
-    state, what_to_show, vm_id = get_vm_state(user, operating_system, requesting_feature)
+def render_vm(request, user, desktop_type, requesting_feature, buttons_to_display):
+    state, what_to_show, vm_id = get_vm_state(user, desktop_type.id, requesting_feature)
     app_name = requesting_feature.app_name
 
     #if (state == VM_OKAY or state == VM_SUPERSIZED)
     #    what_to_show['url'] = reverse(app_name + ':get_rdp_file', args=[vm_id])
 
     if state == VM_SUPERSIZED and what_to_show["is_eligible"]:
-        messages.info(request, format_html(f'Your {str(operating_system).capitalize()} vm is set to resize '
+        messages.info(request, format_html(f'Your {str(desktop_type).capitalize()} vm is set to resize '
                   f'back to the default size on {what_to_show["expires"]}'))
 
-    vm_module = loader.render_to_string(f'vm_manager/html/{state}.html',
-                {'what_to_show': what_to_show,
-                 'operating_system': operating_system,
-                 'vm_id': vm_id,
-                 "buttons_to_display": buttons_to_display,
-                 "app_name": app_name,
-                 "requesting_feature": requesting_feature,
-                 "VM_WAITING": VM_WAITING}, request)
+    context = {
+        'what_to_show': what_to_show,
+        'desktop_type': desktop_type,
+        'vm_id': vm_id,
+        "buttons_to_display": buttons_to_display,
+        "app_name": app_name,
+        "requesting_feature": requesting_feature,
+        "VM_WAITING": VM_WAITING
+    }
 
+    vm_module = loader.render_to_string(f'vm_manager/html/{state}.html',
+                                        context, request)
     script = loader.render_to_string(f'vm_manager/javascript/{state}.js',
-                {'what_to_show': what_to_show, 'operating_system': operating_system, 'vm_id': vm_id,
-                 "buttons_to_display": buttons_to_display, "app_name": app_name,
-                 "requesting_feature": requesting_feature,
-                 "VM_WAITING": VM_WAITING}, request)
+                                     context, request)
     return vm_module, script
 
 

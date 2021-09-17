@@ -1,6 +1,6 @@
 {% extends 'vm_manager/javascript/VM_Okay_base.js' %}
 {% block script %}
-function downsize_{{ app_name }}_{{ operating_system.capitalize }}(tag) {
+function downsize_{{ app_name }}_{{ desktop_type.id.capitalize }}(tag) {
     if (!beenClicked) {
         beenClicked = true;
         tag.disabled = true;
@@ -10,7 +10,7 @@ function downsize_{{ app_name }}_{{ operating_system.capitalize }}(tag) {
     }
 }
 
-function extend_{{ app_name }}_{{ operating_system.capitalize }}(tag) {
+function extend_{{ app_name }}_{{ desktop_type.id.capitalize }}(tag) {
     if (!beenClicked) {
         beenClicked = true;
         tag.disabled = true;

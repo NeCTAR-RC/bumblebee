@@ -1,6 +1,6 @@
 <div>
     <a class="btn btn-success" href="{{ what_to_show.url }}" target="_blank">
-        Open {{ operating_system.capitalize }} {{ requesting_feature }}
+        Open {{ desktop_type.name }} {{ requesting_feature }}
     </a>
 </div>
 
@@ -10,35 +10,35 @@
 {% if buttons_to_display %}
 <div class="accordion">
   <div class="accordion-item">
-    <h5 class="accordion-header" id="{{ app_name }}-{{ operating_system }}-options">
-      <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#{{ app_name }}-{{ operating_system }}-collapse" aria-expanded="true" aria-controls="collapseOne">
+    <h5 class="accordion-header" id="{{ app_name }}-{{ desktop_type.id }}-options">
+      <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#{{ app_name }}-{{ desktop_type.id }}-collapse" aria-expanded="true" aria-controls="collapseOne">
         Options
       </button>
     </h5>
 
-    <div id="{{ app_name }}-{{ operating_system }}-collapse" class="accordion-collapse collapse show" aria-labelledby="{{ app_name }}-{{ operating_system }}-options" data-bs-parent="#{{ app_name }}-{{ operating_system }}-options">
+    <div id="{{ app_name }}-{{ desktop_type.id }}-collapse" class="accordion-collapse collapse show" aria-labelledby="{{ app_name }}-{{ desktop_type.id }}-options" data-bs-parent="#{{ app_name }}-{{ desktop_type.id }}-options">
       <div class="accordion-body">
         {% if "REBOOT_BUTTON" in buttons_to_display %}
-        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#{{ app_name }}-{{ operating_system }}-reboot-modal">
-          Reboot my {{ operating_system.capitalize }} {{ requesting_feature }}
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#{{ app_name }}-{{ desktop_type.id }}-reboot-modal">
+          Reboot my {{ desktop_type.name }} {{ requesting_feature }}
         </button>
         {% endif %}
 
         {% if "SHELVE_BUTTON" in buttons_to_display %}
-        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#{{ app_name }}-{{ operating_system }}-shelve-modal">
-          Shelve my {{ operating_system.capitalize }} {{ requesting_feature }}
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#{{ app_name }}-{{ desktop_type.id }}-shelve-modal">
+          Shelve my {{ desktop_type.name }} {{ requesting_feature }}
         </button>
         {% endif %}
 
         {% if "DELETE_BUTTON" in buttons_to_display %}
-        <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#{{ app_name }}-{{ operating_system }}-delete-modal">
-          Delete my {{ operating_system.capitalize }} {{ requesting_feature }}
+        <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#{{ app_name }}-{{ desktop_type.id }}-delete-modal">
+          Delete my {{ desktop_type.name }} {{ requesting_feature }}
         </button>
         {% endif %}
 
         {% if "BOOST_BUTTON" in buttons_to_display %}
-        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#{{ app_name }}-{{ operating_system }}-supersize-modal">
-          Boost my {{ operating_system.capitalize }} {{ requesting_feature }}
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#{{ app_name }}-{{ desktop_type.id }}-supersize-modal">
+          Boost my {{ desktop_type.name }} {{ requesting_feature }}
         </button>
         {% endif %}
 
@@ -75,11 +75,11 @@
 {% endif %}
 
 {% if "REBOOT_BUTTON" in buttons_to_display %}
-<div class="modal fade" id="{{ app_name }}-{{ operating_system }}-reboot-modal" tabindex="-1" aria-labelledby="{{ app_name }}-{{ operating_system }}-reboot-modal-label" aria-hidden="true">
+<div class="modal fade" id="{{ app_name }}-{{ desktop_type.id }}-reboot-modal" tabindex="-1" aria-labelledby="{{ app_name }}-{{ desktop_type.id }}-reboot-modal-label" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="{{ app_name }}-{{ operating_system }}-reboot-modal-label">Confirm</h5>
+        <h5 class="modal-title" id="{{ app_name }}-{{ desktop_type.id }}-reboot-modal-label">Confirm</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
@@ -92,8 +92,8 @@
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-        <button type="button" class="btn btn-danger" onclick="reboot_{{ app_name }}_{{ operating_system.capitalize }}_soft(this)">Soft Reboot</button>
-        <button type="button" class="btn btn-danger" onclick="reboot_{{ app_name }}_{{ operating_system.capitalize }}_hard(this)">Hard Reboot</button>
+        <button type="button" class="btn btn-danger" onclick="reboot_{{ app_name }}_{{ desktop_type.id }}_soft(this)">Soft Reboot</button>
+        <button type="button" class="btn btn-danger" onclick="reboot_{{ app_name }}_{{ desktop_type.id }}_hard(this)">Hard Reboot</button>
       </div>
     </div>
   </div>
@@ -101,11 +101,11 @@
 {% endif %}
 
 {% if "SHELVE_BUTTON" in buttons_to_display %}
-<div class="modal fade" id="{{ app_name }}-{{ operating_system }}-shelve-modal" tabindex="-1" aria-labelledby="{{ app_name }}-{{ operating_system }}-shelve-modal-label" aria-hidden="true">
+<div class="modal fade" id="{{ app_name }}-{{ desktop_type.id }}-shelve-modal" tabindex="-1" aria-labelledby="{{ app_name }}-{{ desktop_type.id }}-shelve-modal-label" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="{{ app_name }}-{{ operating_system }}-shelve-modal-label">Confirm</h5>
+        <h5 class="modal-title" id="{{ app_name }}-{{ desktop_type.id }}-shelve-modal-label">Confirm</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
@@ -116,7 +116,7 @@
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-        <button type="button" class="btn btn-danger" onclick="shelve_{{ app_name }}_{{ operating_system.capitalize }}(this)">Shelve</button>
+        <button type="button" class="btn btn-danger" onclick="shelve_{{ app_name }}_{{ desktop_type.id }}(this)">Shelve</button>
       </div>
     </div>
   </div>
@@ -124,11 +124,11 @@
 {% endif %}
 
 {% if "DELETE_BUTTON" in buttons_to_display %}
-<div class="modal fade" id="{{ app_name }}-{{ operating_system }}-delete-modal" tabindex="-1" aria-labelledby="{{ app_name }}-{{ operating_system }}-delete-modal-label" aria-hidden="true">
+<div class="modal fade" id="{{ app_name }}-{{ desktop_type.id }}-delete-modal" tabindex="-1" aria-labelledby="{{ app_name }}-{{ desktop_type.id }}-delete-modal-label" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="{{ app_name }}-{{ operating_system }}-delete-modal" tabindex="-1" aria-labelledby="{{ app_name }}-{{ operating_system }}-delete-modal-label">Confirm</h5>
+        <h5 class="modal-title" id="{{ app_name }}-{{ desktop_type.id }}-delete-modal" tabindex="-1" aria-labelledby="{{ app_name }}-{{ desktop_type.id }}-delete-modal-label">Confirm</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
@@ -136,7 +136,7 @@
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-        <button type="button" class="btn btn-danger"onclick="delete_{{ app_name }}_{{ operating_system.capitalize }}(this)">Delete</button>
+        <button type="button" class="btn btn-danger" onclick="delete_{{ app_name }}_{{ desktop_type.id }}(this)">Delete</button>
       </div>
     </div>
   </div>
@@ -144,11 +144,11 @@
 {% endif %}
 
 {% if "BOOST_BUTTON" in buttons_to_display %}
-<div class="modal fade" id="{{ app_name }}-{{ operating_system }}-supersize-modal" tabindex="-1" aria-labelledby="{{ app_name }}-{{ operating_system }}-supersize-modal-label" aria-hidden="true">
+<div class="modal fade" id="{{ app_name }}-{{ desktop_type.id }}-supersize-modal" tabindex="-1" aria-labelledby="{{ app_name }}-{{ desktop_type.id }}-supersize-modal-label" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="{{ app_name }}-{{ operating_system }}-supersize-modal-label">Confirm</h5>
+        <h5 class="modal-title" id="{{ app_name }}-{{ desktop_type.id }}-supersize-modal-label">Confirm</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
@@ -158,7 +158,7 @@
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-        <button type="button" class="btn btn-danger" onclick="supersize_{{ app_name }}_{{ operating_system.capitalize }}(this)">Boost</button>
+        <button type="button" class="btn btn-danger" onclick="supersize_{{ app_name }}_{{ desktop_type.id }}(this)">Boost</button>
       </div>
     </div>
   </div>

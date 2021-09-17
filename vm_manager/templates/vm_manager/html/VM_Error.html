@@ -1,6 +1,6 @@
-<p>{{ operating_system.capitalize }} {{ requesting_feature }} Error</p>
+<p>{{ desktop_type.id }} {{ requesting_feature }} Error</p>
 <p>
-    Your {{ operating_system.capitalize }} {{ requesting_feature }} has thrown an error. Support have been notified and will work on stopping
+    Your {{ desktop_type.id }} {{ requesting_feature }} has thrown an error. Support have been notified and will work on stopping
     this from happening again.
 </p>
 <p>
@@ -13,22 +13,22 @@
         </a>
     </div>
     <div style="flex: 50%;">
-        <a class="button-small warning" data-modal-target="{{ app_name }}-{{ operating_system }}-delete-modal" href="#">
+        <a class="button-small warning" data-modal-target="{{ app_name }}-{{ desktop_type.id }}-delete-modal" href="#">
             DELETE
         </a>
     </div>
 </div>
-<div class="modal__dialog" id="{{ app_name }}-{{ operating_system }}-delete-modal">
+<div class="modal__dialog" id="{{ app_name }}-{{ desktop_type.id }}-delete-modal">
     <h2>
-        Confirm Deleting Your {{ operating_system.capitalize }} {{ requesting_feature }}
+        Confirm Deleting Your {{ desktop_type.id }} {{ requesting_feature }}
     </h2>
     <p>
         Please confirm your selection. Once a {{ requesting_feature }} has been deleted it is not recoverable.
     </p>
     <div>
         <button class="button-small warning"
-                title="Delete {{ operating_system.capitalize }} {{ requesting_feature }}"
-                onclick="delete_{{ app_name }}_{{ operating_system.capitalize }}(this)">
+                title="Delete {{ desktop_type.id }} {{ requesting_feature }}"
+                onclick="delete_{{ app_name }}_{{ desktop_type.id }}(this)">
             DELETE
         </button>
     </div>

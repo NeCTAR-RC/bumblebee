@@ -2,7 +2,7 @@
 
 {% block supersize_message %}
     <p>
-    Your {{ operating_system.capitalize }} {{ requesting_feature }} is set to resize back
+    Your {{ desktop_type.id }} {{ requesting_feature }} is set to resize back
     to the default size after 11:59 pm on {{ what_to_show.expires }}.
     </p>
     <p>
@@ -13,24 +13,24 @@
 <div>
     Switch back to the default size of your {{ requesting_feature }}.
 </div>
-<a class="button" data-modal-target="{{ app_name }}-{{ operating_system }}-downsize-modal" href="#"
+<a class="button" data-modal-target="{{ app_name }}-{{ desktop_type.id }}-downsize-modal" href="#"
 title="Switch back to the default size of your {{ requesting_feature }}">
-    Downsize my {{ operating_system.capitalize }} {{ requesting_feature }} <sup>(BETA)</sup>
+    Downsize my {{ desktop_type.id }} {{ requesting_feature }} <sup>(BETA)</sup>
 </a>
 <div> Extend your boosted period by seven days.
     Can only be done when the expiration date is less than one week from today.
 </div>
 <button class="button" title="Extend your boosted period by seven days"
-data-modal-target="{{ app_name }}-{{ operating_system }}-extend-modal" show-button="{{ what_to_show.is_eligible }}">
+data-modal-target="{{ app_name }}-{{ desktop_type.id }}-extend-modal" show-button="{{ what_to_show.is_eligible }}">
     Extend The Expiration
 </button>
 
 {% endblock buttons %}
 
 {% block modals %}
-<div class="modal__dialog" id="{{ app_name }}-{{ operating_system }}-downsize-modal">
+<div class="modal__dialog" id="{{ app_name }}-{{ desktop_type.id }}-downsize-modal">
     <h2>
-        Confirm Downsizing Your {{ operating_system.capitalize }} {{ requesting_feature }}
+        Confirm Downsizing Your {{ desktop_type.id }} {{ requesting_feature }}
     </h2>
     <p>
         Please save any work and close the connection to your {{ requesting_feature }} before downsizing it.
@@ -43,16 +43,16 @@ data-modal-target="{{ app_name }}-{{ operating_system }}-extend-modal" show-butt
     </p>
     <div>
         <button class="button-small"
-                title="Downsize {{ operating_system.capitalize }} {{ requesting_feature }}"
-                onclick="downsize_{{ app_name }}_{{ operating_system.capitalize }}(this)">
+                title="Downsize {{ desktop_type.id }} {{ requesting_feature }}"
+                onclick="downsize_{{ app_name }}_{{ desktop_type.id }}(this)">
             DOWNSIZE
         </button>
     </div>
 </div>
 
-<div class="modal__dialog" id="{{ app_name }}-{{ operating_system }}-extend-modal">
+<div class="modal__dialog" id="{{ app_name }}-{{ desktop_type.id }}-extend-modal">
     <h2>
-        Extend the Expiration of Your Boosted {{ operating_system.capitalize }} {{ requesting_feature }}
+        Extend the Expiration of Your Boosted {{ desktop_type.id }} {{ requesting_feature }}
     </h2>
     <p>
         This will extend the expiration by seven days.
@@ -65,8 +65,8 @@ data-modal-target="{{ app_name }}-{{ operating_system }}-extend-modal" show-butt
     </p>
     <div>
         <button class="button-small"
-                title="Extend {{ operating_system.capitalize }} {{ requesting_feature }}"
-                onclick="extend_{{ app_name }}_{{ operating_system.capitalize }}(this)">
+                title="Extend {{ desktop_type.id }} {{ requesting_feature }}"
+                onclick="extend_{{ app_name }}_{{ desktop_type.id }}(this)">
             EXTEND
         </button>
     </div>

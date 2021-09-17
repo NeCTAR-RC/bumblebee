@@ -38,6 +38,5 @@ def find_flavor(flavor_list, flavor_name):
     raise Exception('Could not find flavor: ' + flavor_name)
 
 
-def desktop_type_ids():
-    return DesktopType.objects.filter(enabled=True) \
-                              .values_list('id', flat=True)
+def get_desktop_types():
+    return DesktopType.objects.filter(enabled=True)

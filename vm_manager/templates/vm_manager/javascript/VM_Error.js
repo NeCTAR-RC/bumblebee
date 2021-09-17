@@ -1,5 +1,5 @@
 var beenClicked = false;
-function delete_{{ app_name }}_{{ operating_system.capitalize }}(tag) {
+function delete_{{ app_name }}_{{ desktop_type.id }}(tag) {
     if (!beenClicked) {
         beenClicked = true;
         tag.disabled = true;
