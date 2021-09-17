@@ -19,7 +19,7 @@ VM_ERROR = "VM_Error"
 VM_MISSING = "VM_Missing"
 VM_SHUTDOWN = "VM_Shutdown"
 
-LAUNCH_WAIT_SECONDS = 120  # Five minutes
+LAUNCH_WAIT_SECONDS = 300  # Five minutes
 REBOOT_WAIT_SECONDS = 180  # Three minutes
 REBOOT_CONFIRM_WAIT_SECONDS = 120  # Two minutes
 RESIZE_WAIT_SECONDS = 120  # Five minutes

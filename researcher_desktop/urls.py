@@ -17,6 +17,7 @@ urlpatterns = [
     path('downsize_vm/<str:vm_id>', views.downsize_vm, name='downsize_vm'),
     path('extend/<str:vm_id>', views.extend, name='extend'),
     path('notify_vm/', views.notify_vm, name='notify_vm'),
+    path('status_vm/<str:desktop>', views.status_vm, name='status_vm'),
     path('start_downsizing_cron_job/',
          views.start_downsizing_cron_job, name='start_downsizing_cron_job'),
 ]

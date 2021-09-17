@@ -2,13 +2,12 @@ import logging
 
 from django.conf import settings
 from django.contrib.auth.decorators import login_required, user_passes_test
-from django.http import HttpResponse, HttpResponseRedirect, Http404
+from django.http import JsonResponse, HttpResponse, HttpResponseRedirect, Http404
 from django.urls import reverse
 
 from researcher_workspace.models import Feature
 from researcher_desktop.constants import NOTIFY_VM_PATH_PLACEHOLDER
 from researcher_desktop.utils.user_data_ubuntu import user_data_ubuntu
-from researcher_desktop.utils.user_data_windows import user_data_windows
 from researcher_desktop.utils.utils import get_vm_info
 from researcher_desktop.utils.utils import desktop_type_ids
 from vm_manager import views as vm_man_views
@@ -136,6 +135,14 @@ def start_downsizing_cron_job(request):
 def notify_vm(request):
     catalog = get_vm_info()
     return HttpResponse(vm_man_views.notify_vm(request, catalog.FEATURE))
+
+
+@login_required(login_url='login')
+def status_vm(request, desktop):
+    catalog = get_vm_info()
+    state, what_to_show, vm_id = vm_man_views.get_vm_state(request.user, desktop, catalog.FEATURE)
+    result = {'state': state, 'status': what_to_show}
+    return JsonResponse(result)
 
 
 def rd_report(reporting_months):
