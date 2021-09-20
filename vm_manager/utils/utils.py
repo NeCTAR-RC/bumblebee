@@ -7,6 +7,7 @@ from nectarallocationclient import client as allocation_client
 from novaclient import client as nova_client
 
 from django.conf import settings
+from django.utils.crypto import get_random_string
 
 #from researcher_workspace.resplat.ldap_backend import ResplatLDAPBackend
 from researcher_workspace.settings import ENVIRONMENT_NAME
@@ -98,3 +99,7 @@ def get_domain(user) -> str:
     #if 'student' in backend.get_user(user.id).ldap_user.attrs['auedupersontype']:
     #    return STUDENT
     return 'test'
+
+
+def generate_password() -> str:
+    return get_random_string(20)

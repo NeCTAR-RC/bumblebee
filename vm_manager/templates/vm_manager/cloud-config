@@ -1,0 +1,36 @@
+#cloud-config
+
+fqdn: {{ hostname }}
+
+write_files:
+- path: /var/lib/cloud/provision.sh
+  owner: root:root
+  permissions: '0744'
+  content: |
+    #!/bin/bash
+    IP=$(hostname -I | xargs) 
+    HN="{{ hostname }}"
+    curl -Ss "{{ notify_url }}?ip=$IP&hn=$HN&state=1&os=linux&msg=started"
+    curl -Ss "{{ notify_url }}?ip=$IP&hn=$HN&state=1&os=linux&msg=finished"
+
+
+runcmd:
+- [ /var/lib/cloud/provision.sh ]
+
+users:
+- name: {{ username }}
+  passwd: {{ password }}
+  lock_passwd: false
+  gecos: VDI User
+  groups: [adm, audio, cdrom, dialout, dip, floppy, lxd, netdev, plugdev, sudo, video]
+  shell: /bin/bash
+  sudo: ['ALL=(ALL) NOPASSWD:ALL']
+  ssh-authorized-keys:
+    ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDnX18eYr4cLaMccq1QJ/dj37z1vtb/NWc5PAbAo6NdX0/Rer4yDew5PbkJEkFR/KIoi5MINN+tPgcuRrxwe018w+LSB1ZUZT/BNVBte2LrQnvAMiHFNH3qtpcCBQn90+ZR8RRLguzK9vGKRxUuSW+4jNbpnqP3pOImjfe4ds54VszRzVPnK+ULgIwm7JILr97aNjFVprgx1nIzyPj3hlzBOF8Kst1bms/cP32o0/kXaQznrw2yWY84LifymF6DnGuhDaJz4KFRWDZoxevWQhqWqvOHw8r5LX2t/NLWzSUq9Sg3TGqPE8R11wtE/n6PXJyvusGlcdhryh8EYLskpKKj andy@nectar
+
+phone_home:
+  url: {{ phone_home_url }}
+  post:
+    - instance_id
+    - hostname
+  tries: 10

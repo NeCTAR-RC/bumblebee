@@ -1,7 +1,1 @@
-
-SUPERSIZE_FLAVOR = "big_flavor"
-DEFAULTSIZE_FLAVOR = "default_flavor"
-
-NOTIFY_VM_PATH_PLACEHOLDER = "NOTIFY_VM_PATH_PLACEHOLDER"
-
 APP_NAME = 'researcher_desktop'

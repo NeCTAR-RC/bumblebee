@@ -1,18 +1,19 @@
 import copy
+import crypt
 import django_rq
 import logging
 import re
 
 from datetime import datetime, timedelta, timezone
 from django.conf import settings
+from django.template.loader import render_to_string
 from django.urls import reverse
 
 from researcher_workspace.settings import ENVIRONMENT_NAME
 
-from vm_manager.constants import HOSTNAME_PLACEHOLDER, HOSTNAME_URL_PLACEHOLDER, \
-    USERNAME_PLACEHOLDER, VOLUME_CREATION_TIMEOUT, DOMAIN_PLACEHOLDER, NO_VM, VM_OKAY, LINUX
+from vm_manager.constants import VOLUME_CREATION_TIMEOUT, NO_VM, VM_OKAY, LINUX
 from vm_manager.utils.utils import get_nectar, generate_server_name, generate_hostname, generate_hostname_url,\
-    get_domain
+    generate_password
 from vm_manager.models import Instance, Volume, VMStatus
 
 from guacamole.models import GuacamoleConnection
@@ -121,6 +122,8 @@ def _create_instance(user, vm_info, volume):
     hostname = generate_hostname(volume.hostname_id, operating_system)
     hostname_url = generate_hostname_url(volume.hostname_id, operating_system)
 
+    username = 'user'
+    password = generate_password()
     metadata_server = {
         'allow_user': user.username + re.search("@.*", user.email).group(),
         'environment': ENVIRONMENT_NAME,
@@ -130,14 +133,20 @@ def _create_instance(user, vm_info, volume):
     block_device_mapping = copy.deepcopy(n.VM_PARAMS["block_device_mapping"])
     block_device_mapping[0]["uuid"] = volume.id
 
-    user_data_script = vm_info['user_data_script'] \
-        .replace(HOSTNAME_PLACEHOLDER, hostname).replace(HOSTNAME_URL_PLACEHOLDER, hostname_url) \
-        .replace(USERNAME_PLACEHOLDER, user.username).replace(DOMAIN_PLACEHOLDER, get_domain(user))
+    user_data_context = {
+        'hostname': hostname,
+        'notify_url': settings.SITE_URL + reverse('researcher_desktop:notify_vm'),
+        'phone_home_url': settings.SITE_URL + reverse('researcher_desktop:phone_home'),
+        'username': username,
+        'password': crypt.crypt(password, crypt.mksalt(crypt.METHOD_SHA512)),
+    }
+
+    user_data = render_to_string('vm_manager/cloud-config', user_data_context)
 
     # Create instance in OpenStack
     launch_result = n.nova.servers.create(
         name=hostname, image="", flavor=vm_info['flavor'],
-        userdata=user_data_script, security_groups=vm_info['security_groups'],
+        userdata=user_data, security_groups=vm_info['security_groups'],
         key_name=settings.OS_KEYNAME, block_device_mapping_v1=None,
         block_device_mapping_v2=block_device_mapping,
         nics=n.VM_PARAMS["list_net"],
@@ -151,7 +160,9 @@ def _create_instance(user, vm_info, volume):
     # Create record in DB
     instance = Instance.objects.create(
         id=launch_result.id, user=user, boot_volume=volume,
-        guac_connection=guac_connection)
+        guac_connection=guac_connection,
+        username=username,
+        password=password)
 
     logger.info(f"Completed creating {instance}")
 

@@ -4,10 +4,9 @@ from django.conf import settings
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.http import JsonResponse, HttpResponse, HttpResponseRedirect, Http404
 from django.urls import reverse
+from django.views.decorators.csrf import csrf_exempt
 
 from researcher_workspace.models import Feature
-from researcher_desktop.constants import NOTIFY_VM_PATH_PLACEHOLDER
-from researcher_desktop.utils.user_data_ubuntu import user_data_ubuntu
 from researcher_desktop.utils.utils import get_vm_info
 from researcher_desktop.utils.utils import get_desktop_types
 from vm_manager import views as vm_man_views
@@ -43,9 +42,6 @@ def launch_vm(request, desktop):
     vm_info['flavor'] = catalog.DESKTOPS[desktop]['default_flavor']
     vm_info['source_volume'] = catalog.DESKTOPS[desktop]['source_volume']
     vm_info['operating_system'] = desktop
-    vm_info['user_data_script'] = user_data_ubuntu\
-                .replace(NOTIFY_VM_PATH_PLACEHOLDER,
-                         reverse('researcher_desktop:notify_vm'))
     vm_info['security_groups'] = settings.OS_SECGROUPS
     logger.info(request.user) 
     vm_man_views.launch_vm(request.user, vm_info, catalog.FEATURE)
@@ -77,7 +73,6 @@ def unshelve_vm(request, desktop):
     vm_info['flavor'] = catalog.DESKTOPS[desktop]['default_flavor']
     vm_info['source_volume'] = catalog.DESKTOPS[desktop]['source_volume']
     vm_info['operating_system'] = desktop
-    vm_info['user_data_script'] = ""
     vm_info['security_groups'] = settings.OS_SECGROUPS
     vm_man_views.unshelve_vm(request.user, vm_info, catalog.FEATURE)
     return redirect_home(request)
@@ -88,15 +83,6 @@ def reboot_vm(request, vm_id, reboot_level):
     catalog = get_vm_info()
     vm_man_views.reboot_vm(request.user, vm_id, reboot_level, catalog.FEATURE)
     return redirect_home(request)
-
-
-@login_required(login_url='login')
-def get_rdp_file(request, vm_id):
-    catalog = get_vm_info()
-    rdp_file = vm_man_views.get_rdp_file(request.user, vm_id, catalog.FEATURE)
-    response = HttpResponse(rdp_file, content_type='text/plain')
-    response['Content-Disposition'] = 'attachment; filename="research_desktop.rdp"'
-    return response
 
 
 @login_required(login_url='login')
@@ -136,6 +122,11 @@ def start_downsizing_cron_job(request):
 def notify_vm(request):
     catalog = get_vm_info()
     return HttpResponse(vm_man_views.notify_vm(request, catalog.FEATURE))
+
+
+@csrf_exempt
+def phone_home(request):
+    return HttpResponse(vm_man_views.phone_home(request))
 
 
 @login_required(login_url='login')
