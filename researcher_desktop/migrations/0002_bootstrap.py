@@ -4,14 +4,19 @@ from django.db import migrations
 
 from django.conf import settings
 
+from researcher_desktop.constants import APP_NAME
+
 
 class Migration(migrations.Migration):
 
     def addDesktopTypes(apps, schema_editor):
+        Feature = apps.get_model('researcher_workspace', 'Feature')
+        app_feature = Feature.objects.get(app_name=APP_NAME)
         DesktopType = apps.get_model('researcher_desktop', 'DesktopType')
-        # Populate with sensible defaults from the settings.
+
+        # Populate initial desktops from the settings.
         for desktop_type in settings.DESKTOP_TYPES:
-            DesktopType.objects.create(**desktop_type)
+            DesktopType.objects.create(**desktop_type, feature=app_feature)
 
     def removeDesktopTypes(apps, schema_editor):
         DesktopType = apps.get_model('researcher_desktop', 'DesktopType')
