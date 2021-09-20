@@ -36,24 +36,28 @@ from vm_manager.vm_functions.resize_vm import can_extend_supersize_period, calcu
 logger = logging.getLogger(__name__)
 
 
-def launch_vm(user, vm_info, requesting_feature) -> str:
-    operating_system = vm_info['operating_system']
+def _after_wait(seconds):
+    return datetime.now(timezone.utc) + timedelta(seconds=seconds)
 
-    vm_status = VMStatus.objects.get_latest_vm_status(user, operating_system, requesting_feature)
+def launch_vm(user, desktop_type) -> str:
+    vm_status = VMStatus.objects.get_latest_vm_status(user, desktop_type)
     if vm_status and vm_status.status != VM_DELETED:
-        error_message = f"A VMStatus for {user} and {operating_system} already exists"
+        error_message = f"A VMStatus for {user} and {desktop_type.id} already exists"
         logger.error(error_message)
         return error_message
 
     vm_status = VMStatus(
-        user=user, requesting_feature=requesting_feature,
-        operating_system=operating_system, status=VM_CREATING,
-        wait_time=datetime.now(timezone.utc) + timedelta(seconds=LAUNCH_WAIT_SECONDS))
+        user=user, requesting_feature=desktop_type.feature,
+        operating_system=desktop_type.id, status=VM_CREATING,
+        wait_time=_after_wait(LAUNCH_WAIT_SECONDS))
     vm_status.save()
 
     # Check for race condition in previous statements and delete duplicate VMStatus
-    check_vm_status = VMStatus.objects.filter(user=user, operating_system=operating_system, requesting_feature=requesting_feature)\
-        .exclude(status__in=[NO_VM, VM_SHELVED])
+    check_vm_status = \
+        VMStatus.objects.filter(user=user,
+                                operating_system=desktop_type.id,
+                                requesting_feature=desktop_type.feature) \
+                        .exclude(status__in=[NO_VM, VM_SHELVED])
     if check_vm_status.count() > 1:
         vm_status.delete()
         error_message = f"A VMStatus with that User and OS already exists"
@@ -61,14 +65,14 @@ def launch_vm(user, vm_info, requesting_feature) -> str:
         return error_message
 
     queue = django_rq.get_queue('default')
-    queue.enqueue(launch_vm_worker, user=user, vm_info=vm_info,
-                  requesting_feature=requesting_feature)
+    queue.enqueue(launch_vm_worker, user=user, desktop_type=desktop_type)
 
     return str(vm_status)
 
 
 def delete_vm(user, vm_id, requesting_feature) -> str:
-    vm_status = VMStatus.objects.get_vm_status_by_untrusted_vm_id(vm_id, user, requesting_feature)
+    vm_status = VMStatus.objects.get_vm_status_by_untrusted_vm_id(
+        vm_id, user, requesting_feature)
     if (not vm_status) or vm_status.status == NO_VM:
         error_message = (f"No VMStatus found with that vm_id or vm already "
                          f"marked as deleted {user} {vm_id} {vm_status}")
@@ -110,19 +114,22 @@ def admin_delete_vm(request, vm_id):
     queue.enqueue(delete_vm_worker, vm_status.instance)
 
     logger.info(f"{request.user} admin deleted vm {vm_id}")
-    return HttpResponseRedirect(reverse('admin:vm_manager_instance_change', args=(vm_id,)))
+    return HttpResponseRedirect(reverse('admin:vm_manager_instance_change',
+                                        args=(vm_id,)))
 
 
 def shelve_vm(user, vm_id, requesting_feature) -> str:
-    vm_status = VMStatus.objects.get_vm_status_by_untrusted_vm_id(vm_id, user, requesting_feature)
-    if vm_status and not (vm_status.status == VM_OKAY or vm_status.status == VM_SUPERSIZED):
+    vm_status = VMStatus.objects.get_vm_status_by_untrusted_vm_id(
+        vm_id, user, requesting_feature)
+    if vm_status and not (vm_status.status == VM_OKAY
+                          or vm_status.status == VM_SUPERSIZED):
         error_message = f"A VMStatus {vm_id} for {user} is in the wrong state. VM cannot be shelved"
         logger.error(error_message)
         return error_message
 
     logger.info(f"Changing the VMStatus of {vm_id} from {vm_status.status} to "
                 f"{VM_WAITING} and Mark for Deletion is set on the Instance")
-    vm_status.wait_time = datetime.now(timezone.utc) + timedelta(seconds=SHELVE_WAIT_SECONDS)
+    vm_status.wait_time = _after_wait(SHELVE_WAIT_SECONDS)
     vm_status.status = VM_WAITING
     vm_status.save()
     vm_status.instance.set_marked_for_deletion()
@@ -133,39 +140,42 @@ def shelve_vm(user, vm_id, requesting_feature) -> str:
     return str(vm_status)
 
 
-def unshelve_vm(user, vm_info, requesting_feature) -> str:
-    operating_system = vm_info['operating_system']
-
-    vm_status = VMStatus.objects.get_latest_vm_status(user, operating_system, requesting_feature)
+def unshelve_vm(user, desktop_type) -> str:
+    vm_status = VMStatus.objects.get_latest_vm_status(user, desktop_type)
     if not vm_status or vm_status.status != VM_SHELVED:
         error_message = (f"VM Status for {user} and {operating_system} is in the wrong state. "
                          f"VM cannot be unshelved")
         logger.error(error_message)
         return error_message
 
-    vm_status = VMStatus(user=user, requesting_feature=requesting_feature, operating_system=operating_system, status=VM_CREATING,
-                         wait_time=datetime.now(timezone.utc) + timedelta(seconds=LAUNCH_WAIT_SECONDS))
+    vm_status = VMStatus(user=user,
+                         requesting_feature=desktop_type.feature,
+                         operating_system=desktop_type.id, status=VM_CREATING,
+                         wait_time=_after_wait(LAUNCH_WAIT_SECONDS))
     vm_status.save()
 
     queue = django_rq.get_queue('default')
-    queue.enqueue(unshelve_vm_worker, user=user, vm_info=vm_info, requesting_feature=requesting_feature)
+    queue.enqueue(unshelve_vm_worker, user=user, desktop_type=desktop_type)
 
     return str(vm_status)
 
 
 def reboot_vm(user, vm_id, reboot_level, requesting_feature) -> str:
-    vm_status = VMStatus.objects.get_vm_status_by_untrusted_vm_id(vm_id, user, requesting_feature)
-    vm_status.wait_time = datetime.now(timezone.utc)+timedelta(seconds=REBOOT_WAIT_SECONDS)
+    vm_status = VMStatus.objects.get_vm_status_by_untrusted_vm_id(
+        vm_id, user, requesting_feature)
+    vm_status.wait_time = _after_wait(REBOOT_WAIT_SECONDS)
     vm_status.save()
 
     queue = django_rq.get_queue('default')
-    queue.enqueue(reboot_vm_worker, user, vm_id, reboot_level, requesting_feature)
+    queue.enqueue(reboot_vm_worker, user, vm_id, reboot_level,
+                  requesting_feature)
 
     return str(vm_status)
 
 
 def supersize_vm(user, vm_id, flavor, requesting_feature) -> str:
-    vm_status = VMStatus.objects.get_vm_status_by_untrusted_vm_id(vm_id, user, requesting_feature)
+    vm_status = VMStatus.objects.get_vm_status_by_untrusted_vm_id(
+        vm_id, user, requesting_feature)
 
     if vm_status and vm_status.status != VM_OKAY:
         error_message = f"Instance {vm_id} for {user} is not in the right state to Supersize"
@@ -173,18 +183,20 @@ def supersize_vm(user, vm_id, flavor, requesting_feature) -> str:
         return error_message
 
     vm_status.status = VM_RESIZING
-    vm_status.wait_time = datetime.now(timezone.utc) + timedelta(seconds=RESIZE_WAIT_SECONDS)
+    vm_status.wait_time = after_wait()
     vm_status.save()
 
     queue = django_rq.get_queue('default')
-    queue.enqueue(supersize_vm_worker, instance=vm_status.instance, flavor=flavor,
+    queue.enqueue(supersize_vm_worker, instance=vm_status.instance,
+                  flavor=flavor,
                   requesting_feature=requesting_feature)
 
     return str(vm_status)
 
 
 def downsize_vm(user, vm_id, requesting_feature) -> str:
-    vm_status = VMStatus.objects.get_vm_status_by_untrusted_vm_id(vm_id, user, requesting_feature)
+    vm_status = VMStatus.objects.get_vm_status_by_untrusted_vm_id(
+        vm_id, user, requesting_feature)
 
     if vm_status and vm_status.status != VM_SUPERSIZED:
         error_message = f"Instance {vm_id} for {user} is not in the right state to Downsize"
@@ -192,17 +204,18 @@ def downsize_vm(user, vm_id, requesting_feature) -> str:
         return error_message
 
     vm_status.status = VM_RESIZING
-    vm_status.wait_time = datetime.now(timezone.utc) + timedelta(seconds=RESIZE_WAIT_SECONDS)
+    vm_status.wait_time = _after_wait(RESIZE_WAIT_SECONDS)
     vm_status.save()
 
     queue = django_rq.get_queue('default')
-    queue.enqueue(downsize_vm_worker, instance=vm_status.instance, requesting_feature=requesting_feature)
+    queue.enqueue(downsize_vm_worker, instance=vm_status.instance,
+                  requesting_feature=requesting_feature)
 
     return str(vm_status)
 
 
-def get_vm_state(user, desktop_type, requesting_feature):
-    vm_status = VMStatus.objects.get_latest_vm_status(user, desktop_type, requesting_feature)
+def get_vm_state(user, desktop_type):
+    vm_status = VMStatus.objects.get_latest_vm_status(user, desktop_type)
     logger.debug(f"VM Status: {vm_status}")
 
     if (not vm_status) or (vm_status.status == VM_DELETED):
@@ -217,7 +230,8 @@ def get_vm_state(user, desktop_type, requesting_feature):
     curr_time = datetime.now(timezone.utc)
     if vm_status.status == VM_WAITING:
         if vm_status.wait_time > curr_time:
-            return VM_WAITING, str(ceil((vm_status.wait_time - curr_time).seconds)), None
+            time = str(ceil((vm_status.wait_time - curr_time).seconds))
+            return VM_WAITING, time, None
         else: # Time up waiting
             if vm_status.instance:
                 vm_status.error(f"VM {vm_status.instance.id} not ready at {vm_status.wait_time} timeout")
@@ -244,25 +258,28 @@ def get_vm_state(user, desktop_type, requesting_feature):
 
     if vm_status.status == VM_SUPERSIZED:
         resize = Resize.objects.get_latest_resize(vm_status.instance)
-        return VM_SUPERSIZED, {'url': vm_status.instance.get_url(),
-                               'is_eligible': can_extend_supersize_period(resize.expires),
-                               'expires': resize.expires,
-                               'extended_expiration': calculate_supersize_expiration_date(resize.expires)},\
-            vm_status.instance.id
+        return VM_SUPERSIZED, {
+            'url': vm_status.instance.get_url(),
+            'is_eligible': can_extend_supersize_period(resize.expires),
+            'expires': resize.expires,
+            'extended_expiration':
+                calculate_supersize_expiration_date(resize.expires)
+            }, vm_status.instance.id
     logger.error(f"get_vm_state for to an unhandled state for {user} requesting {desktop_type}")
     raise NotImplementedError
 
 
-def render_vm(request, user, desktop_type, requesting_feature, buttons_to_display):
-    state, what_to_show, vm_id = get_vm_state(user, desktop_type.id, requesting_feature)
-    app_name = requesting_feature.app_name
+def render_vm(request, user, desktop_type, buttons_to_display):
+    state, what_to_show, vm_id = get_vm_state(user, desktop_type)
+    app_name = desktop_type.feature.app_name
 
     #if (state == VM_OKAY or state == VM_SUPERSIZED)
     #    what_to_show['url'] = reverse(app_name + ':get_rdp_file', args=[vm_id])
 
     if state == VM_SUPERSIZED and what_to_show["is_eligible"]:
-        messages.info(request, format_html(f'Your {str(desktop_type).capitalize()} vm is set to resize '
-                  f'back to the default size on {what_to_show["expires"]}'))
+        messages.info(request, format_html(
+            f'Your {str(desktop_type).capitalize()} vm is set to resize '
+            f'back to the default size on {what_to_show["expires"]}'))
 
     context = {
         'what_to_show': what_to_show,
@@ -270,7 +287,7 @@ def render_vm(request, user, desktop_type, requesting_feature, buttons_to_displa
         'vm_id': vm_id,
         "buttons_to_display": buttons_to_display,
         "app_name": app_name,
-        "requesting_feature": requesting_feature,
+        "requesting_feature": desktop_type.feature,
         "VM_WAITING": VM_WAITING
     }
 
@@ -287,26 +304,30 @@ def notify_vm(request, requesting_feature):
     operating_system = request.GET.get("os")
     state = int(request.GET.get("state"))
     msg = request.GET.get("msg")
-    instance = Instance.objects.get_instance_by_ip_address(ip_address, requesting_feature)
+    instance = Instance.objects.get_instance_by_ip_address(
+        ip_address, requesting_feature)
     if not instance:
         logger.error(f"No current Instance found with ip address {ip_address}")
         raise Http404
     volume = instance.boot_volume
-    if generate_hostname(volume.hostname_id, volume.operating_system) != hostname:
+    if generate_hostname(volume.hostname_id,
+                         volume.operating_system) != hostname:
         logger.error(f"Hostname provided in request does not match hostname of volume {instance}, {hostname}")
         raise Http404
     if state == SCRIPT_OKAY:
         if msg == CLOUD_INIT_FINISHED:
             volume.ready = True
             volume.save()
-            vm_status = VMStatus.objects.get_vm_status_by_instance(instance, requesting_feature)
+            vm_status = VMStatus.objects.get_vm_status_by_instance(
+                instance, requesting_feature)
             vm_status.status = VM_OKAY
             vm_status.save()
         elif msg == CLOUD_INIT_STARTED:
             volume.checked_in = True
             volume.save()
     else:
-        vm_status = VMStatus.objects.get_vm_status_by_instance(instance, requesting_feature)
+        vm_status = VMStatus.objects.get_vm_status_by_instance(
+            instance, requesting_feature)
         vm_status.error(msg)
         logger.error(f"notify_vm error: {msg} for instance: \"{instance}\"")
     result = f"{ip_address}, {operating_system}, {state}, {msg}"
@@ -314,12 +335,17 @@ def notify_vm(request, requesting_feature):
     return result
 
 
-def rd_report_for_user(user, operating_systems, requesting_feature):
+def rd_report_for_user(user, desktop_type_ids, requesting_feature):
     rd_report_info = {}
-    for operating_system in operating_systems:
-        vms = Instance.objects.filter(user=user, boot_volume__operating_system=operating_system,
-                                      boot_volume__requesting_feature=requesting_feature).order_by('created')
-        deleted = [{'date': vm.marked_for_deletion, 'count': -1} for vm in vms.order_by('marked_for_deletion') if vm.marked_for_deletion]
+    for id in desktop_type_ids:
+        vms = Instance.objects.filter(
+            user=user,
+            boot_volume__operating_system=id,
+            boot_volume__requesting_feature=requesting_feature) \
+                              .order_by('created')
+        deleted = [{'date': vm.marked_for_deletion, 'count': -1}
+                   for vm in vms.order_by('marked_for_deletion')
+                   if vm.marked_for_deletion]
         created = [{'date': vm.created, 'count': 1} for vm in vms]
         vm_info = sorted(created + deleted, key=itemgetter('date'))
         count = 0
@@ -330,5 +356,5 @@ def rd_report_for_user(user, operating_systems, requesting_feature):
             date_obj['count'] = count
             vm_graph.append(date_obj)
         vm_graph.append({'date': datetime.now(timezone.utc), 'count': count})
-        rd_report_info[operating_system] = vm_graph
+        rd_report_info[id] = vm_graph
     return {'user_vm_info': rd_report_info}
