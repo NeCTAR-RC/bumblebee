@@ -41,9 +41,10 @@ class CloudResource(models.Model):
 
 
 class VolumeManager(models.Manager):
-    def get_volume(self, user, operating_system, requesting_feature):
+    def get_volume(self, user, desktop_type):
         try:
-            volume = self.get(user=user, operating_system=operating_system, requesting_feature=requesting_feature,
+            volume = self.get(user=user, operating_system=desktop_type.id,
+                              requesting_feature=desktop_type.feature,
                               marked_for_deletion=None, error_flag=None)
             return volume
         except Volume.DoesNotExist:
@@ -96,11 +97,13 @@ def _create_hostname_id():
 
 
 class InstanceManager(models.Manager):
-    def get_instance(self, user, operating_system, requesting_feature):
+    def get_instance(self, user, desktop_type):
         try:
-            instance = self.get(user=user, boot_volume__operating_system=operating_system,
-                                boot_volume__requesting_feature=requesting_feature,
-                                marked_for_deletion=None, error_flag=None)
+            instance = self.get(
+                user=user,
+                boot_volume__operating_system=desktop_type.id,
+                boot_volume__requesting_feature=desktop_type.feature,
+                marked_for_deletion=None, error_flag=None)
             return instance
         except Instance.DoesNotExist:
             return None
@@ -263,16 +266,20 @@ class Resize(models.Model):
 
 
 class VMStatusManager(models.Manager):
-    def get_latest_vm_status(self, user, operating_system, requesting_feature):
+    def get_latest_vm_status(self, user, desktop_type):
         try:
-            vm_status = self.filter(user=user, operating_system=operating_system, requesting_feature=requesting_feature).latest("created")
+            vm_status = self.filter(user=user,
+                                    operating_system=desktop_type.id,
+                                    requesting_feature=desktop_type.feature) \
+                            .latest("created")
             return vm_status
         except VMStatus.DoesNotExist:
             return None
 
     def get_vm_status_by_instance(self, instance, requesting_feature):
         try:
-            vm_status = self.get(instance=instance, requesting_feature=requesting_feature)
+            vm_status = self.get(instance=instance,
+                                 requesting_feature=requesting_feature)
             return vm_status
         except VMStatus.MultipleObjectsReturned as e:
             logger.error(e)
@@ -286,13 +293,15 @@ class VMStatusManager(models.Manager):
                          f"this vm belongs to {volume.requesting_feature}")
             raise Http404
         try:
-            instance = Instance.objects.filter(boot_volume=volume).latest("created")
+            instance = Instance.objects.filter(boot_volume=volume) \
+                                       .latest("created")
         except Exception as e:
             logger.error(f"Trying to get_vm_status_by_volume {volume}, could not find an instance with that volume,"
                          f"raised error {e}")
             raise e
         try:
-            vm_status = self.get(instance=instance, requesting_feature=requesting_feature)
+            vm_status = self.get(instance=instance,
+                                 requesting_feature=requesting_feature)
             return vm_status
         except VMStatus.MultipleObjectsReturned as e:
             logger.error(e)
@@ -301,20 +310,24 @@ class VMStatusManager(models.Manager):
             raise error
 
     # vm_id is untrusted because it comes from the user, so should be handled with care
-    def get_vm_status_by_untrusted_vm_id(self, vm_id, user, requesting_feature):
+    def get_vm_status_by_untrusted_vm_id(self, vm_id, user,
+                                         requesting_feature):
         # Get vm, and catch any errors
-        instance = Instance.objects.get_instance_by_untrusted_vm_id(vm_id, user, requesting_feature)
+        instance = Instance.objects.get_instance_by_untrusted_vm_id(
+            vm_id, user, requesting_feature)
         # Get vm_status
-        vm_status = self.get_vm_status_by_instance(instance, requesting_feature)
+        vm_status = self.get_vm_status_by_instance(
+            instance, requesting_feature)
         return vm_status
 
 
 class VMStatus(models.Model):
-    user = models.ForeignKey(User, on_delete=models.PROTECT, )
+    user = models.ForeignKey(User, on_delete=models.PROTECT)
     created = models.DateTimeField(auto_now_add=True)
-    requesting_feature = models.ForeignKey(Feature, on_delete=models.PROTECT, )
+    requesting_feature = models.ForeignKey(Feature, on_delete=models.PROTECT)
     operating_system = models.CharField(max_length=20)
-    instance = models.ForeignKey(Instance, on_delete=models.PROTECT, null=True, blank=True)
+    instance = models.ForeignKey(Instance, on_delete=models.PROTECT,
+                                 null=True, blank=True)
     status = models.CharField(max_length=20)
     wait_time = models.DateTimeField(null=True, blank=True)
 

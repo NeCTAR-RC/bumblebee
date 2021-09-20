@@ -275,7 +275,11 @@ def home(request):
     modules = []
     scripts = []
     for feature in selected_project_features:
-        feature_application = apps.app_configs.get(feature.app_name).module
+        feature_conf = apps.app_configs.get(feature.app_name)
+        if not feature_conf:
+            # User has been enabled for a feature that is not implemented
+            continue
+        feature_application = feature_conf.module
         feature_modules, feature_scripts = feature_application.views.render_modules(request)
         modules.extend(feature_modules)
         scripts.extend(feature_scripts)
