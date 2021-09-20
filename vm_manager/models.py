@@ -14,6 +14,7 @@ from researcher_workspace.models import Feature, User
 from vm_manager.constants import ERROR, ACTIVE, SHUTDOWN, VERIFY_RESIZE, RESIZE, VM_WAITING, VM_ERROR
 
 from vm_manager.utils.utils import get_nectar
+from vm_manager.utils.utils import generate_password
 
 from guacamole.models import GuacamoleConnection, GuacamoleConnectionParameter, GuacamoleConnectionPermission, GuacamoleEntity
 from guacamole import utils as guac_utils
@@ -109,29 +110,36 @@ class InstanceManager(models.Manager):
             return None
         except Instance.MultipleObjectsReturned as e:
             logger.error(e)
-            error = Instance.MultipleObjectsReturned(f"Multiple current instances found in the database with user={user} and os={operating_system}")
+            error = Instance.MultipleObjectsReturned(
+                f"Multiple current instances found in the database with "
+                f"user={user} and os={operating_system}")
             logger.error(error)
             raise error
 
     def get_instance_by_ip_address(self, ip_address, requesting_feature):
         try:
             try:
-                instance = self.get(ip_address=ip_address, marked_for_deletion=None, error_flag=None,
-                                    boot_volume__requesting_feature=requesting_feature)
+                instance = self.get(
+                    ip_address=ip_address, marked_for_deletion=None, error_flag=None,
+                    boot_volume__requesting_feature=requesting_feature)
                 return instance
             except Instance.DoesNotExist:
-                instances = self.filter(ip_address=None, marked_for_deletion=None, error_flag=None,
-                                        boot_volume__requesting_feature=requesting_feature)
+                instances = self.filter(
+                    ip_address=None, marked_for_deletion=None, error_flag=None,
+                    boot_volume__requesting_feature=requesting_feature)
                 for instance in instances:
                     instance.get_ip_addr()
-                instance = self.get(ip_address=ip_address, marked_for_deletion=None, error_flag=None,
-                                    boot_volume__requesting_feature=requesting_feature)
+                instance = self.get(
+                    ip_address=ip_address, marked_for_deletion=None, error_flag=None,
+                    boot_volume__requesting_feature=requesting_feature)
                 return instance
         except Instance.DoesNotExist:
             return None
         except Instance.MultipleObjectsReturned as e:
             logger.error(e)
-            error = Instance.MultipleObjectsReturned(f"Multiple current instances found in the database with ip_address={ip_address}")
+            error = Instance.MultipleObjectsReturned(
+                f"Multiple current instances found in the database "
+                f"with ip_address={ip_address}")
             logger.error(error)
             raise error
 
@@ -168,6 +176,8 @@ class Instance(CloudResource):
     ip_address = models.GenericIPAddressField(null=True, blank=True)
     guac_connection = models.ForeignKey(GuacamoleConnection,
         on_delete=models.SET_NULL, null=True, blank=True)
+    username = models.CharField(max_length=20)
+    password = models.CharField(max_length=32)
 
     objects = InstanceManager()
 
@@ -185,11 +195,8 @@ class Instance(CloudResource):
     def create_guac_connection(self):
         params = [
             ('hostname', self.get_ip_addr()),
-            ('port', '3389'),
-            ('username', 'ubuntu'),
-            ('password', 'Nectar1!'),
-#            ('security', 'any'),
-#            ('disable-auth', 'true'),
+            ('username', self.username),
+            ('password', self.password),
         ]
 
         connection_params = []
@@ -345,8 +352,8 @@ class VMStatus(models.Model):
     objects = VMStatusManager()
 
     def __str__(self):
-        return_string = f"VMStatus({self.id}) of [{self.requesting_feature}]" \
-                        f"[{self.operating_system.capitalize()}][{self.user}] is {self.status}"
+        return_string = f"Status of [{self.requesting_feature}]" \
+                        f"[{self.operating_system}][{self.user}] is {self.status}"
         return return_string
 
 

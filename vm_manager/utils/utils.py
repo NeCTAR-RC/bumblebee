@@ -9,6 +9,7 @@ from nectarallocationclient import client as allocation_client
 from novaclient import client as nova_client
 
 from django.conf import settings
+from django.utils.crypto import get_random_string
 
 #from researcher_workspace.resplat.ldap_backend import ResplatLDAPBackend
 from researcher_workspace.settings import ENVIRONMENT_NAME
@@ -114,3 +115,6 @@ class FlavorDetails(object):
 
 def after_time(seconds):
     return datetime.now(timezone.utc) + timedelta(seconds=seconds)
+
+def generate_password() -> str:
+    return get_random_string(20)

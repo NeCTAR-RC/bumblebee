@@ -4,6 +4,7 @@ from django.conf import settings
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.http import JsonResponse, HttpResponse, HttpResponseRedirect, Http404
 from django.urls import reverse
+from django.views.decorators.csrf import csrf_exempt
 
 from researcher_workspace.models import Feature
 from researcher_desktop.constants import NOTIFY_VM_PATH_PLACEHOLDER
@@ -105,6 +106,11 @@ def start_downsizing_cron_job(request):
 
 def notify_vm(request):
     return HttpResponse(vm_man_views.notify_vm(request, desktops_feature()))
+
+
+@csrf_exempt
+def phone_home(request):
+    return HttpResponse(vm_man_views.phone_home(request))
 
 
 @login_required(login_url='login')

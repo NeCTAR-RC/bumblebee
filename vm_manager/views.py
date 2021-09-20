@@ -10,6 +10,8 @@ from django.http import HttpResponseRedirect, Http404
 from django.template import loader
 from django.urls import reverse
 from django.utils.html import format_html
+from django.views.decorators.csrf import csrf_exempt
+
 from operator import itemgetter
 
 from researcher_desktop.models import DesktopType
@@ -30,7 +32,7 @@ from vm_manager.vm_functions.admin_functionality import test_function, admin_wor
     vm_report_for_page, vm_report_for_csv, db_check
 from vm_manager.vm_functions.create_vm import launch_vm_worker
 from vm_manager.vm_functions.delete_vm import delete_vm_worker
-from vm_manager.vm_functions.other_vm_functions import get_rdp_file, reboot_vm_worker
+from vm_manager.vm_functions.other_vm_functions import reboot_vm_worker
 from vm_manager.vm_functions.shelve_vm import shelve_vm_worker, unshelve_vm_worker
 from vm_manager.vm_functions.resize_vm import can_extend_supersize_period, calculate_supersize_expiration_date, \
     supersize_vm_worker, downsize_vm_worker, extend, downsize_expired_supersized_vms
@@ -275,9 +277,6 @@ def render_vm(request, user, desktop_type, buttons_to_display):
     state, what_to_show, vm_id = get_vm_state(user, desktop_type)
     app_name = desktop_type.feature.app_name
 
-    #if (state == VM_OKAY or state == VM_SUPERSIZED)
-    #    what_to_show['url'] = reverse(app_name + ':get_rdp_file', args=[vm_id])
-
     if state == VM_SUPERSIZED and what_to_show["is_eligible"]:
         messages.info(request, format_html(
             f'Your {str(desktop_type).capitalize()} vm is set to resize '
@@ -335,6 +334,12 @@ def notify_vm(request, requesting_feature):
     result = f"{ip_address}, {operating_system}, {state}, {msg}"
     logger.info(result)
     return result
+
+
+@csrf_exempt
+def phone_home(request):
+    # TODO(andy) Migrate from notify_vm to phone_home
+    logger.info(dict(request.POST.items()))
 
 
 def rd_report_for_user(user, desktop_type_ids, requesting_feature):

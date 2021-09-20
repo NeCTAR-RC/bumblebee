@@ -6,11 +6,9 @@ import django_rq
 from django.http import Http404
 from novaclient.v2.servers import REBOOT_HARD, REBOOT_SOFT
 
-from vm_manager.constants import IP_PLACEHOLDER, USERNAME_PLACEHOLDER, DOMAIN_PLACEHOLDER, \
-    REBOOT_CONFIRM_WAIT_SECONDS
+from vm_manager.constants import REBOOT_CONFIRM_WAIT_SECONDS
 from vm_manager.models import Instance, VMStatus
-from vm_manager.utils.RDP_file import rdp_file
-from vm_manager.utils.utils import get_nectar, get_domain
+from vm_manager.utils.utils import get_nectar
 
 logger = logging.getLogger(__name__)
 
@@ -42,10 +40,3 @@ def check_power_state(instance, requesting_feature):
     if not active:
         vm_status.error("Instance not Powered up after Restart")
         vm_status.save()
-
-
-def get_rdp_file(user, vm_id, requesting_feature):
-    instance = Instance.objects.get_instance_by_untrusted_vm_id(vm_id, user, requesting_feature)
-    rdp_info = rdp_file.replace(IP_PLACEHOLDER, instance.get_url())\
-        .replace(USERNAME_PLACEHOLDER, user.username).replace(DOMAIN_PLACEHOLDER, get_domain(user))
-    return rdp_info
