@@ -6,27 +6,6 @@ features = [
     {"name": "Researcher Desktop", "app_name": "researcher_desktop", "currently_available": True,
         "feature_or_service": True, "auto_approved": True, "beta": True, "closed_beta": False,
         "description": "Researcher desktop provides users access to an easy to use, quick to launch computer running in the Melbourne Research Cloud. This provides extra computing power for your research, a computer that's always on and always available to be running computation, scraping APIs, or running programs you can't run on your own computer."},
-    {"name": "Research Server", "app_name": "specialty_resources", "currently_available": True,
-        "feature_or_service": True, "auto_approved": False, "beta": True, "closed_beta": True,
-        "description": "The ‘Research Server’ provides optimised access to the Melbourne Research Cloud (MRC) allowing non expert researchers to deploy server-class virtual machines with a user experience similar to the current RCS ‘Researcher Desktop’.  Users can choose from a wider array of technical options, including high core count or faster core instances, with more options coming soon, including public IPs and GPU-enabled flavours."},
-    {"name": "TCAT", "app_name": "tcat", "currently_available": False, "feature_or_service": True,
-        "auto_approved": False, "beta": False, "closed_beta": False,
-        "description": "TCAT is an easy-to-use Twitter Capture and Analysis Tool.  This service allows users to deploy a TCAT server that runs on the Melbourne Research Cloud (MRC) as a private virtual server.  This server can be left running 24x7 to capture Tweets (within the limits of the associated developer account)."},
-    {"name": "R Shiny", "app_name": "rshiny", "currently_available": False, "feature_or_service": True,
-        "auto_approved": False, "beta": False, "closed_beta": False,
-        "description": "The R Shiny service provides a managed web platform for R Shiny apps.  Once you have developed your app, simply package it up with Packrat and upload it to the R Shiny server.  It will then be published on a central server hosted on the Melbourne Research Cloud (MRC)."},
-    {"name": "Research Computing Services", "app_name": None, "currently_available": False,
-        "feature_or_service": False, "auto_approved": False, "beta": False, "closed_beta": False,
-        "description": "https://gateway.research.unimelb.edu.au/resources/platforms-infrastructure-and-equipment/research-computing-services"},
-    {"name": "HPC - High Performance Computing", "app_name": None, "currently_available": False,
-        "feature_or_service": False, "auto_approved": False, "beta": False, "closed_beta": False,
-        "description": "https://gateway.research.unimelb.edu.au/resources/platforms-infrastructure-and-equipment/research-computing-services/services/hpc-high-performance-computing"},
-    {"name": "Research Cloud", "app_name": None, "currently_available": False, "feature_or_service": False,
-        "auto_approved": False, "beta": False, "closed_beta": False,
-        "description": "https://gateway.research.unimelb.edu.au/resources/platforms-infrastructure-and-equipment/research-computing-services/services/research-cloud"},
-    {"name": "Data Storage and Management", "app_name": None, "currently_available": False,
-        "feature_or_service": False, "auto_approved": False, "beta": False, "closed_beta": False,
-        "description": "https://gateway.research.unimelb.edu.au/resources/platforms-infrastructure-and-equipment/research-computing-services/services/data-storage-management"}
 ]
 
 

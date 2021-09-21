@@ -18,42 +18,6 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name='GuacamoleEntity',
-            fields=[
-                ('entity_id', models.AutoField(primary_key=True, serialize=False)),
-                ('name', models.CharField(max_length=128)),
-                ('type', models.CharField(max_length=10)),
-            ],
-            options={
-                'db_table': 'guacamole_entity',
-                'managed': False,
-            },
-        ),
-        migrations.CreateModel(
-            name='GuacamoleUser',
-            fields=[
-                ('user_id', models.AutoField(primary_key=True, serialize=False)),
-                ('password_hash', models.CharField(max_length=32)),
-                ('password_salt', models.CharField(blank=True, max_length=32, null=True)),
-                ('password_date', models.DateTimeField(auto_now_add=True)),
-                ('disabled', models.BooleanField(default=False)),
-                ('expired', models.BooleanField(default=False)),
-                ('access_window_start', models.TimeField(blank=True, null=True)),
-                ('access_window_end', models.TimeField(blank=True, null=True)),
-                ('valid_from', models.DateField(blank=True, null=True)),
-                ('valid_until', models.DateField(blank=True, null=True)),
-                ('timezone', models.CharField(blank=True, max_length=64, null=True)),
-                ('full_name', models.CharField(blank=True, max_length=256, null=True)),
-                ('email_address', models.CharField(blank=True, max_length=256, null=True)),
-                ('organization', models.CharField(blank=True, max_length=256, null=True)),
-                ('organizational_role', models.CharField(blank=True, max_length=256, null=True)),
-            ],
-            options={
-                'db_table': 'guacamole_user',
-                'managed': False,
-            },
-        ),
-        migrations.CreateModel(
             name='User',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
