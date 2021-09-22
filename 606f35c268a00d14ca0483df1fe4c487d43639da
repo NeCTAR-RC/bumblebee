@@ -22,6 +22,30 @@
       },
       "revId": "606f35c268a00d14ca0483df1fe4c487d43639da",
       "serverId": "f182a8af-62ca-4ceb-ab81-14f8fec9c6c5"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "9fe4e59f_2a0181b1",
+        "filename": "researcher_desktop/models.py",
+        "patchSetId": 3
+      },
+      "lineNbr": 53,
+      "author": {
+        "id": 1000157
+      },
+      "writtenOn": "2021-09-22T02:08:45Z",
+      "side": 1,
+      "message": "Yea.  Can deal with that.  (I was thinking we might need different scripts for different desktop types ...)",
+      "parentUuid": "99fa2da4_b9f46935",
+      "range": {
+        "startLine": 53,
+        "startChar": 8,
+        "endLine": 53,
+        "endChar": 24
+      },
+      "revId": "606f35c268a00d14ca0483df1fe4c487d43639da",
+      "serverId": "f182a8af-62ca-4ceb-ab81-14f8fec9c6c5"
     }
   ]
 }
