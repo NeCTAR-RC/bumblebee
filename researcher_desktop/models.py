@@ -8,6 +8,7 @@ from django.urls import reverse
 
 from researcher_workspace import models as workspace_models
 from vm_manager.utils.utils import get_nectar
+from vm_manager.utils.utils import FlavorDetails
 
 from researcher_desktop.constants import NOTIFY_VM_PATH_PLACEHOLDER
 from researcher_desktop.utils.user_data_ubuntu import user_data_ubuntu
@@ -30,18 +31,18 @@ class DesktopType(models.Model):
     enabled = models.BooleanField(default=True)
 
     @property
-    def default_flavor_id(self):
-        return self._flavor_id_map[self.default_flavor_name]
+    def default_flavor(self):
+        return self._flavor_map[self.default_flavor_name]
 
     @property
-    def big_flavor_id(self):
-        return self._flavor_id_map[self.big_flavor_name]
+    def big_flavor(self):
+        return self._flavor_map[self.big_flavor_name]
 
     @cached_property
-    def _flavor_id_map(self):
+    def _flavor_map(self):
         res = {}
         for f in get_nectar().nova.flavors.list():
-            res[f.name] = f.id
+            res[f.name] = FlavorDetails(f)
         return res
 
     @cached_property

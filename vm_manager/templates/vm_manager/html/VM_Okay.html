@@ -57,13 +57,13 @@
           <tbody>
             <tr>
               <td> vCPU </td>
-              <td> 4 vCPU Cores </td>
-              <td> 16 vCPU Cores </td>
+              <td> {{ desktop_type.default_flavor.vcpus }} vCPU Cores </td>
+              <td> {{ desktop_type.big_flavor.vcpus }} vCPU Cores </td>
             </tr>
             <tr>
               <td> RAM </td>
-              <td> 16 GB </td>
-              <td> 64 GB </td>
+              <td> {{ desktop_type.default_flavor.ram }} GB </td>
+              <td> {{ desktop_type.big_flavor.ram }} GB </td>
           </tr>
           </tbody>
         </table>

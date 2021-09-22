@@ -98,3 +98,13 @@ def get_domain(user) -> str:
     #if 'student' in backend.get_user(user.id).ldap_user.attrs['auedupersontype']:
     #    return STUDENT
     return 'test'
+
+
+class FlavorDetails(object):
+
+    def __init__(self, flavor):
+        self.id = flavor.id
+        self.name = flavor.name
+        self.ram = flavor.ram
+        self.disk = flavor.disk
+        self.vcpus = flavor.vcpus

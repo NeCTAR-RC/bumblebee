@@ -67,7 +67,7 @@ def _create_volume(user, desktop_type):
         image=desktop_type.source_volume_id,
         requesting_feature=requesting_feature,
         operating_system=operating_system,
-        flavor=desktop_type.default_flavor_id)
+        flavor=desktop_type.default_flavor.id)
     volume.save()
 
     # Add the volume's hostname to the volume's metadata on openstack
@@ -148,7 +148,7 @@ def _create_instance(user, desktop_type, volume):
 
     # Create instance in OpenStack
     launch_result = n.nova.servers.create(
-        name=hostname, image="", flavor=desktop_type.default_flavor_id,
+        name=hostname, image="", flavor=desktop_type.default_flavor.id,
         userdata=user_data_script,
         security_groups=desktop_type.security_groups,
         key_name=settings.OS_KEYNAME, block_device_mapping_v1=None,
