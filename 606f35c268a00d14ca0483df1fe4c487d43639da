@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "99fa2da4_b9f46935",
+        "filename": "researcher_desktop/models.py",
+        "patchSetId": 3
+      },
+      "lineNbr": 53,
+      "author": {
+        "id": 1000077
+      },
+      "writtenOn": "2021-09-22T00:13:50Z",
+      "side": 1,
+      "message": "I\u0027ve refactored the userdata stuff, so these might go or be refactored",
+      "range": {
+        "startLine": 53,
+        "startChar": 8,
+        "endLine": 53,
+        "endChar": 24
+      },
+      "revId": "606f35c268a00d14ca0483df1fe4c487d43639da",
+      "serverId": "f182a8af-62ca-4ceb-ab81-14f8fec9c6c5"
+    }
+  ]
+}
