@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "8fba952a_0395c678",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1000157
+      },
+      "writtenOn": "2021-09-22T03:56:31Z",
+      "side": 1,
+      "message": "Looks good to me (modulo the conflicts ...)",
+      "revId": "7543d73cba98fa8b2036bce42eb8a08eb3d3edc0",
+      "serverId": "f182a8af-62ca-4ceb-ab81-14f8fec9c6c5"
+    }
+  ]
+}
