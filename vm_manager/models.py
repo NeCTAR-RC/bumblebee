@@ -221,8 +221,10 @@ class Instance(CloudResource):
         return self.get_status() == ACTIVE
 
     def check_active_or_resize_statuses(self):
-        vm_status = self.get_status()
-        return vm_status == ACTIVE or vm_status == VERIFY_RESIZE or vm_status == RESIZE
+        return self.get_status() in (ACTIVE, VERIFY_RESIZE, RESIZE)
+
+    def check_resizing_status(self):
+        return self.get_status() == RESIZE
 
     def check_shutdown_status(self):
         return self.get_status() == SHUTDOWN

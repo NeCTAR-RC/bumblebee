@@ -92,8 +92,8 @@ class ResizeAdmin(admin.ModelAdmin):
         'instance',
     )
 
-    def has_delete_permission(self, request, obj=None):
-        return False
+#    def has_delete_permission(self, request, obj=None):
+#        return False
 
 
 class VMStatusAdmin(admin.ModelAdmin):

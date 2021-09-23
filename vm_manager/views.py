@@ -13,6 +13,7 @@ from django.utils.html import format_html
 from operator import itemgetter
 
 from researcher_desktop.models import DesktopType
+from researcher_desktop.utils.utils import get_desktop_type
 
 from vm_manager.models import VMStatus, Instance, Resize
 
@@ -21,6 +22,7 @@ from vm_manager.constants import VM_ERROR, VM_OKAY, VM_WAITING, VM_SHELVED, NO_V
     CLOUD_INIT_FINISHED, CLOUD_INIT_STARTED, REBOOT_WAIT_SECONDS, RESIZE_WAIT_SECONDS, SHELVE_WAIT_SECONDS
 
 from vm_manager.constants import SCRIPT_ERROR, SCRIPT_OKAY
+from vm_manager.utils.utils import after_time
 from vm_manager.utils.utils import generate_hostname
 
 # These are all needed, as they're consumed by researcher_workspace/views.py
@@ -36,9 +38,6 @@ from vm_manager.vm_functions.resize_vm import can_extend_supersize_period, calcu
 logger = logging.getLogger(__name__)
 
 
-def _after_wait(seconds):
-    return datetime.now(timezone.utc) + timedelta(seconds=seconds)
-
 def launch_vm(user, desktop_type) -> str:
     vm_status = VMStatus.objects.get_latest_vm_status(user, desktop_type)
     if vm_status and vm_status.status != VM_DELETED:
@@ -49,7 +48,7 @@ def launch_vm(user, desktop_type) -> str:
     vm_status = VMStatus(
         user=user, requesting_feature=desktop_type.feature,
         operating_system=desktop_type.id, status=VM_CREATING,
-        wait_time=_after_wait(LAUNCH_WAIT_SECONDS))
+        wait_time=after_time(LAUNCH_WAIT_SECONDS))
     vm_status.save()
 
     # Check for race condition in previous statements and delete duplicate VMStatus
@@ -129,7 +128,7 @@ def shelve_vm(user, vm_id, requesting_feature) -> str:
 
     logger.info(f"Changing the VMStatus of {vm_id} from {vm_status.status} to "
                 f"{VM_WAITING} and Mark for Deletion is set on the Instance")
-    vm_status.wait_time = _after_wait(SHELVE_WAIT_SECONDS)
+    vm_status.wait_time = after_time(SHELVE_WAIT_SECONDS)
     vm_status.status = VM_WAITING
     vm_status.save()
     vm_status.instance.set_marked_for_deletion()
@@ -151,7 +150,7 @@ def unshelve_vm(user, desktop_type) -> str:
     vm_status = VMStatus(user=user,
                          requesting_feature=desktop_type.feature,
                          operating_system=desktop_type.id, status=VM_CREATING,
-                         wait_time=_after_wait(LAUNCH_WAIT_SECONDS))
+                         wait_time=after_time(LAUNCH_WAIT_SECONDS))
     vm_status.save()
 
     queue = django_rq.get_queue('default')
@@ -163,7 +162,7 @@ def unshelve_vm(user, desktop_type) -> str:
 def reboot_vm(user, vm_id, reboot_level, requesting_feature) -> str:
     vm_status = VMStatus.objects.get_vm_status_by_untrusted_vm_id(
         vm_id, user, requesting_feature)
-    vm_status.wait_time = _after_wait(REBOOT_WAIT_SECONDS)
+    vm_status.wait_time = after_time(REBOOT_WAIT_SECONDS)
     vm_status.save()
 
     queue = django_rq.get_queue('default')
@@ -173,7 +172,7 @@ def reboot_vm(user, vm_id, reboot_level, requesting_feature) -> str:
     return str(vm_status)
 
 
-def supersize_vm(user, vm_id, flavor, requesting_feature) -> str:
+def supersize_vm(user, vm_id, requesting_feature) -> str:
     vm_status = VMStatus.objects.get_vm_status_by_untrusted_vm_id(
         vm_id, user, requesting_feature)
 
@@ -182,14 +181,15 @@ def supersize_vm(user, vm_id, flavor, requesting_feature) -> str:
         logger.error(error_message)
         return error_message
 
+    desktop_type = get_desktop_type(vm_status.operating_system)
+
     vm_status.status = VM_RESIZING
-    vm_status.wait_time = after_wait()
+    vm_status.wait_time = after_time(RESIZE_WAIT_SECONDS)
     vm_status.save()
 
     queue = django_rq.get_queue('default')
     queue.enqueue(supersize_vm_worker, instance=vm_status.instance,
-                  flavor=flavor,
-                  requesting_feature=requesting_feature)
+                  desktop_type=desktop_type)
 
     return str(vm_status)
 
@@ -203,13 +203,15 @@ def downsize_vm(user, vm_id, requesting_feature) -> str:
         logger.error(error_message)
         return error_message
 
+    desktop_type = get_desktop_type(vm_status.operating_system)
+
     vm_status.status = VM_RESIZING
-    vm_status.wait_time = _after_wait(RESIZE_WAIT_SECONDS)
+    vm_status.wait_time = after_time(RESIZE_WAIT_SECONDS)
     vm_status.save()
 
     queue = django_rq.get_queue('default')
     queue.enqueue(downsize_vm_worker, instance=vm_status.instance,
-                  requesting_feature=requesting_feature)
+                  desktop_type=desktop_type)
 
     return str(vm_status)
 

@@ -1,3 +1,5 @@
+from datetime import datetime, timedelta, timezone
+
 from cinderclient import client as cinder_client
 from glanceclient import client as glance_client
 from keystoneauth1 import session
@@ -108,3 +110,7 @@ class FlavorDetails(object):
         self.ram = flavor.ram
         self.disk = flavor.disk
         self.vcpus = flavor.vcpus
+
+
+def after_time(seconds):
+    return datetime.now(timezone.utc) + timedelta(seconds=seconds)

@@ -1,4 +1,4 @@
-{% extends 'vm_manager/html/VM_Okay_base.html' %}
+{% extends 'vm_manager/html/VM_Okay.html' %}
 
 {% block supersize_message %}
     <p>
@@ -10,21 +10,12 @@
     </p>
 {% endblock supersize_message %}
 {% block buttons %}
-<div>
-    Switch back to the default size of your {{ requesting_feature }}.
-</div>
-<a class="button" data-modal-target="{{ app_name }}-{{ desktop_type.id }}-downsize-modal" href="#"
-title="Switch back to the default size of your {{ requesting_feature }}">
-    Downsize my {{ desktop_type.id }} {{ requesting_feature }} <sup>(BETA)</sup>
-</a>
-<div> Extend your boosted period by seven days.
-    Can only be done when the expiration date is less than one week from today.
-</div>
-<button class="button" title="Extend your boosted period by seven days"
-data-modal-target="{{ app_name }}-{{ desktop_type.id }}-extend-modal" show-button="{{ what_to_show.is_eligible }}">
-    Extend The Expiration
-</button>
-
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#{{ app_name }}-{{ desktop_type.id }}-downsize-modal">
+	  Downsize my {{ desktop_type.name }} {{ requesting_feature }}
+	</button>
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#{{ app_name }}-{{ desktop_type.id }}-extend-modal">
+	  Extend my {{ desktop_type.name }} {{ requesting_feature }} Boost by N days
+	</button>
 {% endblock buttons %}
 
 {% block modals %}

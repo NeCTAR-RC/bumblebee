@@ -3,25 +3,31 @@ from datetime import datetime, timedelta, timezone
 import django_rq
 
 from vm_manager.constants import DOWNSIZE_PERIOD, RESIZE_CONFIRM_WAIT_SECONDS, VM_SUPERSIZED, VM_RESIZING, VM_OKAY
-from vm_manager.utils.utils import get_nectar
+from vm_manager.utils.utils import after_time, get_nectar
 from vm_manager.models import VMStatus, Instance, Resize
 
 logger = logging.getLogger(__name__)
 
 
-def supersize_vm_worker(instance, flavor, requesting_feature) -> str:
-    logger.info(f"About to supersize {instance.boot_volume.operating_system} vm "
+def supersize_vm_worker(instance, desktop_type) -> str:
+    logger.info(f"About to supersize {desktop_type.id} vm "
                 f"for user {instance.user.username}")
-    supersize_result = _resize_vm(instance, flavor, requesting_feature)
-    resize = Resize(instance=instance, expires=calculate_supersize_expiration_date(datetime.now(timezone.utc).date()))
+    supersize_result = _resize_vm(instance,
+                                  desktop_type.big_flavor.id,
+                                  desktop_type.feature)
+    resize = Resize(instance=instance,
+                    expires=calculate_supersize_expiration_date(
+                        datetime.now(timezone.utc).date()))
     resize.save()
     return supersize_result
 
 
-def downsize_vm_worker(instance, requesting_feature) -> str:
-    logger.info(f"About to downsize {instance.boot_volume.operating_system} vm "
+def downsize_vm_worker(instance, destop_type) -> str:
+    logger.info(f"About to downsize {desktop_type.id} vm "
                 f"for user {instance.user.username}")
-    downsize_result = _resize_vm(instance, instance.boot_volume.flavor, requesting_feature)
+    downsize_result = _resize_vm(instance,
+                                 desktop_type.default_flavor.id,
+                                 desktop_type.feature)
     resize = Resize.objects.get_latest_resize(instance.id)
     resize.reverted = datetime.now(timezone.utc)
     resize.save()
@@ -47,46 +53,69 @@ def _resize_vm(instance, flavor, requesting_feature):
     n = get_nectar()
     resize_result = n.nova.servers.resize(instance.id, flavor)
     scheduler = django_rq.get_scheduler('default')
-    scheduler.enqueue_at(datetime.now(timezone.utc)+timedelta(seconds=RESIZE_CONFIRM_WAIT_SECONDS),
-                         _confirm_resize, instance, flavor, requesting_feature)
+    scheduler.enqueue_in(timedelta(seconds=5),
+                         _wait_to_confirm_resize,
+                         instance, flavor,
+                         after_time(RESIZE_CONFIRM_WAIT_SECONDS),
+                         requesting_feature)
     return resize_result
 
 
-def _confirm_resize(instance, flavor, requesting_feature):
-    status = VM_OKAY if flavor == instance.boot_volume.flavor else VM_SUPERSIZED
+def _wait_to_confirm_resize(instance, flavor, deadline, requesting_feature):
+    status = VM_OKAY if flavor == instance.boot_volume.flavor \
+        else VM_SUPERSIZED
     n = get_nectar()
-    logger.info(f"Confirming resize of {instance}")
-    vm_status = VMStatus.objects.get_vm_status_by_instance(instance, requesting_feature)
+    vm_status = VMStatus.objects.get_vm_status_by_instance(
+        instance, requesting_feature)
 
     if instance.check_active_status():
         try:
             resized_instance = n.nova.servers.get(instance.id)
             instance_flavor = resized_instance.flavor['id']
         except Exception as e:
-            logger.error(f"Something went wrong with the instance get call for {instance}, it returned {e}")
+            logger.error(f"Something went wrong with the instance get call "
+                         f"for {instance}, it returned {e}")
             return
 
         if instance_flavor != str(flavor):
-            error_message = f"Instance ({instance}) resize failed as instance hasn't changed flavor: " \
-                            f"Actual Flavor: {instance_flavor}, Expected Flavor: {flavor}"
+            error_message = \
+                f"Instance ({instance}) resize failed as " \
+                f"instance hasn't changed flavor: " \
+                f"Actual Flavor: {instance_flavor}, Expected Flavor: {flavor}"
             logger.error(error_message)
             vm_status.error(error_message)
             vm_status.save()
             return error_message
 
-        log_message = f"Resize of {instance} has already been confirmed automatically"
+        log_message = \
+            f"Resize of {instance} has already been confirmed automatically"
         logger.info(log_message)
         vm_status.status = status
         vm_status.save()
         return log_message
 
     if instance.check_verify_resize_status():
+        logger.info(f"Confirming resize of {instance}")
         n.nova.servers.confirm_resize(instance.id)
         vm_status.status = status
         vm_status.save()
         return str(vm_status)
 
-    error_message = f"Instance ({instance}) resize failed instance in state: {instance.get_status()}"
+    if instance.check_resizing_status():
+        logger.info(f"Waiting for resize of {instance}")
+        if datetime.now(timezone.utc) < deadline:
+            scheduler = django_rq.get_scheduler('default')
+            scheduler.enqueue_in(timedelta(seconds=5),
+                                 _wait_to_confirm_resize,
+                                 instance, flavor, deadline,
+                                 requesting_feature)
+            return str(vm_status)
+        else:
+            logger.error("Resize has taken too long")
+
+    error_message = \
+        f"Instance ({instance}) resize failed instance in " \
+        f"state: {instance.get_status()}"
     logger.error(error_message)
     vm_status.error(error_message)
     vm_status.save()
@@ -98,7 +127,8 @@ def calculate_supersize_expiration_date(date):
 
 
 def can_extend_supersize_period(date):
-    return date < datetime.now(timezone.utc).date() + timedelta(days=DOWNSIZE_PERIOD)
+    return date < (datetime.now(timezone.utc).date() +
+                   timedelta(days=DOWNSIZE_PERIOD))
 
 
 def downsize_expired_supersized_vms(requesting_feature):

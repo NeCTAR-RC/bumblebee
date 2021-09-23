@@ -1,5 +1,8 @@
-{% extends 'vm_manager/javascript/VM_Okay_base.js' %}
+{% extends 'vm_manager/javascript/VM_Okay.js' %}
 {% block script %}
+
+{{ block.super }}
+
 function downsize_{{ app_name }}_{{ desktop_type.id.capitalize }}(tag) {
     if (!beenClicked) {
         beenClicked = true;
