@@ -200,6 +200,9 @@ class Instance(CloudResource):
             ('security', 'tls'),
             ('ignore-cert', 'true'),
             ('resize-method', 'display-update'),
+            ('enable-drive', 'true'),
+            ('drive-path', '/var/lib/guacd/shared-drive'),
+            ('create-drive-path', 'true'),
         ]
 
         connection_params = []
