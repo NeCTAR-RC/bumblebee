@@ -5,61 +5,67 @@
     Your {{ desktop_type.id }} {{ requesting_feature }} is set to resize back
     to the default size after 11:59 pm on {{ what_to_show.expires }}.
     </p>
+    {% if "EXTEND_BUTTON" in buttons_to_display %}
     <p>
     Please check the options below if you would like to extend the expiration.
     </p>
+    {% endif %}
 {% endblock supersize_message %}
 {% block buttons %}
+        {% if "DOWNSIZE_BUTTON" in buttons_to_display %}
         <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#{{ app_name }}-{{ desktop_type.id }}-downsize-modal">
-	  Downsize my {{ desktop_type.name }} {{ requesting_feature }}
+	  Downsize
 	</button>
+	{% endif %}
+	{% if "EXTEND_BUTTON" in buttons_to_display %}
         <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#{{ app_name }}-{{ desktop_type.id }}-extend-modal">
-	  Extend my {{ desktop_type.name }} {{ requesting_feature }} Boost by N days
+	  Extend
 	</button>
+	{% endif %}
 {% endblock buttons %}
 
 {% block modals %}
-<div class="modal__dialog" id="{{ app_name }}-{{ desktop_type.id }}-downsize-modal">
-    <h2>
-        Confirm Downsizing Your {{ desktop_type.id }} {{ requesting_feature }}
-    </h2>
-    <p>
-        Please save any work and close the connection to your {{ requesting_feature }} before downsizing it.
-    </p>
-    <p>
-        Your {{ requesting_feature }} will be unreachable for five minutes while downsizing.
-    </p>
-    <p>
-        Please confirm your selection.
-    </p>
-    <div>
-        <button class="button-small"
-                title="Downsize {{ desktop_type.id }} {{ requesting_feature }}"
-                onclick="downsize_{{ app_name }}_{{ desktop_type.id }}(this)">
-            DOWNSIZE
-        </button>
+{% if "DOWNSIZE_BUTTON" in buttons_to_display %}
+<div class="modal fade" id="{{ app_name }}-{{ desktop_type.id }}-downsize-modal" tabindex="-1" aria-labelledby="{{ app_name }}-{{ desktop_type.id }}-downsize-modal-label" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="{{ app_name }}-{{ desktop_type.id }}-downsize-modal-label">Confirm</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p>Please save any work and close the connection to your {{ requesting_feature }} before downsizing it.</p>
+        <p>Your {{ requesting_feature }} will be unreachable for five minutes while downsizing.</p>
+        <p>Please confirm your selection.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-danger" onclick="downsize_{{ app_name }}_{{ desktop_type.id }}(this)">Downsize</button>
+      </div>
     </div>
+  </div>
 </div>
-
-<div class="modal__dialog" id="{{ app_name }}-{{ desktop_type.id }}-extend-modal">
-    <h2>
-        Extend the Expiration of Your Boosted {{ desktop_type.id }} {{ requesting_feature }}
-    </h2>
-    <p>
-        This will extend the expiration by seven days.
-    </p>
-    <p>
-        The current expiration date is {{ what_to_show.expires }}
-    </p>
-    <p>
-        The new expiration date will be {{ what_to_show.extended_expiration }}
-    </p>
-    <div>
-        <button class="button-small"
-                title="Extend {{ desktop_type.id }} {{ requesting_feature }}"
-                onclick="extend_{{ app_name }}_{{ desktop_type.id }}(this)">
-            EXTEND
-        </button>
+{% endif %}
+{% if "EXTEND_BUTTON" in buttons_to_display %}
+<div class="modal fade" id="{{ app_name }}-{{ desktop_type.id }}-extend-modal" tabindex="-1" aria-labelledby="{{ app_name }}-{{ desktop_type.id }}-extend-modal-label" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="{{ app_name }}-{{ desktop_type.id }}-extend-modal-label">Confirm</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p>This will extend your boosted {{ requesting_feature }} by seven days.</p>
+        <p>The current expiration date is {{ what_to_show.expires }}</p>
+        <p>The new expiration date will be {{ what_to_show.extended_expiration }}</p>
+        <p>Please confirm your selection.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-danger" onclick="extend_{{ app_name }}_{{ desktop_type.id }}(this)">Downsize</button>
+      </div>
     </div>
+  </div>
 </div>
+{% endif %}
 {% endblock modals %}
