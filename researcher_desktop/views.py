@@ -56,7 +56,7 @@ def shelve_vm(request, vm_id):
 @login_required(login_url='login')
 def unshelve_vm(request, desktop):
     desktop_type = get_desktop_type(desktop)
-    vm_man_views.unshelve_vm(request.user, vm_info, desktop_type)
+    vm_man_views.unshelve_vm(request.user, desktop_type)
     return redirect_home(request)
 
 
