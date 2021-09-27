@@ -197,6 +197,9 @@ class Instance(CloudResource):
             ('hostname', self.get_ip_addr()),
             ('username', self.username),
             ('password', self.password),
+            ('security', 'tls'),
+            ('ignore-cert', 'true'),
+            ('resize-method', 'display-update'),
         ]
 
         connection_params = []
