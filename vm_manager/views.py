@@ -144,8 +144,8 @@ def shelve_vm(user, vm_id, requesting_feature) -> str:
 def unshelve_vm(user, desktop_type) -> str:
     vm_status = VMStatus.objects.get_latest_vm_status(user, desktop_type)
     if not vm_status or vm_status.status != VM_SHELVED:
-        error_message = (f"VM Status for {user} and {operating_system} is in the wrong state. "
-                         f"VM cannot be unshelved")
+        error_message = (f"VM Status for {user} and {desktop_type.id} "
+                         f"is in the wrong state. VM cannot be unshelved")
         logger.error(error_message)
         return error_message
 
