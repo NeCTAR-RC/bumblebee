@@ -132,10 +132,10 @@ def _create_instance(user, desktop_type, volume):
     hostname = generate_hostname(volume.hostname_id, operating_system)
     hostname_url = generate_hostname_url(volume.hostname_id, operating_system)
 
-    username = 'user'
+    username = 'vdiuser'
     password = generate_password()
     metadata_server = {
-        'allow_user': user.username + re.search("@.*", user.email).group(),
+        'allow_user': user.username,
         'environment': ENVIRONMENT_NAME,
         'requesting_feature': desktop_type.feature.name,
     }

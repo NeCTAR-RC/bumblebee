@@ -20,25 +20,25 @@
       <div class="accordion-body">
         {% if "REBOOT_BUTTON" in buttons_to_display %}
         <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#{{ app_name }}-{{ desktop_type.id }}-reboot-modal">
-          Reboot my {{ desktop_type.name }} {{ requesting_feature }}
+          Reboot
         </button>
         {% endif %}
 
         {% if "SHELVE_BUTTON" in buttons_to_display %}
         <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#{{ app_name }}-{{ desktop_type.id }}-shelve-modal">
-          Shelve my {{ desktop_type.name }} {{ requesting_feature }}
-        </button>
-        {% endif %}
-
-        {% if "DELETE_BUTTON" in buttons_to_display %}
-        <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#{{ app_name }}-{{ desktop_type.id }}-delete-modal">
-          Delete my {{ desktop_type.name }} {{ requesting_feature }}
+          Shelve
         </button>
         {% endif %}
 
         {% if "BOOST_BUTTON" in buttons_to_display %}
         <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#{{ app_name }}-{{ desktop_type.id }}-supersize-modal">
-          Boost my {{ desktop_type.name }} {{ requesting_feature }}
+          Boost
+        </button>
+        {% endif %}
+
+        {% if "DELETE_BUTTON" in buttons_to_display %}
+        <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#{{ app_name }}-{{ desktop_type.id }}-delete-modal">
+          Delete
         </button>
         {% endif %}
 

@@ -1,35 +1,26 @@
-<p>{{ desktop_type.id }} {{ requesting_feature }} Error</p>
-<p>
-    Your {{ desktop_type.id }} {{ requesting_feature }} has thrown an error. Support have been notified and will work on stopping
-    this from happening again.
-</p>
-<p>
-    Please contact support for assistance by using the button below, or delete your {{ requesting_feature }} and launch a new one.
-</p>
-<div class="div-flex">
-    <div style="flex: 50%;">
-        <a class="button-small" target="_blank" href="http://go.unimelb.edu.au/kr96">
-            Contact Support
-        </a>
+<h2>{{ desktop_type.name }} {{ requesting_feature }} Error</h2>
+<p>Your {{ desktop_type.name }} {{ requesting_feature }} has thrown an error. Support have been notified and will work on stopping
+    this from happening again.</p>
+<p>Please contact support for assistance by using the button below, or delete your {{ requesting_feature }} and launch a new one.</p>
+
+<button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#{{ app_name }}-{{ desktop_type.id }}-delete-modal">
+  Delete my {{ desktop_type.name }} {{ requesting_feature }}
+</button>
+
+<div class="modal fade" id="{{ app_name }}-{{ desktop_type.id }}-delete-modal" tabindex="-1" aria-labelledby="{{ app_name }}-{{ desktop_type.id }}-delete-modal-label" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="{{ app_name }}-{{ desktop_type.id }}-delete-modal" tabindex="-1" aria-labelledby="{{ app_name }}-{{ desktop_type.id }}-delete-modal-label">Confirm</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p>Please confirm your selection. Once a {{ requesting_feature }} has been deleted it is not recoverable.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-danger" onclick="delete_{{ app_name }}_{{ desktop_type.id }}(this)">Delete</button>
+      </div>
     </div>
-    <div style="flex: 50%;">
-        <a class="button-small warning" data-modal-target="{{ app_name }}-{{ desktop_type.id }}-delete-modal" href="#">
-            DELETE
-        </a>
-    </div>
-</div>
-<div class="modal__dialog" id="{{ app_name }}-{{ desktop_type.id }}-delete-modal">
-    <h2>
-        Confirm Deleting Your {{ desktop_type.id }} {{ requesting_feature }}
-    </h2>
-    <p>
-        Please confirm your selection. Once a {{ requesting_feature }} has been deleted it is not recoverable.
-    </p>
-    <div>
-        <button class="button-small warning"
-                title="Delete {{ desktop_type.id }} {{ requesting_feature }}"
-                onclick="delete_{{ app_name }}_{{ desktop_type.id }}(this)">
-            DELETE
-        </button>
-    </div>
+  </div>
 </div>

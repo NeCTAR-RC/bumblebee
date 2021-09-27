@@ -1,5 +1,3 @@
-<p>
-    <a class="btn btn-success" onclick="unshelve_{{ app_name }}_{{ desktop_type.id }}(this)">
-        Unshelve my {{ desktop_type.id }} {{ requesting_feature }}
-    </a>
-</p>
+<button type="button" class="btn btn-primary" onclick="unshelve_{{ app_name }}_{{ desktop_type.id }}(this)">
+  Unshelve my {{ desktop_type.name }} {{ requesting_feature }}
+</button>
