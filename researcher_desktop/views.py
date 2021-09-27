@@ -14,7 +14,8 @@ from researcher_desktop.utils.utils import desktops_feature
 
 from vm_manager import views as vm_man_views
 from researcher_workspace.utils import not_support_staff, redirect_home
-from vm_manager.constants import LINUX, REBOOT_BUTTON, SHELVE_BUTTON, DELETE_BUTTON, BOOST_BUTTON
+from vm_manager.constants import LINUX, REBOOT_BUTTON, SHELVE_BUTTON, \
+    DELETE_BUTTON, BOOST_BUTTON, DOWNSIZE_BUTTON
 
 logger = logging.getLogger(__name__)
 
@@ -23,9 +24,10 @@ def render_modules(request):
     feature_modules = []
     feature_scripts = []
     for desktop_type in desktop_types():
+        buttons = [REBOOT_BUTTON, SHELVE_BUTTON, DELETE_BUTTON, BOOST_BUTTON,
+                   DOWNSIZE_BUTTON]
         feature_module, feature_script = vm_man_views.render_vm(
-            request, request.user, desktop_type,
-            [REBOOT_BUTTON, SHELVE_BUTTON, DELETE_BUTTON, BOOST_BUTTON])
+            request, request.user, desktop_type, buttons)
         feature_modules.append(feature_module)
         feature_scripts.append(feature_script)
     return feature_modules, feature_scripts

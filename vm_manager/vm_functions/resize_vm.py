@@ -22,7 +22,7 @@ def supersize_vm_worker(instance, desktop_type) -> str:
     return supersize_result
 
 
-def downsize_vm_worker(instance, destop_type) -> str:
+def downsize_vm_worker(instance, desktop_type) -> str:
     logger.info(f"About to downsize {desktop_type.id} vm "
                 f"for user {instance.user.username}")
     downsize_result = _resize_vm(instance,
@@ -62,19 +62,38 @@ def _resize_vm(instance, flavor, requesting_feature):
 
 
 def _wait_to_confirm_resize(instance, flavor, deadline, requesting_feature):
-    status = VM_OKAY if flavor == instance.boot_volume.flavor \
+    status = VM_OKAY if flavor == str(instance.boot_volume.flavor) \
         else VM_SUPERSIZED
     n = get_nectar()
     vm_status = VMStatus.objects.get_vm_status_by_instance(
         instance, requesting_feature)
 
-    if instance.check_active_status():
+    if instance.check_verify_resize_status():
+        logger.info(f"Confirming resize of {instance}")
+        n.nova.servers.confirm_resize(instance.id)
+        vm_status.status = status
+        vm_status.save()
+        return str(vm_status)
+
+    elif instance.check_resizing_status():
+        logger.info(f"Waiting for resize of {instance}")
+        if datetime.now(timezone.utc) < deadline:
+            scheduler = django_rq.get_scheduler('default')
+            scheduler.enqueue_in(timedelta(seconds=5),
+                                 _wait_to_confirm_resize,
+                                 instance, flavor, deadline,
+                                 requesting_feature)
+            return str(vm_status)
+        else:
+            logger.error("Resize has taken too long")
+
+    elif instance.check_active_status():
         try:
             resized_instance = n.nova.servers.get(instance.id)
             instance_flavor = resized_instance.flavor['id']
         except Exception as e:
             logger.error(f"Something went wrong with the instance get call "
-                         f"for {instance}, it returned {e}")
+                         f"for {instance}: it raised {e}")
             return
 
         if instance_flavor != str(flavor):
@@ -93,25 +112,6 @@ def _wait_to_confirm_resize(instance, flavor, deadline, requesting_feature):
         vm_status.status = status
         vm_status.save()
         return log_message
-
-    if instance.check_verify_resize_status():
-        logger.info(f"Confirming resize of {instance}")
-        n.nova.servers.confirm_resize(instance.id)
-        vm_status.status = status
-        vm_status.save()
-        return str(vm_status)
-
-    if instance.check_resizing_status():
-        logger.info(f"Waiting for resize of {instance}")
-        if datetime.now(timezone.utc) < deadline:
-            scheduler = django_rq.get_scheduler('default')
-            scheduler.enqueue_in(timedelta(seconds=5),
-                                 _wait_to_confirm_resize,
-                                 instance, flavor, deadline,
-                                 requesting_feature)
-            return str(vm_status)
-        else:
-            logger.error("Resize has taken too long")
 
     error_message = \
         f"Instance ({instance}) resize failed instance in " \
