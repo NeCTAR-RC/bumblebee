@@ -1,6 +1,7 @@
 import base64
 import hashlib
 import random
+import urllib
 
 from .models import GuacamoleUser, GuacamoleEntity, GuacamoleConnection
 from .models import GuacamoleConnectionParameter, GuacamoleConnectionPermission
@@ -21,7 +22,8 @@ def get_direct_url(conn):
     components = [str(conn.connection_id), 'c', 'mysql']
     joined_components = '\x00'.join(components).encode('utf-8')
     hash_str = base64.b64encode(joined_components).decode('utf-8')
-    return f'{GUACAMOLE_URL}/#/client/{hash_str}'
+    quote_hash_str = urllib.parse.quote(hash_str)
+    return f'{GUACAMOLE_URL}/#/client/{quote_hash_str}'
 
 def quick_rdp_conn(username, password, hostname):
     """
