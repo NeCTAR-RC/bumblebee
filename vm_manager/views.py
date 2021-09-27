@@ -337,9 +337,33 @@ def notify_vm(request, requesting_feature):
 
 
 @csrf_exempt
-def phone_home(request):
-    # TODO(andy) Migrate from notify_vm to phone_home
-    logger.info(dict(request.POST.items()))
+def phone_home(request, requesting_feature):
+    if 'instance_id' not in request.POST:
+        logger.error(f"Instance ID not found in data")
+        raise Http404
+    if 'hostname' not in request.POST:
+        logger.error(f"Hostname not found in data")
+        raise Http404
+
+    instance = Instance.objects.get(id=request.POST['instance_id'])
+    if not instance:
+        logger.error(f"No current Instance found with given ID")
+        raise Http404
+
+    hostname = request.POST['hostname']
+    volume = instance.boot_volume
+    if generate_hostname(volume.hostname_id, volume.operating_system) != hostname:
+        logger.error(f"Hostname provided in request does not match hostname of volume {instance}, {hostname}")
+        raise Http404
+
+    volume.ready = True
+    volume.save()
+    vm_status = VMStatus.objects.get_vm_status_by_instance(instance, requesting_feature)
+    vm_status.status = VM_OKAY
+    vm_status.save()
+    result = f"Phone home for {instance} successful!"
+    logger.info(result)
+    return result
 
 
 def rd_report_for_user(user, desktop_type_ids, requesting_feature):

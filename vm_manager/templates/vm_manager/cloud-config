@@ -1,15 +1,14 @@
 ## template: jinja
 #cloud-config
 
-runcmd:
-- curl -Ss "{{ notify_url }}?ip={% verbatim %}{{ ds.ec2_metadata.local_ipv4 }}{% endverbatim %}&hn={% verbatim %}{{ v1.local_hostname }{% endverbatim %}&state=1&os=linux&msg=finished"
-
 users:
+- default
 - name: {{ username }}
   passwd: {{ password }}
   lock_passwd: false
   gecos: VDI User
-  groups: [adm, audio, cdrom, dialout, dip, floppy, lxd, netdev, plugdev, sudo, video]
+  groups:
+  - sudo
   shell: /bin/bash
   sudo: 'ALL=(ALL) NOPASSWD:ALL'
   ssh-authorized-keys: {% verbatim %}{{ v1.public_ssh_keys }}{% endverbatim %}

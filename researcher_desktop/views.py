@@ -110,7 +110,8 @@ def notify_vm(request):
 
 @csrf_exempt
 def phone_home(request):
-    return HttpResponse(vm_man_views.phone_home(request))
+    catalog = get_vm_info()
+    return HttpResponse(vm_man_views.phone_home(request, catalog.FEATURE))
 
 
 @login_required(login_url='login')
