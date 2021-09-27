@@ -3,7 +3,8 @@
 
 {{ block.super }}
 
-function downsize_{{ app_name }}_{{ desktop_type.id.capitalize }}(tag) {
+{% if "DOWNSIZE_BUTTON" in buttons_to_display %}
+function downsize_{{ app_name }}_{{ desktop_type.id }}(tag) {
     if (!beenClicked) {
         beenClicked = true;
         tag.disabled = true;
@@ -12,8 +13,9 @@ function downsize_{{ app_name }}_{{ desktop_type.id.capitalize }}(tag) {
         {% endwith %}
     }
 }
-
-function extend_{{ app_name }}_{{ desktop_type.id.capitalize }}(tag) {
+{% endif %}
+{% if "EXTEND_BUTTON" in buttons_to_display %}
+function extend_{{ app_name }}_{{ desktop_type.id }}(tag) {
     if (!beenClicked) {
         beenClicked = true;
         tag.disabled = true;
@@ -22,4 +24,5 @@ function extend_{{ app_name }}_{{ desktop_type.id.capitalize }}(tag) {
         {% endwith %}
     }
 }
+{% endif %}
 {% endblock script %}
