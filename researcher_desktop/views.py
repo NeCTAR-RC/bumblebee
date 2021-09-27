@@ -7,8 +7,6 @@ from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
 
 from researcher_workspace.models import Feature
-from researcher_desktop.constants import NOTIFY_VM_PATH_PLACEHOLDER
-from researcher_desktop.utils.user_data_ubuntu import user_data_ubuntu
 from researcher_desktop.utils.utils import desktop_types
 from researcher_desktop.utils.utils import get_desktop_type
 from researcher_desktop.utils.utils import desktops_feature
@@ -110,8 +108,7 @@ def notify_vm(request):
 
 @csrf_exempt
 def phone_home(request):
-    catalog = get_vm_info()
-    return HttpResponse(vm_man_views.phone_home(request, catalog.FEATURE))
+    return HttpResponse(vm_man_views.phone_home(request, desktops_feature()))
 
 
 @login_required(login_url='login')

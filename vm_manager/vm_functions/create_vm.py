@@ -155,7 +155,7 @@ def _create_instance(user, desktop_type, volume):
     # Create instance in OpenStack
     launch_result = n.nova.servers.create(
         name=hostname, image="", flavor=desktop_type.default_flavor.id,
-        userdata=user_data_script,
+        userdata=user_data,
         security_groups=desktop_type.security_groups,
         key_name=settings.OS_KEYNAME, block_device_mapping_v1=None,
         block_device_mapping_v2=block_device_mapping,

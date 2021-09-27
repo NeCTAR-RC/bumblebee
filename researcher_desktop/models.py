@@ -10,10 +10,6 @@ from researcher_workspace import models as workspace_models
 from vm_manager.utils.utils import get_nectar
 from vm_manager.utils.utils import FlavorDetails
 
-from researcher_desktop.constants import NOTIFY_VM_PATH_PLACEHOLDER
-from researcher_desktop.utils.user_data_ubuntu import user_data_ubuntu
-from researcher_desktop.utils.user_data_windows import user_data_windows
-
 
 logger = logging.getLogger(__name__)
 
@@ -49,13 +45,6 @@ class DesktopType(models.Model):
     def source_volume_id(self):
         return get_nectar().cinder.volumes.list(
             search_opts={'name': self.image_name})[0].id
-
-    @property
-    def user_data_script(self):
-        # FIX ME - this shouldn't be hardwired
-        return user_data_ubuntu.replace(
-            NOTIFY_VM_PATH_PLACEHOLDER,
-            reverse('researcher_desktop:notify_vm'))
 
     @property
     def security_groups(self):
