@@ -7,8 +7,10 @@ from vm_manager.views import admin_delete_vm
 
 
 class ResourceAdmin(admin.ModelAdmin):
-    list_filter = ['created', 'deleted', 'error_flag', 'error_message', 'user', 'marked_for_deletion']
-    readonly_fields = ['id', 'created',]
+    list_filter = [
+        'created', 'deleted', 'error_flag', 'error_message',
+        'user', 'marked_for_deletion']
+    readonly_fields = ['id', 'created']
     ordering = ('-created',)
 
     list_display = (
@@ -22,10 +24,12 @@ class ResourceAdmin(admin.ModelAdmin):
 
 
 class InstanceAdmin(ResourceAdmin):
-    list_filter = ResourceAdmin.list_filter + ['boot_volume__image', 'boot_volume__operating_system',
-                                               'boot_volume__requesting_feature']
+    list_filter = ResourceAdmin.list_filter + [
+        'boot_volume__image', 'boot_volume__operating_system',
+        'boot_volume__requesting_feature']
     actions = ["admin_delete_selected_instances"]
-    readonly_fields = ResourceAdmin.readonly_fields + ["boot_volume_fields", ]
+    readonly_fields = ResourceAdmin.readonly_fields + [
+        "boot_volume_fields", ]
 
     list_display = ResourceAdmin.list_display + (
         'ip_address',
@@ -38,22 +42,9 @@ class InstanceAdmin(ResourceAdmin):
 
     get_requesting_feature.short_description = 'requesting feature'
 
-    #def has_delete_permission(self, request, obj=None):
-    #    if obj and isinstance(obj, Instance):
-    #        return not obj.marked_for_deletion
-    #    return False
-    #delete_confirmation_template = "admin/vm_manager/instance/task/delete_confirmation.html"
-
-    #def admin_delete_selected_instances(self, request, queryset):
-    #    for instance in queryset:
-    #        if not instance.deleted:
-    #            admin_delete_vm(instance.id)
-    #admin_delete_selected_instances.short_description = "Delete instances and volumes from openstack and mark them as deleted in the db"
-
 
 class InstanceInline(admin.StackedInline):
     model = Instance
-    #can_delete = False
     can_delete = True
     show_change_link = True
     fk_name = "boot_volume"
@@ -64,11 +55,10 @@ class InstanceInline(admin.StackedInline):
 
 
 class VolumeAdmin(ResourceAdmin):
-    list_filter = ResourceAdmin.list_filter + ['image', 'operating_system', 'flavor', 'requesting_feature', 'ready', 'checked_in']
+    list_filter = ResourceAdmin.list_filter + [
+        'image', 'operating_system', 'flavor', 'requesting_feature',
+        'ready', 'checked_in']
     inlines = (InstanceInline, )
-
-    #def has_delete_permission(self, request, obj=None):
-    #    return False
 
     list_display = ResourceAdmin.list_display + (
         'operating_system',
@@ -80,7 +70,9 @@ class VolumeAdmin(ResourceAdmin):
 
 
 class ResizeAdmin(admin.ModelAdmin):
-    list_filter = ['instance__boot_volume__operating_system', 'reverted', 'instance__deleted', 'requested', 'expires', 'instance__user']
+    list_filter = [
+        'instance__boot_volume__operating_system', 'reverted',
+        'instance__deleted', 'requested', 'expires', 'instance__user']
     readonly_fields = ('requested',)
     ordering = ('-requested',)
 
@@ -92,12 +84,11 @@ class ResizeAdmin(admin.ModelAdmin):
         'instance',
     )
 
-#    def has_delete_permission(self, request, obj=None):
-#        return False
-
 
 class VMStatusAdmin(admin.ModelAdmin):
-    list_filter = ['created', 'requesting_feature', 'operating_system', 'status', 'instance__deleted', 'user']
+    list_filter = [
+        'created', 'requesting_feature', 'operating_system',
+        'status', 'instance__deleted', 'user']
     readonly_fields = ('created',)
     ordering = ('-created',)
 
@@ -128,9 +119,6 @@ class VMStatusAdmin(admin.ModelAdmin):
             self.message_user(request, "VM Status set to VM_Okay")
             return HttpResponseRedirect(".")
         return super().response_change(request, obj)
-
-    #def has_delete_permission(self, request, obj=None):
-    #    return False
 
 
 admin.site.register(Instance, InstanceAdmin)

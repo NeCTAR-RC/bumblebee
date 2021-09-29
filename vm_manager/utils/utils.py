@@ -11,7 +11,6 @@ from novaclient import client as nova_client
 from django.conf import settings
 from django.utils.crypto import get_random_string
 
-#from researcher_workspace.resplat.ldap_backend import ResplatLDAPBackend
 from researcher_workspace.settings import ENVIRONMENT_NAME
 from vm_manager.constants import LINUX
 
@@ -34,21 +33,20 @@ class Nectar(object):
 
     .. todo:: Optionally construct object using parameters rather than
               loading environment variables.
-
-    .. _`nectarallocationclient v1` : https://github.com/NeCTAR-RC/python-necta
-                                      rallocationclient/tree/master/nectaralloc
-                                      ationclient/v1
     """
 
     def __init__(self):
         auth = ApplicationCredential(
             auth_url=settings.OS_AUTH_URL,
-            application_credential_secret=settings.OS_APPLICATION_CREDENTIAL_SECRET,
+            application_credential_secret=
+                settings.OS_APPLICATION_CREDENTIAL_SECRET,
             application_credential_id=settings.OS_APPLICATION_CREDENTIAL_ID)
         sess = session.Session(auth=auth)
+
         # Roles
         auth_ref = auth.get_auth_ref(sess)
         self.roles = auth_ref.role_names
+
         # Establish clients
         self.nova = nova_client.Client('2', session=sess)
         self.allocation = allocation_client.Client('1', session=sess)
@@ -56,6 +54,7 @@ class Nectar(object):
         self.glance = glance_client.Client('2', session=sess)
         self.cinder = cinder_client.Client('3', session=sess)
 
+        net_id = self.nova.neutron.find_network(settings.OS_NETWORK).id
         self.VM_PARAMS = {
             "metadata_volume": {'readonly': 'False'},
             "availability_zone_volume": settings.OS_AVAILABILITY_ZONE,
@@ -69,13 +68,9 @@ class Nectar(object):
                 'volume_size': 20,
             }],
             "availability_zone_server": settings.OS_AVAILABILITY_ZONE,
-            "id_net": self.nova.neutron.find_network(settings.OS_NETWORK).id,
-            "list_net": [{
-                'net-id': self.nova.neutron.find_network(settings.OS_NETWORK).id
-            }],
+            "id_net": net_id,
+            "list_net": [{'net-id': net_id}],
         }
-        #self.VM_PARAMS["block_device_mapping"][0]["volume_size"] = self.VM_PARAMS["size"]
-        #self.VM_PARAMS["list_net"] = [{'net-id': self.VM_PARAMS["id_net"]}]
 
 
 def get_nectar():
@@ -97,9 +92,6 @@ def generate_hostname(hostname_id, operating_system) -> str:
 
 
 def get_domain(user) -> str:
-    #backend = ResplatLDAPBackend()
-    #if 'student' in backend.get_user(user.id).ldap_user.attrs['auedupersontype']:
-    #    return STUDENT
     return 'test'
 
 
@@ -115,6 +107,7 @@ class FlavorDetails(object):
 
 def after_time(seconds):
     return datetime.now(timezone.utc) + timedelta(seconds=seconds)
+
 
 def generate_password() -> str:
     return get_random_string(20)

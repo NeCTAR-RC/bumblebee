@@ -19,23 +19,29 @@ from researcher_desktop.utils.utils import get_desktop_type
 
 from vm_manager.models import VMStatus, Instance, Resize
 
-from vm_manager.constants import VM_ERROR, VM_OKAY, VM_WAITING, VM_SHELVED, NO_VM, VM_SHUTDOWN, \
-    VM_SUPERSIZED, VM_DELETED, VM_CREATING, VM_MISSING, VM_RESIZING, LAUNCH_WAIT_SECONDS, \
-    CLOUD_INIT_FINISHED, CLOUD_INIT_STARTED, REBOOT_WAIT_SECONDS, RESIZE_WAIT_SECONDS, SHELVE_WAIT_SECONDS
+from vm_manager.constants import VM_ERROR, VM_OKAY, VM_WAITING, \
+    VM_SHELVED, NO_VM, VM_SHUTDOWN, VM_SUPERSIZED, VM_DELETED, \
+    VM_CREATING, VM_MISSING, VM_RESIZING, LAUNCH_WAIT_SECONDS, \
+    CLOUD_INIT_FINISHED, CLOUD_INIT_STARTED, REBOOT_WAIT_SECONDS, \
+    RESIZE_WAIT_SECONDS, SHELVE_WAIT_SECONDS
 
 from vm_manager.constants import SCRIPT_ERROR, SCRIPT_OKAY
 from vm_manager.utils.utils import after_time
 from vm_manager.utils.utils import generate_hostname
 
 # These are all needed, as they're consumed by researcher_workspace/views.py
-from vm_manager.vm_functions.admin_functionality import test_function, admin_worker, start_downsizing_cron_job, \
+from vm_manager.vm_functions.admin_functionality import test_function, \
+    admin_worker, start_downsizing_cron_job, \
     vm_report_for_page, vm_report_for_csv, db_check
 from vm_manager.vm_functions.create_vm import launch_vm_worker
 from vm_manager.vm_functions.delete_vm import delete_vm_worker
 from vm_manager.vm_functions.other_vm_functions import reboot_vm_worker
-from vm_manager.vm_functions.shelve_vm import shelve_vm_worker, unshelve_vm_worker
-from vm_manager.vm_functions.resize_vm import can_extend_supersize_period, calculate_supersize_expiration_date, \
-    supersize_vm_worker, downsize_vm_worker, extend, downsize_expired_supersized_vms
+from vm_manager.vm_functions.shelve_vm import shelve_vm_worker, \
+    unshelve_vm_worker
+from vm_manager.vm_functions.resize_vm import can_extend_supersize_period, \
+    calculate_supersize_expiration_date, \
+    supersize_vm_worker, downsize_vm_worker, \
+    extend, downsize_expired_supersized_vms
 
 logger = logging.getLogger(__name__)
 
@@ -43,7 +49,8 @@ logger = logging.getLogger(__name__)
 def launch_vm(user, desktop_type) -> str:
     vm_status = VMStatus.objects.get_latest_vm_status(user, desktop_type)
     if vm_status and vm_status.status != VM_DELETED:
-        error_message = f"A VMStatus for {user} and {desktop_type.id} already exists"
+        error_message = (f"A VMStatus for {user} and {desktop_type.id} "
+                         f"already exists")
         logger.error(error_message)
         return error_message
 
@@ -53,7 +60,8 @@ def launch_vm(user, desktop_type) -> str:
         wait_time=after_time(LAUNCH_WAIT_SECONDS))
     vm_status.save()
 
-    # Check for race condition in previous statements and delete duplicate VMStatus
+    # Check for race condition in previous statements and delete
+    # duplicate VMStatus
     check_vm_status = \
         VMStatus.objects.filter(user=user,
                                 operating_system=desktop_type.id,
@@ -79,9 +87,9 @@ def delete_vm(user, vm_id, requesting_feature) -> str:
                          f"marked as deleted {user} {vm_id} {vm_status}")
         logger.error(error_message)
         return error_message
-    logger.info(f"Changing the VMStatus of {vm_id} from {vm_status.status} to "
-                f"{VM_DELETED} and Mark for Deletion is set "
-                f"on the Instance and Volume {vm_status.instance.boot_volume.id}")
+    logger.info(f"Changing the VMStatus of {vm_id} from {vm_status.status} "
+                f"to {VM_DELETED} and Mark for Deletion is set on the "
+                f"Instance and Volume {vm_status.instance.boot_volume.id}")
     vm_status.status = VM_DELETED
     vm_status.save()
     vm_status.instance.set_marked_for_deletion()
@@ -101,11 +109,13 @@ def admin_delete_vm(request, vm_id):
     try:
         vm_status = VMStatus.objects.get(instance=vm_id)
     except VMStatus.DoesNotExist:
-        error_message = f"No VMStatus found with that vm_id when trying to admin delete Instance {vm_id}"
+        error_message = (f"No VMStatus found with that vm_id when "
+                         f"trying to admin delete Instance {vm_id}")
         logger.error(error_message)
         return error_message
-    logger.info(f"Performing Admin delete on {vm_id} Mark for Deletion is set "
-                f"on the Instance and Volume {vm_status.instance.boot_volume.id}")
+    logger.info(f"Performing Admin delete on {vm_id} "
+                f"Mark for Deletion is set on the Instance "
+                f"and Volume {vm_status.instance.boot_volume.id}")
     vm_status.status = VM_DELETED
     vm_status.save()
     vm_status.instance.set_marked_for_deletion()
@@ -124,12 +134,14 @@ def shelve_vm(user, vm_id, requesting_feature) -> str:
         vm_id, user, requesting_feature)
     if vm_status and not (vm_status.status == VM_OKAY
                           or vm_status.status == VM_SUPERSIZED):
-        error_message = f"A VMStatus {vm_id} for {user} is in the wrong state. VM cannot be shelved"
+        error_message = (f"A VMStatus {vm_id} for {user} is in the "
+                         f"wrong state. VM cannot be shelved")
         logger.error(error_message)
         return error_message
 
-    logger.info(f"Changing the VMStatus of {vm_id} from {vm_status.status} to "
-                f"{VM_WAITING} and Mark for Deletion is set on the Instance")
+    logger.info(f"Changing the VMStatus of {vm_id} "
+                f"from {vm_status.status} to {VM_WAITING} "
+                f"and Mark for Deletion is set on the Instance")
     vm_status.wait_time = after_time(SHELVE_WAIT_SECONDS)
     vm_status.status = VM_WAITING
     vm_status.save()
@@ -151,7 +163,8 @@ def unshelve_vm(user, desktop_type) -> str:
 
     vm_status = VMStatus(user=user,
                          requesting_feature=desktop_type.feature,
-                         operating_system=desktop_type.id, status=VM_CREATING,
+                         operating_system=desktop_type.id,
+                         status=VM_CREATING,
                          wait_time=after_time(LAUNCH_WAIT_SECONDS))
     vm_status.save()
 
@@ -179,7 +192,8 @@ def supersize_vm(user, vm_id, requesting_feature) -> str:
         vm_id, user, requesting_feature)
 
     if vm_status and vm_status.status != VM_OKAY:
-        error_message = f"Instance {vm_id} for {user} is not in the right state to Supersize"
+        error_message = (f"Instance {vm_id} for {user} is not in the "
+                         "right state to Supersize")
         logger.error(error_message)
         return error_message
 
@@ -236,14 +250,16 @@ def get_vm_state(user, desktop_type):
         if vm_status.wait_time > curr_time:
             time = str(ceil((vm_status.wait_time - curr_time).seconds))
             return VM_WAITING, time, None
-        else: # Time up waiting
+        else:  # Time up waiting
             if vm_status.instance:
-                vm_status.error(f"VM {vm_status.instance.id} not ready at {vm_status.wait_time} timeout")
+                vm_status.error(f"VM {vm_status.instance.id} not ready "
+                                f"at {vm_status.wait_time} timeout")
                 return VM_ERROR, "VM Not Ready", vm_status.instance.id
             else:
                 vm_status.status = VM_ERROR
                 vm_status.save()
-                logger.error(f"VM is missing at timeout {vm_status.id}, {user}, {desktop_type}")
+                logger.error(f"VM is missing at timeout {vm_status.id}, "
+                             f"{user}, {desktop_type}")
                 return VM_MISSING, "VM has Errored", None
 
     if vm_status.status == VM_SHELVED:
@@ -253,11 +269,13 @@ def get_vm_state(user, desktop_type):
         return VM_SHUTDOWN, "VM Shutdown", vm_status.instance.id
 
     if vm_status.status == VM_OKAY:
-        return VM_OKAY, {'url': vm_status.instance.get_url()}, vm_status.instance.id
+        return VM_OKAY, {'url': vm_status.instance.get_url()}, \
+            vm_status.instance.id
 
     if not vm_status.instance.check_active_or_resize_statuses():
         instance_status = vm_status.instance.get_status()
-        vm_status.instance.error(f"Error at OpenStack level. Status: {instance_status}")
+        vm_status.instance.error(f"Error at OpenStack level. "
+                                 f"Status: {instance_status}")
         return VM_ERROR, "Error at OpenStack level", vm_status.instance.id
 
     if vm_status.status == VM_SUPERSIZED:
@@ -269,7 +287,8 @@ def get_vm_state(user, desktop_type):
             'extended_expiration':
                 calculate_supersize_expiration_date(resize.expires)
             }, vm_status.instance.id
-    logger.error(f"get_vm_state for to an unhandled state for {user} requesting {desktop_type}")
+    logger.error(f"get_vm_state for to an unhandled state "
+                 f"for {user} requesting {desktop_type}")
     raise NotImplementedError
 
 
@@ -308,12 +327,14 @@ def notify_vm(request, requesting_feature):
     instance = Instance.objects.get_instance_by_ip_address(
         ip_address, requesting_feature)
     if not instance:
-        logger.error(f"No current Instance found with ip address {ip_address}")
+        logger.error(f"No current Instance found with "
+                     f"ip address {ip_address}")
         raise Http404
     volume = instance.boot_volume
     if generate_hostname(volume.hostname_id,
                          volume.operating_system) != hostname:
-        logger.error(f"Hostname provided in request does not match hostname of volume {instance}, {hostname}")
+        logger.error(f"Hostname provided in request does not match "
+                     f"hostname of volume {instance}, {hostname}")
         raise Http404
     if state == SCRIPT_OKAY:
         if msg == CLOUD_INIT_FINISHED:
@@ -352,13 +373,16 @@ def phone_home(request, requesting_feature):
 
     hostname = request.POST['hostname']
     volume = instance.boot_volume
-    if generate_hostname(volume.hostname_id, volume.operating_system) != hostname:
-        logger.error(f"Hostname provided in request does not match hostname of volume {instance}, {hostname}")
+    if generate_hostname(volume.hostname_id,
+                         volume.operating_system) != hostname:
+        logger.error(f"Hostname provided in request does not match "
+                     f"hostname of volume {instance}, {hostname}")
         raise Http404
 
     volume.ready = True
     volume.save()
-    vm_status = VMStatus.objects.get_vm_status_by_instance(instance, requesting_feature)
+    vm_status = VMStatus.objects.get_vm_status_by_instance(
+        instance, requesting_feature)
     vm_status.status = VM_OKAY
     vm_status.save()
     result = f"Phone home for {instance} successful!"

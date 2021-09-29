@@ -14,7 +14,8 @@ logger = logging.getLogger(__name__)
 
 
 def reboot_vm_worker(user, vm_id, reboot_level, requesting_feature):
-    instance = Instance.objects.get_instance_by_untrusted_vm_id(vm_id, user, requesting_feature)
+    instance = Instance.objects.get_instance_by_untrusted_vm_id(
+        vm_id, user, requesting_feature)
     volume = instance.boot_volume
     volume.rebooted = datetime.now(timezone.utc)
     volume.save()
@@ -29,13 +30,16 @@ def reboot_vm_worker(user, vm_id, reboot_level, requesting_feature):
     logger.info(str(reboot_result))
 
     scheduler = django_rq.get_scheduler('default')
-    scheduler.enqueue_in(timedelta(seconds=REBOOT_CONFIRM_WAIT_SECONDS), check_power_state, instance, requesting_feature)
+    scheduler.enqueue_in(
+        timedelta(seconds=REBOOT_CONFIRM_WAIT_SECONDS),
+        check_power_state, instance, requesting_feature)
 
     return reboot_result
 
 
 def check_power_state(instance, requesting_feature):
-    vm_status = VMStatus.objects.get_vm_status_by_instance(instance, requesting_feature)
+    vm_status = VMStatus.objects.get_vm_status_by_instance(
+        instance, requesting_feature)
     active = instance.check_active_status()
     if not active:
         vm_status.error("Instance not Powered up after Restart")
