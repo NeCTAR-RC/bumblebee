@@ -2,7 +2,8 @@ import logging
 from datetime import datetime, timedelta, timezone
 import django_rq
 
-from vm_manager.constants import DOWNSIZE_PERIOD, RESIZE_CONFIRM_WAIT_SECONDS, VM_SUPERSIZED, VM_RESIZING, VM_OKAY
+from vm_manager.constants import DOWNSIZE_PERIOD, \
+    RESIZE_CONFIRM_WAIT_SECONDS, VM_SUPERSIZED, VM_RESIZING, VM_OKAY
 from vm_manager.utils.utils import after_time, get_nectar
 from vm_manager.models import VMStatus, Instance, Resize
 
@@ -35,13 +36,16 @@ def downsize_vm_worker(instance, desktop_type) -> str:
 
 
 def extend(user, vm_id, requesting_feature) -> str:
-    instance = Instance.objects.get_instance_by_untrusted_vm_id(vm_id, user, requesting_feature)
-    logger.info(f"Extending the expiration of {instance.boot_volume.operating_system} vm "
+    instance = Instance.objects.get_instance_by_untrusted_vm_id(
+        vm_id, user, requesting_feature)
+    logger.info(f"Extending the expiration of "
+                f"{instance.boot_volume.operating_system} vm "
                 f"for user {user.username}")
     resize = Resize.objects.get_latest_resize(instance.id)
     expiration_date = resize.expires
     if not can_extend_supersize_period(expiration_date):
-        error_message = f"Resize {resize.id} date too far in future: {expiration_date}"
+        error_message = f"Resize {resize.id} date too far " \
+                        f"in future: {expiration_date}"
         logger.error(error_message)
         return error_message
     resize.expires = calculate_supersize_expiration_date(expiration_date)
@@ -100,7 +104,8 @@ def _wait_to_confirm_resize(instance, flavor, deadline, requesting_feature):
             error_message = \
                 f"Instance ({instance}) resize failed as " \
                 f"instance hasn't changed flavor: " \
-                f"Actual Flavor: {instance_flavor}, Expected Flavor: {flavor}"
+                f"Actual Flavor: {instance_flavor}, " \
+                f"Expected Flavor: {flavor}"
             logger.error(error_message)
             vm_status.error(error_message)
             vm_status.save()
@@ -127,20 +132,24 @@ def calculate_supersize_expiration_date(date):
 
 
 def can_extend_supersize_period(date):
-    return date < (datetime.now(timezone.utc).date() +
-                   timedelta(days=DOWNSIZE_PERIOD))
+    return date < (datetime.now(timezone.utc).date()
+                   + timedelta(days=DOWNSIZE_PERIOD))
 
 
 def downsize_expired_supersized_vms(requesting_feature):
     try:
-        resizes = Resize.objects.filter(reverted=None, instance__marked_for_deletion=None, expires__lte=datetime.now(timezone.utc).date())
+        resizes = Resize.objects.filter(
+            reverted=None, instance__marked_for_deletion=None,
+            expires__lte=datetime.now(timezone.utc).date())
     except Resize.DoesNotExist:
         return None
     for resize in resizes:
-        _resize_vm(resize.instance, resize.instance.boot_volume.flavor, requesting_feature)
+        _resize_vm(resize.instance, resize.instance.boot_volume.flavor,
+                   requesting_feature)
         resize.reverted = datetime.now(timezone.utc)
         resize.save()
-        vm_status = VMStatus.objects.get_vm_status_by_instance(resize.instance, requesting_feature)
+        vm_status = VMStatus.objects.get_vm_status_by_instance(
+            resize.instance, requesting_feature)
         vm_status.status = VM_RESIZING
         vm_status.save()
     logger.info(f"Downsized {len(resizes)} instances")

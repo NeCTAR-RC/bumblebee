@@ -27,27 +27,32 @@ def check_availability():
     data = StringIO(content)
 
     dataframe = pd.read_csv(data, sep='|')
-    cols = ['Cell', 'Host', 'Status', 'PCPUs', 'LCPUs', 'VCPUs', 'VCPU_Free', 'RAM', 'RAM_Free', 'VM_Count', 'Agg']
+    cols = ['Cell', 'Host', 'Status', 'PCPUs', 'LCPUs',
+            'VCPUs', 'VCPU_Free', 'RAM', 'RAM_Free', 'VM_Count', 'Agg']
     dataframe.columns = cols
 
     # Filter for nodes that can fit a desktop
     for cores, ram in zip(CORES_LIST, RAM_GB_LIST):
-        availability += f"\nFor Desktop Flavor {cores} cores and {ram}GB RAM: \n"
+        availability += \
+            f"\nFor Desktop Flavor {cores} cores and {ram}GB RAM: \n"
         nodes_df = dataframe[
-            (dataframe['VCPU_Free'] >= cores) &
-            (dataframe['RAM_Free'] >= ram) &
-            (dataframe['Agg'].str.contains(AGG))].copy()
+            (dataframe['VCPU_Free'] >= cores)
+            & (dataframe['RAM_Free'] >= ram)
+            & (dataframe['Agg'].str.contains(AGG))].copy()
 
-        nodes_df['by_cores'] = nodes_df.apply(lambda x: int(x['VCPU_Free'] / cores), axis=1)
-        nodes_df['by_ram'] = nodes_df.apply(lambda x: int(x['RAM_Free'] / ram), axis=1)
-        nodes_df['possible_rd'] = nodes_df.apply(lambda x: min(x['by_cores'], x['by_ram']), axis=1)
+        nodes_df['by_cores'] = \
+            nodes_df.apply(lambda x: int(x['VCPU_Free'] / cores), axis=1)
+        nodes_df['by_ram'] = \
+            nodes_df.apply(lambda x: int(x['RAM_Free'] / ram), axis=1)
+        nodes_df['possible_rd'] = \
+            nodes_df.apply(lambda x: min(x['by_cores'], x['by_ram']), axis=1)
 
         num_nodes = len(nodes_df)
         num_rd = nodes_df['possible_rd'].sum()
         nodes_df_host = nodes_df['Host'].array
 
-        availability += f"{num_rd} desktops available across {num_nodes} nodes \n"
-
-        availability += "Hosts:"
-        availability += '\n'.join(nodes_df['Host'].array)
+        availability += (
+            f"{num_rd} desktops available across {num_nodes} nodes \n"
+            "Hosts:"
+            '\n'.join(nodes_df['Host'].array))
     return availability

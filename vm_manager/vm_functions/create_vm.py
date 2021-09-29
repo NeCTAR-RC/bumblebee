@@ -11,9 +11,10 @@ from django.urls import reverse
 
 from researcher_workspace.settings import ENVIRONMENT_NAME
 
-from vm_manager.constants import VOLUME_CREATION_TIMEOUT, NO_VM, VM_OKAY, LINUX
-from vm_manager.utils.utils import get_nectar, generate_server_name, generate_hostname, generate_hostname_url,\
-    generate_password
+from vm_manager.constants import VOLUME_CREATION_TIMEOUT, NO_VM, \
+    VM_OKAY, LINUX
+from vm_manager.utils.utils import get_nectar, generate_server_name, \
+    generate_hostname, generate_hostname_url, generate_password
 from vm_manager.models import Instance, Volume, VMStatus
 
 from guacamole.models import GuacamoleConnection
@@ -77,7 +78,8 @@ def _create_volume(user, desktop_type):
         metadata={
             'hostname': generate_hostname(volume.hostname_id,
                                           operating_system),
-            'allow_user': user.username + re.search("@.*", user.email).group(),
+            'allow_user': (user.username
+                           + re.search("@.*", user.email).group()),
             'environment': ENVIRONMENT_NAME,
             'requesting_feature': requesting_feature.name,
         })
@@ -86,8 +88,9 @@ def _create_volume(user, desktop_type):
 
 def wait_to_create_instance(user, desktop_type, volume, start_time):
     n = get_nectar()
+    now = datetime.now(timezone.utc)
     openstack_volume = n.cinder.volumes.get(volume_id=volume.id)
-    logger.info(f"Volume created in {datetime.now(timezone.utc)-start_time}s; "
+    logger.info(f"Volume created in {now-start_time}s; "
                 f"volume status is {openstack_volume.status}")
 
     if openstack_volume.status == 'available':
@@ -104,15 +107,14 @@ def wait_to_create_instance(user, desktop_type, volume, start_time):
         logger.info(f'{desktop_type.name} VM creation initiated '
                     f'for {user.username}')
         return
-    
-    if (datetime.now(timezone.utc)-start_time >
-        timedelta(seconds=VOLUME_CREATION_TIMEOUT)):
+
+    if (now - start_time > timedelta(seconds=VOLUME_CREATION_TIMEOUT)):
         os = desktop_type.id
         logger.error(f"Volume took too long to create: user:{user} "
                      f"operating_system:{os} volume:{volume} "
                      f"volume.status:{openstack_volume.status} "
                      f"start_time:{start_time} "
-                     f"datetime.now:{datetime.now(timezone.utc)}")
+                     f"datetime.now:{now}")
         vm_status = VMStatus.objects.get_latest_vm_status(user, desktop_type)
         vm_status.status = NO_VM
         vm_status.save()
@@ -130,7 +132,8 @@ def _create_instance(user, desktop_type, volume):
     n = get_nectar()
     operating_system = desktop_type.id
     hostname = generate_hostname(volume.hostname_id, operating_system)
-    hostname_url = generate_hostname_url(volume.hostname_id, operating_system)
+    hostname_url = generate_hostname_url(volume.hostname_id,
+                                         operating_system)
 
     username = 'vdiuser'
     password = generate_password()
@@ -145,12 +148,15 @@ def _create_instance(user, desktop_type, volume):
 
     user_data_context = {
         'hostname': hostname,
-        'notify_url': settings.SITE_URL + reverse('researcher_desktop:notify_vm'),
-        'phone_home_url': settings.SITE_URL + reverse('researcher_desktop:phone_home'),
+        'notify_url': (settings.SITE_URL
+                       + reverse('researcher_desktop:notify_vm')),
+        'phone_home_url': (settings.SITE_URL
+                           + reverse('researcher_desktop:phone_home')),
         'username': username,
         'password': crypt.crypt(password, crypt.mksalt(crypt.METHOD_SHA512)),
     }
-    user_data = render_to_string('vm_manager/cloud-config', user_data_context)
+    user_data = render_to_string('vm_manager/cloud-config',
+                                 user_data_context)
 
     # Create instance in OpenStack
     launch_result = n.nova.servers.create(
