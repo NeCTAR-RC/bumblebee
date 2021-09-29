@@ -22,6 +22,30 @@
       },
       "revId": "0f2b534272d8b97cf85aa91b640aeb0ed2a15924",
       "serverId": "f182a8af-62ca-4ceb-ab81-14f8fec9c6c5"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1e34e9e8_d7e0e634",
+        "filename": "vm_manager/admin.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 41,
+      "author": {
+        "id": 1000157
+      },
+      "writtenOn": "2021-09-29T23:58:35Z",
+      "side": 0,
+      "message": "I\u0027ll restore those",
+      "parentUuid": "8143e274_0117f429",
+      "range": {
+        "startLine": 41,
+        "startChar": 4,
+        "endLine": 41,
+        "endChar": 56
+      },
+      "revId": "0f2b534272d8b97cf85aa91b640aeb0ed2a15924",
+      "serverId": "f182a8af-62ca-4ceb-ab81-14f8fec9c6c5"
     }
   ]
 }

@@ -26,6 +26,30 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "453155ae_849498b2",
+        "filename": "vm_manager/models.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 316,
+      "author": {
+        "id": 1000157
+      },
+      "writtenOn": "2021-09-29T23:58:35Z",
+      "side": 1,
+      "message": "OK",
+      "parentUuid": "d19e7875_6713c0ff",
+      "range": {
+        "startLine": 313,
+        "startChar": 36,
+        "endLine": 316,
+        "endChar": 56
+      },
+      "revId": "e240542a60804c4a2e5510ca740444d358a28977",
+      "serverId": "f182a8af-62ca-4ceb-ab81-14f8fec9c6c5"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "3b0a73b9_759b8380",
         "filename": "vm_manager/views.py",
         "patchSetId": 1
@@ -37,6 +61,30 @@
       "writtenOn": "2021-09-29T23:51:37Z",
       "side": 1,
       "message": "I think this would be an ideal candidate for\n\n  from vm_manager.constants import *\n\nWhat do you think?",
+      "range": {
+        "startLine": 22,
+        "startChar": 0,
+        "endLine": 26,
+        "endChar": 44
+      },
+      "revId": "e240542a60804c4a2e5510ca740444d358a28977",
+      "serverId": "f182a8af-62ca-4ceb-ab81-14f8fec9c6c5"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5bd1f8af_cc6c62a8",
+        "filename": "vm_manager/views.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 26,
+      "author": {
+        "id": 1000157
+      },
+      "writtenOn": "2021-09-29T23:58:35Z",
+      "side": 1,
+      "message": "OK.  But don\u0027t tell Sam :-)",
+      "parentUuid": "3b0a73b9_759b8380",
       "range": {
         "startLine": 22,
         "startChar": 0,
