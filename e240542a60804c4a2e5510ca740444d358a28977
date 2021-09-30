@@ -48,6 +48,30 @@
       "serverId": "f182a8af-62ca-4ceb-ab81-14f8fec9c6c5"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "757862ed_0d3a118d",
+        "filename": "vm_manager/models.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 316,
+      "author": {
+        "id": 1000157
+      },
+      "writtenOn": "2021-09-30T00:38:57Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "453155ae_849498b2",
+      "range": {
+        "startLine": 313,
+        "startChar": 36,
+        "endLine": 316,
+        "endChar": 56
+      },
+      "revId": "e240542a60804c4a2e5510ca740444d358a28977",
+      "serverId": "f182a8af-62ca-4ceb-ab81-14f8fec9c6c5"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "3b0a73b9_759b8380",
@@ -85,6 +109,30 @@
       "side": 1,
       "message": "OK.  But don\u0027t tell Sam :-)",
       "parentUuid": "3b0a73b9_759b8380",
+      "range": {
+        "startLine": 22,
+        "startChar": 0,
+        "endLine": 26,
+        "endChar": 44
+      },
+      "revId": "e240542a60804c4a2e5510ca740444d358a28977",
+      "serverId": "f182a8af-62ca-4ceb-ab81-14f8fec9c6c5"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "dbfa0aad_f18ee849",
+        "filename": "vm_manager/views.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 26,
+      "author": {
+        "id": 1000157
+      },
+      "writtenOn": "2021-09-30T00:38:57Z",
+      "side": 1,
+      "message": "Actually the PEP8 style guide says: \"Wildcard imports (from \u003cmodule\u003e import *) should be avoided, as they make it unclear which names are present in the namespace, confusing both readers and many automated tools.\"\n\nSo since I agree with the style guide on this (and I think Sam does too), lets leave it.",
+      "parentUuid": "5bd1f8af_cc6c62a8",
       "range": {
         "startLine": 22,
         "startChar": 0,

@@ -46,6 +46,30 @@
       },
       "revId": "0f2b534272d8b97cf85aa91b640aeb0ed2a15924",
       "serverId": "f182a8af-62ca-4ceb-ab81-14f8fec9c6c5"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "d98c6a09_5c536137",
+        "filename": "vm_manager/admin.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 41,
+      "author": {
+        "id": 1000157
+      },
+      "writtenOn": "2021-09-30T00:38:57Z",
+      "side": 0,
+      "message": "Done",
+      "parentUuid": "1e34e9e8_d7e0e634",
+      "range": {
+        "startLine": 41,
+        "startChar": 4,
+        "endLine": 41,
+        "endChar": 56
+      },
+      "revId": "0f2b534272d8b97cf85aa91b640aeb0ed2a15924",
+      "serverId": "f182a8af-62ca-4ceb-ab81-14f8fec9c6c5"
     }
   ]
 }
