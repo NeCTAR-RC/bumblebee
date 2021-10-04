@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2fdda255_68a81249",
+        "filename": "vm_manager/vm_functions/create_vm.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 1,
+      "author": {
+        "id": 1000077
+      },
+      "writtenOn": "2021-10-04T23:56:19Z",
+      "side": 1,
+      "message": "Is this a mistake?",
+      "range": {
+        "startLine": 1,
+        "startChar": 0,
+        "endLine": 1,
+        "endChar": 10
+      },
+      "revId": "259beba01aee200bff1337546647bdee5b166e0d",
+      "serverId": "f182a8af-62ca-4ceb-ab81-14f8fec9c6c5"
+    }
+  ]
+}
