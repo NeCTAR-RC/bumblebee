@@ -76,7 +76,7 @@ class Volume(CloudResource):
     objects = VolumeManager()
 
     def __str__(self):
-        return (f"({self.id}) Volume of {self.operating_system} " 
+        return (f"({self.id}) Volume of {self.operating_system} "
                 f"for {self.user}")
 
     def save(self, *args, **kwargs):

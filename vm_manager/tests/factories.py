@@ -1,6 +1,8 @@
 import factory
 from factory import fuzzy, random
+
 import uuid
+from datetime import datetime, timezone
 
 
 class FuzzyUUID(fuzzy.BaseFuzzyAttribute):
@@ -15,6 +17,7 @@ class InstanceFactory(factory.django.DjangoModelFactory):
         model = 'vm_manager.Instance'
 
     id = FuzzyUUID()
+    created = datetime.now(timezone.utc)
 
 
 class VolumeFactory(factory.django.DjangoModelFactory):
@@ -23,9 +26,9 @@ class VolumeFactory(factory.django.DjangoModelFactory):
 
     id = FuzzyUUID()
     flavor = FuzzyUUID()
+    created = datetime.now(timezone.utc)
 
 
 class VMStatusFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = 'vm_manager.VMStatus'
-

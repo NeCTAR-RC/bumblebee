@@ -1,3 +1,5 @@
+import pdb
+
 import copy
 import crypt
 import django_rq
@@ -69,7 +71,8 @@ def _create_volume(user, desktop_type):
         image=desktop_type.source_volume_id,
         requesting_feature=requesting_feature,
         operating_system=operating_system,
-        flavor=desktop_type.default_flavor.id)
+        flavor=desktop_type.default_flavor.id,
+        created=datetime.now(timezone.utc))
     volume.save()
 
     # Add the volume's hostname to the volume's metadata on openstack
