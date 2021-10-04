@@ -10,8 +10,8 @@ class ResourceAdmin(admin.ModelAdmin):
     list_filter = [
         'created', 'deleted', 'error_flag', 'error_message',
         'user', 'marked_for_deletion']
-    readonly_fields = ['id', 'created',]
-    ordering = ('-created',)
+    readonly_fields = ['id', 'created']
+    ordering = ('-created', )
 
     list_display = (
         '__str__',

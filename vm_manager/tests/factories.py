@@ -1,5 +1,6 @@
 import factory
 from factory import fuzzy, random
+
 import uuid
 
 
@@ -28,4 +29,3 @@ class VolumeFactory(factory.django.DjangoModelFactory):
 class VMStatusFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = 'vm_manager.VMStatus'
-
