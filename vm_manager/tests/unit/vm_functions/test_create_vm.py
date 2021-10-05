@@ -1,6 +1,7 @@
 import pdb
 
 import uuid
+import copy
 
 from unittest.mock import Mock, patch
 
@@ -10,83 +11,14 @@ from django.test import TestCase
 from researcher_workspace.tests.factories import UserFactory
 from researcher_desktop.utils.utils import get_desktop_type, desktops_feature
 
+from vm_manager.tests.fakes import Fake, FakeServer, FakeVolume, FakeNectar
 from vm_manager.tests.factories import InstanceFactory, VMStatusFactory, \
     VolumeFactory
 
-from vm_manager.constants import VM_MISSING, NO_VM
-from vm_manager.vm_functions.create_vm import _create_volume, _create_instance
+from vm_manager.constants import VM_MISSING, VM_OKAY, NO_VM
+from vm_manager.vm_functions.create_vm import launch_vm_worker, \
+    wait_to_create_instance, _create_volume, _create_instance
 from vm_manager.utils.utils import get_nectar
-
-
-class Fake(object):
-    def __init__(self, **kwargs):
-        for key, value in kwargs.items():
-            setattr(self, key, value)
-
-    def __repr__(self):
-        return f"{self.__class__} id={self.id}}}"
-
-    def __eq__(self, other):
-        return self.__class__ == other.__class__ and self.id == other.id
-
-
-class FakeFlavor(Fake):
-    pass
-
-
-class FakeVolume(Fake):
-    pass
-
-
-class FakeServer(Fake):
-    pass
-
-
-FLAVORS = [
-    FakeFlavor(id=uuid.uuid4(), name='m3.medium',
-               ram='1', disk='1', vcpus='1'),
-]
-
-VOLUMES = [
-    FakeVolume(id='1', name='m3.medium', ram='1', disk='1', vcpus='1'),
-]
-
-
-class FakeNectar(object):
-    def __init__(self):
-        self.nova = Mock()
-        self.nova.flavors.list = Mock(return_value=FLAVORS)
-        self.nova.servers.create = Mock(
-            return_value=FakeServer(
-                id=uuid.UUID(bytes=b'\x12\x34\x56\x78' * 4)))
-
-        self.allocation = Mock()
-        self.keystone = Mock()
-        self.glance = Mock()
-
-        self.cinder = Mock()
-        self.cinder.volumes.list = Mock(return_value=VOLUMES)
-        self.cinder.volumes.create = Mock(
-            return_value=FakeVolume(
-                id=uuid.UUID(bytes=b'\x12\x34\x56\x78' * 4)))
-
-        net_id = uuid.UUID(bytes=b'\x11\x11\x11\x11' * 4)
-        self.VM_PARAMS = {
-            "size": 20,
-            "metadata_volume": {'readonly': 'False'},
-            "availability_zone_volume": settings.OS_AVAILABILITY_ZONE,
-            "availability_zone_server": settings.OS_AVAILABILITY_ZONE,
-            "block_device_mapping": [{
-                'source_type': "volume",
-                'destination_type': 'volume',
-                'delete_on_termination': False,
-                'uuid': None,
-                'boot_index': '0',
-                'volume_size': 20,
-            }],
-            "id_net": net_id,
-            "list_net": [{'net-id': net_id}],
-        }
 
 
 class CreateVMTests(TestCase):
@@ -98,17 +30,58 @@ class CreateVMTests(TestCase):
         self.CENTOS = get_desktop_type('centos')
         self.user = UserFactory.create()
 
-    def test_launch_has_instance(self):
-        volume = VolumeFactory.create(
+    @patch('vm_manager.vm_functions.create_vm._create_volume')
+    @patch('vm_manager.vm_functions.create_vm.django_rq')
+    def test_launch_vm_worker(self, mock_rq, mock_create):
+        mock_scheduler = Mock()
+        mock_rq.get_scheduler.return_value = mock_scheduler
+        fake_volume = VolumeFactory.create(
+            user=self.user,
+            requesting_feature=self.UBUNTU.feature)
+        mock_create.return_value = fake_volume
+
+        result = launch_vm_worker(self.user, self.UBUNTU)
+        self.assertIsNone(result)
+
+        mock_create.assert_called_once_with(self.user, self.UBUNTU)
+        mock_rq.get_scheduler.called_once_with('default')
+        mock_scheduler.enqueue_in.assert_called_once()
+        args = mock_scheduler.enqueue_in.call_args.args
+        self.assertEqual(6, len(args))
+        self.assertEqual(wait_to_create_instance, args[1])
+        self.assertEqual(self.user, args[2])
+        self.assertEqual(self.UBUNTU, args[3])
+        self.assertEqual(fake_volume, args[4])
+
+    @patch('vm_manager.vm_functions.create_vm._create_volume')
+    @patch('vm_manager.vm_functions.create_vm.django_rq')
+    def test_launch_vm_worker_exists(self, mock_rq, mock_create):
+        mock_scheduler = Mock()
+        mock_rq.get_scheduler.return_value = mock_scheduler
+        fake_volume = VolumeFactory.create(
             user=self.user,
             operating_system=self.UBUNTU.id,
             requesting_feature=self.UBUNTU.feature)
-        instance = InstanceFactory.create(
+        fake_instance = InstanceFactory.create(
+            boot_volume=fake_volume,
+            user=self.user)
+        fake_vmstatus = VMStatusFactory.create(
             user=self.user,
-            boot_volume=volume
-        )
+            instance=fake_instance,
+            operating_system=self.UBUNTU.id,
+            requesting_feature=self.UBUNTU.feature,
+            status=VM_OKAY)
+        mock_create.return_value = fake_volume
 
-        self.assertIsNotNone(instance)
+        with self.assertRaises(RuntimeWarning) as cm:
+            launch_vm_worker(self.user, self.UBUNTU)
+        self.assertEquals(f"A {self.UBUNTU.id} VM for {self.user.username} "
+                          f"already exists",
+                          str(cm.exception))
+
+        mock_create.assert_not_called()
+        mock_rq.get_scheduler.assert_not_called()
+        mock_scheduler.enqueue_in.assert_not_called()
 
     @patch('vm_manager.utils.utils.Nectar', new=FakeNectar)
     @patch('vm_manager.vm_functions.create_vm.generate_server_name')
@@ -186,3 +159,55 @@ class CreateVMTests(TestCase):
         self.assertEqual(uuid.UUID(bytes=b'\x12\x34\x56\x78' * 4), result.id)
 
         fake.cinder.volumes.create.assert_called_once()
+
+    @patch('vm_manager.utils.utils.Nectar', new=FakeNectar)
+    @patch('vm_manager.vm_functions.create_vm.generate_hostname')
+    @patch('vm_manager.vm_functions.create_vm.generate_password')
+    @patch('vm_manager.vm_functions.create_vm.render_to_string')
+    def test_create_instance(self, mock_render, mock_gen_password,
+                             mock_gen_hostname):
+        mock_gen_hostname.return_value = "mullion"
+        mock_gen_password.return_value = "secret"
+        mock_render.return_value = "RENDERED_USER_DATA"
+        fake = get_nectar()
+        fake_volume = VolumeFactory.create(
+            id=uuid.UUID(bytes=b'\x15\x26\x37\x48' * 4),
+            user=self.user,
+            image=self.UBUNTU.source_volume_id,
+            operating_system=self.UBUNTU.id,
+            requesting_feature=self.UBUNTU.feature,
+            flavor=self.UBUNTU.default_flavor.id)
+
+        result = _create_instance(self.user, self.UBUNTU, fake_volume)
+
+        self.assertIsNotNone(result)
+        self.assertEqual(uuid.UUID(bytes=b'\x12\x34\x56\x78' * 4), result.id)
+        self.assertEqual(self.user, result.user)
+        self.assertEqual(fake_volume, result.boot_volume)
+        self.assertEqual("vdiuser", result.username)
+        self.assertEqual("secret", result.password)
+        self.assertIsNotNone(result.guac_connection)
+
+        mock_gen_password.assert_called_once()
+        mock_gen_hostname.assert_called_once()
+
+        fake = get_nectar()
+        expected_mapping = copy.deepcopy(
+            fake.VM_PARAMS['block_device_mapping'])
+        expected_mapping[0]["uuid"] = fake_volume.id
+
+        fake.nova.servers.create.assert_called_once_with(
+            userdata="RENDERED_USER_DATA",
+            security_groups=self.UBUNTU.security_groups,
+            key_name=settings.OS_KEYNAME,
+            name="mullion",
+            flavor=self.UBUNTU.default_flavor.id,
+            image='',
+            block_device_mapping_v1=None,
+            block_device_mapping_v2=expected_mapping,
+            nics=fake.VM_PARAMS['list_net'],
+            availability_zone=fake.VM_PARAMS['availability_zone_server'],
+            meta={'allow_user': self.user.username,
+                  'environment': settings.ENVIRONMENT_NAME,
+                  'requesting_feature': self.UBUNTU.feature.name}
+        )

@@ -31,7 +31,7 @@ def launch_vm_worker(user, desktop_type):
     instance = Instance.objects.get_instance(user, desktop_type)
     if instance:
         vm_status = VMStatus.objects.get_vm_status_by_instance(
-            instance, requesting_feature)
+            instance, desktop_type.feature)
         if vm_status.status != NO_VM:
             msg = f"A {operating_system} VM for {user} already exists"
             logger.error(msg)
