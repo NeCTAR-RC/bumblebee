@@ -264,12 +264,12 @@ GENERAL_WARNING_MESSAGE = ""
 # Values that need to be set in local_settings.py
 PROXY_URL = False
 SECRET_KEY = 'secret'
-OS_APPLICATION_CREDENTIAL_ID = 'nada'
-OS_APPLICATION_CREDENTIAL_SECRET = 'nada'
+OS_APPLICATION_CREDENTIAL_ID = 'os_cred_id'
+OS_APPLICATION_CREDENTIAL_SECRET = 'os_cred_secret'
 
-OS_KEYNAME = 'nada'
-ENVIRONMENT_NAME = 'nada'
-ENVIRONMENT_COLOR = 'nada'
+OS_KEYNAME = 'os_keyname'
+ENVIRONMENT_NAME = 'tiger'
+ENVIRONMENT_COLOR = 'pink'
 NOTIFY_URL = 'http://notify'
 SITE_URL = 'http://site'
 GUACAMOLE_URL = 'http://guacamole'
