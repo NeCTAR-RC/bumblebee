@@ -2,6 +2,7 @@ import pdb
 
 import uuid
 import copy
+from datetime import datetime, timedelta, timezone
 
 from unittest.mock import Mock, patch
 
@@ -15,7 +16,8 @@ from vm_manager.tests.fakes import Fake, FakeServer, FakeVolume, FakeNectar
 from vm_manager.tests.factories import InstanceFactory, VMStatusFactory, \
     VolumeFactory
 
-from vm_manager.constants import VM_MISSING, VM_OKAY, NO_VM
+from vm_manager.constants import VM_MISSING, VM_OKAY, VM_SHELVED, NO_VM
+from vm_manager.models import VMStatus
 from vm_manager.vm_functions.create_vm import launch_vm_worker, \
     wait_to_create_instance, _create_volume, _create_instance
 from vm_manager.utils.utils import get_nectar
@@ -30,14 +32,46 @@ class CreateVMTests(TestCase):
         self.CENTOS = get_desktop_type('centos')
         self.user = UserFactory.create()
 
+    def _build_fake_volume(self, id=None):
+        if id is None:
+            id = uuid.UUID(bytes=b'\x15\x26\x37\x48' * 4)
+        return VolumeFactory.create(
+            id=id,
+            user=self.user,
+            image=self.UBUNTU.source_volume_id,
+            operating_system=self.UBUNTU.id,
+            requesting_feature=self.UBUNTU.feature,
+            flavor=self.UBUNTU.default_flavor.id)
+
+    def _build_fake_vol_instance(self, volume_id=None, instance_id=None):
+        if instance_id is None:
+            instance_id = uuid.UUID(bytes=b'\x87\x65\x43\x21' * 4)
+        fake_volume = self._build_fake_volume(id=volume_id)
+        fake_instance = InstanceFactory.create(
+            id=instance_id,
+            boot_volume=fake_volume,
+            user=self.user)
+        return fake_volume, fake_instance
+
+    def _build_fake_vol_inst_status(self, volume_id=None,
+                                    instance_id=None,
+                                    status=VM_OKAY):
+        fake_volume, fake_instance = self._build_fake_vol_instance(
+            volume_id=volume_id, instance_id=instance_id)
+        fake_vmstatus = VMStatusFactory.create(
+            user=self.user,
+            instance=fake_instance,
+            operating_system=self.UBUNTU.id,
+            requesting_feature=self.UBUNTU.feature,
+            status=status)
+        return fake_volume, fake_instance, fake_vmstatus
+
     @patch('vm_manager.vm_functions.create_vm._create_volume')
     @patch('vm_manager.vm_functions.create_vm.django_rq')
     def test_launch_vm_worker(self, mock_rq, mock_create):
         mock_scheduler = Mock()
         mock_rq.get_scheduler.return_value = mock_scheduler
-        fake_volume = VolumeFactory.create(
-            user=self.user,
-            requesting_feature=self.UBUNTU.feature)
+        fake_volume = self._build_fake_volume()
         mock_create.return_value = fake_volume
 
         result = launch_vm_worker(self.user, self.UBUNTU)
@@ -55,22 +89,10 @@ class CreateVMTests(TestCase):
 
     @patch('vm_manager.vm_functions.create_vm._create_volume')
     @patch('vm_manager.vm_functions.create_vm.django_rq')
-    def test_launch_vm_worker_exists(self, mock_rq, mock_create):
+    def test_launch_vm_worker_instance_exists(self, mock_rq, mock_create):
         mock_scheduler = Mock()
         mock_rq.get_scheduler.return_value = mock_scheduler
-        fake_volume = VolumeFactory.create(
-            user=self.user,
-            operating_system=self.UBUNTU.id,
-            requesting_feature=self.UBUNTU.feature)
-        fake_instance = InstanceFactory.create(
-            boot_volume=fake_volume,
-            user=self.user)
-        fake_vmstatus = VMStatusFactory.create(
-            user=self.user,
-            instance=fake_instance,
-            operating_system=self.UBUNTU.id,
-            requesting_feature=self.UBUNTU.feature,
-            status=VM_OKAY)
+        fake_volume, _, _ = self._build_fake_vol_inst_status()
         mock_create.return_value = fake_volume
 
         with self.assertRaises(RuntimeWarning) as cm:
@@ -82,6 +104,65 @@ class CreateVMTests(TestCase):
         mock_create.assert_not_called()
         mock_rq.get_scheduler.assert_not_called()
         mock_scheduler.enqueue_in.assert_not_called()
+
+    @patch('vm_manager.vm_functions.create_vm._create_volume')
+    @patch('vm_manager.vm_functions.create_vm.django_rq')
+    def test_launch_vm_worker_instance_deleted(self, mock_rq, mock_create):
+        mock_scheduler = Mock()
+        mock_rq.get_scheduler.return_value = mock_scheduler
+        fake_volume, _, _ = self._build_fake_vol_inst_status(status=NO_VM)
+        mock_create.return_value = fake_volume
+
+        launch_vm_worker(self.user, self.UBUNTU)
+
+        # The test_launch_vm_worker test does a more thorough job
+        # of checking the mocks
+        mock_create.assert_called_once()
+        mock_rq.get_scheduler.assert_called_once()
+        mock_scheduler.enqueue_in.assert_called_once()
+
+    @patch('vm_manager.utils.utils.Nectar', new=FakeNectar)
+    @patch('vm_manager.vm_functions.create_vm._create_instance')
+    def test_wait_to_create(self, mock_create_instance):
+        fake_nectar = get_nectar()
+        fake_volume, fake_instance, _ = self._build_fake_vol_inst_status()
+        fake_nectar.cinder.volumes.get.return_value = FakeVolume(
+            volume_id=fake_volume.id,
+            status='available')
+        mock_create_instance.return_value = fake_instance
+
+        wait_to_create_instance(self.user, self.UBUNTU, fake_volume,
+                                datetime.now(timezone.utc))
+
+        fake_nectar.cinder.volumes.get.assert_called_once_with(
+            volume_id=fake_volume.id)
+        mock_create_instance.assert_called_once_with(
+            self.user, self.UBUNTU, fake_volume)
+
+    @patch('vm_manager.utils.utils.Nectar', new=FakeNectar)
+    @patch('vm_manager.vm_functions.create_vm._create_instance')
+    def test_wait_to_create_unshelve(self, mock_create_instance):
+        fake_nectar = get_nectar()
+        fake_volume, fake_instance, fake_status = \
+            self._build_fake_vol_inst_status(status=VM_SHELVED)
+        fake_volume.shelved = True
+        fake_nectar.cinder.volumes.get.return_value = FakeVolume(
+            volume_id=fake_volume.id,
+            status='available')
+        mock_create_instance.return_value = fake_instance
+
+        wait_to_create_instance(self.user, self.UBUNTU, fake_volume,
+                                datetime.now(timezone.utc))
+
+        fake_nectar.cinder.volumes.get.assert_called_with(
+            volume_id=fake_volume.id)
+        mock_create_instance.assert_called_once_with(
+            self.user, self.UBUNTU, fake_volume)
+
+        self.assertFalse(fake_volume.shelved)
+
+        updated_status = VMStatus.objects.get(pk=fake_status.pk)
+        self.assertEqual(VM_OKAY, updated_status.status)
 
     @patch('vm_manager.utils.utils.Nectar', new=FakeNectar)
     @patch('vm_manager.vm_functions.create_vm.generate_server_name')
@@ -110,22 +191,7 @@ class CreateVMTests(TestCase):
 
     @patch('vm_manager.vm_functions.create_vm.get_nectar')
     def test_create_volume_exists(self, mock_get):
-        fake_volume = VolumeFactory.create(
-            id=uuid.UUID(bytes=b'\x13\x24\x57\x68' * 4),
-            user=self.user,
-            image=self.UBUNTU.source_volume_id,
-            operating_system=self.UBUNTU.id,
-            requesting_feature=self.UBUNTU.feature,
-            flavor=self.UBUNTU.default_flavor.id)
-        fake_instance = InstanceFactory.create(
-            boot_volume=fake_volume,
-            user=self.user)
-        fake_vmstatus = VMStatusFactory.create(
-            user=self.user,
-            instance=fake_instance,
-            operating_system=self.UBUNTU.id,
-            requesting_feature=self.UBUNTU.feature,
-            status=VM_MISSING)
+        fake_volume, _, _ = self._build_fake_vol_inst_status()
 
         result = _create_volume(self.user, self.UBUNTU)
         self.assertEqual(fake_volume, result)
@@ -133,23 +199,7 @@ class CreateVMTests(TestCase):
 
     @patch('vm_manager.utils.utils.Nectar', new=FakeNectar)
     def test_create_volume_deleted(self):
-        fake_volume = VolumeFactory.create(
-            id=uuid.UUID(bytes=b'\x13\x24\x57\x68' * 4),
-            user=self.user,
-            image=self.UBUNTU.source_volume_id,
-            operating_system=self.UBUNTU.id,
-            requesting_feature=self.UBUNTU.feature,
-            flavor=self.UBUNTU.default_flavor.id)
-        fake_instance = InstanceFactory.create(
-            id=uuid.UUID(bytes=b'\x87\x65\x43\x21' * 4),
-            boot_volume=fake_volume,
-            user=self.user)
-        fake_vmstatus = VMStatusFactory.create(
-            user=self.user,
-            instance=fake_instance,
-            operating_system=self.UBUNTU.id,
-            requesting_feature=self.UBUNTU.feature,
-            status=NO_VM)
+        fake_volume, _, _ = self._build_fake_vol_inst_status(status=NO_VM)
 
         fake = get_nectar()
         fake.cinder.volumes.create.reset_mock()
@@ -170,13 +220,7 @@ class CreateVMTests(TestCase):
         mock_gen_password.return_value = "secret"
         mock_render.return_value = "RENDERED_USER_DATA"
         fake = get_nectar()
-        fake_volume = VolumeFactory.create(
-            id=uuid.UUID(bytes=b'\x15\x26\x37\x48' * 4),
-            user=self.user,
-            image=self.UBUNTU.source_volume_id,
-            operating_system=self.UBUNTU.id,
-            requesting_feature=self.UBUNTU.feature,
-            flavor=self.UBUNTU.default_flavor.id)
+        fake_volume = self._build_fake_volume()
 
         result = _create_instance(self.user, self.UBUNTU, fake_volume)
 
