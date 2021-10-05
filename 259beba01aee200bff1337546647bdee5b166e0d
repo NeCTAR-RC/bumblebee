@@ -22,6 +22,30 @@
       },
       "revId": "259beba01aee200bff1337546647bdee5b166e0d",
       "serverId": "f182a8af-62ca-4ceb-ab81-14f8fec9c6c5"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "030529b6_e6036686",
+        "filename": "vm_manager/vm_functions/create_vm.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 1,
+      "author": {
+        "id": 1000157
+      },
+      "writtenOn": "2021-10-05T05:23:42Z",
+      "side": 1,
+      "message": "Yes and no.  I was debugging.  But I\u0027ve now figured out why the the auto_now_add was not working for the \u0027creation\u0027 field.  So the hack of setting it is no longer needed.",
+      "parentUuid": "2fdda255_68a81249",
+      "range": {
+        "startLine": 1,
+        "startChar": 0,
+        "endLine": 1,
+        "endChar": 10
+      },
+      "revId": "259beba01aee200bff1337546647bdee5b166e0d",
+      "serverId": "f182a8af-62ca-4ceb-ab81-14f8fec9c6c5"
     }
   ]
 }
