@@ -1,5 +1,3 @@
-import pdb
-
 import copy
 import crypt
 import django_rq
@@ -108,12 +106,10 @@ def wait_to_create_instance(user, desktop_type, volume, start_time):
         volume.save()
         logger.info(f'{desktop_type.name} VM creation initiated '
                     f'for {user.username}')
-        return
 
-    if (now - start_time > timedelta(seconds=VOLUME_CREATION_TIMEOUT)):
-        os = desktop_type.id
+    elif (now - start_time > timedelta(seconds=VOLUME_CREATION_TIMEOUT)):
         logger.error(f"Volume took too long to create: user:{user} "
-                     f"operating_system:{os} volume:{volume} "
+                     f"operating_system:{desktop_type.id} volume:{volume} "
                      f"volume.status:{openstack_volume.status} "
                      f"start_time:{start_time} "
                      f"datetime.now:{now}")
@@ -124,6 +120,7 @@ def wait_to_create_instance(user, desktop_type, volume, start_time):
         volume.error(msg)
         volume.save()
         raise TimeoutError(msg)
+
     else:
         scheduler = django_rq.get_scheduler('default')
         scheduler.enqueue_in(timedelta(seconds=5), wait_to_create_instance,
