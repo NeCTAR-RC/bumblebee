@@ -56,7 +56,7 @@ class VolumeManager(models.Manager):
             logger.error(e)
             error = Volume.MultipleObjectsReturned(
                 f"Multiple current volumes found in the database with "
-                f"user={user} and os={operating_system}")
+                f"user={user} and os={desktop_type.id}")
             logger.error(error)
             raise error
 
