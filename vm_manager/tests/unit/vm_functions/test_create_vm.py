@@ -16,8 +16,9 @@ from vm_manager.tests.fakes import Fake, FakeServer, FakeVolume, FakeNectar
 from vm_manager.tests.factories import InstanceFactory, VMStatusFactory, \
     VolumeFactory
 
-from vm_manager.constants import VM_MISSING, VM_OKAY, VM_SHELVED, NO_VM
-from vm_manager.models import VMStatus
+from vm_manager.constants import VM_MISSING, VM_OKAY, VM_SHELVED, NO_VM, \
+    VOLUME_CREATION_TIMEOUT
+from vm_manager.models import VMStatus, Volume
 from vm_manager.vm_functions.create_vm import launch_vm_worker, \
     wait_to_create_instance, _create_volume, _create_instance
 from vm_manager.utils.utils import get_nectar
@@ -163,6 +164,61 @@ class CreateVMTests(TestCase):
 
         updated_status = VMStatus.objects.get(pk=fake_status.pk)
         self.assertEqual(VM_OKAY, updated_status.status)
+
+    @patch('vm_manager.utils.utils.Nectar', new=FakeNectar)
+    @patch('vm_manager.vm_functions.create_vm._create_instance')
+    def test_wait_to_create_timeout(self, mock_create_instance):
+        fake_nectar = get_nectar()
+        fake_volume, _, fake_status = self._build_fake_vol_inst_status()
+        fake_nectar.cinder.volumes.get.return_value = FakeVolume(
+            volume_id=fake_volume.id,
+            status='unavailable')
+
+        with self.assertRaises(TimeoutError) as cm:
+            time = (datetime.now(timezone.utc)
+                    - timedelta(seconds=VOLUME_CREATION_TIMEOUT + 1))
+            wait_to_create_instance(self.user, self.UBUNTU, fake_volume, time)
+        self.assertEquals("Volume took too long to create", str(cm.exception))
+
+        fake_nectar.cinder.volumes.get.assert_called_with(
+            volume_id=fake_volume.id)
+        mock_create_instance.assert_not_called()
+
+        updated_status = VMStatus.objects.get(pk=fake_status.pk)
+        self.assertEqual(NO_VM, updated_status.status)
+
+        updated_volume = Volume.objects.get(id=fake_volume.id)
+        self.assertEqual("Volume took too long to create",
+                         updated_volume.error_message)
+        self.assertIsNotNone(updated_volume.error_flag)
+
+    @patch('vm_manager.utils.utils.Nectar', new=FakeNectar)
+    @patch('vm_manager.vm_functions.create_vm.django_rq')
+    @patch('vm_manager.vm_functions.create_vm._create_instance')
+    def test_wait_to_create_poll(self, mock_create_instance, mock_rq):
+        mock_scheduler = Mock()
+        mock_rq.get_scheduler.return_value = mock_scheduler
+        fake_nectar = get_nectar()
+        fake_volume, _, fake_status = self._build_fake_vol_inst_status()
+        fake_nectar.cinder.volumes.get.return_value = FakeVolume(
+            volume_id=fake_volume.id,
+            status='unavailable')
+
+        wait_to_create_instance(self.user, self.UBUNTU, fake_volume,
+                                datetime.now(timezone.utc)
+                                - timedelta(seconds=5))
+
+        fake_nectar.cinder.volumes.get.assert_called_with(
+            volume_id=fake_volume.id)
+        mock_create_instance.assert_not_called()
+        mock_rq.get_scheduler.called_once_with('default')
+        mock_scheduler.enqueue_in.assert_called_once()
+        args = mock_scheduler.enqueue_in.call_args.args
+        self.assertEqual(6, len(args))
+        self.assertEqual(wait_to_create_instance, args[1])
+        self.assertEqual(self.user, args[2])
+        self.assertEqual(self.UBUNTU, args[3])
+        self.assertEqual(fake_volume, args[4])
 
     @patch('vm_manager.utils.utils.Nectar', new=FakeNectar)
     @patch('vm_manager.vm_functions.create_vm.generate_server_name')
