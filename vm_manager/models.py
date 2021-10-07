@@ -4,6 +4,7 @@ import socket
 import string
 
 from datetime import datetime, timezone
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.utils import IntegrityError
 from django.http import Http404
@@ -120,7 +121,7 @@ class InstanceManager(models.Manager):
             logger.error(e)
             error = Instance.MultipleObjectsReturned(
                 f"Multiple current instances found in the database with "
-                f"user={user} and os={operating_system}")
+                f"user={user} and os={desktop_type.name}")
             logger.error(error)
             raise error
 
@@ -164,6 +165,11 @@ class InstanceManager(models.Manager):
         except ValueError:
             logger.error(
                 f"Value error trying to get a VM with "
+                f"vm_id: {vm_id}, called by {user}")
+            raise Http404
+        except ValidationError as e:
+            logger.error(
+                f"Validation error ({e}) trying to get a VM with "
                 f"vm_id: {vm_id}, called by {user}")
             raise Http404
         except Instance.DoesNotExist:
@@ -230,12 +236,13 @@ class Instance(CloudResource):
             ('create-drive-path', 'true'),
         ]
 
-        connection_params = []
         for k, v in params:
-            GuacamoleConnectionParameter.objects.get_or_create(
+            gcp, created = GuacamoleConnectionParameter.objects.get_or_create(
                 connection=self.guac_connection,
                 parameter_name=k,
-                parameter_value=v)
+                defaults={'parameter_value': v})
+            if not created:
+                gcp.parameter_value = v
 
         entity, _ = GuacamoleEntity.objects.get_or_create(
             name=self.user.username)
