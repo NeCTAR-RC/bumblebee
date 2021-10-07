@@ -230,12 +230,13 @@ class Instance(CloudResource):
             ('create-drive-path', 'true'),
         ]
 
-        connection_params = []
         for k, v in params:
-            GuacamoleConnectionParameter.objects.get_or_create(
+            gcp, created = GuacamoleConnectionParameter.objects.get_or_create(
                 connection=self.guac_connection,
                 parameter_name=k,
-                parameter_value=v)
+                defaults={'parameter_value': v})
+            if not created:
+                gcp.parameter_value = v
 
         entity, _ = GuacamoleEntity.objects.get_or_create(
             name=self.user.username)
