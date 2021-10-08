@@ -1,3 +1,5 @@
+from novaclient.v2 import servers as nova_servers
+
 LINUX = "linux"
 
 SCRIPT_ERROR = 0
@@ -18,6 +20,12 @@ VM_SHELVED = "VM_Shelved"
 VM_ERROR = "VM_Error"
 VM_MISSING = "VM_Missing"
 VM_SHUTDOWN = "VM_Shutdown"
+
+ALL_VM_STATES = frozenset([NO_VM, VM_WAITING, VM_OKAY, VM_SUPERSIZED,
+                           VM_SHELVED, VM_ERROR, VM_MISSING, VM_SHUTDOWN])
+
+REBOOT_SOFT = nova_servers.REBOOT_SOFT
+REBOOT_HARD = nova_servers.REBOOT_HARD
 
 LAUNCH_WAIT_SECONDS = 300  # Five minutes
 REBOOT_WAIT_SECONDS = 180  # Three minutes

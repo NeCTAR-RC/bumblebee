@@ -23,9 +23,8 @@ from vm_manager.constants import VM_ERROR, VM_OKAY, VM_WAITING, \
     VM_SHELVED, NO_VM, VM_SHUTDOWN, VM_SUPERSIZED, VM_DELETED, \
     VM_CREATING, VM_MISSING, VM_RESIZING, LAUNCH_WAIT_SECONDS, \
     CLOUD_INIT_FINISHED, CLOUD_INIT_STARTED, REBOOT_WAIT_SECONDS, \
-    RESIZE_WAIT_SECONDS, SHELVE_WAIT_SECONDS
-
-from vm_manager.constants import SCRIPT_ERROR, SCRIPT_OKAY
+    RESIZE_WAIT_SECONDS, SHELVE_WAIT_SECONDS, \
+    REBOOT_SOFT, REBOOT_HARD, SCRIPT_ERROR, SCRIPT_OKAY
 from vm_manager.utils.utils import after_time
 from vm_manager.utils.utils import generate_hostname
 
@@ -46,13 +45,30 @@ from vm_manager.vm_functions.resize_vm import can_extend_supersize_period, \
 logger = logging.getLogger(__name__)
 
 
+def _wrong_state_message(action, user, feature=None, desktop_type=None,
+                         vm_status=None, vm_id=None):
+    status_str = f"in wrong state ({vm_status.status})" if vm_status else "missing"
+    instance_str = (
+        f", instance {vm_id}" if vm_id
+        else f", instance {vm_status.instance.id}" if (vm_status
+                                                       and vm_status.instance)
+        else "")
+    kind_str = (
+        f", desktop_type {desktop_type.id}" if desktop_type
+        else f", feature {feature}" if feature else "")
+    message = (
+        f"VMStatus for user {user}{kind_str}{instance_str} is {status_str}. "
+        f"Cannot {action} VM.")
+    logger.error(message)
+    return message
+
+
 def launch_vm(user, desktop_type) -> str:
+    # TODO - the handling of race conditions is dodgy
     vm_status = VMStatus.objects.get_latest_vm_status(user, desktop_type)
     if vm_status and vm_status.status != VM_DELETED:
-        error_message = (f"A VMStatus for {user} and {desktop_type.id} "
-                         f"already exists")
-        logger.error(error_message)
-        return error_message
+        return _wrong_state_message(
+            "launch", user, desktop_type=desktop_type, vm_status=vm_status)
 
     vm_status = VMStatus(
         user=user, requesting_feature=desktop_type.feature,
@@ -80,13 +96,16 @@ def launch_vm(user, desktop_type) -> str:
 
 
 def delete_vm(user, vm_id, requesting_feature) -> str:
-    vm_status = VMStatus.objects.get_vm_status_by_untrusted_vm_id(
-        vm_id, user, requesting_feature)
-    if (not vm_status) or vm_status.status == NO_VM:
-        error_message = (f"No VMStatus found with that vm_id or vm already "
-                         f"marked as deleted {user} {vm_id} {vm_status}")
-        logger.error(error_message)
-        return error_message
+    try:
+        vm_status = VMStatus.objects.get_vm_status_by_untrusted_vm_id(
+            vm_id, user, requesting_feature)
+    except VMStatus.DoesNotExist:
+        vm_status = None
+
+    if not vm_status or vm_status.status in (NO_VM, VM_DELETED):
+        return _wrong_state_message(
+            "delete", user, feature=requesting_feature, vm_status=vm_status)
+
     logger.info(f"Changing the VMStatus of {vm_id} from {vm_status.status} "
                 f"to {VM_DELETED} and Mark for Deletion is set on the "
                 f"Instance and Volume {vm_status.instance.boot_volume.id}")
@@ -110,10 +129,9 @@ def admin_delete_vm(request, vm_id):
     try:
         vm_status = VMStatus.objects.get(instance=vm_id)
     except VMStatus.DoesNotExist:
-        error_message = (f"No VMStatus found with that vm_id when "
-                         f"trying to admin delete Instance {vm_id}")
-        logger.error(error_message)
-        return error_message
+        return _wrong_state_message(
+             "admin delete", user, feature=requesting_feature, vm_id=vm_id)
+
     logger.info(f"Performing Admin delete on {vm_id} "
                 f"Mark for Deletion is set on the Instance "
                 f"and Volume {vm_status.instance.boot_volume.id}")
@@ -131,14 +149,16 @@ def admin_delete_vm(request, vm_id):
 
 
 def shelve_vm(user, vm_id, requesting_feature) -> str:
-    vm_status = VMStatus.objects.get_vm_status_by_untrusted_vm_id(
-        vm_id, user, requesting_feature)
-    if vm_status and not (vm_status.status == VM_OKAY
-                          or vm_status.status == VM_SUPERSIZED):
-        error_message = (f"A VMStatus {vm_id} for {user} is in the "
-                         f"wrong state. VM cannot be shelved")
-        logger.error(error_message)
-        return error_message
+    try:
+        vm_status = VMStatus.objects.get_vm_status_by_untrusted_vm_id(
+            vm_id, user, requesting_feature)
+    except VMStatus.DoesNotExist:
+        vm_status = None
+
+    if not vm_status or vm_status.status not in [VM_OKAY, VM_SUPERSIZED]:
+        return _wrong_state_message(
+            "shelve", user, feature=requesting_feature, vm_status=vm_status,
+            vm_id=vm_id)
 
     logger.info(f"Changing the VMStatus of {vm_id} "
                 f"from {vm_status.status} to {VM_WAITING} "
@@ -157,10 +177,8 @@ def shelve_vm(user, vm_id, requesting_feature) -> str:
 def unshelve_vm(user, desktop_type) -> str:
     vm_status = VMStatus.objects.get_latest_vm_status(user, desktop_type)
     if not vm_status or vm_status.status != VM_SHELVED:
-        error_message = (f"VM Status for {user} and {desktop_type.id} "
-                         f"is in the wrong state. VM cannot be unshelved")
-        logger.error(error_message)
-        return error_message
+        return _wrong_state_message(
+            "unshelve", user, desktop_type=desktop_type, vm_status=vm_status)
 
     vm_status = VMStatus(user=user,
                          requesting_feature=desktop_type.feature,
@@ -176,8 +194,19 @@ def unshelve_vm(user, desktop_type) -> str:
 
 
 def reboot_vm(user, vm_id, reboot_level, requesting_feature) -> str:
+    if not reboot_level in [REBOOT_SOFT, REBOOT_HARD]:
+        log.error(f"Unrecognized reboot level ({reboot_level}) "
+                  f"for instance {vm_id} and user {user}")
+        # TODO - Fix the researcher_desktop layer so that we can return
+        # a 400 HTTP response code.
+        raise Http404
     vm_status = VMStatus.objects.get_vm_status_by_untrusted_vm_id(
         vm_id, user, requesting_feature)
+    if vm_status.status not in {VM_OKAY, VM_SUPERSIZED}:
+        return _wrong_state_message(
+            "reboot", user, feature=requesting_feature, vm_status=vm_status,
+            vm_id=vm_id)
+
     vm_status.wait_time = after_time(REBOOT_WAIT_SECONDS)
     vm_status.save()
 
@@ -192,11 +221,10 @@ def supersize_vm(user, vm_id, requesting_feature) -> str:
     vm_status = VMStatus.objects.get_vm_status_by_untrusted_vm_id(
         vm_id, user, requesting_feature)
 
-    if vm_status and vm_status.status != VM_OKAY:
-        error_message = (f"Instance {vm_id} for {user} is not in the "
-                         "right state to Supersize")
-        logger.error(error_message)
-        return error_message
+    if not vm_status or vm_status.status != VM_OKAY:
+        return _wrong_state_message(
+            "supersize", user, feature=requesting_feature, vm_status=vm_status,
+            vm_id=vm_id)
 
     desktop_type = get_desktop_type(vm_status.operating_system)
 
@@ -215,10 +243,10 @@ def downsize_vm(user, vm_id, requesting_feature) -> str:
     vm_status = VMStatus.objects.get_vm_status_by_untrusted_vm_id(
         vm_id, user, requesting_feature)
 
-    if vm_status and vm_status.status != VM_SUPERSIZED:
-        error_message = f"Instance {vm_id} for {user} is not in the right state to Downsize"
-        logger.error(error_message)
-        return error_message
+    if not vm_status or vm_status.status != VM_SUPERSIZED:
+        return _wrong_state_message(
+            "downsize", user, feature=requesting_feature, vm_status=vm_status,
+            vm_id=vm_id)
 
     desktop_type = get_desktop_type(vm_status.operating_system)
 

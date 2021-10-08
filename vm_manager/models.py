@@ -376,7 +376,7 @@ class VMStatusManager(models.Manager):
     # be handled with care
     def get_vm_status_by_untrusted_vm_id(self, vm_id, user,
                                          requesting_feature):
-        # Get vm, and catch any errors
+        # Get vm, and map any errors to Http404 errors
         instance = Instance.objects.get_instance_by_untrusted_vm_id(
             vm_id, user, requesting_feature)
         # Get vm_status
