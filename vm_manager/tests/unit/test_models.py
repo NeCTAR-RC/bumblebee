@@ -22,7 +22,8 @@ from vm_manager.tests.fakes import Fake, FakeNectar
 from vm_manager.constants import ERROR
 from vm_manager.utils.utils import get_nectar
 
-from vm_manager.models import Instance, Volume, Resize, _create_hostname_id
+from vm_manager.models import Instance, Volume, Resize, VMStatus, \
+    _create_hostname_id
 
 
 class VMManagerModelTestBase(TestCase):
@@ -446,3 +447,62 @@ class ResizeModelTests(VMManagerModelTestBase):
 
         self.assertEquals(resize2,
                           Resize.objects.get_latest_resize(fake_instance))
+
+
+class VMStatusModelTests(VMManagerModelTestBase):
+
+    def setUp(self, *args, **kwargs):
+        super().setUp(*args, **kwargs)
+        self.volume = VolumeFactory.create(
+            id=uuid.uuid4(), user=self.user,
+            requesting_feature=self.desktop_type.feature)
+        self.instance = InstanceFactory.create(
+            id=uuid.uuid4(), user=self.user, boot_volume=self.volume)
+
+    def test_get_latest_vm_status(self):
+        self.assertIsNone(VMStatus.objects.get_latest_vm_status(
+            self.user, self.desktop_type))
+
+        vmstatus = VMStatusFactory(instance=self.instance,
+                                   user=self.user,
+                                   requesting_feature=self.feature)
+        self.assertEquals(vmstatus,
+                          VMStatus.objects.get_latest_vm_status(
+                              self.user, self.desktop_type))
+
+        vmstatus2 = VMStatusFactory(instance=self.instance,
+                                    user=self.user,
+                                    requesting_feature=self.feature)
+        self.assertEquals(vmstatus2,
+                          VMStatus.objects.get_latest_vm_status(
+                              self.user, self.desktop_type))
+
+    def test_get_vm_status_by_volume(self):
+        other_feature = FeatureFactory.create()
+        with self.assertRaises(Http404):
+            VMStatus.objects.get_vm_status_by_volume(
+                self.volume, other_feature)
+
+        other_volume = VolumeFactory.create(
+            id=uuid.uuid4(), user=self.user,
+            requesting_feature=self.feature)
+        with self.assertRaises(Instance.DoesNotExist):
+            VMStatus.objects.get_vm_status_by_volume(
+                other_volume, self.feature)
+
+        vmstatus = VMStatusFactory(instance=self.instance,
+                                   user=self.user,
+                                   requesting_feature=self.feature)
+        self.assertEquals(vmstatus,
+                          VMStatus.objects.get_vm_status_by_volume(
+                              self.volume, self.feature))
+
+        vmstatus2 = VMStatusFactory(instance=self.instance,
+                                    user=self.user,
+                                    requesting_feature=self.feature)
+        with self.assertRaises(VMStatus.MultipleObjectsReturned) as cm:
+            VMStatus.objects.get_vm_status_by_volume(
+                self.volume, self.feature)
+        self.assertEqual(f"Multiple vm_statuses found in the database "
+                         f"with instance={self.instance}",
+                         str(cm.exception))

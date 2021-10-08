@@ -330,11 +330,20 @@ class VMStatusManager(models.Manager):
         except VMStatus.DoesNotExist:
             return None
 
+    # TODO - The 'requesting_feature' argument is redundant (AFAIK)
+    # In fact it is probably redundant on the model class too.
     def get_vm_status_by_instance(self, instance, requesting_feature):
         try:
             vm_status = self.get(instance=instance,
                                  requesting_feature=requesting_feature)
             return vm_status
+        except VMStatus.DoesNotExist as e:
+            logger.error(e)
+            error = VMStatus.DoesNotExist(
+                f"No vm_statuses found in the database "
+                f"with instance={instance}")
+            logger.error(error)
+            raise error
         except VMStatus.MultipleObjectsReturned as e:
             logger.error(e)
             error = VMStatus.MultipleObjectsReturned(
@@ -350,6 +359,7 @@ class VMStatusManager(models.Manager):
                 f"{requesting_feature} with vm_id: {volume.id}"
                 f"this vm belongs to {volume.requesting_feature}")
             raise Http404
+
         try:
             instance = Instance.objects.filter(boot_volume=volume) \
                                        .latest("created")
@@ -359,17 +369,8 @@ class VMStatusManager(models.Manager):
                 f"could not find an instance with that volume,"
                 f"raised error {e}")
             raise e
-        try:
-            vm_status = self.get(instance=instance,
-                                 requesting_feature=requesting_feature)
-            return vm_status
-        except VMStatus.MultipleObjectsReturned as e:
-            logger.error(e)
-            error = VMStatus.MultipleObjectsReturned(
-                f"Multiple vm_statuses found in the database "
-                f"with instance={instance}")
-            logger.error(error)
-            raise error
+
+        return self.get_vm_status_by_instance(instance, requesting_feature)
 
     # vm_id is untrusted because it comes from the user, so should
     # be handled with care

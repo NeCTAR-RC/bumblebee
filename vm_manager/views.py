@@ -106,6 +106,7 @@ def admin_delete_vm(request, vm_id):
     if not request.user.is_superuser:
         raise Http404()
 
+    # TODO - Should be able to tidy up multiple VMstatus if found
     try:
         vm_status = VMStatus.objects.get(instance=vm_id)
     except VMStatus.DoesNotExist:
