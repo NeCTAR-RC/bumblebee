@@ -29,3 +29,8 @@ class VolumeFactory(factory.django.DjangoModelFactory):
 class VMStatusFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = 'vm_manager.VMStatus'
+
+
+class ResizeFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = 'vm_manager.Resize'

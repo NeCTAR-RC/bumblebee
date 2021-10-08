@@ -16,12 +16,13 @@ from researcher_desktop.tests.factories import DesktopTypeFactory
 from guacamole.models import GuacamoleEntity, GuacamoleConnectionParameter, \
     GuacamoleConnectionPermission
 from guacamole.tests.factories import GuacamoleConnectionFactory
-from vm_manager.tests.factories import InstanceFactory, VolumeFactory
+from vm_manager.tests.factories import InstanceFactory, VolumeFactory, \
+    ResizeFactory, VMStatusFactory
 from vm_manager.tests.fakes import Fake, FakeNectar
 from vm_manager.constants import ERROR
 from vm_manager.utils.utils import get_nectar
 
-from vm_manager.models import Instance, Volume, _create_hostname_id
+from vm_manager.models import Instance, Volume, Resize, _create_hostname_id
 
 
 class VMManagerModelTestBase(TestCase):
@@ -381,3 +382,67 @@ class InstanceModelTests(VMManagerModelTestBase):
         mock_logger.error.assert_called_with(
             f"Trying to get a vm that has been deleted with "
             f"vm_id: {id}, called by {self.user}")
+
+
+class ResizeModelTests(VMManagerModelTestBase):
+
+    def test_resize_basics(self):
+        id = uuid.uuid4()
+        fake_volume = VolumeFactory.create(
+            id=uuid.uuid4(), user=self.user,
+            requesting_feature=self.desktop_type.feature)
+        fake_instance = InstanceFactory.create(
+            id=id, user=self.user, boot_volume=fake_volume)
+
+        now = datetime.now(timezone.utc)
+        resize = ResizeFactory.create(instance=fake_instance)
+        self.assertTrue(now <= resize.requested)
+        self.assertFalse(resize.expired())
+        self.assertEqual(f"Resize (Current) of Instance ({id}) "
+                         f"requested on {resize.requested.date()}",
+                         str(resize))
+
+        fake_instance.deleted = datetime.now(timezone.utc)
+        fake_instance.save()
+        self.assertTrue(resize.expired())
+        self.assertEqual(f"Resize (Expired) of Instance ({id}) "
+                         f"requested on {resize.requested.date()}",
+                         str(resize))
+
+        fake_instance.deleted = None
+        fake_instance.save()
+        self.assertFalse(resize.expired())
+
+        resize.reverted = now
+        resize.save()
+        self.assertTrue(resize.expired())
+        self.assertEqual(f"Resize (Expired) of Instance ({id}) "
+                         f"requested on {resize.requested.date()}",
+                         str(resize))
+
+    def test_get_latest_resize(self):
+        fake_volume = VolumeFactory.create(
+            id=uuid.uuid4(), user=self.user,
+            requesting_feature=self.desktop_type.feature)
+        fake_instance = InstanceFactory.create(
+            id=uuid.uuid4(), user=self.user, boot_volume=fake_volume)
+
+        self.assertIsNone(Resize.objects.get_latest_resize(fake_instance))
+
+        resize = ResizeFactory.create(instance=fake_instance)
+
+        self.assertEquals(resize,
+                          Resize.objects.get_latest_resize(fake_instance))
+
+        resize2 = ResizeFactory.create(instance=fake_instance)
+
+        self.assertEquals(resize2,
+                          Resize.objects.get_latest_resize(fake_instance))
+
+        fake_instance2 = InstanceFactory.create(
+            id=uuid.uuid4(), user=self.user, boot_volume=fake_volume)
+
+        resize3 = ResizeFactory.create(instance=fake_instance2)
+
+        self.assertEquals(resize2,
+                          Resize.objects.get_latest_resize(fake_instance))
