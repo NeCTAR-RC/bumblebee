@@ -47,6 +47,7 @@ logger = logging.getLogger(__name__)
 
 
 def launch_vm(user, desktop_type) -> str:
+    # TODO - the handling of race conditions is dodgy
     vm_status = VMStatus.objects.get_latest_vm_status(user, desktop_type)
     if vm_status and vm_status.status != VM_DELETED:
         error_message = (f"A VMStatus for {user} and {desktop_type.id} "
@@ -80,13 +81,21 @@ def launch_vm(user, desktop_type) -> str:
 
 
 def delete_vm(user, vm_id, requesting_feature) -> str:
-    vm_status = VMStatus.objects.get_vm_status_by_untrusted_vm_id(
-        vm_id, user, requesting_feature)
-    if (not vm_status) or vm_status.status == NO_VM:
-        error_message = (f"No VMStatus found with that vm_id or vm already "
-                         f"marked as deleted {user} {vm_id} {vm_status}")
+    try:
+        vm_status = VMStatus.objects.get_vm_status_by_untrusted_vm_id(
+            vm_id, user, requesting_feature)
+    except VMStatus.DoesNotExist:
+        error_message = (f"No VMStatus found when trying to user delete "
+                         f"Instance {vm_id}")
         logger.error(error_message)
         return error_message
+
+    if vm_status.status in (NO_VM, VM_DELETED):
+        error_message = (f"VMStatus has wrong status ({vm_status.status}) "
+                         f"when trying to user delete Instance {vm_id}")
+        logger.error(error_message)
+        return error_message
+
     logger.info(f"Changing the VMStatus of {vm_id} from {vm_status.status} "
                 f"to {VM_DELETED} and Mark for Deletion is set on the "
                 f"Instance and Volume {vm_status.instance.boot_volume.id}")
