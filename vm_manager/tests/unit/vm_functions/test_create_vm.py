@@ -10,6 +10,7 @@ from django.test import TestCase
 from researcher_workspace.tests.factories import UserFactory
 from researcher_desktop.utils.utils import get_desktop_type, desktops_feature
 
+from vm_manager.tests.common import UUID_1, UUID_2, UUID_3, UUID_4
 from vm_manager.tests.fakes import Fake, FakeServer, FakeVolume, FakeNectar
 from vm_manager.tests.factories import InstanceFactory, VMStatusFactory, \
     VolumeFactory
@@ -33,7 +34,7 @@ class CreateVMTests(TestCase):
 
     def _build_fake_volume(self, id=None):
         if id is None:
-            id = uuid.UUID(bytes=b'\x15\x26\x37\x48' * 4)
+            id = UUID_3
         return VolumeFactory.create(
             id=id,
             user=self.user,
@@ -44,7 +45,7 @@ class CreateVMTests(TestCase):
 
     def _build_fake_vol_instance(self, volume_id=None, instance_id=None):
         if instance_id is None:
-            instance_id = uuid.UUID(bytes=b'\x87\x65\x43\x21' * 4)
+            instance_id = UUID_4
         fake_volume = self._build_fake_volume(id=volume_id)
         fake_instance = InstanceFactory.create(
             id=instance_id,
@@ -225,7 +226,7 @@ class CreateVMTests(TestCase):
         result = _create_volume(self.user, self.UBUNTU)
 
         self.assertIsNotNone(result)
-        self.assertEqual(uuid.UUID(bytes=b'\x12\x34\x56\x78' * 4), result.id)
+        self.assertEqual(UUID_1, result.id)
         self.assertEqual(self.user, result.user)
         self.assertEqual(self.UBUNTU.source_volume_id, result.image)
         self.assertEqual(self.UBUNTU.id, result.operating_system)
@@ -260,7 +261,7 @@ class CreateVMTests(TestCase):
 
         result = _create_volume(self.user, self.UBUNTU)
         self.assertNotEqual(fake_volume, result)
-        self.assertEqual(uuid.UUID(bytes=b'\x12\x34\x56\x78' * 4), result.id)
+        self.assertEqual(UUID_1, result.id)
 
         fake.cinder.volumes.create.assert_called_once()
 
@@ -279,7 +280,7 @@ class CreateVMTests(TestCase):
         result = _create_instance(self.user, self.UBUNTU, fake_volume)
 
         self.assertIsNotNone(result)
-        self.assertEqual(uuid.UUID(bytes=b'\x12\x34\x56\x78' * 4), result.id)
+        self.assertEqual(UUID_1, result.id)
         self.assertEqual(self.user, result.user)
         self.assertEqual(fake_volume, result.boot_volume)
         self.assertEqual("vdiuser", result.username)

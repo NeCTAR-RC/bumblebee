@@ -4,6 +4,7 @@ import uuid
 
 from django.conf import settings
 
+from vm_manager.tests.common import UUID_1, UUID_2
 
 class Fake(object):
     def __init__(self, **kwargs):
@@ -44,8 +45,7 @@ class FakeNectar(object):
         self.nova = Mock()
         self.nova.flavors.list = Mock(return_value=FLAVORS)
         self.nova.servers.create = Mock(
-            return_value=FakeServer(
-                id=uuid.UUID(bytes=b'\x12\x34\x56\x78' * 4)))
+            return_value=FakeServer(id=UUID_1))
 
         self.allocation = Mock()
         self.keystone = Mock()
@@ -54,10 +54,9 @@ class FakeNectar(object):
         self.cinder = Mock()
         self.cinder.volumes.list = Mock(return_value=VOLUMES)
         self.cinder.volumes.create = Mock(
-            return_value=FakeVolume(
-                id=uuid.UUID(bytes=b'\x12\x34\x56\x78' * 4)))
+            return_value=FakeVolume(id=UUID_1))
 
-        net_id = uuid.UUID(bytes=b'\x11\x11\x11\x11' * 4)
+        net_id = UUID_2
         self.VM_PARAMS = {
             "size": 20,
             "metadata_volume": {'readonly': 'False'},
