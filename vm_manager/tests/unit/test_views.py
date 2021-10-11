@@ -14,17 +14,22 @@ from researcher_desktop.tests.factories import DesktopTypeFactory
 from vm_manager.tests.factories import InstanceFactory, VolumeFactory, \
     ResizeFactory, VMStatusFactory
 from vm_manager.tests.fakes import Fake, FakeNectar
-from vm_manager.constants import ERROR, VM_OKAY, VM_DELETED, VM_WAITING, \
-    VM_CREATING, NO_VM, VM_SHELVED, VM_MISSING, VM_ERROR, VM_SHUTDOWN, \
-    VM_SUPERSIZED, ALL_VM_STATES, LAUNCH_WAIT_SECONDS, \
-    REBOOT_HARD, REBOOT_SOFT
-from vm_manager.models import VMStatus
+
+from vm_manager.constants import ERROR, ACTIVE, SHUTDOWN, VERIFY_RESIZE, \
+    BUILD, REBUILD, RESIZE, REBOOT, RESCUE, REBOOT_HARD, REBOOT_SOFT
+
+from vm_manager.constants import VM_OKAY, VM_DELETED, VM_WAITING, \
+    VM_CREATING, VM_RESIZING, NO_VM, VM_SHELVED, VM_MISSING, VM_ERROR, \
+    VM_SHUTDOWN, VM_SUPERSIZED, ALL_VM_STATES, LAUNCH_WAIT_SECONDS
+
+from vm_manager.models import VMStatus, Instance
 from vm_manager.utils.utils import get_nectar, after_time
 from vm_manager.views import launch_vm_worker, delete_vm_worker, \
-    shelve_vm_worker, unshelve_vm_worker, reboot_vm_worker
+    shelve_vm_worker, unshelve_vm_worker, reboot_vm_worker, supersize_vm_worker, \
+    downsize_vm_worker
 
 from vm_manager.views import launch_vm, delete_vm, shelve_vm, unshelve_vm, \
-    reboot_vm
+    reboot_vm, supersize_vm, downsize_vm, get_vm_state
 
 
 class VMManagerViewTests(TestCase):
@@ -240,4 +245,200 @@ class VMManagerViewTests(TestCase):
                 f"Cannot reboot VM.",
                 reboot_vm(self.user, self.instance.id, REBOOT_SOFT, self.feature))
 
+        self.build_existing_vm(VM_OKAY)
+        with self.assertRaises(Http404):
+            reboot_vm(self.user, self.instance.id, "squirrelly", self.feature)
+
         mock_rq.get_queue.assert_not_called()
+
+    @patch('vm_manager.views.django_rq')
+    def test_reboot_vm(self, mock_rq):
+        mock_queue = Mock()
+        mock_rq.get_queue.return_value = mock_queue
+        self.build_existing_vm(VM_OKAY)
+        now = datetime.now(timezone.utc)
+
+        self.assertEqual(
+            f"Status of [{self.feature}][{self.desktop_type.id}][{self.user}] "
+            f"is {VM_OKAY}",
+            reboot_vm(self.user, self.instance.id, REBOOT_SOFT, self.feature))
+
+        mock_rq.get_queue.assert_called_once_with("default")
+        mock_queue.enqueue.assert_called_once_with(
+            reboot_vm_worker, self.user, self.instance.id, REBOOT_SOFT,
+            self.feature)
+        vm_status = VMStatus.objects.get_latest_vm_status(
+            self.user, self.desktop_type)
+        self.assertEqual(vm_status.pk, self.vm_status.pk)
+        self.assertEqual(VM_OKAY, vm_status.status)
+        self.assertTrue(now < vm_status.wait_time)
+
+    @patch('vm_manager.views.django_rq')
+    def test_supersize_vm_inconsistent(self, mock_rq):
+        with self.assertRaises(Http404):
+            supersize_vm(self.user, uuid.uuid4(), self.feature)
+
+        self.build_existing_vm(None)
+        self.assertEqual(
+            f"VMStatus for user {self.user}, feature {self.feature}, "
+            f"instance {self.instance.id} is missing. Cannot supersize VM.",
+            supersize_vm(self.user, self.instance.id, self.feature))
+
+        for state in ALL_VM_STATES - {VM_OKAY}:
+            self.build_existing_vm(state)
+            self.assertEqual(
+                f"VMStatus for user {self.user}, feature {self.feature}, "
+                f"instance {self.instance.id} is in wrong state ({state}). "
+                f"Cannot supersize VM.",
+                supersize_vm(self.user, self.instance.id, self.feature))
+
+        mock_rq.get_queue.assert_not_called()
+
+    @patch('vm_manager.views.django_rq')
+    def test_supersize_vm(self, mock_rq):
+        mock_queue = Mock()
+        mock_rq.get_queue.return_value = mock_queue
+        self.build_existing_vm(VM_OKAY)
+        now = datetime.now(timezone.utc)
+
+        self.assertEqual(
+            f"Status of [{self.feature}][{self.desktop_type.id}][{self.user}] "
+            f"is {VM_RESIZING}",
+            supersize_vm(self.user, self.instance.id, self.feature))
+
+        mock_rq.get_queue.assert_called_once_with("default")
+        mock_queue.enqueue.assert_called_once_with(
+            supersize_vm_worker, instance=self.instance,
+            desktop_type=self.desktop_type)
+        vm_status = VMStatus.objects.get_latest_vm_status(
+            self.user, self.desktop_type)
+        self.assertEqual(vm_status.pk, self.vm_status.pk)
+        self.assertEqual(VM_RESIZING, vm_status.status)
+        self.assertTrue(now < vm_status.wait_time)
+
+    @patch('vm_manager.views.django_rq')
+    def test_downsize_vm_inconsistent(self, mock_rq):
+        with self.assertRaises(Http404):
+            downsize_vm(self.user, uuid.uuid4(), self.feature)
+
+        self.build_existing_vm(None)
+        self.assertEqual(
+            f"VMStatus for user {self.user}, feature {self.feature}, "
+            f"instance {self.instance.id} is missing. Cannot downsize VM.",
+            downsize_vm(self.user, self.instance.id, self.feature))
+
+        for state in ALL_VM_STATES - {VM_SUPERSIZED}:
+            self.build_existing_vm(state)
+            self.assertEqual(
+                f"VMStatus for user {self.user}, feature {self.feature}, "
+                f"instance {self.instance.id} is in wrong state ({state}). "
+                f"Cannot downsize VM.",
+                downsize_vm(self.user, self.instance.id, self.feature))
+
+        mock_rq.get_queue.assert_not_called()
+
+    @patch('vm_manager.views.django_rq')
+    def test_downsize_vm(self, mock_rq):
+        mock_queue = Mock()
+        mock_rq.get_queue.return_value = mock_queue
+        self.build_existing_vm(VM_SUPERSIZED)
+        now = datetime.now(timezone.utc)
+
+        self.assertEqual(
+            f"Status of [{self.feature}][{self.desktop_type.id}][{self.user}] "
+            f"is {VM_RESIZING}",
+            downsize_vm(self.user, self.instance.id, self.feature))
+
+        mock_rq.get_queue.assert_called_once_with("default")
+        mock_queue.enqueue.assert_called_once_with(
+            downsize_vm_worker, instance=self.instance,
+            desktop_type=self.desktop_type)
+        vm_status = VMStatus.objects.get_latest_vm_status(
+            self.user, self.desktop_type)
+        self.assertEqual(vm_status.pk, self.vm_status.pk)
+        self.assertEqual(VM_RESIZING, vm_status.status)
+        self.assertTrue(now < vm_status.wait_time)
+
+    @patch('vm_manager.utils.utils.Nectar', new=FakeNectar)
+    @patch('vm_manager.models.Instance.get_url')
+    def test_get_vm_state_2(self, mock_get_url):
+        self.assertEqual((NO_VM, "No VM", None),
+                         get_vm_state(self.user, self.desktop_type))
+
+        self.build_existing_vm(None)
+        self.assertEqual((NO_VM, "No VM", None),
+                         get_vm_state(self.user, self.desktop_type))
+
+        self.build_existing_vm(NO_VM)
+        self.assertEqual((NO_VM, "No VM", None),
+                         get_vm_state(self.user, self.desktop_type))
+
+        self.build_existing_vm(VM_DELETED)
+        self.assertEqual((NO_VM, "No VM", None),
+                         get_vm_state(self.user, self.desktop_type))
+
+        self.build_existing_vm(VM_ERROR)
+        self.assertEqual((VM_ERROR, "VM has Errored", self.instance.id),
+                         get_vm_state(self.user, self.desktop_type))
+
+        VMStatusFactory.create(
+            status=VM_ERROR, user=self.user,
+            operating_system=self.desktop_type.id,
+            requesting_feature=self.feature)
+        self.assertEqual((VM_MISSING, "VM has Errored", None),
+                         get_vm_state(self.user, self.desktop_type))
+
+        VMStatusFactory.create(
+            status=VM_WAITING, user=self.user,
+            operating_system=self.desktop_type.id,
+            requesting_feature=self.feature, wait_time=after_time(10))
+        self.assertEqual((VM_WAITING, "9", None),
+                         get_vm_state(self.user, self.desktop_type))
+
+        VMStatusFactory.create(
+            status=VM_WAITING, user=self.user,
+            operating_system=self.desktop_type.id,
+            requesting_feature=self.feature,
+            instance=self.instance, wait_time=datetime.now(timezone.utc))
+        self.assertEqual((VM_ERROR, "VM Not Ready", self.instance.id),
+                         get_vm_state(self.user, self.desktop_type))
+
+        vm_status = VMStatusFactory.create(
+            status=VM_WAITING, user=self.user,
+            operating_system=self.desktop_type.id,
+            requesting_feature=self.feature,
+            wait_time=datetime.now(timezone.utc))
+        self.assertEqual((VM_MISSING, "VM has Errored", None),
+                         get_vm_state(self.user, self.desktop_type))
+        # Changes the state to VM_ERROR
+        self.assertEqual(VM_ERROR,
+                         VMStatus.objects.get(pk=vm_status.pk).status)
+
+        self.build_existing_vm(VM_SHELVED)
+        self.assertEqual((VM_SHELVED, "VM SHELVED", self.instance.id),
+                         get_vm_state(self.user, self.desktop_type))
+
+        fake_nectar = get_nectar()
+        fake_nectar.nova.servers.get.return_value = Fake(status=SHUTDOWN)
+        self.build_existing_vm(VM_OKAY)
+        self.assertEqual((VM_SHUTDOWN, "VM Shutdown", self.instance.id),
+                         get_vm_state(self.user, self.desktop_type))
+
+        url = "https://foo/bar"
+        mock_get_url.return_value = url
+
+        fake_nectar.nova.servers.get.return_value = Fake(status=ACTIVE)
+        self.build_existing_vm(VM_OKAY)
+        self.assertEqual((VM_OKAY, {'url': url}, self.instance.id),
+                         get_vm_state(self.user, self.desktop_type))
+
+        for os_status in [BUILD, REBOOT, REBUILD, RESCUE]:   # just some
+            fake_nectar.nova.servers.get.return_value=Fake(status=os_status)
+            self.build_existing_vm("lalala")
+            self.assertEqual((VM_ERROR, "Error at OpenStack level",
+                              self.instance.id),
+                             get_vm_state(self.user, self.desktop_type))
+            instance = Instance.objects.get(pk=self.instance.pk)
+            self.assertEqual(f"Error at OpenStack level. Status: {os_status}",
+                             instance.error_message)
+            self.assertIsNone(instance.boot_volume.error_message)

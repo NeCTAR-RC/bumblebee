@@ -6,6 +6,7 @@ from django.conf import settings
 
 from vm_manager.tests.common import UUID_1, UUID_2
 
+
 class Fake(object):
     def __init__(self, **kwargs):
         for key, value in kwargs.items():
