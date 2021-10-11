@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7252d0ff_4dd721e2",
+        "filename": "vm_manager/constants.py",
+        "patchSetId": 2
+      },
+      "lineNbr": 16,
+      "author": {
+        "id": 1000077
+      },
+      "writtenOn": "2021-10-11T08:14:27Z",
+      "side": 1,
+      "message": "missing spaces around the \u003d",
+      "range": {
+        "startLine": 13,
+        "startChar": 0,
+        "endLine": 16,
+        "endChar": 15
+      },
+      "revId": "0d9e87201f9dcc4b691fcb8e0a94907443c4bffb",
+      "serverId": "f182a8af-62ca-4ceb-ab81-14f8fec9c6c5"
+    }
+  ]
+}
