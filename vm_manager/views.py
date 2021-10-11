@@ -194,9 +194,9 @@ def unshelve_vm(user, desktop_type) -> str:
 
 
 def reboot_vm(user, vm_id, reboot_level, requesting_feature) -> str:
-    if not reboot_level in [REBOOT_SOFT, REBOOT_HARD]:
-        log.error(f"Unrecognized reboot level ({reboot_level}) "
-                  f"for instance {vm_id} and user {user}")
+    if reboot_level not in [REBOOT_SOFT, REBOOT_HARD]:
+        logger.error(f"Unrecognized reboot level ({reboot_level}) "
+                     f"for instance {vm_id} and user {user}")
         # TODO - Fix the researcher_desktop layer so that we can return
         # a 400 HTTP response code.
         raise Http404
@@ -218,8 +218,11 @@ def reboot_vm(user, vm_id, reboot_level, requesting_feature) -> str:
 
 
 def supersize_vm(user, vm_id, requesting_feature) -> str:
-    vm_status = VMStatus.objects.get_vm_status_by_untrusted_vm_id(
-        vm_id, user, requesting_feature)
+    try:
+        vm_status = VMStatus.objects.get_vm_status_by_untrusted_vm_id(
+            vm_id, user, requesting_feature)
+    except VMStatus.DoesNotExist:
+        vm_status = None
 
     if not vm_status or vm_status.status != VM_OKAY:
         return _wrong_state_message(
@@ -240,8 +243,11 @@ def supersize_vm(user, vm_id, requesting_feature) -> str:
 
 
 def downsize_vm(user, vm_id, requesting_feature) -> str:
-    vm_status = VMStatus.objects.get_vm_status_by_untrusted_vm_id(
-        vm_id, user, requesting_feature)
+    try:
+        vm_status = VMStatus.objects.get_vm_status_by_untrusted_vm_id(
+            vm_id, user, requesting_feature)
+    except VMStatus.DoesNotExist:
+        vm_status = None
 
     if not vm_status or vm_status.status != VM_SUPERSIZED:
         return _wrong_state_message(
