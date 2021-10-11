@@ -64,10 +64,11 @@ class GuacamoleUser(models.Model):
         managed = False
         db_table = 'guacamole_user'
 
+
 class GuacamoleConnectionGroup(models.Model):
     connection_group_id = models.AutoField(primary_key=True)
     parent_id = models.IntegerField(blank=True, null=True)
-    #parent = models.ForeignKey(
+    # parent = models.ForeignKey(
     #    'self',
     #    on_delete=models.CASCADE,
     #    blank=True, null=True)
@@ -89,7 +90,7 @@ class GuacamoleConnection(models.Model):
     connection_id = models.AutoField(primary_key=True)
     connection_name = models.CharField(max_length=128)
     parent_id = models.IntegerField(blank=True, null=True)
-    #parent = models.ForeignKey(GuacamoleConnectionGroup,
+    # parent = models.ForeignKey(GuacamoleConnectionGroup,
     #    on_delete=models.CASCADE,
     #    blank=True, null=True)
     protocol = models.CharField(max_length=32, default='rdp')
@@ -227,7 +228,6 @@ class GuacamoleConnectionPermission(models.Model):
         managed = False
         db_table = 'guacamole_connection_permission'
         unique_together = (('entity', 'connection', 'permission'),)
-
 
 
 class GuacamoleSharingProfileAttribute(models.Model):
@@ -399,5 +399,3 @@ class GuacamoleUserPermission(models.Model):
         managed = False
         db_table = 'guacamole_user_permission'
         unique_together = (('entity', 'affected_user', 'permission'),)
-
-

@@ -12,7 +12,7 @@ from researcher_workspace.settings import GUACAMOLE_URL
 def get_direct_url(conn):
     # Guacamole uses a special format for generating direct URLs to connections
     # https://sourceforge.net/p/guacamole/discussion/1110834/thread/fb609070
-    # 
+    #
     # The connection hash is a base64 encoded string build from three
     # components, each separated by a NULL character (U+0000)
     #   - The connection identifier (id?)
@@ -24,6 +24,7 @@ def get_direct_url(conn):
     hash_str = base64.b64encode(joined_components).decode('utf-8')
     quote_hash_str = urllib.parse.quote(hash_str)
     return f'{GUACAMOLE_URL}/#/client/{quote_hash_str}'
+
 
 def quick_rdp_conn(username, password, hostname):
     """

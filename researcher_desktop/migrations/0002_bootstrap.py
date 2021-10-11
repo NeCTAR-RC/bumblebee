@@ -20,7 +20,7 @@ class Migration(migrations.Migration):
 
     def removeDesktopTypes(apps, schema_editor):
         DesktopType = apps.get_model('researcher_desktop', 'DesktopType')
-        DesktopType.objects.all().delete();
+        DesktopType.objects.all().delete()
 
     dependencies = [
         ('researcher_desktop', '0001_initial'),
@@ -29,6 +29,3 @@ class Migration(migrations.Migration):
     operations = [
         migrations.RunPython(addDesktopTypes, removeDesktopTypes)
     ]
-
-
-

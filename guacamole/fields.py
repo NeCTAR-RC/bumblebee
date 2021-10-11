@@ -42,6 +42,7 @@ class GuacamoleSystemPermissionTypeField(EnumField):
         super(GuacamoleSystemPermissionTypeField,
               self).__init__(*args, **kwargs)
 
+
 class GuacamoleEntityTypeField(EnumField):
     description = 'enumerated type for entity'
 

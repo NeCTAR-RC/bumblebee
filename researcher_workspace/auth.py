@@ -1,6 +1,7 @@
 from mozilla_django_oidc.auth import OIDCAuthenticationBackend
 from guacamole import models as guac_models
 
+
 class NectarAuthBackend(OIDCAuthenticationBackend):
     def create_user(self, claims):
         user = super(NectarAuthBackend, self).create_user(claims)
@@ -33,4 +34,3 @@ class NectarAuthBackend(OIDCAuthenticationBackend):
 
 def generate_username(email):
     return email
-

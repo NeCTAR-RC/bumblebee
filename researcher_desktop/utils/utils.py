@@ -26,5 +26,6 @@ def get_desktop_type(id, only_enabled=True):
         logger.error(f"Unknown desktop({id}) requested")
         raise Http404
 
+
 def desktop_types():
     return DesktopType.objects.filter(enabled=True)

@@ -5,7 +5,6 @@ from django.contrib.auth import get_user_model
 class Command(BaseCommand):
     help = 'Promote a superuser'
 
-
     def add_arguments(self, parser):
         parser.add_argument('users', nargs='+', type=str)
 

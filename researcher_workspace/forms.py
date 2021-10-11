@@ -57,14 +57,17 @@ class UserSearchForm(SpanForm):
 
 
 class CustomRadioSelect(forms.RadioSelect):
-    template_name = "researcher_workspace/forms/widgets/custom_radio_select.html" # A copy of django/forms/widgets/multiple_input.html
-    option_template_name = "researcher_workspace/forms/widgets/custom_radio_select_options.html" # A copy of django/forms/widgets/input_option.html
+    # A copy of django/forms/widgets/multiple_input.html
+    template_name = "researcher_workspace/forms/widgets/custom_radio_select.html"
+    # A copy of django/forms/widgets/input_option.html
+    option_template_name = "researcher_workspace/forms/widgets/custom_radio_select_options.html"
 
 
 class ProjectForm(forms.ModelForm):
     class Meta:
         model = Project
-        fields = ['title', 'description', 'FoR_code', 'FoR_code2', 'ARO', 'sensitive_data', 'additional_comments']
+        fields = ['title', 'description', 'FoR_code', 'FoR_code2',
+                  'ARO', 'sensitive_data', 'additional_comments']
     title = forms.CharField(max_length=100)
     description = forms.CharField(widget=forms.Textarea)
     FoR_code = forms.ChoiceField(choices=FOR_CODE_CHOICES, label="Field of Research Code",
@@ -73,13 +76,13 @@ class ProjectForm(forms.ModelForm):
                   '<a href="https://www.abs.gov.au/AUSSTATS/abs@.nsf/Lookup/1297.0Main+Features12020?OpenDocument"'
                   ' target="_blank">Australian Bureau of Statistics website</a>.',
     )
-    #FoR_code.widget.option_template_name = "researcher_workspace/forms/widgets/FoR_code_select_option.html"
-    #FoR_code.widget.attrs['class'] = 'alt'
+    # FoR_code.widget.option_template_name = "researcher_workspace/forms/widgets/FoR_code_select_option.html"
+    # FoR_code.widget.attrs['class'] = 'alt'
     FoR_code2 = forms.ChoiceField(choices=FOR_CODE_CHOICES, required=False,
                                   label="Optional second Field of Research Code"
     )
-    #FoR_code2.widget.option_template_name = "researcher_workspace/forms/widgets/FoR_code_select_option.html"
-    #FoR_code2.widget.attrs['class'] = 'alt'
+    # FoR_code2.widget.option_template_name = "researcher_workspace/forms/widgets/FoR_code_select_option.html"
+    # FoR_code2.widget.attrs['class'] = 'alt'
     ARO = forms.EmailField(label="Accountable Resource Owner (ARO)", help_text=
         '<div class="small">Please enter the email address of the project\'s ARO</div>'
         '<ul style="padding-bottom:0;">'
@@ -116,6 +119,7 @@ class ProjectForm(forms.ModelForm):
           InlineRadios('sensitive_data'),
           FloatingField('additional_comments', css_class='ch-100'),
         )
+
 
 class PermissionRequestForm(forms.Form):
     feature_options = forms.MultipleChoiceField(label='Options', choices=(), widget=forms.CheckboxSelectMultiple)

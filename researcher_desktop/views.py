@@ -2,7 +2,8 @@ import logging
 
 from django.conf import settings
 from django.contrib.auth.decorators import login_required, user_passes_test
-from django.http import JsonResponse, HttpResponse, HttpResponseRedirect, Http404
+from django.http import JsonResponse, HttpResponse, HttpResponseRedirect, \
+    Http404
 from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
 
@@ -31,13 +32,14 @@ def render_modules(request):
         feature_scripts.append(feature_script)
     return feature_modules, feature_scripts
 
+
 @login_required(login_url='login')
-@user_passes_test(test_func=not_support_staff, login_url='staff_home', redirect_field_name=None)  # Only need to stop support staff creating vms, as they can't use any other function if they don't have a vm
+# Only need to stop support staff creating vms, as they can't use any
+# other function if they don't have a vm
+@user_passes_test(test_func=not_support_staff, login_url='staff_home',
+                  redirect_field_name=None)
 def launch_vm(request, desktop):
-    desktop_type = get_desktop_type(desktop)
-    print("desktop type %s" % desktop_type)
-    logger.info(request.user) 
-    vm_man_views.launch_vm(request.user, desktop_type)
+    vm_man_views.launch_vm(request.user, get_desktop_type(desktop))
     return redirect_home(request)
 
 
@@ -55,8 +57,7 @@ def shelve_vm(request, vm_id):
 
 @login_required(login_url='login')
 def unshelve_vm(request, desktop):
-    desktop_type = get_desktop_type(desktop)
-    vm_man_views.unshelve_vm(request.user, desktop_type)
+    vm_man_views.unshelve_vm(request.user, get_desktop_type(desktop))
     return redirect_home(request)
 
 

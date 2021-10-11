@@ -10,22 +10,18 @@ from django.apps import apps
 from django.contrib import messages
 from django.contrib.auth import user_logged_in, user_logged_out
 from django.contrib.auth.decorators import login_required, user_passes_test
-#from django.contrib.auth.models import User
 from django.dispatch import receiver
 from django.http import HttpResponse, HttpResponseRedirect, Http404, StreamingHttpResponse
 from django.shortcuts import render
 from django.template import loader
 from django.urls import reverse
 from django.utils.html import format_html
-#from staff_identity import call_boomi
 from django.core.mail import mail_managers
 
 from researcher_workspace.constants import USAGE
 from researcher_workspace.forms import UserSearchForm, ProjectForm, PermissionRequestForm
 from researcher_workspace.models import PermissionRequest, Feature, Project, AROWhitelist, Profile, \
     add_username_to_whitelist, remove_username_from_whitelist, Permission, FeatureOptions, User
-#from researcher_workspace.resplat.ldap_search import LDAP, LDAPDoesNotExist
-#from researcher_workspace.resplat.ldap_backend import ResplatLDAPBackend
 from researcher_workspace.settings import USER_LIMIT, GENERAL_WARNING_MESSAGE, SITE_URL, ALLOCATION_ID
 from researcher_workspace.templatetags.group_filters import has_group
 from researcher_workspace.utils import redirect_home, not_support_staff, offset_month_and_year
@@ -37,7 +33,7 @@ logger = logging.getLogger(__name__)
 
 
 def _get_users_for_report():
-    #backend = ResplatLDAPBackend()
+    # backend = ResplatLDAPBackend()
     django_users = User.objects.filter(is_active=True).order_by('date_joined')
     users = []
     num = 1
@@ -77,7 +73,7 @@ def user_search(request):
     if request.GET:
         form = UserSearchForm(request.GET)
         users = []
-        #if form.is_valid():
+        # if form.is_valid():
         #    search = {k: v for k, v in form.cleaned_data.items() if v}
         #    # LDAP search
         #    if search:
@@ -111,10 +107,10 @@ def user_search_details(request, username):
     except User.DoesNotExist:
         is_user = False
     aro_whitelisted = AROWhitelist.objects.is_username_whitelisted(username)
-    #ldap = LDAP()
-    #try:
+    # ldap = LDAP()
+    # try:
     #    user = ldap.get(uid=username)
-    #except LDAPDoesNotExist:
+    # except LDAPDoesNotExist:
     return render(request, 'researcher_workspace/staff/user_search_details.html', {'user_does_not_exist': True,
                   'is_user': is_user, 'aro_whitelisted': aro_whitelisted, 'user_details': {'uid': username}})
 #    try:
@@ -150,6 +146,7 @@ def user_search_details(request, username):
 #                   'is_user': is_user, 'aro_whitelisted': aro_whitelisted})
 #
 
+
 @login_required(login_url='login')
 def orion_report(request):
     if not (request.user.is_staff or has_group(request.user, 'Support Staff')):
@@ -169,8 +166,10 @@ def orion_report(request):
     for user in users:
         user["simple_date"] = (user["date_joined"].month, user["date_joined"].year)
     for date in user_count:
-        for user in [user for user in users if user["simple_date"][1] < date[1] or
-                                       (user["simple_date"][1] == date[1] and user["simple_date"][0] <= date[0])]:
+        for user in [user for user in users
+                     if user["simple_date"][1] < date[1]
+                     or (user["simple_date"][1] == date[1]
+                         and user["simple_date"][0] <= date[0])]:
             try:
                 user_count[date][FACULTY_MAPPING[user["department"][0]]] += 1
             except KeyError:
@@ -178,7 +177,7 @@ def orion_report(request):
             user_count[date]['Total'] += 1
 
     user_count_report = [
-        [f"01/{month[0]}/{month[1]}"]+[user_count[month][faculty] for faculty in FACULTIES.keys()]
+        [f"01/{month[0]}/{month[1]}"] + [user_count[month][faculty] for faculty in FACULTIES.keys()]
         for month in user_count.keys()]
     user_count_report_data_frame = pandas.DataFrame(user_count_report, columns=['Month'] + list(FACULTIES.keys()))
     user_count_report_data_frame.to_excel(writer, sheet_name="User growth")
@@ -300,7 +299,7 @@ def home(request):
             except Permission.DoesNotExist:
                 permission_feature_options = FeatureOptions.objects.none()
             # The options you can request are the options on the feature, minus the options you already have access to
-            #request_form_options = [(option.id, option.name) for option in feature.options.difference(permission_feature_options)]
+            # request_form_options = [(option.id, option.name) for option in feature.options.difference(permission_feature_options)]
             request_form_options = [(option.id, option.name) for option in permission_feature_options]
             request_form = PermissionRequestForm(choices=request_form_options) if request_form_options else ""
             if request_form:

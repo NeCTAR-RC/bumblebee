@@ -17,7 +17,7 @@ class PermissionRequestAdmin(admin.ModelAdmin):
     actions = ["accept_requests", "deny_requests"]
     change_form_template = 'admin/researcher_workspace/permissionrequest/change_form.html'
 
-    #def has_delete_permission(self, request, obj=None):
+    # def has_delete_permission(self, request, obj=None):
     #    return False
 
     def response_change(self, request, obj):
@@ -61,7 +61,7 @@ class ProjectAdmin(admin.ModelAdmin):
     change_form_template = 'admin/researcher_workspace/project/change_form.html'
     inlines = (PermissionInline, )
 
-    #def has_delete_permission(self, request, obj=None):
+    # def has_delete_permission(self, request, obj=None):
     #    return False
 
     def response_change(self, request, obj):
@@ -126,7 +126,7 @@ class CustomUserAdmin(UserAdmin):
         return super().response_change(request, obj)
 
 
-#admin.site.unregister(User)
+# admin.site.unregister(User)
 admin.site.register(User, CustomUserAdmin)
 
 
@@ -178,7 +178,7 @@ class FeatureAdmin(admin.ModelAdmin):
 
     view_feature_or_service.short_description = 'Feature/Service'
 
-    #def has_delete_permission(self, request, obj=None):
+    # def has_delete_permission(self, request, obj=None):
     #    return False
 
     def save_model(self, request, obj, form, change):
