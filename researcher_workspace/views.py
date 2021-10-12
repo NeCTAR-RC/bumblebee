@@ -17,12 +17,13 @@ from django.template import loader
 from django.urls import reverse
 from django.utils.html import format_html
 from django.core.mail import mail_managers
+from django.conf import settings
 
 from researcher_workspace.constants import USAGE
 from researcher_workspace.forms import UserSearchForm, ProjectForm, PermissionRequestForm
 from researcher_workspace.models import PermissionRequest, Feature, Project, AROWhitelist, Profile, \
     add_username_to_whitelist, remove_username_from_whitelist, Permission, FeatureOptions, User
-from researcher_workspace.settings import USER_LIMIT, GENERAL_WARNING_MESSAGE, SITE_URL, ALLOCATION_ID
+
 from researcher_workspace.templatetags.group_filters import has_group
 from researcher_workspace.utils import redirect_home, not_support_staff, offset_month_and_year
 from researcher_workspace.utils.faculty_mapping import FACULTIES, FACULTY_MAPPING
@@ -195,7 +196,7 @@ def orion_report(request):
     for date in usage_count:
         start_date = datetime(day=1, month=date[0], year=date[1])
         end_date = start_date + relativedelta(months=+1)
-        usage = n.nova.usage.get(ALLOCATION_ID, start_date, end_date)
+        usage = n.nova.usage.get(settings.ALLOCATION_ID, start_date, end_date)
         usage_count[date]['CPU Hours'] = round(usage.total_vcpus_usage, 2)
         usage_count[date]['Disk GB-Hours'] = round(usage.total_local_gb_usage, 2)
         usage_count[date]['RAM MB-Hours'] = round(usage.total_memory_mb_usage, 2)
@@ -248,10 +249,11 @@ def on_logout(sender, user, request, **kwargs):
 @user_passes_test(test_func=not_support_staff, login_url='staff_home', redirect_field_name=None)
 def home(request):
     # Handle edge cases
-    if request.user.id > USER_LIMIT:
+    if request.user.id > settings.USER_LIMIT:
         return render(request, 'researcher_workspace/home/user_limit_home.html')
-    if len(GENERAL_WARNING_MESSAGE) != 0:
-        messages.warning(request, format_html(GENERAL_WARNING_MESSAGE))
+    if len(settings.GENERAL_WARNING_MESSAGE) != 0:
+        messages.warning(request,
+                         format_html(settings.GENERAL_WARNING_MESSAGE))
 
     # Get user's Project(s)
     project_id = request.POST.get('project', None)
@@ -389,7 +391,7 @@ def _notify_managers_to_review_project(project, action):
                   f"{project.project_admin.username} has {action} \"{project.title}\".\n"
                   f"ARO - {project.ARO} \n"
                   f"Project Description - {project.description} \n"
-                  f"Kindly review the project here {SITE_URL}"
+                  f"Kindly review the project here {settings.SITE_URL}"
                   f"{reverse('admin:researcher_workspace_project_change', args=(project.id,))}")
 
 

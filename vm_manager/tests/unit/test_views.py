@@ -4,11 +4,9 @@ from datetime import datetime, timedelta, timezone
 
 from unittest.mock import Mock, patch
 
-from django.conf import settings
 from django.http import Http404
 from django.test import TestCase
 
-from researcher_workspace.settings import GUACAMOLE_URL
 from researcher_workspace.tests.factories import FeatureFactory, UserFactory
 from researcher_desktop.tests.factories import DesktopTypeFactory
 from vm_manager.tests.factories import InstanceFactory, VolumeFactory, \
