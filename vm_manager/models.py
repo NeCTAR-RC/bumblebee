@@ -159,6 +159,20 @@ class InstanceManager(models.Manager):
     # be handled with care
     def get_instance_by_untrusted_vm_id(self, vm_id, user,
                                         requesting_feature):
+        instance = self.get_instance_by_untrusted_vm_id_2(
+            vm_id, requesting_feature, user=user)
+        if instance.user != user:
+            logger.error(
+                f"Trying to get a vm that doesn't belong "
+                f"to {user} with vm_id: {vm_id}, "
+                f"this vm belongs to {instance.user}")
+            raise Http404
+        return instance
+
+    # vm_id is untrusted because it comes from the user, so should
+    # be handled with care.  In this version, the request is anonymous.
+    def get_instance_by_untrusted_vm_id_2(self, vm_id, requesting_feature,
+                                          user="internal"):
         # Get vm, and catch any errors
         try:
             instance = self.get(id=vm_id)
@@ -176,12 +190,6 @@ class InstanceManager(models.Manager):
             logger.error(
                 f"Trying to get a vm that doesn't exist "
                 f"with vm_id: {vm_id}, called by {user}")
-            raise Http404
-        if instance.user != user:
-            logger.error(
-                f"Trying to get a vm that doesn't belong "
-                f"to {user} with vm_id: {vm_id}, "
-                f"this vm belongs to {instance.user}")
             raise Http404
         if instance.boot_volume.requesting_feature != requesting_feature:
             logger.error(
