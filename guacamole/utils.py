@@ -6,7 +6,7 @@ import urllib
 from .models import GuacamoleUser, GuacamoleEntity, GuacamoleConnection
 from .models import GuacamoleConnectionParameter, GuacamoleConnectionPermission
 
-from researcher_workspace.settings import GUACAMOLE_URL
+from django.conf import settings
 
 
 def get_direct_url(conn):
@@ -23,7 +23,7 @@ def get_direct_url(conn):
     joined_components = '\x00'.join(components).encode('utf-8')
     hash_str = base64.b64encode(joined_components).decode('utf-8')
     quote_hash_str = urllib.parse.quote(hash_str)
-    return f'{GUACAMOLE_URL}/#/client/{quote_hash_str}'
+    return f'{settings.GUACAMOLE_URL}/#/client/{quote_hash_str}'
 
 
 def quick_rdp_conn(username, password, hostname):

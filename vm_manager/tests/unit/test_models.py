@@ -8,7 +8,6 @@ from django.conf import settings
 from django.http import Http404
 from django.test import TestCase
 
-from researcher_workspace.settings import GUACAMOLE_URL
 from researcher_workspace.tests.factories import FeatureFactory, UserFactory
 from researcher_desktop.tests.factories import DesktopTypeFactory
 from guacamole.models import GuacamoleEntity, GuacamoleConnectionParameter, \
@@ -195,7 +194,7 @@ class InstanceModelTests(VMManagerModelTestBase):
 
         # This is what create_guac_connection is used for ...
         url = fake_instance.get_url()
-        self.assertTrue(url.startswith(f"{GUACAMOLE_URL}/#/client/"))
+        self.assertTrue(url.startswith(f"{settings.GUACAMOLE_URL}/#/client/"))
 
     def test_get_instance(self):
         self.assertIsNone(

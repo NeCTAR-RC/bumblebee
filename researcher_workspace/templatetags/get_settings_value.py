@@ -1,5 +1,5 @@
 from django import template
-from researcher_workspace import settings
+from django.conf import settings
 
 register = template.Library()
 

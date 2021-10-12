@@ -11,7 +11,6 @@ from novaclient import client as nova_client
 from django.conf import settings
 from django.utils.crypto import get_random_string
 
-from researcher_workspace.settings import ENVIRONMENT_NAME
 from vm_manager.constants import LINUX
 
 
@@ -80,7 +79,7 @@ def get_nectar():
 
 
 def generate_server_name(username, operating_system):
-    return f"{operating_system}_{username}_{ENVIRONMENT_NAME[0]}"
+    return f"{operating_system}_{username}_{settings.ENVIRONMENT_NAME[0]}"
 
 
 def generate_hostname_url(hostname_id, operating_system) -> str:
