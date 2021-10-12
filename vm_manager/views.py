@@ -401,10 +401,8 @@ def phone_home(request, requesting_feature):
         logger.error(f"Hostname not found in data")
         raise Http404
 
-    instance = Instance.objects.get(id=request.POST['instance_id'])
-    if not instance:
-        logger.error(f"No current Instance found with given ID")
-        raise Http404
+    instance = Instance.objects.get_instance_by_untrusted_vm_id_2(
+        request.POST['instance_id'], requesting_feature)
 
     hostname = request.POST['hostname']
     volume = instance.boot_volume

@@ -353,6 +353,12 @@ class InstanceModelTests(VMManagerModelTestBase):
             f"to {fake_user} with vm_id: {id}, "
             f"this vm belongs to {self.user}")
 
+        # The special version used in anonymous callbacks
+        self.assertEqual(
+            fake_instance,
+            Instance.objects.get_instance_by_untrusted_vm_id_2(
+                id, self.feature))
+
         fake_feature = FeatureFactory.create()
         with self.assertRaises(Http404):
             Instance.objects.get_instance_by_untrusted_vm_id(
