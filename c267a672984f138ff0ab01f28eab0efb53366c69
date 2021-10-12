@@ -1,0 +1,44 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "eb81f0ea_b3d8d150",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 3
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1000077
+      },
+      "writtenOn": "2021-10-12T08:06:15Z",
+      "side": 1,
+      "message": "lgtm, just one thing needs fixing",
+      "revId": "c267a672984f138ff0ab01f28eab0efb53366c69",
+      "serverId": "f182a8af-62ca-4ceb-ab81-14f8fec9c6c5"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a2e1004d_214b38b1",
+        "filename": "researcher_workspace/models.py",
+        "patchSetId": 3
+      },
+      "lineNbr": 105,
+      "author": {
+        "id": 1000077
+      },
+      "writtenOn": "2021-10-12T08:06:15Z",
+      "side": 1,
+      "message": "settings - missing the s on the end",
+      "range": {
+        "startLine": 105,
+        "startChar": 57,
+        "endLine": 105,
+        "endChar": 64
+      },
+      "revId": "c267a672984f138ff0ab01f28eab0efb53366c69",
+      "serverId": "f182a8af-62ca-4ceb-ab81-14f8fec9c6c5"
+    }
+  ]
+}
