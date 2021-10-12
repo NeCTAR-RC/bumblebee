@@ -2,7 +2,7 @@ import uuid
 import copy
 from datetime import datetime, timedelta, timezone
 
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, patch, call
 
 from django.http import Http404
 from django.test import TestCase
@@ -23,11 +23,11 @@ from vm_manager.constants import VM_OKAY, VM_DELETED, VM_WAITING, \
 from vm_manager.models import VMStatus, Instance
 from vm_manager.utils.utils import get_nectar, after_time
 from vm_manager.views import launch_vm_worker, delete_vm_worker, \
-    shelve_vm_worker, unshelve_vm_worker, reboot_vm_worker, supersize_vm_worker, \
-    downsize_vm_worker
+    shelve_vm_worker, unshelve_vm_worker, reboot_vm_worker, \
+    supersize_vm_worker, downsize_vm_worker
 
 from vm_manager.views import launch_vm, delete_vm, shelve_vm, unshelve_vm, \
-    reboot_vm, supersize_vm, downsize_vm, get_vm_state
+    reboot_vm, supersize_vm, downsize_vm, get_vm_state, render_vm, notify_vm
 
 
 class VMManagerViewTests(TestCase):
@@ -446,7 +446,7 @@ class VMManagerViewTests(TestCase):
         time1 = (datetime.now(timezone.utc)
                  + timedelta(days=DOWNSIZE_PERIOD)).date()
         time2 = (datetime.now(timezone.utc)
-                 + timedelta(days=(DOWNSIZE_PERIOD * 2))).date()
+                 + timedelta(days=DOWNSIZE_PERIOD * 2)).date()
         resize = ResizeFactory.create(instance=self.instance, expires=time1)
         self.assertEqual((VM_SUPERSIZED,
                           {
@@ -457,3 +457,102 @@ class VMManagerViewTests(TestCase):
                           },
                           self.instance.id),
                          get_vm_state(self.user, self.desktop_type))
+
+    @patch('vm_manager.views.loader')
+    @patch('vm_manager.models.Instance.get_url')
+    @patch('vm_manager.views.messages')
+    def test_render_vm(self, mock_messages, mock_get_url, mock_loader):
+        url = "https://foo/bar"
+        mock_get_url.return_value = url
+
+        # Not testing what is actually rendered.
+        mock_loader.render_to_string.return_value = "rendered"
+
+        request = "The Request"
+        buttons = ["ONE", "TWO"]
+
+        self.build_existing_vm(VM_OKAY)
+        self.assertEqual(("rendered", "rendered"),
+                         render_vm(request, self.user, self.desktop_type,
+                                   buttons))
+        context = {
+            'what_to_show': {'url': url},
+            'desktop_type': self.desktop_type,
+            'vm_id': self.instance.id,
+            'buttons_to_display': buttons,
+            'app_name': self.feature.app_name,
+            'requesting_feature': self.feature,
+            'VM_WAITING': VM_WAITING}
+        calls = [call(f"vm_manager/html/{VM_OKAY}.html",
+                      context, request),
+                 call(f"vm_manager/javascript/{VM_OKAY}.js",
+                      context, request)]
+        mock_loader.render_to_string.assert_has_calls(calls)
+        mock_loader.render_to_string.reset_mock()
+        mock_messages.info.assert_not_called()
+
+        # Reset for supersized (non extendable)
+        self.build_existing_vm(VM_SUPERSIZED)
+        time1 = (datetime.now(timezone.utc)
+                 + timedelta(days=DOWNSIZE_PERIOD)).date()
+        time2 = (datetime.now(timezone.utc)
+                 + timedelta(days=DOWNSIZE_PERIOD * 2)).date()
+        resize = ResizeFactory.create(instance=self.instance, expires=time1)
+
+        self.assertEqual(("rendered", "rendered"),
+                         render_vm(request, self.user, self.desktop_type,
+                                   buttons))
+        context['what_to_show'] = {
+            'url': url,
+            'is_eligible': False,
+            'expires': time1,
+            'extended_expiration': time2
+        }
+        context['vm_id'] = self.instance.id
+        calls = [call(f"vm_manager/html/{VM_SUPERSIZED}.html",
+                      context, request),
+                 call(f"vm_manager/javascript/{VM_SUPERSIZED}.js",
+                      context, request)]
+        mock_loader.render_to_string.assert_has_calls(calls)
+        mock_messages.info.assert_not_called()
+
+        # Reset for supersized (extendable)
+        self.build_existing_vm(VM_SUPERSIZED)
+        time1 = (datetime.now(timezone.utc)
+                 + timedelta(days=DOWNSIZE_PERIOD - 1)).date()
+        time2 = (datetime.now(timezone.utc)
+                 + timedelta(days=DOWNSIZE_PERIOD * 2 - 1)).date()
+        resize = ResizeFactory.create(instance=self.instance, expires=time1)
+
+        self.assertEqual(("rendered", "rendered"),
+                         render_vm(request, self.user, self.desktop_type,
+                                   buttons))
+        context['what_to_show'] = {
+            'url': url,
+            'is_eligible': True,
+            'expires': time1,
+            'extended_expiration': time2
+        }
+        context['vm_id'] = self.instance.id
+
+        mock_loader.render_to_string.assert_has_calls(calls)
+        mock_messages.info.assert_called_with(
+            request,
+            f'Your {str(self.desktop_type).capitalize()} vm is set to resize '
+            f'back to the default size on {time1}')
+
+    @patch('vm_manager.views.logger')
+    def test_notify_vm_inconsistent(self, mock_logger):
+        message = "1 2 3"
+        state = 42
+        fake_request = Fake(GET={
+            'ip': '11.11.11.11',
+            'hn': 'foo',
+            'os': self.desktop_type.id,
+            'state': state,
+            'msg': message
+        })
+        with self.assertRaises(Http404):
+            notify_vm(fake_request, self.feature)
+        mock_logger.error.assert_called_with(
+            "No current Instance found with ip address 11.11.11.11")
