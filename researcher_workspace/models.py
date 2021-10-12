@@ -12,7 +12,7 @@ from django.utils.timezone import now
 from django_currentuser.db.models import CurrentUserField
 
 from researcher_workspace.utils.FoR_codes import FOR_CODE_CHOICES
-from researcher_workspace.settings import SITE_URL
+
 
 logger = logging.getLogger(__name__)
 
@@ -102,7 +102,7 @@ class Project(models.Model):
         self.save()
         self.project_admin.email_user("Orion Project Request - Approved",
                                       f"Your project request - \"{self.title}\" has been approved. \n"
-                                      f"Please login to {SITE_URL} to explore the features offered.")
+                                      f"Please login to {settings.SITE_URL} to explore the features offered.")
 
     def deny(self):
         self.ARO_approval = False
@@ -157,7 +157,7 @@ class PermissionRequest(models.Model):
         self.requesting_user.email_user("Orion Feature Request - Granted",
                                         f"{self.requested_feature} access for your project "
                                         f"\"{self.project.title}\" has been granted. \n"
-                                        f"Please login to {SITE_URL} to access the feature.")
+                                        f"Please login to {settings.SITE_URL} to access the feature.")
 
     def deny(self):
         self.accepted = False

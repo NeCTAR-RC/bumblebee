@@ -9,8 +9,6 @@ from django.conf import settings
 from django.template.loader import render_to_string
 from django.urls import reverse
 
-from researcher_workspace.settings import ENVIRONMENT_NAME
-
 from vm_manager.constants import VOLUME_CREATION_TIMEOUT, NO_VM, \
     VM_OKAY, LINUX
 from vm_manager.utils.utils import get_nectar, generate_server_name, \
@@ -80,7 +78,7 @@ def _create_volume(user, desktop_type):
                                           operating_system),
             'allow_user': (user.username
                            + re.search("@.*", user.email).group()),
-            'environment': ENVIRONMENT_NAME,
+            'environment': settings.ENVIRONMENT_NAME,
             'requesting_feature': requesting_feature.name,
         })
     return volume
@@ -138,7 +136,7 @@ def _create_instance(user, desktop_type, volume):
     password = generate_password()
     metadata_server = {
         'allow_user': user.username,
-        'environment': ENVIRONMENT_NAME,
+        'environment': settings.ENVIRONMENT_NAME,
         'requesting_feature': desktop_type.feature.name,
     }
 
