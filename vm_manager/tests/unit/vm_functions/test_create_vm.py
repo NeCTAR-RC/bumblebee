@@ -14,6 +14,7 @@ from vm_manager.tests.common import UUID_1, UUID_2, UUID_3, UUID_4
 from vm_manager.tests.fakes import Fake, FakeServer, FakeVolume, FakeNectar
 from vm_manager.tests.factories import InstanceFactory, VMStatusFactory, \
     VolumeFactory
+from vm_manager.tests.unit.vm_functions.base import VMFunctionTestBase
 
 from vm_manager.constants import VM_MISSING, VM_OKAY, VM_SHELVED, NO_VM, \
     VOLUME_CREATION_TIMEOUT
@@ -23,55 +24,14 @@ from vm_manager.vm_functions.create_vm import launch_vm_worker, \
 from vm_manager.utils.utils import get_nectar
 
 
-class CreateVMTests(TestCase):
-
-    def setUp(self, *args, **kwargs):
-        super().setUp(*args, **kwargs)
-        self.FEATURE = desktops_feature()
-        self.UBUNTU = get_desktop_type('ubuntu')
-        self.CENTOS = get_desktop_type('centos')
-        self.user = UserFactory.create()
-
-    def _build_fake_volume(self, id=None):
-        if id is None:
-            id = UUID_3
-        return VolumeFactory.create(
-            id=id,
-            user=self.user,
-            image=self.UBUNTU.source_volume_id,
-            operating_system=self.UBUNTU.id,
-            requesting_feature=self.UBUNTU.feature,
-            flavor=self.UBUNTU.default_flavor.id)
-
-    def _build_fake_vol_instance(self, volume_id=None, instance_id=None):
-        if instance_id is None:
-            instance_id = UUID_4
-        fake_volume = self._build_fake_volume(id=volume_id)
-        fake_instance = InstanceFactory.create(
-            id=instance_id,
-            boot_volume=fake_volume,
-            user=self.user)
-        return fake_volume, fake_instance
-
-    def _build_fake_vol_inst_status(self, volume_id=None,
-                                    instance_id=None,
-                                    status=VM_OKAY):
-        fake_volume, fake_instance = self._build_fake_vol_instance(
-            volume_id=volume_id, instance_id=instance_id)
-        fake_vmstatus = VMStatusFactory.create(
-            user=self.user,
-            instance=fake_instance,
-            operating_system=self.UBUNTU.id,
-            requesting_feature=self.UBUNTU.feature,
-            status=status)
-        return fake_volume, fake_instance, fake_vmstatus
+class CreateVMTests(VMFunctionTestBase):
 
     @patch('vm_manager.vm_functions.create_vm._create_volume')
     @patch('vm_manager.vm_functions.create_vm.django_rq')
     def test_launch_vm_worker(self, mock_rq, mock_create):
         mock_scheduler = Mock()
         mock_rq.get_scheduler.return_value = mock_scheduler
-        fake_volume = self._build_fake_volume()
+        fake_volume = self.build_fake_volume()
         mock_create.return_value = fake_volume
 
         result = launch_vm_worker(self.user, self.UBUNTU)
@@ -92,7 +52,7 @@ class CreateVMTests(TestCase):
     def test_launch_vm_worker_instance_exists(self, mock_rq, mock_create):
         mock_scheduler = Mock()
         mock_rq.get_scheduler.return_value = mock_scheduler
-        fake_volume, _, _ = self._build_fake_vol_inst_status()
+        fake_volume, _, _ = self.build_fake_vol_inst_status()
         mock_create.return_value = fake_volume
 
         with self.assertRaises(RuntimeWarning) as cm:
@@ -110,7 +70,7 @@ class CreateVMTests(TestCase):
     def test_launch_vm_worker_instance_deleted(self, mock_rq, mock_create):
         mock_scheduler = Mock()
         mock_rq.get_scheduler.return_value = mock_scheduler
-        fake_volume, _, _ = self._build_fake_vol_inst_status(status=NO_VM)
+        fake_volume, _, _ = self.build_fake_vol_inst_status(status=NO_VM)
         mock_create.return_value = fake_volume
 
         launch_vm_worker(self.user, self.UBUNTU)
@@ -125,7 +85,7 @@ class CreateVMTests(TestCase):
     @patch('vm_manager.vm_functions.create_vm._create_instance')
     def test_wait_to_create(self, mock_create_instance):
         fake_nectar = get_nectar()
-        fake_volume, fake_instance, _ = self._build_fake_vol_inst_status()
+        fake_volume, fake_instance, _ = self.build_fake_vol_inst_status()
         fake_nectar.cinder.volumes.get.return_value = FakeVolume(
             volume_id=fake_volume.id,
             status='available')
@@ -144,7 +104,7 @@ class CreateVMTests(TestCase):
     def test_wait_to_create_unshelve(self, mock_create_instance):
         fake_nectar = get_nectar()
         fake_volume, fake_instance, fake_status = \
-            self._build_fake_vol_inst_status(status=VM_SHELVED)
+            self.build_fake_vol_inst_status(status=VM_SHELVED)
         fake_volume.shelved = True
         fake_nectar.cinder.volumes.get.return_value = FakeVolume(
             volume_id=fake_volume.id,
@@ -168,7 +128,7 @@ class CreateVMTests(TestCase):
     @patch('vm_manager.vm_functions.create_vm._create_instance')
     def test_wait_to_create_timeout(self, mock_create_instance):
         fake_nectar = get_nectar()
-        fake_volume, _, fake_status = self._build_fake_vol_inst_status()
+        fake_volume, _, fake_status = self.build_fake_vol_inst_status()
         fake_nectar.cinder.volumes.get.return_value = FakeVolume(
             volume_id=fake_volume.id,
             status='unavailable')
@@ -198,7 +158,7 @@ class CreateVMTests(TestCase):
         mock_scheduler = Mock()
         mock_rq.get_scheduler.return_value = mock_scheduler
         fake_nectar = get_nectar()
-        fake_volume, _, fake_status = self._build_fake_vol_inst_status()
+        fake_volume, _, fake_status = self.build_fake_vol_inst_status()
         fake_nectar.cinder.volumes.get.return_value = FakeVolume(
             volume_id=fake_volume.id,
             status='unavailable')
@@ -246,7 +206,7 @@ class CreateVMTests(TestCase):
 
     @patch('vm_manager.vm_functions.create_vm.get_nectar')
     def test_create_volume_exists(self, mock_get):
-        fake_volume, _, _ = self._build_fake_vol_inst_status()
+        fake_volume, _, _ = self.build_fake_vol_inst_status()
 
         result = _create_volume(self.user, self.UBUNTU)
         self.assertEqual(fake_volume, result)
@@ -254,7 +214,7 @@ class CreateVMTests(TestCase):
 
     @patch('vm_manager.utils.utils.Nectar', new=FakeNectar)
     def test_create_volume_deleted(self):
-        fake_volume, _, _ = self._build_fake_vol_inst_status(status=NO_VM)
+        fake_volume, _, _ = self.build_fake_vol_inst_status(status=NO_VM)
 
         fake = get_nectar()
         fake.cinder.volumes.create.reset_mock()
@@ -275,7 +235,7 @@ class CreateVMTests(TestCase):
         mock_gen_password.return_value = "secret"
         mock_render.return_value = "RENDERED_USER_DATA"
         fake = get_nectar()
-        fake_volume = self._build_fake_volume()
+        fake_volume = self.build_fake_volume()
 
         result = _create_instance(self.user, self.UBUNTU, fake_volume)
 
