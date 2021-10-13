@@ -671,7 +671,7 @@ class VMManagerViewTests(TestCase):
         self.assertFalse(self.volume.ready)
         self.assertEqual(VM_WAITING, self.vm_status.status)
 
-        self.assertEquals(
+        self.assertEqual(
             f"Phone home for {self.instance} successful!",
             phone_home(fake_request, self.feature))
         volume = Volume.objects.get(pk=self.volume.pk)
