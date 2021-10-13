@@ -123,6 +123,8 @@ def delete_vm(user, vm_id, requesting_feature) -> str:
 @login_required(login_url='login')
 def admin_delete_vm(request, vm_id):
     if not request.user.is_superuser:
+        logger.error(f"Attempted admin delete of {vm_id} by "
+                     f"non-admin user {request.user}")
         raise Http404()
 
     # TODO - Should be able to tidy up multiple VMstatus if found
@@ -130,7 +132,8 @@ def admin_delete_vm(request, vm_id):
         vm_status = VMStatus.objects.get(instance=vm_id)
     except VMStatus.DoesNotExist:
         return _wrong_state_message(
-             "admin delete", user, feature=requesting_feature, vm_id=vm_id)
+             "admin delete", request.user,
+            feature="admin", vm_id=vm_id)
 
     logger.info(f"Performing Admin delete on {vm_id} "
                 f"Mark for Deletion is set on the Instance "

@@ -4,7 +4,8 @@ from datetime import datetime, timedelta, timezone
 
 from unittest.mock import Mock, patch, call
 
-from django.http import Http404
+from django.http import Http404, HttpResponseRedirect
+from django.contrib.auth.models import AnonymousUser
 from django.test import TestCase
 
 from researcher_workspace.tests.factories import FeatureFactory, UserFactory
@@ -28,7 +29,7 @@ from vm_manager.views import launch_vm_worker, delete_vm_worker, \
 
 from vm_manager.views import launch_vm, delete_vm, shelve_vm, unshelve_vm, \
     reboot_vm, supersize_vm, downsize_vm, get_vm_state, render_vm, notify_vm, \
-    phone_home, rd_report_for_user
+    phone_home, rd_report_for_user, admin_delete_vm
 
 
 class VMManagerViewTests(TestCase):
@@ -759,3 +760,56 @@ class VMManagerViewTests(TestCase):
                 self.assertEqual(e_graph[i]['date'].timestamp(),
                                  e_graph[i]['date'].timestamp(),
                                  f"timestamps for {key}[{i}] differ")
+
+    @patch('vm_manager.views.logger')
+    @patch('vm_manager.views.django_rq')
+    def test_admin_delete_vm(self, mock_rq, mock_logger):
+        admin_user = UserFactory.create(username="admin-joe")
+        vm_id = uuid.uuid4()
+
+        def fake_build():
+            return "redirect"
+
+        def fake_get():
+            return "wherever"
+
+        request = Fake(user=AnonymousUser(),
+                       get_full_path=fake_get,
+                       build_absolute_uri=fake_build)
+        res = admin_delete_vm(request, vm_id)
+        self.assertEqual(HttpResponseRedirect, res.__class__)
+        self.assertEqual(302, res.status_code)
+        self.assertEqual("/login/?next=wherever", res.url),
+
+        request = Fake(user=admin_user)
+        with self.assertRaises(Http404):
+            admin_delete_vm(request, vm_id)
+        mock_logger.error.assert_called_once_with(
+            f"Attempted admin delete of {vm_id} by "
+            f"non-admin user admin-joe")
+
+        admin_user.is_superuser = True
+        self.assertEqual(
+            f"VMStatus for user admin-joe, feature admin, "
+            f"instance {vm_id} is missing. Cannot admin delete VM.",
+            admin_delete_vm(request, vm_id))
+
+        mock_rq.get_queue.assert_not_called()
+        mock_queue = Mock()
+        mock_rq.get_queue.return_value = mock_queue
+
+        self.build_existing_vm(VM_OKAY)
+        res = admin_delete_vm(request, self.instance.id)
+        self.assertEqual(HttpResponseRedirect, res.__class__)
+        self.assertEqual(302, res.status_code)
+        self.assertEqual(
+            f"/rcsadmin/vm_manager/instance/{self.instance.id}/change/",
+            res.url),
+        mock_logger.info.assert_called_with(
+            f"admin-joe admin deleted vm {self.instance.id}")
+        mock_rq.get_queue.assert_called_with("default")
+        mock_queue.enqueue.assert_called_with(delete_vm_worker, self.instance)
+        vms = VMStatus.objects.get(pk=self.vm_status.pk)
+        self.assertEqual(VM_DELETED, vms.status)
+        self.assertIsNotNone(vms.instance.marked_for_deletion)
+        self.assertIsNotNone(vms.instance.boot_volume.marked_for_deletion)
