@@ -27,9 +27,9 @@ class SimpleTestCase(TestCase):
             password="passwerd",
             hostname="some.windows.host")
 
-        self.assertEquals(gcp.entity.name, "guacman")
-        self.assertEquals(gcp.connection.protocol, "rdp")
-        self.assertEquals(gcp.permission, "READ")
+        self.assertEqual(gcp.entity.name, "guacman")
+        self.assertEqual(gcp.connection.protocol, "rdp")
+        self.assertEqual(gcp.permission, "READ")
 
         def get_parameter(connection, name):
             try:
@@ -43,15 +43,15 @@ class SimpleTestCase(TestCase):
         username_parameter = get_parameter(gcp.connection, 'username')
         password_parameter = get_parameter(gcp.connection, 'password')
 
-        self.assertEquals(
+        self.assertEqual(
             hostname_parameter.parameter_value,
             'some.windows.host')
 
-        self.assertEquals(
+        self.assertEqual(
             username_parameter.parameter_value,
             'Administrator')
 
-        self.assertEquals(
+        self.assertEqual(
             password_parameter.parameter_value,
             'passwerd')
 
@@ -61,6 +61,6 @@ class SimpleTestCase(TestCase):
             hostname="some.windows.host")
 
         # We should be empty now
-        self.assertEquals(GuacamoleUser.objects.count(), 0)
-        self.assertEquals(GuacamoleConnection.objects.count(), 0)
-        self.assertEquals(GuacamoleConnectionPermission.objects.count(), 0)
+        self.assertEqual(GuacamoleUser.objects.count(), 0)
+        self.assertEqual(GuacamoleConnection.objects.count(), 0)
+        self.assertEqual(GuacamoleConnectionPermission.objects.count(), 0)

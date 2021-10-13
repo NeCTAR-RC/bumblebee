@@ -60,7 +60,7 @@ class VolumeModelTests(VMManagerModelTestBase):
         id = uuid.uuid4()
         volume = VolumeFactory.create(id=id, user=self.user,
                                       requesting_feature=self.feature)
-        self.assertEquals("fnord", volume.hostname_id)
+        self.assertEqual("fnord", volume.hostname_id)
         mock_gen.assert_called_once()
 
         mock_gen.return_value = ERROR
@@ -96,7 +96,7 @@ class VolumeModelTests(VMManagerModelTestBase):
                                       requesting_feature=self.feature)
         with self.assertRaises(Volume.MultipleObjectsReturned) as cm:
             Volume.objects.get_volume(self.user, self.desktop_type)
-        self.assertEquals(
+        self.assertEqual(
             f"Multiple current volumes found in the database with "
             f"user={self.user} and os={self.desktop_type.id}",
             str(cm.exception))
@@ -435,21 +435,21 @@ class ResizeModelTests(VMManagerModelTestBase):
 
         resize = ResizeFactory.create(instance=fake_instance)
 
-        self.assertEquals(resize,
-                          Resize.objects.get_latest_resize(fake_instance))
+        self.assertEqual(resize,
+                         Resize.objects.get_latest_resize(fake_instance))
 
         resize2 = ResizeFactory.create(instance=fake_instance)
 
-        self.assertEquals(resize2,
-                          Resize.objects.get_latest_resize(fake_instance))
+        self.assertEqual(resize2,
+                         Resize.objects.get_latest_resize(fake_instance))
 
         fake_instance2 = InstanceFactory.create(
             id=uuid.uuid4(), user=self.user, boot_volume=fake_volume)
 
         resize3 = ResizeFactory.create(instance=fake_instance2)
 
-        self.assertEquals(resize2,
-                          Resize.objects.get_latest_resize(fake_instance))
+        self.assertEqual(resize2,
+                         Resize.objects.get_latest_resize(fake_instance))
 
 
 class VMStatusModelTests(VMManagerModelTestBase):
@@ -469,16 +469,16 @@ class VMStatusModelTests(VMManagerModelTestBase):
         vmstatus = VMStatusFactory(instance=self.instance,
                                    user=self.user,
                                    requesting_feature=self.feature)
-        self.assertEquals(vmstatus,
-                          VMStatus.objects.get_latest_vm_status(
-                              self.user, self.desktop_type))
+        self.assertEqual(vmstatus,
+                         VMStatus.objects.get_latest_vm_status(
+                             self.user, self.desktop_type))
 
         vmstatus2 = VMStatusFactory(instance=self.instance,
                                     user=self.user,
                                     requesting_feature=self.feature)
-        self.assertEquals(vmstatus2,
-                          VMStatus.objects.get_latest_vm_status(
-                              self.user, self.desktop_type))
+        self.assertEqual(vmstatus2,
+                         VMStatus.objects.get_latest_vm_status(
+                             self.user, self.desktop_type))
 
     def test_get_vm_status_by_volume(self):
         other_feature = FeatureFactory.create()
@@ -496,9 +496,9 @@ class VMStatusModelTests(VMManagerModelTestBase):
         vmstatus = VMStatusFactory(instance=self.instance,
                                    user=self.user,
                                    requesting_feature=self.feature)
-        self.assertEquals(vmstatus,
-                          VMStatus.objects.get_vm_status_by_volume(
-                              self.volume, self.feature))
+        self.assertEqual(vmstatus,
+                         VMStatus.objects.get_vm_status_by_volume(
+                             self.volume, self.feature))
 
         vmstatus2 = VMStatusFactory(instance=self.instance,
                                     user=self.user,

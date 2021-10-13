@@ -97,9 +97,9 @@ class CreateVMTests(TestCase):
 
         with self.assertRaises(RuntimeWarning) as cm:
             launch_vm_worker(self.user, self.UBUNTU)
-        self.assertEquals(f"A {self.UBUNTU.id} VM for {self.user.username} "
-                          f"already exists",
-                          str(cm.exception))
+            self.assertEqual(f"A {self.UBUNTU.id} VM for {self.user.username} "
+                             f"already exists",
+                             str(cm.exception))
 
         mock_create.assert_not_called()
         mock_rq.get_scheduler.assert_not_called()
@@ -177,7 +177,7 @@ class CreateVMTests(TestCase):
             time = (datetime.now(timezone.utc)
                     - timedelta(seconds=VOLUME_CREATION_TIMEOUT + 1))
             wait_to_create_instance(self.user, self.UBUNTU, fake_volume, time)
-        self.assertEquals("Volume took too long to create", str(cm.exception))
+        self.assertEqual("Volume took too long to create", str(cm.exception))
 
         fake_nectar.cinder.volumes.get.assert_called_with(
             volume_id=fake_volume.id)
