@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "95c6a3ac_1610f094",
+        "filename": "tox.ini",
+        "patchSetId": 1
+      },
+      "lineNbr": 32,
+      "author": {
+        "id": 1000077
+      },
+      "writtenOn": "2021-10-14T01:32:53Z",
+      "side": 1,
+      "message": "I want this back",
+      "revId": "0e5fb21c0eebcd84b31eac59b89d765e24c3470f",
+      "serverId": "f182a8af-62ca-4ceb-ab81-14f8fec9c6c5"
+    }
+  ]
+}
