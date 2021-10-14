@@ -24,7 +24,7 @@ from guacamole.models import GuacamoleConnection
 from vm_manager.models import VMStatus, Volume, Instance
 from vm_manager.vm_functions.delete_vm import delete_vm_worker, \
     _check_instance_is_shutoff_and_delete, _delete_instance_worker, \
-    _delete_volume_once_instance_is_deleted
+    _delete_volume_once_instance_is_deleted, _delete_volume
 from vm_manager.utils.utils import get_nectar
 
 
@@ -175,3 +175,165 @@ class DeleteVMTests(VMFunctionTestBase):
         mock_logger.error.assert_called_once_with(
             f"something went wrong with the instance deletion "
             f"call for {fake_instance}, it raised weirdness")
+
+    @patch('vm_manager.vm_functions.delete_vm.get_nectar')
+    @patch('vm_manager.vm_functions.delete_vm.logger')
+    @patch('vm_manager.vm_functions.delete_vm._delete_volume')
+    def test_delete_volume_once_instance_is_deleted(
+            self, mock_delete, mock_logger, mock_get_nectar):
+        fake_nectar = FakeNectar()
+        mock_get_nectar.return_value = fake_nectar
+        fake_nectar.nova.servers.get.side_effect = \
+            novaclient.exceptions.NotFound(code=42)  # code is ignored
+
+        fake_volume, fake_instance = self.build_fake_vol_instance(
+            ip_address='10.0.0.99')
+        self.assertIsNone(fake_instance.deleted)
+
+        self.assertIsNone(
+            _delete_volume_once_instance_is_deleted(fake_instance, 1))
+        fake_nectar.nova.servers.get.assert_called_once_with(fake_instance.id)
+        mock_delete.assert_called_once_with(fake_volume)
+        mock_logger.info.assert_called_once_with(
+            f"Instance {fake_instance.id} successfully deleted, "
+            f"we can delete the volume now!")
+        instance = Instance.objects.get(pk=fake_instance.pk)
+        self.assertIsNotNone(instance.deleted)
+
+    @patch('vm_manager.vm_functions.delete_vm.get_nectar')
+    @patch('vm_manager.vm_functions.delete_vm.logger')
+    @patch('vm_manager.vm_functions.delete_vm._delete_volume')
+    def test_delete_volume_once_instance_is_deleted_2(
+            self, mock_delete, mock_logger, mock_get_nectar):
+        fake_nectar = FakeNectar()
+        mock_get_nectar.return_value = fake_nectar
+        fake_nectar.nova.servers.get.side_effect = Exception("wonderfulness")
+
+        fake_volume, fake_instance = self.build_fake_vol_instance(
+            ip_address='10.0.0.99')
+        self.assertIsNone(fake_instance.deleted)
+
+        self.assertIsNone(
+            _delete_volume_once_instance_is_deleted(fake_instance, 1))
+        fake_nectar.nova.servers.get.assert_called_once_with(fake_instance.id)
+        mock_delete.assert_not_called()
+        mock_logger.error.assert_called_once_with(
+            f"something went wrong with the instance get "
+            f"call for {fake_instance}, it raised wonderfulness")
+        instance = Instance.objects.get(pk=fake_instance.pk)
+        self.assertIsNone(instance.deleted)
+
+    @patch('vm_manager.vm_functions.delete_vm.get_nectar')
+    @patch('vm_manager.vm_functions.delete_vm.django_rq')
+    @patch('vm_manager.vm_functions.delete_vm.logger')
+    @patch('vm_manager.vm_functions.delete_vm._delete_volume')
+    @patch('vm_manager.vm_functions.delete_vm._delete_instance_worker')
+    def test_delete_volume_once_instance_is_deleted_3(
+            self, mock_delete_instance, mock_delete_volume,
+            mock_logger, mock_rq, mock_get_nectar):
+        mock_scheduler = Mock()
+        mock_rq.get_scheduler.return_value = mock_scheduler
+
+        fake_volume, fake_instance = self.build_fake_vol_instance(
+            ip_address='10.0.0.99')
+
+        fake_nectar = FakeNectar()
+        mock_get_nectar.return_value = fake_nectar
+        fake_nectar.nova.servers.get.return_value = FakeServer(
+            id=fake_instance.id, status=SHUTDOWN)
+
+        self.assertIsNone(
+            _delete_volume_once_instance_is_deleted(fake_instance, 0))
+        mock_logger.info.assert_not_called()
+        mock_logger.error.assert_not_called()
+
+        fake_nectar.nova.servers.get.assert_called_once_with(fake_instance.id)
+        mock_delete_volume.assert_not_called()
+        mock_delete_instance.assert_called_once_with(fake_instance)
+        mock_rq.get_scheduler.assert_called_once_with("default")
+        mock_scheduler.enqueue_in.assert_called_once_with(
+            timedelta(minutes=INSTANCE_DELETION_RETRY_WAIT_TIME),
+            _delete_volume_once_instance_is_deleted, fake_instance,
+            -1)
+
+    @patch('vm_manager.vm_functions.delete_vm.get_nectar')
+    @patch('vm_manager.vm_functions.delete_vm.django_rq')
+    @patch('vm_manager.vm_functions.delete_vm.logger')
+    @patch('vm_manager.vm_functions.delete_vm._delete_volume')
+    @patch('vm_manager.vm_functions.delete_vm._delete_instance_worker')
+    def test_delete_volume_once_instance_is_deleted_4(
+            self, mock_delete_instance, mock_delete_volume,
+            mock_logger, mock_rq, mock_get_nectar):
+        mock_scheduler = Mock()
+        mock_rq.get_scheduler.return_value = mock_scheduler
+
+        fake_volume, fake_instance = self.build_fake_vol_instance(
+            ip_address='10.0.0.99')
+
+        fake_nectar = FakeNectar()
+        mock_get_nectar.return_value = fake_nectar
+        fake_nectar.nova.servers.get.return_value = FakeServer(
+            id=fake_instance.id, status=SHUTDOWN)
+
+        self.assertIsNone(
+            _delete_volume_once_instance_is_deleted(fake_instance, -1))
+        mock_logger.info.assert_not_called()
+        message = "ran out of retries trying to delete"
+        mock_logger.error.assert_called_once_with(f"{message} {fake_instance}")
+
+        fake_nectar.nova.servers.get.assert_called_once_with(fake_instance.id)
+        mock_delete_volume.assert_not_called()
+        mock_delete_instance.assert_not_called()
+        mock_rq.get_scheduler.assert_not_called()
+        mock_scheduler.enqueue_in.assert_not_called()
+        instance = Instance.objects.get(pk=fake_instance.pk)
+        self.assertEqual(message, instance.error_message)
+        self.assertEqual(message, instance.boot_volume.error_message)
+
+    @patch('vm_manager.vm_functions.delete_vm.get_nectar')
+    @patch('vm_manager.vm_functions.delete_vm.django_rq')
+    @patch('vm_manager.vm_functions.delete_vm.logger')
+    @patch('vm_manager.vm_functions.delete_vm._delete_volume')
+    @patch('vm_manager.vm_functions.delete_vm._delete_instance_worker')
+    def test_delete_volume_once_instance_is_deleted_5(
+            self, mock_delete_instance, mock_delete_volume,
+            mock_logger, mock_rq, mock_get_nectar):
+        mock_scheduler = Mock()
+        mock_rq.get_scheduler.return_value = mock_scheduler
+
+        fake_volume, fake_instance = self.build_fake_vol_instance(
+            ip_address='10.0.0.99')
+
+        fake_nectar = FakeNectar()
+        mock_get_nectar.return_value = fake_nectar
+        fake_nectar.nova.servers.get.return_value = FakeServer(
+            id=fake_instance.id, status=SHUTDOWN)
+
+        self.assertIsNone(
+            _delete_volume_once_instance_is_deleted(fake_instance, 1))
+        mock_logger.info.assert_not_called()
+        mock_logger.error.assert_not_called()
+
+        fake_nectar.nova.servers.get.assert_called_once_with(fake_instance.id)
+        mock_delete_volume.assert_not_called()
+        mock_delete_instance.assert_called_once_with(fake_instance)
+        mock_rq.get_scheduler.assert_called_once_with('default')
+        mock_scheduler.enqueue_in.assert_called_once_with(
+            timedelta(seconds=INSTANCE_DELETION_RETRY_WAIT_TIME),
+            _delete_volume_once_instance_is_deleted, fake_instance, 0)
+
+    @patch('vm_manager.vm_functions.delete_vm.get_nectar')
+    def test_delete_volume(self, mock_get_nectar):
+
+        fake_volume = self.build_fake_volume()
+
+        fake_nectar = FakeNectar()
+        mock_get_nectar.return_value = fake_nectar
+        fake_nectar.cinder.volumes.return_value = 99
+
+        self.assertIsNone(_delete_volume(fake_volume))
+        mock_get_nectar.assert_called_once()
+        fake_nectar.cinder.volumes.delete.assert_called_once_with(
+            fake_volume.id)
+        volume = Volume.objects.get(pk=fake_volume.pk)
+        self.assertIsNotNone(volume.deleted)
