@@ -120,7 +120,7 @@ def _delete_volume_once_instance_is_deleted(instance, retries):
         error_message = f"ran out of retries trying to delete"
         instance.error(error_message)
         instance.boot_volume.error(error_message)
-        logger.error(error_message + " " + instance)
+        logger.error(f"{error_message} {instance}")
         return
 
     _delete_instance_worker(instance)
