@@ -29,12 +29,19 @@ def downsize_vm_worker(instance, desktop_type) -> str:
     downsize_result = _resize_vm(instance,
                                  desktop_type.default_flavor.id,
                                  desktop_type.feature)
+
     resize = Resize.objects.get_latest_resize(instance.id)
-    resize.reverted = datetime.now(timezone.utc)
-    resize.save()
+    if not resize:
+        logger.error("Missing resize record for instance {instance}")
+    else:
+        resize.reverted = datetime.now(timezone.utc)
+        resize.save()
     return downsize_result
 
 
+# TODO - This is not wired up.  I think it really belongs in
+# vm_manager.views because it doesn't involve any asynchrony.
+# TODO - Analyse for possible race conditions with supersize/downsize
 def extend(user, vm_id, requesting_feature) -> str:
     instance = Instance.objects.get_instance_by_untrusted_vm_id(
         vm_id, user, requesting_feature)
@@ -42,30 +49,41 @@ def extend(user, vm_id, requesting_feature) -> str:
                 f"{instance.boot_volume.operating_system} vm "
                 f"for user {user.username}")
     resize = Resize.objects.get_latest_resize(instance.id)
-    expiration_date = resize.expires
-    if not can_extend_supersize_period(expiration_date):
-        error_message = f"Resize {resize.id} date too far " \
-                        f"in future: {expiration_date}"
-        logger.error(error_message)
-        return error_message
-    resize.expires = calculate_supersize_expiration_date(expiration_date)
+    if not resize or resize.reverted:
+        message = f"No Resize is current for instance {instance}"
+        logger.error(message)
+        return message
+    exp_date = resize.expires
+    if not can_extend_supersize_period(exp_date):
+        message = f"Resize (id {resize.id}) date too far in future: {exp_date}"
+        logger.error(message)
+        return message
+    resize.expires = calculate_supersize_expiration_date(exp_date)
     resize.save()
     return str(resize)
 
 
-def _resize_vm(instance, flavor, requesting_feature):
+def _resize_vm(instance, flavor_id, requesting_feature):
     n = get_nectar()
-    resize_result = n.nova.servers.resize(instance.id, flavor)
+    current_flavor_id = n.nova.servers.get(instance.id).flavor.id
+    if current_flavor_id == flavor_id:
+        message = (
+            f"Instance {instance.id} already has flavor {flavor_id}. "
+            f"Skipping the resize.")
+        logger.error(message)
+        return message
+
+    resize_result = n.nova.servers.resize(instance.id, flavor_id)
     scheduler = django_rq.get_scheduler('default')
     scheduler.enqueue_in(timedelta(seconds=5),
                          _wait_to_confirm_resize,
-                         instance, flavor,
+                         instance, flavor_id,
                          after_time(RESIZE_CONFIRM_WAIT_SECONDS),
                          requesting_feature)
     return resize_result
 
 
-def _wait_to_confirm_resize(instance, flavor, deadline, requesting_feature):
+def _wait_to_confirm_resize(instance, flavor_id, deadline, requesting_feature):
     status = VM_OKAY if flavor == str(instance.boot_volume.flavor) \
         else VM_SUPERSIZED
     n = get_nectar()
@@ -85,7 +103,7 @@ def _wait_to_confirm_resize(instance, flavor, deadline, requesting_feature):
             scheduler = django_rq.get_scheduler('default')
             scheduler.enqueue_in(timedelta(seconds=5),
                                  _wait_to_confirm_resize,
-                                 instance, flavor, deadline,
+                                 instance, flavor_id, deadline,
                                  requesting_feature)
             return str(vm_status)
         else:
@@ -100,7 +118,7 @@ def _wait_to_confirm_resize(instance, flavor, deadline, requesting_feature):
                          f"for {instance}: it raised {e}")
             return
 
-        if instance_flavor != str(flavor):
+        if instance_flavor != str(flavor_id):
             error_message = \
                 f"Instance ({instance}) resize failed as " \
                 f"instance hasn't changed flavor: " \

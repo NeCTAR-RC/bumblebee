@@ -34,6 +34,8 @@ class FakeServer(Fake):
 FLAVORS = [
     FakeFlavor(id=uuid.uuid4(), name='m3.medium',
                ram='1', disk='1', vcpus='1'),
+    FakeFlavor(id=uuid.uuid4(), name='m3.xxlarge',
+               ram='2', disk='2', vcpus='2'),
 ]
 
 VOLUMES = [
