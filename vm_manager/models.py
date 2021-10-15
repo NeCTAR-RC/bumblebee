@@ -274,7 +274,7 @@ class Instance(CloudResource):
         return self.get_status() == ACTIVE
 
     def check_active_or_resize_statuses(self):
-        return self.get_status() in (ACTIVE, VERIFY_RESIZE, RESIZE)
+        return self.get_status() in {ACTIVE, VERIFY_RESIZE, RESIZE}
 
     def check_resizing_status(self):
         return self.get_status() == RESIZE
