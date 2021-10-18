@@ -32,7 +32,7 @@
     <!-- navbar -->
     <nav class="navbar navbar-expand-md navbar-dark bg-dark" id="navbar-main">
       <div class="container">
-        <a class="navbar-brand" href="{% url 'index' %}">Bumblebee</a>
+        <a class="navbar-brand" href="{% url 'index' %}"><img src="{% static 'img/bumblebee-logo.png' %}" height="60"></a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavDropdown" aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
           <span class="navbar-toggler-icon"></span>
         </button>
@@ -40,27 +40,24 @@
         <div class="collapse navbar-collapse" id="navbarNavDropdown">
           <ul class="navbar-nav me-auto mb-2 mb-lg-0">
             <li class="nav-item {% active_link 'desktop_description' %}">
-              <a class="nav-link" href="{% url 'desktop_description' %}">Desktop Description</a>
-            </li>
-            <li class="nav-item {% active_link 'terms' %}">
-              <a class="nav-link" href="{% url 'terms' %}">Terms of Service</a>
+              <a class="nav-link" href="{% url 'desktop_description' %}">Overview</a>
             </li>
             <li class="nav-item {% active_link 'help' %}">
-              <a class="nav-link" href="{% url 'help' %}">Get Help or Contact Us</a>
+              <a class="nav-link" href="{% url 'help' %}">Help</a>
             </li>
             {% if user.is_authenticated %}
             {% load group_filters %}
             {% if user.is_staff and user.is_superuser %}
             <li class="nav-item">
-              <a class="nav-link" href="{% url "admin:index" %}">Administer site</a>
+              <a class="nav-link" href="{% url "admin:index" %}">Admin</a>
             </li>
             {% endif %}
             {% if user.is_staff or user|has_group:'Support Staff' %}
             <li class="nav-item {% active_link 'orion_report' %}">
-              <a class="nav-link" href="{% url 'orion_report' %}">Orion Reporting</a>
+              <a class="nav-link" href="{% url 'orion_report' %}">Orion</a>
             </li>
             <li class="nav-item {% active_link 'user_search' %}">
-              <a class="nav-link" href="{% url 'user_search' %}">User Reporting and Search</a>
+              <a class="nav-link" href="{% url 'user_search' %}">Users &amp; Search</a>
             </li>
             {% endif %}
           </ul>
@@ -93,26 +90,90 @@
     </nav>
     <!-- /navbar -->
 
-    <main role="main" class="main container">
-
-      {% if user.is_authenticated %}
-        {# only show the warning header if the user is a super user. #}
-        {% if user.is_superuser %}
-           <div class="debug_header"></div>
+    <main role="main" class="main">
+      <div class="container">
+        {% if user.is_authenticated %}
+          {# only show the warning header if the user is a super user. #}
+          {% if user.is_superuser %}
+            <div class="debug_header"></div>
+          {% endif %}
         {% endif %}
-      {% endif %}
 
-      {% for message in messages %}
-        <div class="alert {{ message.tags }} alert-dismissible fade show" role="alert">
-          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-          {{ message }}
-        </div>
-      {% endfor %}
-
+        {% for message in messages %}
+          <div class="alert {{ message.tags }} alert-dismissible fade show" role="alert">
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            {{ message }}
+          </div>
+        {% endfor %}
+      </div>
+      
       {% block content %}
       {% endblock content %}
 
     </main>
+
+    <!-- footer -->
+    <footer class="footer bg-black text-white">
+      <div class="container">
+        <div class="row align-items-end mb-5">
+          <div class="col-sm-8 footer-text pe-5">
+            <p>The Virtual Desktop Interface is a service of the Australian Research Data Commons (ARDC).
+              The Australian Research Data Commons (ARDC) is enabled by the National Collaborative Research Infrastructure Strategy Program (NCRIS).
+              <a href="https://ardc.edu.au/about/" target="_blank">Read more about the ARDC...</a>
+            </p>
+          </div>
+          <div class="col-sm-4">
+            <div class="row">
+              <div class="col-7 align-self-end">
+                <a href="https://www.ardc.edu.au/" target="_blank">
+                  <img src="{% static 'img/ardc_logo_rev.svg' %}" class="img-fluid" alt="Australian Research Data Commons (ARDC)">
+                </a>
+              </div>
+              <div class="col-5 align-self-end">
+                <a href="https://education.gov.au/national-collaborative-research-infrastructure-strategy-ncris" target="_blank">
+                  <img src="{% static 'img/ncris_mono_rev.svg' %}" class="img-fluid" alt="National Collaborative Research Infrastructure Strategy (NCRIS)">
+                </a>
+              </div>
+            </div>
+          </div>
+        </div> <!-- row -->
+        <div class="row h-100 footer-links">
+          <div class="col-sm-3 col-xs-6">
+            <h4>Quicklinks</h4>
+            <ul class="list-unstyled">
+              <li><a href="/">Home</a></li>
+              <li><a href="/terms">Terms and Conditions</a></li>
+              <li><a href="https://ardc.edu.au/privacy-policy/">Privacy Policy</a></li>
+            </ul>
+          </div>
+          <div class="col-sm-3 col-xs-6">
+            <h4>Explore</h4>
+            <ul class="list-unstyled">
+              <li><a href="http://support.nectar.org.au//support/solutions/folders/6000190150">Cloud Basics</a></li>
+              <li><a href="http://support.nectar.org.au//support/solutions/folders/6000232361">Cloud Services</a></li>
+              <li><a href="http://support.nectar.org.au//support/solutions/folders/6000230414">Cloud Applications</a></li>
+              <li><a href="http://support.nectar.org.au//support/solutions/folders/6000190155">Cloud Fundamentals</a></li>
+            </ul>
+          </div>
+          <div class="col-sm-3 col-xs-6">
+            <h4>Help</h4>
+            <ul class="list-unstyled">
+              <li><a href="http://support.nectar.org.au//support/tickets/new" target="_blank">Request Support</a></li>
+              <li><a href="#!">Online Chat</a></li>
+              <li><a href="https://tutorials.rc.nectar.org.au">Tutorials</a></li>
+            </ul>
+          </div>
+          <div class="col-sm-3 col-xs-6">
+            <h4>External Resources</h4>
+            <ul class="list-unstyled">
+              <li><a href="https://ardc.edu.au/">ARDC Home</a></li>
+              <li><a href="https://dashboard.rc.nectar.org.au/">Nectar Dashboard</a></li>
+              <li><a href="https://ardc.edu.au/services/">ARDC Online Services</a></li>
+            </ul>
+          </div>
+        </div>
+      </div> 
+    </footer>
 
     <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
     {% block script %}

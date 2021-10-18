@@ -1,16 +1,31 @@
 // Use ARDC Proxima Nova
+@import url("https://use.typekit.net/nlr0joz.css");
 // $font-family-sans-serif: "Proxima Nova", -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !default;
+$font-family-base: proxima-nova, sans-serif;
 $font-size-base: 1rem;
 
 // ARDC colours
-$ardc-blue:   #00A2C4 !default;
-$ardc-pink:   #E51875 !default;
-$ardc-orange: #F8B20E !default;
-$ardc-purple: #8E489B !default;
-$ardc-grey:   #969696 !default;
+$ardc-blue:   #00A2C4;
+$ardc-pink:   #E51875;
+$ardc-orange: #F8B20E;
+$ardc-purple: #8E489B;
+$ardc-grey:   #969696;
 
 // Override bootstrap colours
 $dark: #000000;
+$blue: $ardc-blue;
+$pink: $ardc-pink;
+$orange: $ardc-orange;
+$purple: $ardc-purple;
+$gray: $ardc-grey;
+
+$primary:       $orange;
+$secondary:     $gray;
+$success:       #62C400;
+$info:          $blue;
+$warning:       $orange;
+$danger:        $pink;
+
 //$component-active-bg: $ardc-purple;
 $navbar-brand-padding-y: 0;
 
@@ -26,29 +41,6 @@ $fa-font-path: "fontawesome";
 @import "scss/fontawesome/solid.scss";
 @import "scss/fontawesome/brands.scss";
 
-/* Spectral heading font */
-@import url("https://fonts.googleapis.com/css?family=Spectral:400,700");
-
-/* Proxima Nova body font */
-@font-face {
-  font-family: "Proxima Nova";
-  src: local("Proxima Nova Regular"), local("ProximaNova-Regular"),
-    url("fonts/ProximaNova-Regular.woff2") format("woff2"),
-    url("fonts/ProximaNova-Regular.woff") format("woff");
-  font-weight: normal;
-  font-style: normal;
-}
-
-.display-1,
-.display-2,
-.display-3,
-.display-4 {
-  font-family: "Spectral";
-  color: $black;
-  font-weight: 400;
-}
-
-
 html,
 body {
   overflow-x: hidden; /* Prevent scroll on narrow devices */
@@ -56,6 +48,13 @@ body {
 
 main {
   padding-top: 2em;
+}
+
+.h1, .h2, .h3, .h4, .h5, .h6, 
+h1, h2, h3, h4, h5, h6 {
+  font-family: proxima-nova, sans-serif;
+  font-weight: 700;
+  font-style: normal;
 }
 
 /* Helper for setting the textarea size with bootstrap + crispy forms */
@@ -67,11 +66,9 @@ main {
  * Footer
  */
 .footer {
+  padding: 24px 0;
   .footer-text {
     a {
-      color: $ardc-orange;
-      text-decoration: underline;
-
       &:hover,
       &:focus {
         color: $ardc-pink;
@@ -80,6 +77,23 @@ main {
     }
     ul {
       list-style: none;
+    }
+  }
+  h4 {
+    text-transform:  uppercase;
+    &:after {
+      content: "";
+      background: #fff;
+      height: 2px;
+      display: block;
+      margin-top: 10px;
+      max-width: 50px;
+    }
+  }
+  .footer-links {
+    a {
+      color: #fff;
+      text-decoration: none;
     }
   }
 }
