@@ -63,29 +63,29 @@ def extend(user, vm_id, requesting_feature) -> str:
     return str(resize)
 
 
-def _resize_vm(instance, flavor_id, requesting_feature):
+def _resize_vm(instance, flavor, requesting_feature):
     n = get_nectar()
-    current_flavor_id = n.nova.servers.get(instance.id).flavor.id
-    if current_flavor_id == flavor_id:
+    current_flavor = n.nova.servers.get(instance.id).flavor.id
+    if current_flavor == str(flavor):
         message = (
-            f"Instance {instance.id} already has flavor {flavor_id}. "
+            f"Instance {instance.id} already has flavor {flavor}. "
             f"Skipping the resize.")
         logger.error(message)
         return message
 
-    resize_result = n.nova.servers.resize(instance.id, flavor_id)
+    resize_result = n.nova.servers.resize(instance.id, flavor)
     scheduler = django_rq.get_scheduler('default')
     scheduler.enqueue_in(timedelta(seconds=5),
                          _wait_to_confirm_resize,
-                         instance, flavor_id,
+                         instance, flavor,
                          after_time(RESIZE_CONFIRM_WAIT_SECONDS),
                          requesting_feature)
     return resize_result
 
 
-def _wait_to_confirm_resize(instance, flavor_id, deadline, requesting_feature):
-    status = VM_OKAY if flavor == str(instance.boot_volume.flavor) \
-        else VM_SUPERSIZED
+def _wait_to_confirm_resize(instance, flavor, deadline, requesting_feature):
+    status = (VM_OKAY if flavor == instance.boot_volume.flavor
+              else VM_SUPERSIZED)
     n = get_nectar()
     vm_status = VMStatus.objects.get_vm_status_by_instance(
         instance, requesting_feature)
@@ -103,7 +103,7 @@ def _wait_to_confirm_resize(instance, flavor_id, deadline, requesting_feature):
             scheduler = django_rq.get_scheduler('default')
             scheduler.enqueue_in(timedelta(seconds=5),
                                  _wait_to_confirm_resize,
-                                 instance, flavor_id, deadline,
+                                 instance, flavor, deadline,
                                  requesting_feature)
             return str(vm_status)
         else:
@@ -118,31 +118,30 @@ def _wait_to_confirm_resize(instance, flavor_id, deadline, requesting_feature):
                          f"for {instance}: it raised {e}")
             return
 
-        if instance_flavor != str(flavor_id):
-            error_message = \
-                f"Instance ({instance}) resize failed as " \
-                f"instance hasn't changed flavor: " \
-                f"Actual Flavor: {instance_flavor}, " \
-                f"Expected Flavor: {flavor}"
-            logger.error(error_message)
-            vm_status.error(error_message)
+        if instance_flavor != str(flavor):
+            message = (
+                f"Instance ({instance}) resize failed as "
+                f"instance hasn't changed flavor: "
+                f"Actual Flavor: {instance_flavor}, "
+                f"Expected Flavor: {flavor}")
+            logger.error(message)
+            vm_status.error(message)
             vm_status.save()
-            return error_message
+            return message
 
-        log_message = \
-            f"Resize of {instance} has already been confirmed automatically"
-        logger.info(log_message)
+        message = f"Resize of {instance} was confirmed automatically"
+        logger.info(message)
         vm_status.status = status
         vm_status.save()
-        return log_message
+        return message
 
-    error_message = \
-        f"Instance ({instance}) resize failed instance in " \
-        f"state: {instance.get_status()}"
-    logger.error(error_message)
-    vm_status.error(error_message)
+    message = (
+        f"Instance ({instance}) resize failed instance in "
+        f"state: {instance.get_status()}")
+    logger.error(message)
+    vm_status.error(message)
     vm_status.save()
-    return error_message
+    return message
 
 
 def calculate_supersize_expiration_date(date):
@@ -154,13 +153,15 @@ def can_extend_supersize_period(date):
                    + timedelta(days=DOWNSIZE_PERIOD))
 
 
+# TODO - The current implementation will potentially fire off
+# a number of simultaneous downsizes.  Assuming that this method
+# is asynchronous, it could send the resizes one by one, and wait
+# for each resize to complete (or fail) before starting the next one.
 def downsize_expired_supersized_vms(requesting_feature):
-    try:
-        resizes = Resize.objects.filter(
-            reverted=None, instance__marked_for_deletion=None,
-            expires__lte=datetime.now(timezone.utc).date())
-    except Resize.DoesNotExist:
-        return None
+    resizes = Resize.objects.filter(
+        reverted=None, instance__marked_for_deletion=None,
+        expires__lte=datetime.now(timezone.utc).date())
+
     for resize in resizes:
         _resize_vm(resize.instance, resize.instance.boot_volume.flavor,
                    requesting_feature)
