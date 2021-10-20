@@ -91,7 +91,7 @@ def _confirm_instance_deleted(instance, instance_deletion_retries,
         instance_deletion_retries - 1, requesting_feature)
 
 
-def unshelve_vm_worker(user, desktop_type):
+def unshelve_vm_worker(user, desktop_type, zone):
     logger.info(f'Unshelving {desktop_type.id} VM '
                 f'for {user.username}')
-    launch_vm_worker(user, desktop_type)
+    launch_vm_worker(user, desktop_type, zone)

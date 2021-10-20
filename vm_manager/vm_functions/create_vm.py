@@ -20,7 +20,7 @@ from guacamole.models import GuacamoleConnection
 logger = logging.getLogger(__name__)
 
 
-def launch_vm_worker(user, desktop_type):
+def launch_vm_worker(user, desktop_type, zone):
     operating_system = desktop_type.id
     logger.info(f'Launching {operating_system} VM for {user.username}')
 
@@ -33,7 +33,7 @@ def launch_vm_worker(user, desktop_type):
             logger.error(msg)
             raise RuntimeWarning(msg)
 
-    volume = _create_volume(user, desktop_type)
+    volume = _create_volume(user, desktop_type, zone)
     scheduler = django_rq.get_scheduler('default')
     scheduler.enqueue_in(timedelta(seconds=5), wait_to_create_instance,
                          user, desktop_type, volume,
@@ -42,7 +42,7 @@ def launch_vm_worker(user, desktop_type):
                 f'for {user.username}')
 
 
-def _create_volume(user, desktop_type):
+def _create_volume(user, desktop_type, zone):
     operating_system = desktop_type.id
     requesting_feature = desktop_type.feature
     volume = Volume.objects.get_volume(user, desktop_type)
@@ -50,23 +50,36 @@ def _create_volume(user, desktop_type):
         vm_status = VMStatus.objects.get_vm_status_by_volume(
             volume, requesting_feature)
         if vm_status.status != NO_VM:
+            if volume.zone != zone.name:
+                # TODO - check if this scenario is possible ... and think
+                # about how to resolve it.
+                msg = (
+                    f"A live {operating_system} Volume for {user} already "
+                    f"exists in a different availability zone ({volume.zone}) "
+                    f"to the one requested ({zone.name})")
+                logger.error(msg)
+                raise RuntimeWarning(msg)
+
             return volume
 
-    n = get_nectar()
     name = generate_server_name(user.username, operating_system)
+    source_volume_id = _get_source_volume_id(desktop_type, zone)
+
+    n = get_nectar()
     volume_result = n.cinder.volumes.create(
-        source_volid=desktop_type.source_volume_id,
+        source_volid=source_volume_id,
         size=n.VM_PARAMS["size"],
         name=name, metadata=n.VM_PARAMS["metadata_volume"],
-        availability_zone=n.VM_PARAMS["availability_zone_volume"])
+        availability_zone=zone.name)
     n.cinder.volumes.set_bootable(volume=volume_result, flag=True)
 
     # Create record in DB
     volume = Volume(
         id=volume_result.id, user=user,
-        image=desktop_type.source_volume_id,
+        image=source_volume_id,
         requesting_feature=requesting_feature,
         operating_system=operating_system,
+        zone=zone.name,
         flavor=desktop_type.default_flavor.id)
     volume.save()
 
@@ -82,6 +95,22 @@ def _create_volume(user, desktop_type):
             'requesting_feature': requesting_feature.name,
         })
     return volume
+
+
+def _get_source_volume_id(desktop_type, zone):
+    n = get_nectar()
+    res = n.cinder.volumes.list(
+        search_opts={'name': desktop_type.image_name,
+                     'availability_zone': zone.name})
+    nos_found = len(res) if res else 0
+    if nos_found != 1:
+        prefix = "Multiple source volumes" if nos_found else "No source volume"
+        msg = (
+            f"{prefix} with image_name {desktop_type.image_name} "
+            f"in availability zone {zone.name})")
+        logger.error(msg)
+        raise RuntimeWarning(msg)
+    return res[0].id
 
 
 def wait_to_create_instance(user, desktop_type, volume, start_time):
@@ -163,7 +192,7 @@ def _create_instance(user, desktop_type, volume):
         key_name=settings.OS_KEYNAME, block_device_mapping_v1=None,
         block_device_mapping_v2=block_device_mapping,
         nics=n.VM_PARAMS["list_net"],
-        availability_zone=n.VM_PARAMS["availability_zone_server"],
+        availability_zone=volume.zone,
         meta=metadata_server)
 
     # Create guac connection

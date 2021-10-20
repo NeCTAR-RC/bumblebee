@@ -302,4 +302,31 @@ DESKTOP_TYPES = [
         'default_flavor_name': "m3.medium",
         'big_flavor_name': "m3.xxlarge"
     },
+    {
+        'id': "tern",
+        'image_name': "NeCTAR Ubuntu 20.04 LTS (Focal) Virtual Desktop",
+        'name': "TERN / CoESRA Desktop",
+        'description': "A kind of bird",
+        'default_flavor_name': "m3.medium",
+        'big_flavor_name': "m3.xxlarge",
+        'restrict_to_zones': ["QRIScloud"]
+    },
+]
+
+ZONES = [
+    {
+        'name': "QRIScloud",
+        'zone_weight': 10,
+        'domains': ['uq.edu.au', 'qut.edu.au']
+    },
+    {
+        'name': "melbourne-qh2",
+        'zone_weight': 15,
+        'domains': ['unimelb.edu.au']
+    },
+    {
+        'name': "monash-01",
+        'zone_weight': 20,
+        'domains': ['monash.edu']
+    },
 ]

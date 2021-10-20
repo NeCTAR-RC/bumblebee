@@ -14,6 +14,25 @@ from vm_manager.utils.utils import FlavorDetails
 logger = logging.getLogger(__name__)
 
 
+class AvailabilityZone(models.Model):
+    name = models.CharField(primary_key=True, max_length=32)
+    zone_weight = models.IntegerField()
+    enabled = models.BooleanField(default=True)
+
+    def __str__(self):
+        return f"{self.__class__.name}({self.name})"
+
+
+class Domain(models.Model):
+    name = models.CharField(primary_key=True, max_length=128)
+    zone = models.ForeignKey(AvailabilityZone,
+                             on_delete=models.CASCADE,
+                             related_name='domains')
+
+    def __str__(self):
+        return f"{self.__class__.name}({self.name})"
+
+
 class DesktopType(models.Model):
     id = models.CharField(primary_key=True, max_length=32)
     name = models.CharField(max_length=128)
@@ -25,6 +44,10 @@ class DesktopType(models.Model):
     feature = models.ForeignKey(workspace_models.Feature,
                                 on_delete=models.PROTECT)
     enabled = models.BooleanField(default=True)
+    restrict_to_zones = models.ManyToManyField(AvailabilityZone)
+
+    def __str__(self):
+        return f"{self.__class__.name}({self.id})"
 
     @property
     def default_flavor(self):
@@ -40,11 +63,6 @@ class DesktopType(models.Model):
         for f in get_nectar().nova.flavors.list():
             res[f.name] = FlavorDetails(f)
         return res
-
-    @cached_property
-    def source_volume_id(self):
-        return get_nectar().cinder.volumes.list(
-            search_opts={'name': self.image_name})[0].id
 
     @property
     def security_groups(self):

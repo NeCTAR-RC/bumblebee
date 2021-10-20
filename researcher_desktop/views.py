@@ -8,8 +8,9 @@ from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
 
 from researcher_workspace.models import Feature
-from researcher_desktop.utils.utils import desktop_types
 from researcher_desktop.utils.utils import get_desktop_type
+from researcher_desktop.utils.utils import get_best_zone
+from researcher_desktop.utils.utils import desktop_types
 from researcher_desktop.utils.utils import desktops_feature
 
 from vm_manager import views as vm_man_views
@@ -34,12 +35,16 @@ def render_modules(request):
 
 
 @login_required(login_url='login')
+# TODO - Is the 'user_passes_test' still needed?
 # Only need to stop support staff creating vms, as they can't use any
 # other function if they don't have a vm
 @user_passes_test(test_func=not_support_staff, login_url='staff_home',
                   redirect_field_name=None)
-def launch_vm(request, desktop):
-    vm_man_views.launch_vm(request.user, get_desktop_type(desktop))
+def launch_vm(request, desktop, zone_name=None):
+    desktop_type = get_desktop_type(desktop)
+    zone = get_best_zone(request.user.email, desktop_type,
+                         chosen_zone=zone_name)
+    vm_man_views.launch_vm(request.user, desktop_type, zone)
     return redirect_home(request)
 
 
@@ -56,8 +61,8 @@ def shelve_vm(request, vm_id):
 
 
 @login_required(login_url='login')
-def unshelve_vm(request, desktop):
-    vm_man_views.unshelve_vm(request.user, get_desktop_type(desktop))
+def unshelve_vm(request, desktop_id):
+    vm_man_views.unshelve_vm(request.user, get_desktop_type(desktop_id))
     return redirect_home(request)
 
 

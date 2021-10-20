@@ -15,8 +15,16 @@ class Migration(migrations.Migration):
         DesktopType = apps.get_model('researcher_desktop', 'DesktopType')
 
         # Populate initial desktops from the settings.
+        field_names = [f.name for f in DesktopType._meta.get_fields()]
         for desktop_type in settings.DESKTOP_TYPES:
-            DesktopType.objects.create(**desktop_type, feature=app_feature)
+            # Make sure we only incorporate fields that have been defined
+            # at this point in the migration history.  Other fields may
+            # need to be incorporated by later migrations.
+            filtered_desktop_type = {
+                key: value for (key, value) in desktop_type.items()
+                if key in field_names}
+            DesktopType.objects.create(**filtered_desktop_type,
+                                       feature=app_feature)
 
     def removeDesktopTypes(apps, schema_editor):
         DesktopType = apps.get_model('researcher_desktop', 'DesktopType')

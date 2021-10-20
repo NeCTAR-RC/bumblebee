@@ -4,6 +4,7 @@ from django.test import TestCase
 
 from researcher_workspace.tests.factories import UserFactory
 from researcher_desktop.utils.utils import get_desktop_type, desktops_feature
+from researcher_desktop.tests.factories import AvailabilityZoneFactory
 
 from vm_manager.tests.common import UUID_1, UUID_2, UUID_3, UUID_4
 from vm_manager.tests.fakes import Fake, FakeServer, FakeVolume, FakeNectar
@@ -20,8 +21,11 @@ class VMFunctionTestBase(TestCase):
         super().setUp(*args, **kwargs)
         self.FEATURE = desktops_feature()
         self.UBUNTU = get_desktop_type('ubuntu')
+        self.UBUNTU_source_volume_id = uuid.uuid4()
         self.CENTOS = get_desktop_type('centos')
         self.user = UserFactory.create()
+        self.zone = AvailabilityZoneFactory.create(name="a_zone",
+                                                   zone_weight=1)
 
     def build_fake_volume(self, id=None):
         if id is None:
@@ -29,9 +33,10 @@ class VMFunctionTestBase(TestCase):
         return VolumeFactory.create(
             id=id,
             user=self.user,
-            image=self.UBUNTU.source_volume_id,
+            image=self.UBUNTU_source_volume_id,
             operating_system=self.UBUNTU.id,
             requesting_feature=self.UBUNTU.feature,
+            zone=self.zone.name,
             flavor=self.UBUNTU.default_flavor.id)
 
     def build_fake_vol_instance(self, volume_id=None, instance_id=None,

@@ -66,6 +66,7 @@ class Volume(CloudResource):
     image = models.CharField(max_length=100)
     operating_system = models.CharField(max_length=20)
     flavor = models.UUIDField()
+    zone = models.CharField(max_length=32, null=True)
     requesting_feature = models.ForeignKey(Feature,
                                            on_delete=models.PROTECT)
     checked_in = models.BooleanField(default=False)

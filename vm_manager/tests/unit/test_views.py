@@ -9,7 +9,8 @@ from django.contrib.auth.models import AnonymousUser
 from django.test import TestCase
 
 from researcher_workspace.tests.factories import FeatureFactory, UserFactory
-from researcher_desktop.tests.factories import DesktopTypeFactory
+from researcher_desktop.tests.factories import DesktopTypeFactory, \
+    AvailabilityZoneFactory
 from vm_manager.tests.factories import InstanceFactory, VolumeFactory, \
     ResizeFactory, VMStatusFactory
 from vm_manager.tests.fakes import Fake, FakeNectar
@@ -42,12 +43,15 @@ class VMManagerViewTests(TestCase):
         self.desktop_type = DesktopTypeFactory.create(name='some desktop',
                                                       id='desktop',
                                                       feature=self.feature)
+        self.zone = AvailabilityZoneFactory.create(name="a_zone",
+                                                   zone_weight=1)
 
     def build_existing_vm(self, status):
         self.volume = VolumeFactory.create(
             id=uuid.uuid4(), user=self.user,
             operating_system=self.desktop_type.id,
-            requesting_feature=self.feature)
+            requesting_feature=self.feature,
+            zone=self.zone.name)
         self.instance = InstanceFactory.create(
             id=uuid.uuid4(), user=self.user, boot_volume=self.volume,
             ip_address='10.0.0.1')
@@ -68,7 +72,7 @@ class VMManagerViewTests(TestCase):
             f"VMStatus for user {self.user}, desktop_type {self.desktop_type.id}, "
             f"instance {self.instance.id} is in wrong state "
             f"({self.vm_status.status}). Cannot launch VM.",
-            launch_vm(self.user, self.desktop_type))
+            launch_vm(self.user, self.desktop_type, self.zone))
 
         mock_rq.get_queue.assert_not_called()
 
@@ -83,7 +87,7 @@ class VMManagerViewTests(TestCase):
         self.assertEqual(
             f"Status of [feature][desktop][{self.user}] "
             f"is {VM_WAITING}",
-            launch_vm(self.user, self.desktop_type))
+            launch_vm(self.user, self.desktop_type, self.zone))
         vm_status = VMStatus.objects.get_latest_vm_status(
             self.user, self.desktop_type)
         self.assertTrue(vm_status != self.vm_status)
@@ -96,7 +100,8 @@ class VMManagerViewTests(TestCase):
 
         mock_rq.get_queue.assert_called_once_with("default")
         mock_queue.enqueue.assert_called_once_with(
-            launch_vm_worker, user=self.user, desktop_type=self.desktop_type)
+            launch_vm_worker, user=self.user, desktop_type=self.desktop_type,
+            zone=self.zone)
 
     @patch('vm_manager.views.django_rq')
     def test_delete_vm_inconsistent(self, mock_rq):
@@ -220,7 +225,8 @@ class VMManagerViewTests(TestCase):
 
         mock_rq.get_queue.assert_called_once_with("default")
         mock_queue.enqueue.assert_called_once_with(
-            unshelve_vm_worker, user=self.user, desktop_type=self.desktop_type)
+            unshelve_vm_worker, user=self.user, desktop_type=self.desktop_type,
+            zone=self.zone)
         vm_status = VMStatus.objects.get_latest_vm_status(
             self.user, self.desktop_type)
         self.assertTrue(vm_status.pk != self.vm_status.pk)

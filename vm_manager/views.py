@@ -14,7 +14,7 @@ from django.views.decorators.csrf import csrf_exempt
 
 from operator import itemgetter
 
-from researcher_desktop.models import DesktopType
+from researcher_desktop.models import DesktopType, AvailabilityZone
 from researcher_desktop.utils.utils import get_desktop_type
 
 from vm_manager.models import VMStatus, Instance, Resize
@@ -63,7 +63,7 @@ def _wrong_state_message(action, user, feature=None, desktop_type=None,
     return message
 
 
-def launch_vm(user, desktop_type) -> str:
+def launch_vm(user, desktop_type, zone) -> str:
     # TODO - the handling of race conditions is dodgy
     vm_status = VMStatus.objects.get_latest_vm_status(user, desktop_type)
     if vm_status and vm_status.status != VM_DELETED:
@@ -90,7 +90,8 @@ def launch_vm(user, desktop_type) -> str:
         return error_message
 
     queue = django_rq.get_queue('default')
-    queue.enqueue(launch_vm_worker, user=user, desktop_type=desktop_type)
+    queue.enqueue(launch_vm_worker, user=user, desktop_type=desktop_type,
+                  zone=zone)
 
     return str(vm_status)
 
@@ -182,6 +183,8 @@ def unshelve_vm(user, desktop_type) -> str:
     if not vm_status or vm_status.status != VM_SHELVED:
         return _wrong_state_message(
             "unshelve", user, desktop_type=desktop_type, vm_status=vm_status)
+    zone = AvailabilityZone.objects.get(
+        name=vm_status.instance.boot_volume.zone)
 
     vm_status = VMStatus(user=user,
                          requesting_feature=desktop_type.feature,
@@ -191,7 +194,8 @@ def unshelve_vm(user, desktop_type) -> str:
     vm_status.save()
 
     queue = django_rq.get_queue('default')
-    queue.enqueue(unshelve_vm_worker, user=user, desktop_type=desktop_type)
+    queue.enqueue(unshelve_vm_worker, user=user, desktop_type=desktop_type,
+                  zone=zone)
 
     return str(vm_status)
 
