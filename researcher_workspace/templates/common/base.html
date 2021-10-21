@@ -46,21 +46,22 @@
               <a class="nav-link" href="{% url 'help' %}">Help</a>
             </li>
             {% if user.is_authenticated %}
-            {% load group_filters %}
-            {% if user.is_staff and user.is_superuser %}
-            <li class="nav-item">
-              <a class="nav-link" href="{% url "admin:index" %}">Admin</a>
-            </li>
-            {% endif %}
-            {% if user.is_staff or user|has_group:'Support Staff' %}
-            <li class="nav-item {% active_link 'orion_report' %}">
-              <a class="nav-link" href="{% url 'orion_report' %}">Orion</a>
-            </li>
-            <li class="nav-item {% active_link 'user_search' %}">
-              <a class="nav-link" href="{% url 'user_search' %}">Users &amp; Search</a>
-            </li>
-            {% endif %}
-          </ul>
+              {% load group_filters %}
+              {% if user.is_staff and user.is_superuser %}
+                <li class="nav-item">
+                  <a class="nav-link" href="{% url 'admin:index' %}">Admin</a>
+                </li>
+              {% endif %}
+              {% if user.is_staff or user|has_group:'Support Staff' %}
+                <li class="nav-item {% active_link 'orion_report' %}">
+                  <a class="nav-link" href="{% url 'orion_report' %}">Orion</a>
+                </li>
+                <li class="nav-item {% active_link 'user_search' %}">
+                  <a class="nav-link" href="{% url 'user_search' %}">Users &amp; Search</a>
+                </li>
+              {% endif %}
+            </ul>
+          </div>
 
           <ul class="navbar-nav">
             <div class="dropdown">
@@ -79,13 +80,17 @@
                 </form>
               </ul>
             </div>
-          {% else %}
-            <li class="nav-item">
-            <a class="btn btn-primary" href="{% url 'login' %}" role="button">Log in</a>
-          </li>
-          {% endif %}
           </ul>
         </div>
+        
+        {% else %}
+          <ul class="navbar-nav me-auto">
+            <li class="nav-item">
+              <a class="btn btn-primary" href="{% url 'login' %}" role="button">Log In</a>
+            </li>
+          </ul>
+        {% endif %}
+          
       </div>
     </nav>
     <!-- /navbar -->
@@ -117,7 +122,7 @@
       <div class="container">
         <div class="row align-items-end mb-5">
           <div class="col-sm-8 footer-text pe-5">
-            <p>The Virtual Desktop Interface is a service of the Australian Research Data Commons (ARDC).
+            <p>The Virtual Desktop Service is a service of the Australian Research Data Commons (ARDC) and utilises the Nectar Research Cloud.
               The Australian Research Data Commons (ARDC) is enabled by the National Collaborative Research Infrastructure Strategy Program (NCRIS).
               <a href="https://ardc.edu.au/about/" target="_blank">Read more about the ARDC...</a>
             </p>
