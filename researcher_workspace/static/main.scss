@@ -19,6 +19,16 @@ $orange: $ardc-orange;
 $purple: $ardc-purple;
 $gray: $ardc-grey;
 
+$gray-100: #fcfcfc;
+$gray-200: #EEEEEE;
+$gray-300: #dddddd;
+$gray-400: #c6c6c6;
+$gray-500: #999999;
+$gray-600: #666666;
+$gray-700: #333333;
+$gray-800: #222222;
+$gray-900: #111111;
+
 $primary:       $orange;
 $secondary:     $gray;
 $success:       #62C400;
@@ -26,11 +36,18 @@ $info:          $blue;
 $warning:       $orange;
 $danger:        $pink;
 
+$body-bg:                   $gray-100;
+$body-color:                $gray-900;
+
+$min-contrast-ratio: 1.5;
 //$component-active-bg: $ardc-purple;
 $navbar-brand-padding-y: 0;
-
+$input-btn-padding-y-lg: .75rem;
+$input-btn-padding-x-lg: 1.25rem;
 // Bootstrap shadows
 $enable-shadows: true;
+
+$spacer: 1.25rem;
 
 // Bootstrap
 @import "scss/bootstrap/bootstrap";
@@ -53,13 +70,101 @@ main {
 .h1, .h2, .h3, .h4, .h5, .h6, 
 h1, h2, h3, h4, h5, h6 {
   font-family: proxima-nova, sans-serif;
-  font-weight: 700;
   font-style: normal;
+  font-weight: 600;
 }
 
 /* Helper for setting the textarea size with bootstrap + crispy forms */
 .ch-100 {
   height: 100px !important;
+}
+
+.btn {
+  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 1px;
+  border-width: 2px;
+}
+
+section.welcome {
+  width:  100%;
+  overflow: hidden;
+  #welcome-bg {
+    position:  relative;
+    bottom:  0;
+    z-index:  -1;
+    margin-top:  -4vw;
+    margin-bottom:  -10vw;
+    margin-left:  -4vw;
+    margin-right:  -4vw;
+    #web {
+      g {
+        opacity: 0;
+        animation: fadeIn 2s linear 1s forwards;
+      }
+    }
+    #up-down {
+      opacity: 0;
+      animation: fadeIn 3s linear forwards;
+    }
+    #computers {
+      g {
+        opacity: 0;
+        animation: fadeIn 0.5s linear forwards;
+        &:nth-child(1) { animation-delay: 0.5s }
+        &:nth-child(2) { animation-delay: 0.2s }
+      }
+    }
+    #racks {
+      > g {
+        opacity: 0;
+        animation: fadeIn 0.5s linear 1s forwards;
+        &:nth-child(2) { animation-delay: 1.5s }
+      }
+    }
+    #disks {
+      > g {
+        opacity: 0;
+        animation: fadeIn 0.5s linear 1.5s forwards;
+      }
+      &:nth-child(1) { animation-delay: 2s }
+    }
+    #files {
+      opacity: 0;
+      animation: fadeIn 0.5s linear 2s forwards;
+    }
+    #lines {
+      line {
+        stroke-dasharray: 300;
+        stroke-dashoffset: 300;
+        animation: draw 2s linear 2s forwards;
+      }
+    }
+    #lines-dashed {
+      path, line {
+        opacity: 0;
+        stroke-dasharray: 12 14;
+        stroke-dashoffset: 1000;
+        animation: fadeIn 0.5s linear 2s forwards, drawDashed 20s linear 2s infinite;
+      }
+    }
+    #gogs {
+      path {
+        &:nth-child(1) {
+          opacity: 0;
+          animation: fadeIn 0.5s linear 2s forwards, spinGogs 4s linear infinite;
+          transform-origin: center;
+          transform-box: fill-box;
+        }
+        &:nth-child(2) {
+          opacity: 0;
+          animation: fadeIn 0.5s linear 2s forwards, spinGogs 4s linear infinite reverse;
+          transform-origin: center;
+          transform-box: fill-box;
+        }
+      }
+    }
+  }
 }
 
 /*
@@ -96,4 +201,36 @@ h1, h2, h3, h4, h5, h6 {
       text-decoration: none;
     }
   }
+}
+
+/*
+ * CSS Functions
+ */
+@keyframes spinGogs { 
+  to { 
+      transform:rotate(360deg); 
+  } 
+}
+
+@keyframes drawDashed {
+  from {
+    stroke-dashoffset: 1000;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes draw {
+  from {
+    stroke-dashoffset: 300;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
