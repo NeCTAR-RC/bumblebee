@@ -5,6 +5,26 @@
 {% block content %}
   {% load mathfilters %}
   {% if user.is_authenticated %}
+  <section class="desktop-section bg-secondary hex-bg">
+    <div class="desktop-container container">
+      <div class="row py-5">
+        <div class="workspace-info col-sm-12 col-md-4">
+          <h6 class="text-white mb-3">WORKSPACE</h6>
+          <h1 class="h2 text-white mb-3">This is your workspace title.</h1>
+          <p class="text-white mb-3">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit.</p>
+        </div>
+        <div class="desktop-info col-sm-12 col-md-8">
+          <h2 class="text-center text-white">Good morning {{ user.first_name }}!</h2>
+          <div id="desktop-computer">
+            <img id="desktop-computer-frame" src="{% static 'img/desktop-computer.svg' %}">
+            <div id="desktop-computer-screen" class="bg-white d-flex align-items-center justify-content-center">
+              <h4>This is some content.</h4>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
 
     {% if projects %}
       <div class="container py-5">

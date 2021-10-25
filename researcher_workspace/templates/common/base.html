@@ -60,10 +60,11 @@
                   <a class="nav-link" href="{% url 'user_search' %}">Users &amp; Search</a>
                 </li>
               {% endif %}
-            </ul>
-          </div>
+            {% endif %}
+          </ul>
 
-          <ul class="navbar-nav">
+          {% if user.is_authenticated %}
+          <ul class="navbar-nav navbar-right">
             <div class="dropdown">
               <a href="#" class="d-block text-decoration-none dropdown-toggle nav-link" id="dropdownUser1" data-bs-toggle="dropdown" aria-expanded="false">
                 <img src="{{ user|gravatar:50 }}" alt="{{ user.email }}" width="32" height="32" class="rounded-circle">
@@ -84,7 +85,7 @@
         </div>
         
         {% else %}
-          <ul class="navbar-nav me-auto">
+          <ul class="navbar-nav navbar-right">
             <li class="nav-item">
               <a class="btn btn-primary" href="{% url 'login' %}" role="button">Log In</a>
             </li>
@@ -96,18 +97,21 @@
     <!-- /navbar -->
 
     <main role="main" class="main">
-      <div class="container">
-        {% if user.is_authenticated %}
-          {# only show the warning header if the user is a super user. #}
-          {% if user.is_superuser %}
-            <div class="debug_header"></div>
-          {% endif %}
+      {% if user.is_authenticated %}
+        {# only show the warning header if the user is a super user. #}
+        {% if user.is_superuser %}
+          <div class="debug_header"></div>
         {% endif %}
-
+      {% endif %}
+      <div class="toast-container position-absolute top-0 end-0 pt-5 pe-3">
         {% for message in messages %}
-          <div class="alert {{ message.tags }} alert-dismissible fade show" role="alert">
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            {{ message }}
+          <div class="message-toast toast align-items-center text-white bg-primary border-0" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+              <div class="toast-body">
+                {{ message }}
+              </div>
+              <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
           </div>
         {% endfor %}
       </div>
@@ -181,6 +185,7 @@
     </footer>
 
     <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
+    <script src="{% static 'js/main.js' %}"></script>
     {% block script %}
     {% endblock script %}
 
