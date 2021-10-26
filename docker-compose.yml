@@ -1,0 +1,103 @@
+version: "3"
+
+services:
+  bumblebee:
+    build: .
+    image: bumblebee
+    stdin_open: true
+    tty: true
+    ports:
+    - 8000:8000
+    env_file:
+      - .env
+    volumes:
+    - .:/app
+    restart: unless-stopped
+    command: django-admin runserver 0.0.0.0:8000
+    depends_on:
+    - mariadb
+    - redis
+    links:
+    - mariadb:mariadb
+    - redis:redis
+
+  init:
+    build: .
+    links:
+    - mariadb:mariadb
+    - redis:redis
+    env_file:
+    - .env
+    volumes:
+    - .:/app
+    restart: on-failure
+    command: /docker-setup.sh
+
+  rqscheduler:
+    build: .
+    env_file:
+      - .env
+    restart: on-failure
+    command: django-admin rqscheduler -i5
+    depends_on:
+    - mariadb
+    - redis
+    links:
+    - mariadb:mariadb
+    - redis:redis
+    volumes:
+    - .:/app
+
+  rqworker:
+    build: .
+    links:
+    - mariadb:mariadb
+    - redis:redis
+    env_file:
+    - .env
+    restart: on-failure
+    command: django-admin rqworker
+    depends_on:
+    - mariadb
+    - redis
+    links:
+    - mariadb:mariadb
+    - redis:redis
+    volumes:
+    - .:/app
+
+  mariadb:
+    image: mariadb
+    env_file:
+    - .env
+    ports:
+    - 3306:3306
+    volumes:
+    - dbdata:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "--silent"]
+
+  redis:
+    image: redis:alpine
+    ports:
+    - 6379:6379
+
+  guacd:
+    image: guacamole/guacd:1.3.0
+    restart: unless-stopped
+    ports:
+    - 4822:4822
+
+  guacamole:
+    image: guacamole/guacamole:1.3.0
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+    - 8080:8080
+    depends_on:
+    - mysql
+    - guacd
+
+volumes:
+  dbdata:

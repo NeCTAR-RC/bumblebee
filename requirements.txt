@@ -1,6 +1,7 @@
 pbr
 wheel
 Django
+oslo.concurrency
 keystoneauth1
 python-cinderclient
 python-glanceclient
