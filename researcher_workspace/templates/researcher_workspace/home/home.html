@@ -10,15 +10,19 @@
       <div class="row py-5">
         <div class="workspace-info col-sm-12 col-md-4">
           <h6 class="text-white mb-3">WORKSPACE</h6>
-          <h1 class="h2 text-white mb-3">This is your workspace title.</h1>
-          <p class="text-white mb-3">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit.</p>
+          <h1 class="workspace-title h2 text-white mb-3">This is your workspace title.</h1>
+          <p class="workspace-description text-white mb-3">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit.</p>
         </div>
         <div class="desktop-info col-sm-12 col-md-8">
           <h2 class="text-center text-white">Good morning {{ user.first_name }}!</h2>
           <div id="desktop-computer">
             <img id="desktop-computer-frame" src="{% static 'img/desktop-computer.svg' %}">
             <div id="desktop-computer-screen" class="bg-white d-flex align-items-center justify-content-center">
-              <h4>This is some content.</h4>
+              <div class="text-center">
+                <h4 class="mb-3">You haven't created a Desktop! Explore the Desktop Library...</h4>
+                <a href="#desktop-library" class="btn btn-link btn-lg">Explore <i class="fas fa-arrow-down"></i></a>
+              </div>
+              
             </div>
           </div>
         </div>
@@ -27,6 +31,7 @@
   </section>
 
     {% if projects %}
+    <section id="#desktop-library">
       <div class="container py-5">
         <div class="row">
           <h1 class="mb-4">Desktop Library</h1>
@@ -68,6 +73,7 @@
           {% endfor %}
         </div>
       </div>
+    </section>
     {% else %}
       <div class="container py-5">
         <div class="row">
