@@ -22,16 +22,15 @@ logger = logging.getLogger(__name__)
 
 
 def render_modules(request):
-    feature_modules = []
-    feature_scripts = []
+    modules = []
     for desktop_type in desktop_types():
         buttons = [REBOOT_BUTTON, SHELVE_BUTTON, DELETE_BUTTON, BOOST_BUTTON,
                    DOWNSIZE_BUTTON]
-        feature_module, feature_script = vm_man_views.render_vm(
-            request, request.user, desktop_type, buttons)
-        feature_modules.append(feature_module)
-        feature_scripts.append(feature_script)
-    return feature_modules, feature_scripts
+        modules.append(
+            vm_man_views.render_vm(
+                request, request.user, desktop_type, buttons)
+        )
+    return modules
 
 
 @login_required(login_url='login')

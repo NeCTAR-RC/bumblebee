@@ -18,11 +18,14 @@
           <div id="desktop-computer">
             <img id="desktop-computer-frame" src="{% static 'img/desktop-computer.svg' %}">
             <div id="desktop-computer-screen" class="bg-white d-flex align-items-center justify-content-center">
+            {% if active_module %}
+              {{ active_module }}
+            {% else %}
               <div class="text-center">
                 <h4 class="mb-3">You haven't created a Desktop! Explore the Desktop Library...</h4>
                 <a href="#desktop-library" class="btn btn-link btn-lg">Explore <i class="fas fa-arrow-down"></i></a>
               </div>
-              
+            {% endif %}
             </div>
           </div>
         </div>

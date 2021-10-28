@@ -481,7 +481,7 @@ class VMManagerViewTests(TestCase):
         buttons = ["ONE", "TWO"]
 
         self.build_existing_vm(VM_OKAY)
-        self.assertEqual(("rendered", "rendered"),
+        self.assertEqual(("rendered", "rendered", VM_OKAY),
                          render_vm(request, self.user, self.desktop_type,
                                    buttons))
         context = {
@@ -508,7 +508,7 @@ class VMManagerViewTests(TestCase):
                  + timedelta(days=DOWNSIZE_PERIOD * 2)).date()
         resize = ResizeFactory.create(instance=self.instance, expires=time1)
 
-        self.assertEqual(("rendered", "rendered"),
+        self.assertEqual(("rendered", "rendered", VM_SUPERSIZED),
                          render_vm(request, self.user, self.desktop_type,
                                    buttons))
         context['what_to_show'] = {
@@ -533,7 +533,7 @@ class VMManagerViewTests(TestCase):
                  + timedelta(days=DOWNSIZE_PERIOD * 2 - 1)).date()
         resize = ResizeFactory.create(instance=self.instance, expires=time1)
 
-        self.assertEqual(("rendered", "rendered"),
+        self.assertEqual(("rendered", "rendered", VM_SUPERSIZED),
                          render_vm(request, self.user, self.desktop_type,
                                    buttons))
         context['what_to_show'] = {

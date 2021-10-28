@@ -357,7 +357,7 @@ def render_vm(request, user, desktop_type, buttons_to_display):
                                         context, request)
     script = loader.render_to_string(f'vm_manager/javascript/{state}.js',
                                      context, request)
-    return vm_module, script
+    return vm_module, script, state
 
 
 def notify_vm(request, requesting_feature):

@@ -29,6 +29,7 @@ from researcher_workspace.utils import redirect_home, not_support_staff, offset_
 from researcher_workspace.utils.faculty_mapping import FACULTIES, FACULTY_MAPPING
 import researcher_desktop.views as rdesk_views
 from vm_manager.utils.utils import get_nectar
+from vm_manager.constants import NO_VM
 
 logger = logging.getLogger(__name__)
 
@@ -273,6 +274,7 @@ def home(request):
         selected_project_features = []
 
     # Render the features to display on the user's Do tab
+    active_module = None
     modules = []
     scripts = []
     for feature in selected_project_features:
@@ -281,54 +283,66 @@ def home(request):
             # User has been enabled for a feature that is not implemented
             continue
         feature_application = feature_conf.module
-        feature_modules, feature_scripts = feature_application.views.render_modules(request)
-        modules.extend(feature_modules)
-        scripts.extend(feature_scripts)
+        feature_modules = feature_application.views.render_modules(request)
 
-    # Render the features to display on the Discover tab
-    discover_features = []
-    # Get the features the user has already requested for this project
-    requested_features = [request.requested_feature for request in PermissionRequest.objects.filter(project=selected_project, accepted=None)]
-    # Render all the features
-    for feature in Feature.objects.filter(feature_or_service=True):
-        # Create the variables necessary for rendering
-        previously_requested = feature in requested_features
-        project_already_has_feature = feature in selected_project_features
-        # If the feature is available, create the form for requesting it
-        if feature.currently_available:
-            try:
-                permission_feature_options = Permission.objects.get(project=selected_project, feature=feature).feature_options.all()
-            except Permission.DoesNotExist:
-                permission_feature_options = FeatureOptions.objects.none()
-            # The options you can request are the options on the feature, minus the options you already have access to
-            # request_form_options = [(option.id, option.name) for option in feature.options.difference(permission_feature_options)]
-            request_form_options = [(option.id, option.name) for option in permission_feature_options]
-            request_form = PermissionRequestForm(choices=request_form_options) if request_form_options else ""
-            if request_form:
-                try:
-                    # If you've already requested access, then pre-tick the options you requested
-                    requested_feature_options = PermissionRequest.objects.get(project=selected_project, requested_feature=feature, accepted=None).feature_options.values_list('id', flat=True)
-                    request_form.fields["feature_options"].initial = list(requested_feature_options)
-                except PermissionRequest.DoesNotExist:
-                    pass
-        else:
-            request_form = ""
-        # User can request access if there's a valid request form, or if the feature has not been granted access and there is not an already active request
-        requestable = request_form or (not project_already_has_feature and not previously_requested)
-        feature_html = loader.render_to_string(f'researcher_workspace/home/discover/feature.html',
-            {'feature': feature, 'previously_requested': previously_requested,
-             'project_already_has_feature': project_already_has_feature,
-             'request_form': request_form, 'requestable': requestable}, request)
-        discover_features.append(feature_html)
+        for module, script, state in feature_modules:
+            if state == NO_VM:
+                modules.append(module)
+            else:
+                active_module = module
+            scripts.append(script)
 
+#    # Render the features to display on the Discover tab
+#    discover_features = []
+#    # Get the features the user has already requested for this project
+#    requested_features = [request.requested_feature for request in PermissionRequest.objects.filter(project=selected_project, accepted=None)]
+#    # Render all the features
+#    for feature in Feature.objects.filter(feature_or_service=True):
+#        # Create the variables necessary for rendering
+#        previously_requested = feature in requested_features
+#        project_already_has_feature = feature in selected_project_features
+#        # If the feature is available, create the form for requesting it
+#        if feature.currently_available:
+#            try:
+#                permission_feature_options = Permission.objects.get(project=selected_project, feature=feature).feature_options.all()
+#            except Permission.DoesNotExist:
+#                permission_feature_options = FeatureOptions.objects.none()
+#            # The options you can request are the options on the feature, minus the options you already have access to
+#            # request_form_options = [(option.id, option.name) for option in feature.options.difference(permission_feature_options)]
+#            request_form_options = [(option.id, option.name) for option in permission_feature_options]
+#            request_form = PermissionRequestForm(choices=request_form_options) if request_form_options else ""
+#            if request_form:
+#                try:
+#                    # If you've already requested access, then pre-tick the options you requested
+#                    requested_feature_options = PermissionRequest.objects.get(project=selected_project, requested_feature=feature, accepted=None).feature_options.values_list('id', flat=True)
+#                    request_form.fields["feature_options"].initial = list(requested_feature_options)
+#                except PermissionRequest.DoesNotExist:
+#                    pass
+#        else:
+#            request_form = ""
+#        # User can request access if there's a valid request form, or if the feature has not been granted access and there is not an already active request
+#        requestable = request_form or (not project_already_has_feature and not previously_requested)
+#        feature_html = loader.render_to_string(f'researcher_workspace/home/discover/feature.html',
+#            {'feature': feature, 'previously_requested': previously_requested,
+#             'project_already_has_feature': project_already_has_feature,
+#             'request_form': request_form, 'requestable': requestable}, request)
+#        discover_features.append(feature_html)
+#
     # Get the services to display on the Discover tab
-    discover_services = [loader.render_to_string(f'researcher_workspace/home/discover/service.html',
-            {'service': service}, request) for service in Feature.objects.filter(feature_or_service=False)]
+    # discover_services = [loader.render_to_string(f'researcher_workspace/home/discover/service.html',
+    #        {'service': service}, request) for service in Feature.objects.filter(feature_or_service=False)]
+    context = {
+        'active_module': active_module,
+        'modules': modules,
+        'scripts': scripts,
+        'projects': current_projects,
+        'selected_project': selected_project,
+        # 'discover_features': discover_features,  # unused
+        # 'discover_services': discover_services   # unused
+    }
 
     # Render
-    return render(request, 'researcher_workspace/home/home.html', {'modules': modules, 'scripts': scripts,
-                'projects': current_projects, 'selected_project': selected_project,
-                'discover_features': discover_features, 'discover_services': discover_services})
+    return render(request, 'researcher_workspace/home/home.html', context)
 
 
 def login(request):
