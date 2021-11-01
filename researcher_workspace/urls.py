@@ -33,6 +33,7 @@ urlpatterns = [
     path('vm_manager/', include('vm_manager.urls')),
     path('researcher_desktop/', include('researcher_desktop.urls')),
 #    path('specialty_resources/', include('specialty_resources.urls')),
+    path('desktop/<str:desktop_name>', views.desktop_details, name='desktop_details'),
     path('orion_report/', views.orion_report, name='orion_report'),
     path('desktop_description/', views.desktop_description, name='desktop_description'),
     path('terms/', views.terms, name='terms'),

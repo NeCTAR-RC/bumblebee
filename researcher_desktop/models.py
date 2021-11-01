@@ -1,3 +1,4 @@
+import json
 import logging
 
 from functools import cached_property
@@ -20,7 +21,7 @@ class AvailabilityZone(models.Model):
     enabled = models.BooleanField(default=True)
 
     def __str__(self):
-        return f"{self.__class__.name}({self.name})"
+        return f"{self.name}"
 
 
 class Domain(models.Model):
@@ -30,7 +31,7 @@ class Domain(models.Model):
                              related_name='domains')
 
     def __str__(self):
-        return f"{self.__class__.name}({self.name})"
+        return f"{self.name}"
 
 
 class DesktopType(models.Model):
@@ -44,10 +45,11 @@ class DesktopType(models.Model):
     feature = models.ForeignKey(workspace_models.Feature,
                                 on_delete=models.PROTECT)
     enabled = models.BooleanField(default=True)
-    restrict_to_zones = models.ManyToManyField(AvailabilityZone)
+    restrict_to_zones = models.ManyToManyField(AvailabilityZone, blank=True)
+    details = models.JSONField(blank=True, null=True)
 
     def __str__(self):
-        return f"{self.__class__.name}({self.id})"
+        return f"{self.id}"
 
     @property
     def default_flavor(self):

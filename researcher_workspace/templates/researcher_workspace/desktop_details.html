@@ -1,0 +1,23 @@
+{% extends 'common/base.html' %}
+
+{% block content %}
+    <section class="welcome">
+        <div class="container">
+          {{ desktop_type.id }}
+          {{ desktop_type.description }}
+          {{ desktop_type.name }}
+          {{ desktop_type.flavor }}
+          {{ desktop_type.default_flavor.vcpus }}
+          {{ desktop_type.default_flavor.ram }}
+          {{ desktop_type.big_flavor.ram }}
+          <img src="{{ desktop_type.logo.url }}">
+          <br>
+
+          <ul> 
+          {% for feature in desktop_type.details.features %}
+          <li>{{ feature }}</li>
+          {% endfor %}
+          </ul>
+        </div>
+    </section>
+{% endblock %}

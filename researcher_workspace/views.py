@@ -19,6 +19,8 @@ from django.utils.html import format_html
 from django.core.mail import mail_managers
 from django.conf import settings
 
+from researcher_desktop.utils.utils import get_desktop_type
+
 from researcher_workspace.constants import USAGE
 from researcher_workspace.forms import UserSearchForm, ProjectForm, PermissionRequestForm
 from researcher_workspace.models import PermissionRequest, Feature, Project, AROWhitelist, Profile, \
@@ -30,6 +32,7 @@ from researcher_workspace.utils.faculty_mapping import FACULTIES, FACULTY_MAPPIN
 import researcher_desktop.views as rdesk_views
 from vm_manager.utils.utils import get_nectar
 from vm_manager.constants import NO_VM
+
 
 logger = logging.getLogger(__name__)
 
@@ -372,6 +375,12 @@ def custom_page_error(request, exception=None):
                      exception) if exception else logger.error(
         f"Returning 500.html! { request.user } {request.path}")
     return render(request, 'researcher_workspace/500.html')
+
+
+@login_required(login_url='login')
+def desktop_details(request, desktop_name):
+    desktop_type = get_desktop_type(desktop_name)
+    return render(request, 'researcher_workspace/desktop_details.html', {'desktop_type': desktop_type})
 
 
 @login_required(login_url='login')
