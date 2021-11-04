@@ -1,98 +1,90 @@
-<div>
-    <a class="btn btn-success" href="{{ what_to_show.url }}" target="_blank">
-        Open {{ desktop_type.name }} {{ requesting_feature }}
-    </a>
-</div>
+{% load static %}
 
-{% block supersize_message %}
-{% endblock supersize_message %}
+<div id="{{ app_name }}-{{ desktop_type.id }}" class="active-desktop">
+  <div class="desktop-info d-block text-center">
+    <h3>Your Virtual Desktop is</h3>
+    <h2>{{ desktop_type.name }}</h2>
+    <table class="table my-1 my-md-2 my-lg-4"> 
+      <thead>
+        <tr>
+          <th scope="col">OPERATING SYSTEM</th>
+          <th scope="col">CURRENT SIZE</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>{{ desktop_type.name }}</td>
+          <td>{{ desktop_type.default_flavor.vcpus }} vCPU Cores | {{ desktop_type.default_flavor.ram }} GB</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
 
-{% if buttons_to_display %}
-<div class="accordion">
-  <div class="accordion-item">
-    <h5 class="accordion-header" id="{{ app_name }}-{{ desktop_type.id }}-options">
-      <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#{{ app_name }}-{{ desktop_type.id }}-collapse" aria-expanded="true" aria-controls="collapseOne">
-        Options
-      </button>
-    </h5>
+  {% block supersize_message %}
+  {% endblock supersize_message %}
 
-    <div id="{{ app_name }}-{{ desktop_type.id }}-collapse" class="accordion-collapse collapse show" aria-labelledby="{{ app_name }}-{{ desktop_type.id }}-options" data-bs-parent="#{{ app_name }}-{{ desktop_type.id }}-options">
-      <div class="accordion-body">
-        {% if "REBOOT_BUTTON" in buttons_to_display %}
-        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#{{ app_name }}-{{ desktop_type.id }}-reboot-modal">
-          Reboot
-        </button>
-        {% endif %}
+  {% if buttons_to_display %}
+      <div class="desktop-buttons text-center">
+        <a class="btn btn-success" href="{{ what_to_show.url }}" target="_blank">
+          Open Desktop <i class="fas fa-arrow-right"></i>
+        </a>
+        <div class="mt-2">
+          {% if "REBOOT_BUTTON" in buttons_to_display %}
+          <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#{{ app_name }}-{{ desktop_type.id }}-reboot-modal">
+            Reboot
+          </button>
+          {% endif %}
 
-        {% if "SHELVE_BUTTON" in buttons_to_display %}
-        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#{{ app_name }}-{{ desktop_type.id }}-shelve-modal">
-          Shelve
-        </button>
-        {% endif %}
+          {% if "SHELVE_BUTTON" in buttons_to_display %}
+          <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#{{ app_name }}-{{ desktop_type.id }}-shelve-modal">
+            Shelve
+          </button>
+          {% endif %}
 
-        {% if "BOOST_BUTTON" in buttons_to_display %}
-        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#{{ app_name }}-{{ desktop_type.id }}-supersize-modal">
-          Boost
-        </button>
-        {% endif %}
+          {% if "BOOST_BUTTON" in buttons_to_display %}
+          <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#{{ app_name }}-{{ desktop_type.id }}-supersize-modal">
+            Boost
+          </button>
+          {% endif %}
 
-        {% if "DELETE_BUTTON" in buttons_to_display %}
-        <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#{{ app_name }}-{{ desktop_type.id }}-delete-modal">
-          Delete
-        </button>
-        {% endif %}
+          {% if "DELETE_BUTTON" in buttons_to_display %}
+          <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#{{ app_name }}-{{ desktop_type.id }}-delete-modal">
+            Delete
+          </button>
+          {% endif %}
 
-        {% block buttons %}
-        {% endblock buttons %}
-
-        {% if "BOOST_BUTTON" in buttons_to_display %}
-        <table class="table table-striped">
-          <thead>
-            <tr>
-              <th scope="col"></th>
-              <th scope="col"> Default {{ requesting_feature }} </th>
-              <th scope="col"> Boosted {{ requesting_feature }} </th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td> vCPU </td>
-              <td> {{ desktop_type.default_flavor.vcpus }} vCPU Cores </td>
-              <td> {{ desktop_type.big_flavor.vcpus }} vCPU Cores </td>
-            </tr>
-            <tr>
-              <td> RAM </td>
-              <td> {{ desktop_type.default_flavor.ram }} GB </td>
-              <td> {{ desktop_type.big_flavor.ram }} GB </td>
-          </tr>
-          </tbody>
-        </table>
-        {% endif %}
+          {% block buttons %}
+          {% endblock buttons %}
+        </div>
       </div>
     </div>
   </div>
+  {% endif %}
 </div>
-{% endif %}
+
 
 {% if "REBOOT_BUTTON" in buttons_to_display %}
 <div class="modal fade" id="{{ app_name }}-{{ desktop_type.id }}-reboot-modal" tabindex="-1" aria-labelledby="{{ app_name }}-{{ desktop_type.id }}-reboot-modal-label" aria-hidden="true">
-  <div class="modal-dialog">
+  <div class="modal-dialog modal-lg">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="{{ app_name }}-{{ desktop_type.id }}-reboot-modal-label">Confirm</h5>
+        <h5 class="modal-title" id="{{ app_name }}-{{ desktop_type.id }}-reboot-modal-label">Confirm Reboot</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-      <div class="modal-body">
-        <p>Please save any work and close the connection to your {{ requesting_feature }} before rebooting it.</p>
-        <p>Your {{ requesting_feature }} will be unreachable for three minutes while it reboots.</p>
-        <p><b>Note</b>: A soft reboot is a request to the operating system to reboot itself and is the safer option. A hard
-        reboot is a power cycle for the machine, and should only be used as a last resort, as it can on rare occasions
-        cause serious file system damage.</p>
-        <p>Please confirm your selection.</p>
+      <div class="modal-body text-center">
+        <img src="{% static 'img/action-reboot.gif' %}" class="img-fluid mb-1" />
+        <p>Rebooting your Virtual Desktop allows you to shutdown and restart the operating system. Your desktop will be unreachable for three minutes while it reboots.</p>
+        <p>Please save any work and close the connection to your desktop before rebooting it.</p>
+        <div class="alert alert-warning" role="alert">
+          <b>Note</b>: A <em>soft reboot</em> is a request to the operating system to reboot itself and is the safer option. A <em>hard
+          reboot</em> is a power cycle for the machine, and should only be used as a last resort, as it can (on rare occasions)
+          cause serious file system damage.
+        </div>
+        <p class="h5 py-4">Are you sure you want to reboot your desktop?</p>
       </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-        <button type="button" class="btn btn-danger" onclick="reboot_{{ app_name }}_{{ desktop_type.id }}_soft(this)">Soft Reboot</button>
+      <div class="modal-footer text-center">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-success" onclick="reboot_{{ app_name }}_{{ desktop_type.id }}_soft(this)">Soft Reboot</button>
         <button type="button" class="btn btn-danger" onclick="reboot_{{ app_name }}_{{ desktop_type.id }}_hard(this)">Hard Reboot</button>
       </div>
     </div>
@@ -102,20 +94,21 @@
 
 {% if "SHELVE_BUTTON" in buttons_to_display %}
 <div class="modal fade" id="{{ app_name }}-{{ desktop_type.id }}-shelve-modal" tabindex="-1" aria-labelledby="{{ app_name }}-{{ desktop_type.id }}-shelve-modal-label" aria-hidden="true">
-  <div class="modal-dialog">
+  <div class="modal-dialog modal-lg">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="{{ app_name }}-{{ desktop_type.id }}-shelve-modal-label">Confirm</h5>
+        <h5 class="modal-title" id="{{ app_name }}-{{ desktop_type.id }}-shelve-modal-label">Confirm Shelve</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-      <div class="modal-body">
+      <div class="modal-body text-center">
+        <img src="{% static 'img/action-shelve.gif' %}" class="img-fluid mb-3" />
         <p>Shelving your {{ requesting_feature }} will put it in a suspended state, where it is no longer consuming cloud
-        resources. A shelved {{ requesting_feature }} can quickly be unshelved to get back to the state it was before shelving.</p>
-        <p>Please save any work and close the connection to your {{ requesting_feature }} before shelving it.</p>
-        <p>Please confirm your selection.</p>
+        resources. A shelved desktop can quickly be unshelved to get back to the state it was before shelving.</p>
+        <p>Please save any work and close the connection to your desktop before shelving it.</p>
+        <p class="h5 py-4">Are you sure you want to shelve your desktop?</p>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
         <button type="button" class="btn btn-danger" onclick="shelve_{{ app_name }}_{{ desktop_type.id }}(this)">Shelve</button>
       </div>
     </div>
@@ -125,17 +118,18 @@
 
 {% if "DELETE_BUTTON" in buttons_to_display %}
 <div class="modal fade" id="{{ app_name }}-{{ desktop_type.id }}-delete-modal" tabindex="-1" aria-labelledby="{{ app_name }}-{{ desktop_type.id }}-delete-modal-label" aria-hidden="true">
-  <div class="modal-dialog">
+  <div class="modal-dialog modal-lg">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="{{ app_name }}-{{ desktop_type.id }}-delete-modal" tabindex="-1" aria-labelledby="{{ app_name }}-{{ desktop_type.id }}-delete-modal-label">Confirm</h5>
+        <h5 class="modal-title" id="{{ app_name }}-{{ desktop_type.id }}-delete-modal" tabindex="-1" aria-labelledby="{{ app_name }}-{{ desktop_type.id }}-delete-modal-label">Confirm Delete</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-      <div class="modal-body">
-        <p>Please confirm your selection. Once a {{ requesting_feature }} has been deleted it is not recoverable.</p>
+      <div class="modal-body text-center">
+        <p>Once a {{ requesting_feature }} has been deleted it is not recoverable.</p>
+        <p class="h5 py-4">Sre you sure you want tp permanently delete your desktop?</p>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
         <button type="button" class="btn btn-danger" onclick="delete_{{ app_name }}_{{ desktop_type.id }}(this)">Delete</button>
       </div>
     </div>
@@ -145,16 +139,17 @@
 
 {% if "BOOST_BUTTON" in buttons_to_display %}
 <div class="modal fade" id="{{ app_name }}-{{ desktop_type.id }}-supersize-modal" tabindex="-1" aria-labelledby="{{ app_name }}-{{ desktop_type.id }}-supersize-modal-label" aria-hidden="true">
-  <div class="modal-dialog">
+  <div class="modal-dialog modal-lg">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="{{ app_name }}-{{ desktop_type.id }}-supersize-modal-label">Confirm</h5>
+        <h5 class="modal-title" id="{{ app_name }}-{{ desktop_type.id }}-supersize-modal-label">Confirm Boost</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-      <div class="modal-body">
-        <p>Please save any work and close the connection to your {{ requesting_feature }} before boosting it.</p>
-        <p>Your {{ requesting_feature }} will be unreachable for five minutes while boosting.</p>
-        <p>Please confirm your selection.</p>
+      <div class="modal-body text-center">
+        <img src="{% static 'img/action-boost.gif' %}" class="img-fluid mb-1" />
+        <p>Your can boost your Desktop size from {{ desktop_type.default_flavor.vcpus }} vCPU Cores {{ desktop_type.default_flavor.ram }} GB to {{ desktop_type.big_flavor.vcpus }} vCPU Cores {{ desktop_type.big_flavor.ram }} GB <strong>for 7 days</strong>.</p>
+        <p>Please save any work and close the connection to your {{ requesting_feature }} before boosting it. Your {{ requesting_feature }} will be unreachable for five minutes while boosting.</p>
+        <p class="h5 py-4">Are you sure you want to boost for 7 days?</p>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>

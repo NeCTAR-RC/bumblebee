@@ -1,23 +1,64 @@
 {% extends 'common/base.html' %}
 
 {% block content %}
-    <section class="welcome">
-        <div class="container">
-          {{ desktop_type.id }}
-          {{ desktop_type.description }}
-          {{ desktop_type.name }}
-          {{ desktop_type.flavor }}
-          {{ desktop_type.default_flavor.vcpus }}
-          {{ desktop_type.default_flavor.ram }}
-          {{ desktop_type.big_flavor.ram }}
-          <img src="{{ desktop_type.logo.url }}">
-          <br>
-
-          <ul> 
-          {% for feature in desktop_type.details.features %}
-          <li>{{ feature }}</li>
-          {% endfor %}
-          </ul>
+  <header class="desktop-header bg-white shadow-sm">
+    <div class="container">
+      <div class="py-5 d-flex">
+        <div class="desktop-logo flex-grow-1"><h1>{{ desktop_type.name }}</h1></div>
+        <div class="desktop-header-button">
+          <button class="btn btn-success my-auto" title="Launch {{ desktop_type.name }}"
+          onclick="launch_{{ app_name }}_{{ desktop_type.id }}(this)">
+          Create Desktop <i class="fas fa-plus"></i>
+          </button>
         </div>
-    </section>
+      </div>
+    </div>
+  </header>
+  <section class="desktop-details">
+      <div class="container py-5">
+        <div class="row mb-5">
+          <div class="col-12 col-md-8 col-lg-9 col-xxl-10">
+            <p>{{ desktop_type.description }}</p>
+          </div>
+          <div class="col-12 col-md-4 col-lg-3 col-xxl-2">
+            <h6>DEFAULT SIZE</h6>
+            <p>{{ desktop_type.default_flavor.vcpus }} vCPU Cores | {{ desktop_type.default_flavor.ram }} GB</p>
+            <h6>BOOST SIZE</h6>
+            <p>{{ desktop_type.big_flavor.vcpus }} vCPU Cores | {{ desktop_type.big_flavor.ram }} GB</p>
+            {% if desktop_type.details.features.apps %}
+              <h6>FEATURES</h6>
+              <ul>
+              {% for app in desktop_type.details.features.apps %}
+                <li>{{ desktop_type.details.features.apps }}</li>
+              {% endfor %}
+              <ul>
+            {% endif %}
+          </div>
+        </div>     
+        <div class="row mb-5">
+          <div class="col-lg-12 col-xl-10 offset-xl-1">
+            <div class="card shadow">
+              <div class="card-body px-lg-5">
+                <h2 class="text-center mt-3 mb-5">This Desktop is great for...</h2>
+                <ul class="fa-ul">
+                  {% for feature in desktop_type.details.features %}
+                    <li class="h4"><span class="fa-li"><i class="fas fa-check-circle text-success"></i></span><span class="text-secondary">{{ feature }}</span></li>
+                  {% endfor %}
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="row mb-5">
+          <div class="col-12 text-center">
+            <h3 class="mb-4">Ready to get started?</h3>
+            <button class="btn btn-outline-success mb-4" title="Launch {{ desktop_type.name }}"
+            onclick="launch_{{ app_name }}_{{ desktop_type.id }}(this)">
+            Create Desktop {{ desktop_type.name }} <i class="fas fa-plus"></i>
+            </button>
+            <h3>Or explore <a href="{% url 'index' %}">other desktops.</a></h3>
+          </div>
+        </div>
+      </div>
+  </section>
 {% endblock %}

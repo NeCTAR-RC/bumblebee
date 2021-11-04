@@ -1,13 +1,23 @@
-<div class="feature col">
-  <div class="feature-icon">
-    {{ desktop_type.logo }}
+<div class="card h-100 shadow">
+  <div class="card-body h-100 d-flex flex-column">
+    <div class="feature text-center">
+      <div class="feature-icon">
+        <img src="" class="img-fluid" />
+      </div>
+      <h2>{{ desktop_type.name }}</h2>
+      <h6>OPERATING SYSTEM</h6>
+      <p>{{ desktop_type.name }}</p>
+      {% if desktop_type.details.features.apps %}
+        <h6>FEATURES</h6>
+        <p>
+        {% for app in desktop_type.details.features.apps %}
+          {{ desktop_type.details.features.apps }}&nbsp;
+        {% endfor %}
+        </p>
+      {% endif %}
+    </div>
+    <a href="/desktop/{{ desktop_type.id }}" class="btn btn-link mt-auto">View Details <i class="fas fa-arrow-right"></i></a>
   </div>
-  <h2>{{ desktop_type.name }}</h2>
-  <p>{{ desktop_type.description }}</p>
-  <button class="btn btn-primary" title="Launch {{ desktop_type.name }}"
-    onclick="launch_{{ app_name }}_{{ desktop_type.id }}(this)">
-    Create a {{ desktop_type.name }} {{ requesting_feature }}
-  </button>
 </div>
 
 
