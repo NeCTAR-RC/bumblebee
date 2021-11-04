@@ -2,9 +2,8 @@
   <div class="card-body h-100 d-flex flex-column">
     <div class="feature text-center">
       <div class="feature-icon">
-        <img src="" class="img-fluid" />
+        <img src="{{ desktop_type.logo }}" class="img-fluid mb-3" />
       </div>
-      <h2>{{ desktop_type.name }}</h2>
       <h6>OPERATING SYSTEM</h6>
       <p>{{ desktop_type.name }}</p>
       {% if desktop_type.details.features.apps %}

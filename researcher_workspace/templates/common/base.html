@@ -33,18 +33,13 @@
     <nav class="navbar navbar-expand-md navbar-dark bg-dark" id="navbar-main">
       <div class="container">
         <a class="navbar-brand" href="{% url 'index' %}"><img src="{% static 'img/logo.svg' %}" height="60" class="me-2"> Virtual Desktop Service</a>
+        
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavDropdown" aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
           <span class="navbar-toggler-icon"></span>
         </button>
 
         <div class="collapse navbar-collapse" id="navbarNavDropdown">
           <ul class="navbar-nav navbar-right mb-2 mb-lg-0 ms-auto">
-            <li class="nav-item {% active_link 'desktop_description' %}">
-              <a class="nav-link" href="{% url 'desktop_description' %}">Overview</a>
-            </li>
-            <li class="nav-item {% active_link 'help' %}">
-              <a class="nav-link" href="{% url 'help' %}">Help</a>
-            </li>
             {% if user.is_authenticated %}
               {% load group_filters %}
               {% if user.is_staff and user.is_superuser %}
@@ -61,6 +56,12 @@
                 </li>
               {% endif %}
             {% endif %}
+            <li class="nav-item {% active_link 'desktop_description' %}">
+              <a class="nav-link" href="{% url 'desktop_description' %}">Overview</a>
+            </li>
+            <li class="nav-item {% active_link 'help' %}">
+              <a class="nav-link" href="{% url 'help' %}"><i class="fas fa-question-circle"></i> Help</a>
+            </li>
           </ul>
 
           {% if user.is_authenticated %}

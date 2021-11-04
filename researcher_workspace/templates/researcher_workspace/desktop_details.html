@@ -2,11 +2,15 @@
 
 {% block content %}
   <header class="desktop-header bg-white shadow-sm">
-    <div class="container">
-      <div class="py-5 d-flex">
-        <div class="desktop-logo flex-grow-1"><h1>{{ desktop_type.name }}</h1></div>
-        <div class="desktop-header-button">
-          <button class="btn btn-success my-auto" title="Launch {{ desktop_type.name }}"
+    <div class="container py-5 position-relative">
+      <a href="{{ request.META.HTTP_REFERER }}" class="btn btn-link position-absolute top-0 mt-2"><i class="fas fa-arrow-left"></i> Back</a>
+      <div class="d-flex">
+        <div class="desktop-logo flex-grow-1">
+          <img src="{{ desktop_type.logo }}" width="240" />
+          <!-- <h1>{{ desktop_type.name }}</h1> -->
+        </div>
+        <div class="desktop-header-button d-none d-sm-inline-block align-self-center">
+          <button class="btn btn-success" title="Launch {{ desktop_type.name }}"
           onclick="launch_{{ app_name }}_{{ desktop_type.id }}(this)">
           Create Desktop <i class="fas fa-plus"></i>
           </button>
@@ -40,7 +44,7 @@
             <div class="card shadow">
               <div class="card-body px-lg-5">
                 <h2 class="text-center mt-3 mb-5">This Desktop is great for...</h2>
-                <ul class="fa-ul">
+                <ul class="fa-ul mb-4">
                   {% for feature in desktop_type.details.features %}
                     <li class="h4"><span class="fa-li"><i class="fas fa-check-circle text-success"></i></span><span class="text-secondary">{{ feature }}</span></li>
                   {% endfor %}
@@ -54,9 +58,9 @@
             <h3 class="mb-4">Ready to get started?</h3>
             <button class="btn btn-outline-success mb-4" title="Launch {{ desktop_type.name }}"
             onclick="launch_{{ app_name }}_{{ desktop_type.id }}(this)">
-            Create Desktop {{ desktop_type.name }} <i class="fas fa-plus"></i>
+            Create {{ desktop_type.name }} Desktop <i class="fas fa-plus"></i>
             </button>
-            <h3>Or explore <a href="{% url 'index' %}">other desktops.</a></h3>
+            <h3>Or explore <a href="{% url 'index' %}#desktop-library">other desktops.</a></h3>
           </div>
         </div>
       </div>

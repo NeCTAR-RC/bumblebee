@@ -1,9 +1,11 @@
 {% load static %}
 
 <div id="{{ app_name }}-{{ desktop_type.id }}" class="active-desktop">
-  <div class="desktop-info d-block text-center">
-    <h3>Your Virtual Desktop is</h3>
-    <h2>{{ desktop_type.name }}</h2>
+  <div class="desktop-info d-block text-center position-relative">
+    <h6 class="d-lg-none">Your Virtual Desktop is</h6>
+    <h3 class="d-none d-lg-block">Your Virtual Desktop is</h3>
+    <img src="{{ desktop_type.logo }}" class="d-lg-none w-50" />
+    <img src="{{ desktop_type.logo }}" class="d-none d-lg-inline-block w-75 mb-1" />
     <table class="table my-1 my-md-2 my-lg-4"> 
       <thead>
         <tr>
@@ -126,7 +128,7 @@
       </div>
       <div class="modal-body text-center">
         <p>Once a {{ requesting_feature }} has been deleted it is not recoverable.</p>
-        <p class="h5 py-4">Sre you sure you want tp permanently delete your desktop?</p>
+        <p class="h5 py-4">Are you sure you want tp permanently delete your desktop?</p>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
