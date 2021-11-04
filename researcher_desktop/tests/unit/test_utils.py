@@ -6,7 +6,7 @@ from researcher_desktop.tests.factories import DomainFactory, \
     AvailabilityZoneFactory, DesktopTypeFactory
 from researcher_desktop.models import AvailabilityZone
 from researcher_desktop.utils.utils import desktop_types, get_desktop_type, \
-    desktops_feature, get_best_zone
+    desktops_feature, get_best_zone, do_get_best_zone, get_applicable_zones
 
 
 class UtilsTests(TestCase):
@@ -45,35 +45,50 @@ class UtilsTests(TestCase):
         # Tests for a DesktopType without any zone restriction
         dt = DesktopTypeFactory.create(feature=desktops_feature())
         self.assertEqual("az1",
-                         get_best_zone("foo@dom1.com", dt).name)
+                         do_get_best_zone("foo@dom1.com", dt, None).name)
         self.assertEqual("az1",
-                         get_best_zone("foo@dom2.com", dt).name)
+                         do_get_best_zone("foo@dom2.com", dt, None).name)
         self.assertEqual("az2",
-                         get_best_zone("foo@dom3.com", dt).name)
+                         do_get_best_zone("foo@dom3.com", dt, None).name)
         self.assertEqual("az1",   # Fallback, 'cos "az3" is disabled
-                         get_best_zone("foo@dom4.com", dt).name)
+                         do_get_best_zone("foo@dom4.com", dt, None).name)
 
         self.assertEqual("az1",
-                         get_best_zone("foo@dom1.com", dt,
-                                       chosen_zone="az1").name)
+                         do_get_best_zone("foo@dom1.com", dt, "az1").name)
         self.assertEqual("az2",
-                         get_best_zone("foo@dom1.com", dt,
-                                       chosen_zone="az2").name)
+                         do_get_best_zone("foo@dom1.com", dt, "az2").name)
 
         # The requested zone is disabled
-        self.assertIsNone(get_best_zone("foo@dom1.com", dt,
-                                        chosen_zone="az3"))
+        self.assertIsNone(do_get_best_zone("foo@dom1.com", dt, "az3"))
+        with self.assertRaises(Http404):
+            get_best_zone("foo@dom1.com", dt, "az3")
 
         # Repeat with a zone restricted DesktopType
         dt.restrict_to_zones.add(AvailabilityZone.objects.get(name="az1"))
         dt.save()
         self.assertEqual("az1",
-                         get_best_zone("foo@dom1.com", dt).name)
+                         do_get_best_zone("foo@dom1.com", dt, None).name)
         self.assertEqual("az1",
-                         get_best_zone("foo@dom3.com", dt).name)
+                         do_get_best_zone("foo@dom3.com", dt, None).name)
 
         self.assertEqual("az1",
-                         get_best_zone("foo@dom1.com", dt,
-                                       chosen_zone="az1").name)
-        self.assertIsNone(get_best_zone("foo@dom1.com", dt,
-                                        chosen_zone="az2"))
+                         do_get_best_zone("foo@dom1.com", dt, "az1").name)
+        with self.assertRaises(Http404):
+            get_best_zone("foo@dom1.com", dt, "az2")
+
+    def test_get_test_applicable_zones(self):
+        self._populate_zones()
+
+        # Tests for a DesktopType without any zone restriction
+        dt = DesktopTypeFactory.create(feature=desktops_feature())
+        all_zones = set(AvailabilityZone.objects.filter(enabled=True))
+
+        zones = get_applicable_zones(dt)
+        self.assertEqual(all_zones, set(zones))
+
+        # Repeat with a zone restricted DesktopType
+        az1 = AvailabilityZone.objects.get(name="az1")
+        dt.restrict_to_zones.add(az1)
+        dt.save()
+        zones = get_applicable_zones(dt)
+        self.assertEqual({az1}, set(zones))

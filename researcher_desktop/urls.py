@@ -6,7 +6,10 @@ from .constants import APP_NAME
 app_name = APP_NAME
 
 urlpatterns = [
-    path('launch_vm/<str:desktop>', views.launch_vm, name='launch_vm'),
+    path('launch_vm/<str:desktop>/<str:zone_name>',
+         views.launch_vm, name='launch_vm'),
+    path('launch_vm/<str:desktop>/',
+         views.launch_vm, name='launch_vm_default'),
     path('delete_vm/<uuid:vm_id>', views.delete_vm, name='delete_vm'),
     path('reboot_vm/<uuid:vm_id>/<str:reboot_level>',
          views.reboot_vm, name='reboot_vm'),

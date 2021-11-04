@@ -11,8 +11,9 @@
         </div>
         <div class="desktop-header-button d-none d-sm-inline-block align-self-center">
           <button class="btn btn-success" title="Launch {{ desktop_type.name }}"
-          onclick="launch_{{ app_name }}_{{ desktop_type.id }}(this)">
-          Create Desktop <i class="fas fa-plus"></i>
+                  data-bs-toggle="modal"
+                  data-bs-target="#{{ app_name }}-{{ desktop_type.id }}-launch-modal">
+            Create Desktop <i class="fas fa-plus"></i>
           </button>
         </div>
       </div>
@@ -57,12 +58,65 @@
           <div class="col-12 text-center">
             <h3 class="mb-4">Ready to get started?</h3>
             <button class="btn btn-outline-success mb-4" title="Launch {{ desktop_type.name }}"
-            onclick="launch_{{ app_name }}_{{ desktop_type.id }}(this)">
-            Create {{ desktop_type.name }} Desktop <i class="fas fa-plus"></i>
+                    data-bs-toggle="modal"
+                    data-bs-target="#{{ app_name }}-{{ desktop_type.id }}-launch-modal">
+              Create {{ desktop_type.name }} Desktop <i class="fas fa-plus"></i>
             </button>
             <h3>Or explore <a href="{% url 'index' %}#desktop-library">other desktops.</a></h3>
           </div>
         </div>
       </div>
   </section>
+  <!-- Modal for the launch button -->
+  <div class="modal fade" id="{{ app_name }}-{{ desktop_type.id }}-launch-modal" tabindex="-1" aria-labelledby="{{ app_name }}-{{ desktop_type.id }}-launch-modal-label" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="{{ app_name }}-{{ desktop_type.id }}-launch-modal-label">Launch</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        {% if applicable_zones|length == 1 %}
+          <p>Your desktop will be launched in the
+            {{ applicable_zones.first.name }} availability zone.</p>
+        {% elif applicable_zones|length > 1 %}
+          <p>You may select a preferred availability zone.</p>
+          <select id="{{ app_name }}-{{ desktop_type.id }}-zone">
+          <option value="">default</option>
+             {% for zone in applicable_zones %}
+              <option value="{{ zone.name }}">{{ zone.name }}</option>
+            {% endfor %}
+          </select>
+          {% else %}
+          <p>No availability zones currently support this desktop type.</p>
+        {% endif %}
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-danger" onclick="launch_{{ app_name }}_{{ desktop_type.id }}(this)">Launch</button>
+      </div>
+    </div>
+  </div>
+{% endblock %}
+{% block script %}
+  <script>
+    var beenClicked = false;
+    function launch_{{ app_name }}_{{ desktop_type.id }}(tag) {
+        if (!beenClicked) {
+            beenClicked = true;
+            tag.disabled = true;
+            selection = document.getElementById("{{ app_name }}-{{ desktop_type.id }}-zone").value;
+            if (selection == "") {
+                {% with "researcher_desktop:launch_vm_default" as url_path %}
+                window.location.href = '{% url url_path desktop=desktop_type.id %}';
+                {% endwith %}
+            } else {
+                {% with "researcher_desktop:launch_vm" as url_path %}
+                url = '{% url url_path desktop=desktop_type.id zone_name="fixme" %}';
+                window.location.href = url.replace("fixme", selection)
+                {% endwith %}
+            }
+        }
+    }
+  </script>
 {% endblock %}

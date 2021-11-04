@@ -31,14 +31,38 @@ def desktop_types():
     return DesktopType.objects.filter(enabled=True)
 
 
-def get_best_zone(email, desktop_type, chosen_zone=None) -> AvailabilityZone:
+def get_best_zone(email, desktop_type, chosen_zone) -> AvailabilityZone:
+    """Pick the best AZ for launching a desktop of the given type.
+    The chosen_zone is the user's choice.  If None, then choose on
+    the user's behalf.  The email is the user's email address.  If no
+    AZ is suitable, raise Http404.  (The UI shouldn't offer the user
+    the option to do this, but it could be done by crafting a URL.)
+    """
+
+    zone = do_get_best_zone(email, desktop_type, chosen_zone)
+    if not zone:
+        if chosen_zone:
+            logger.error(f"Chosen AZ {chosen_zone} is unknown or "
+                         "disallowed for this desktop type")
+        else:
+            logger.error(f"No AZs allowed for this desktop type")
+        raise Http404
+    return zone
+
+
+def do_get_best_zone(email, desktop_type, chosen_zone) -> AvailabilityZone:
     # The current 'policy' is to choose from the restricted_to zones if
     # the desktop type is restricted.  Otherwise, try restricting based
     # the user's email domain.  Use the zone's weight and name to break ties.
     #
-    # If we want to, we could  block users whose domain is not recognized.
-    #
     # Another possibility might be to dispatch randomly, or based on some
+    # measure of AZ "fullness".
+    #
+    # If we wanted to, we could block users whose domain is not recognized,
+    # or from specific domains / regions; e.g. New Zealand.
+    #
+    # The logic of this fn should be consistent with get_applicable_zones
+    # with respect to restricting access.
     zones = desktop_type.restrict_to_zones.all()
     if zones.count():
         if chosen_zone:
@@ -52,10 +76,21 @@ def get_best_zone(email, desktop_type, chosen_zone=None) -> AvailabilityZone:
     if chosen_zone:
         zones = zones.filter(name=chosen_zone)
     elif zones.count() > 1:
-        # See if limiting based on the user's email domain helps
+        # If there are multiple zones, use the user's email domain
+        # to try to get a preferred zone
         domain_name = email.split('@', 2)[1]
         user_zones = zones.filter(domains__name=domain_name)
         if user_zones.count() > 0:
             zones = user_zones
 
     return zones.order_by('zone_weight', 'name').first()
+
+
+def get_applicable_zones(desktop_type):
+    """Get a list of AZ for launching a desktop to populate the zone
+    selector in the UI.
+    """
+    zones = desktop_type.restrict_to_zones.all()
+    if not zones:
+        zones = AvailabilityZone.objects.all()
+    return list(zones.filter(enabled=True).order_by('zone_weight', 'name'))
