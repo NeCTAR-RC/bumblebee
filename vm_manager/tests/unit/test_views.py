@@ -69,9 +69,7 @@ class VMManagerViewTests(TestCase):
     def test_launch_vm_exists(self, mock_rq):
         self.build_existing_vm(VM_OKAY)
         self.assertEqual(
-            f"VMStatus for user {self.user}, desktop_type {self.desktop_type.id}, "
-            f"instance {self.instance.id} is in wrong state "
-            f"({self.vm_status.status}). Cannot launch VM.",
+            f"User {self.user} already has 1 live desktops",
             launch_vm(self.user, self.desktop_type, self.zone))
 
         mock_rq.get_queue.assert_not_called()

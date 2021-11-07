@@ -11,8 +11,9 @@ from django.http import Http404
 from django.template.defaultfilters import safe
 
 from researcher_workspace.models import Feature, User
+from researcher_desktop.models import DesktopType
 from vm_manager.constants import ERROR, ACTIVE, SHUTDOWN, VERIFY_RESIZE, \
-    RESIZE, VM_WAITING, VM_ERROR
+    RESIZE, VM_WAITING, VM_ERROR, VM_DELETED
 
 from vm_manager.utils.utils import get_nectar
 from vm_manager.utils.utils import generate_password
@@ -329,7 +330,24 @@ class Resize(models.Model):
 
 
 class VMStatusManager(models.Manager):
+    def get_latest_vm_statuses(self, user, excluded_states=[VM_DELETED]):
+        """This is used to check if a User has any live desktop instances.
+        We check each desktop type, and look for the latest VMStatus for
+        the user.  If it is not in the excluded states, we include it
+        in the result list.
+        """
+        statuses = []
+        for desktop_type in DesktopType.objects.all():
+            # Note that this includes disabled DesktopTypes.
+            vm_status = self.get_latest_vm_status(user, desktop_type)
+            if vm_status and vm_status.status not in excluded_states:
+                statuses.append(vm_status)
+        return statuses
+
     def get_latest_vm_status(self, user, desktop_type):
+        """Get the latest VMStatus for this User and DesktopType in
+        any state.  Returns None if there are none.
+        """
         try:
             vm_status = self.filter(
                 user=user,

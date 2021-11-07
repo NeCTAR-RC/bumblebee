@@ -30,6 +30,7 @@ from researcher_workspace.templatetags.group_filters import has_group
 from researcher_workspace.utils import redirect_home, not_support_staff, offset_month_and_year
 from researcher_workspace.utils.faculty_mapping import FACULTIES, FACULTY_MAPPING
 import researcher_desktop.views as rdesk_views
+from vm_manager.models import VMStatus
 from vm_manager.utils.utils import get_nectar
 from vm_manager.constants import NO_VM
 
@@ -381,8 +382,11 @@ def custom_page_error(request, exception=None):
 def desktop_details(request, desktop_name):
     desktop_type = get_desktop_type(desktop_name)
     zones = get_applicable_zones(desktop_type)
+    launch_allowed = len(
+        VMStatus.objects.get_latest_vm_statuses(request.user)) == 0
     return render(request, 'researcher_workspace/desktop_details.html',
                   {'app_name': 'researcher_workspace',
+                   'launch_allowed': launch_allowed,
                    'desktop_type': desktop_type,
                    'applicable_zones': zones})
 

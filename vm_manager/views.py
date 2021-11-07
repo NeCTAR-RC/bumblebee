@@ -64,11 +64,13 @@ def _wrong_state_message(action, user, feature=None, desktop_type=None,
 
 
 def launch_vm(user, desktop_type, zone) -> str:
-    # TODO - the handling of race conditions is dodgy
-    vm_status = VMStatus.objects.get_latest_vm_status(user, desktop_type)
-    if vm_status and vm_status.status != VM_DELETED:
-        return _wrong_state_message(
-            "launch", user, desktop_type=desktop_type, vm_status=vm_status)
+    # TODO - the handling of race conditions (below) is dodgy
+
+    vm_statuses = VMStatus.objects.get_latest_vm_statuses(user)
+    if vm_statuses:
+        message = f"User {user} already has {len(vm_statuses)} live desktops"
+        logger.error(message)
+        return message
 
     vm_status = VMStatus(
         user=user, requesting_feature=desktop_type.feature,

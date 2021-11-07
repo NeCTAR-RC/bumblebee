@@ -11,7 +11,7 @@
         </div>
         <div class="desktop-header-button d-none d-sm-inline-block align-self-center">
           <button class="btn btn-success" title="Launch {{ desktop_type.name }}"
-                  data-bs-toggle="modal"
+                  data-bs-toggle="modal" {% if not launch_allowed %}disabled{% endif %}
                   data-bs-target="#{{ app_name }}-{{ desktop_type.id }}-launch-modal">
             Create Desktop <i class="fas fa-plus"></i>
           </button>
@@ -23,8 +23,6 @@
       <div class="container py-5">
         <div class="row mb-5">
           <div class="col-12 col-md-8 col-lg-9 col-xxl-10">
-            <h6>OPERATING SYSTEM</h6>
-            <h2>{{ desktop_type.details.operating_system }}</h2>
             <p>{{ desktop_type.description }}</p>
           </div>
           <div class="col-12 col-md-4 col-lg-3 col-xxl-2">
@@ -58,6 +56,7 @@
         </div>
         <div class="row mb-5">
           <div class="col-12 text-center">
+            {% if launch_allowed %}
             <h3 class="mb-4">Ready to get started?</h3>
             <button class="btn btn-outline-success mb-4" title="Launch {{ desktop_type.name }}"
                     data-bs-toggle="modal"
@@ -65,6 +64,9 @@
               Create {{ desktop_type.name }} Desktop <i class="fas fa-plus"></i>
             </button>
             <h3>Or explore <a href="{% url 'index' %}#desktop-library">other desktops.</a></h3>
+            {% else %}
+            <!-- Sorry.  Only one desktop permitted at a time -->
+            {% endif %}
           </div>
         </div>
       </div>
