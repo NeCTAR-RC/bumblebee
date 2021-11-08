@@ -20,7 +20,7 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
   });
 });
 
-//Custom functions
+// Custom functions
 function scrollToId(elId) {
   document.getElementById(elId).scrollIntoView({
     behavior: 'smooth'

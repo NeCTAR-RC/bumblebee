@@ -74,7 +74,10 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body text-center">
-        <img src="{% static 'img/action-reboot.gif' %}" class="img-fluid mb-1" />
+        <video autoplay loop muted playsinline class="ratio ratio-16x9 mb-1">
+            <source src="{% static 'videos/action-reboot.webm' %}" type="video/webm">
+            <img src="{% static 'img/action-reboot.gif' %}" class="img-fluid" />
+        </video>
         <p>Rebooting your Virtual Desktop allows you to shutdown and restart the operating system. Your desktop will be unreachable for three minutes while it reboots.</p>
         <p>Please save any work and close the connection to your desktop before rebooting it.</p>
         <div class="alert alert-warning" role="alert">
@@ -103,7 +106,10 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body text-center">
-        <img src="{% static 'img/action-shelve.gif' %}" class="img-fluid mb-3" />
+        <video autoplay loop muted playsinline class="ratio ratio-16x9 mb-3">
+          <source src="{% static 'videos/action-shelve.webm' %}" type="video/webm">
+          <img src="{% static 'img/action-shelve.gif' %}" class="img-fluid" />
+        </video>
         <p>Shelving your {{ requesting_feature }} will put it in a suspended state, where it is no longer consuming cloud
         resources. A shelved desktop can quickly be unshelved to get back to the state it was before shelving.</p>
         <p>Please save any work and close the connection to your desktop before shelving it.</p>
@@ -127,8 +133,12 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body text-center">
-        <p>Once a {{ requesting_feature }} has been deleted it is not recoverable.</p>
-        <p class="h5 py-4">Are you sure you want tp permanently delete your desktop?</p>
+        <video autoplay loop muted playsinline class="ratio ratio-16x9 mb-4">
+          <source src="{% static 'videos/action-delete.webm' %}" type="video/webm">
+          <img src="{% static 'img/action-delete.gif' %}" class="img-fluid" />
+        </video>
+        <p>Deleting a desktop is a complete and permanent destroy of the system. Once a {{ requesting_feature }} has been deleted <strong>it is not recoverable</strong>.</p>
+        <p class="h5 py-4">Are you sure you want to permanently delete your desktop?</p>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -148,7 +158,10 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body text-center">
-        <img src="{% static 'img/action-boost.gif' %}" class="img-fluid mb-1" />
+        <video autoplay loop muted playsinline class="ratio ratio-16x9 mb-1">
+          <source src="{% static 'videos/action-boost.webm' %}" type="video/webm">
+          <img src="{% static 'img/action-boost.gif' %}" class="img-fluid" />
+        </video>
         <p>Your can boost your Desktop size from {{ desktop_type.default_flavor.vcpus }} vCPU Cores {{ desktop_type.default_flavor.ram }} GB to {{ desktop_type.big_flavor.vcpus }} vCPU Cores {{ desktop_type.big_flavor.ram }} GB <strong>for 7 days</strong>.</p>
         <p>Please save any work and close the connection to your {{ requesting_feature }} before boosting it. Your {{ requesting_feature }} will be unreachable for five minutes while boosting.</p>
         <p class="h5 py-4">Are you sure you want to boost for 7 days?</p>
