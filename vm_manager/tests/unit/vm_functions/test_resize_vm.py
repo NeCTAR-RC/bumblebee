@@ -150,7 +150,7 @@ class ResizeVMTests(VMFunctionTestBase):
 
         fake_nectar = get_nectar()
         fake_nectar.nova.servers.get.return_value = FakeServer(
-            flavor=FakeFlavor(id=str(default_flavor_id)))
+            flavor={'id': str(default_flavor_id)})
         fake_nectar.nova.servers.resize.return_value = "whatever"
         self.assertEqual(
             f"Instance {fake_instance.id} already has flavor "
