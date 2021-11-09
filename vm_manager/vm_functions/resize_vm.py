@@ -65,7 +65,8 @@ def extend(user, vm_id, requesting_feature) -> str:
 
 def _resize_vm(instance, flavor, requesting_feature):
     n = get_nectar()
-    current_flavor = n.nova.servers.get(instance.id).flavor.id
+    server = n.nova.servers.get(instance.id)
+    current_flavor = server.flavor['id']
     if current_flavor == str(flavor):
         message = (
             f"Instance {instance.id} already has flavor {flavor}. "
