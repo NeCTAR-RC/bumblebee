@@ -1,6 +1,6 @@
 {% extends 'common/base.html' %}
 
-<div class="container py-5">
+
 {% block breadcrumb %}
 <li itemprop="itemListElement" itemscope="" itemtype="http://schema.org/ListItem">
     <a href="{% url 'learn' %}#Learn" itemprop="item" title="Learn">
@@ -11,6 +11,8 @@
 {% endblock breadcrumb %}
 
 {% block content %}
+<div class="container py-5">
+    <h4 class="text-danger">The content on this page requires updating.</h4>
     <div class="tabbed-nav" data-tabbed="" id="nav">
         <div class="full-width">
             <nav role="tablist">
@@ -67,5 +69,5 @@
            </section>
         </div>
     </div>
-{% endblock content %}
 </div>
+{% endblock content %}

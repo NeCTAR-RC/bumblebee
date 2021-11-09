@@ -1,36 +1,73 @@
 {% extends 'common/base.html' %}
-<div class="container py-5">
-{% block breadcrumb %}
-<li itemprop="itemListElement" itemscope="" itemtype="http://schema.org/ListItem">
-    <a href="{% url 'terms' %}" itemprop="item" title="Terms of Service">
-        <span itemprop="name">Terms of Service</span>
-    </a>
-    <meta content="2" itemprop="position" />
-</li>
-{% endblock breadcrumb %}
 
-{% block content %}
+    {% block breadcrumb %}
+    <li itemprop="itemListElement" itemscope="" itemtype="http://schema.org/ListItem">
+        <a href="{% url 'terms' %}" itemprop="item" title="Terms of Service">
+            <span itemprop="name">Terms of Service</span>
+        </a>
+        <meta content="2" itemprop="position" />
+    </li>
+    {% endblock breadcrumb %}
 
-    <h2>Terms of Service</h2>
-    <p>
-        This is a trial service to provide easy access to the Melbourne Research
-        Cloud. Over the next few months, we will be monitoring the service and collecting feedback to assess the
-        viability of a production service. During this beta phase, Researcher Desktops should not be considered
-        production-ready. The service is intended for the exclusive use of the University of Melbourne researchers,
-        including Academic continuing and fixed term staff, and graduate researchers (PhD and Masters by Research).
-        This excludes professional and honorary staff, and all non-RHD students.
-    </p>
-    <p>
-        You may use the Researcher Desktop to support your research activities when you need more computation
-        resource than you currently have and you want to work with a familiar operating system, or you need a
-        computer that can run calculations 24x7, or you need short-term access to an operating system or compute
-        configuration that you don’t have.
-    </p>
-    <p>
-        By logging in to this service, you are confirming that you are eligible to use the service and that you
-        will comply with The University’s <a href="https://gateway.research.unimelb.edu.au/resources/platforms-infrastructure-and-equipment/research-computing-services/images/RCS-TOS-20200211.pdf"
-           target="_blank">Terms of Service</a>
-    </p>
-
-{% endblock %}
-</div>
+    {% block content %}
+    <div class="container py-5">
+        <h1 class="display-4 mb-4">Terms of Service</h1>
+        <p>By signing into or otherwise using the Service, you agree to the terms of this Service Schedule and <a href="https://ardc.edu.au/wp-content/uploads/2020/10/ARDC_Service_agreement.pdf">ARDC's Standard Terms of Service</a>.</p>
+        <h3>User</h3>
+        <p>User means any end user of the Service.</p>
+        <h3>Service</h3>
+        <p>The Nectar Virtual Desktop Service provided by ARDC is hosted on the Nectar Research Cloud and managed by the ARDC Nectar Research Cloud team, comprising computing infrastructure and software.</p>
+        <h3>Term</h3>
+        <p>The Term is the time period approved for your Nectar Virtual Desktop resource allocation.</p>
+        <h3>Additional Terms</h3>
+        <h4>Nodes</h4>
+        <ol>
+            <li>The Service is provided, operated and maintained by ARDC and organisations that have partnered with ARDC (Nodes). A list of Nodes is available here.</li>
+            <li>From time to time a Node may be added or removed, which may affect Users' use of the Service. If that occurs, while ARDC endeavours to provide notice before migration, ARDC may migrate Users' material and any relevant virtual infrastructure to another Node without notice.</li>
+        </ol>
+        <h4>Use of the Services</h4>
+        <ol>
+            <li><strong>Users must:</strong>
+                <ul>
+                    <li>have an Australian Access Federation (AAF)  and be a student or employee of, or a collaborator with, an Australian research institution; and</li>
+                    <li>use the Service only for research purposes, or for related purposes as approved by ARDC or a Node.</li>
+                </ul>
+            </li>
+            <li><strong>Users:</strong>
+                <ul>
+                    <li>are responsible for maintaining and configuring any virtual infrastructure they may use, and for backup of their data and configuration;</li>
+                    <li>must comply with the <a href="https://support.ehelp.edu.au/support/solutions/folders/6000203455">Nectar Virtual Desktop security guidelines</a> and the <a href="https://www.nhmrc.gov.au/about-us/publications/australian-code-responsible-conduct-research-2018">Australian Code for the Responsible Conduct of Research</a> in connection with their use of the Service;</li>
+                    <li>must not provide credentials to a third party and are responsible for any use of the Services with their credentials; and</li>
+                    <li>must notify Nectar Research Cloud support immediately if they notice any breach of security or unauthorised use of their allocation or user account.</li>
+                </ul>
+            </li>
+        </ol>
+        <h4>Attribution</h4>
+        <ol>
+            <li><strong>Users must:</strong>
+                <ul>
+                    <li>attribute ownership of the Service to ARDC when using the Service in accordance with <a href="https://ardc.edu.au/about_us/policies-and-guidelines/attribution-and-acknowledgement-guidelines/">ARDC's Attribution and Acknowledgement Guidelines</a>; and</li>
+                    <li>do all things reasonably necessary to preserve the integrity and security of the Service and to protect the Service from any modification, defacement or disparaging treatment.</li>
+                </ul>
+            </li>
+        </ol>
+        <h4>Expiry, Suspension, or Termination</h4>
+        <ol>
+            <li>Any data, virtual environments or other material created or stored in the Service by Users will be deleted 3 months after the expiry of the Term.</li>
+            <li>ARDC and its Node partners reserve the right to monitor, search for, and investigate violations to the Terms of Service and may remove, suspend, or terminate access if there are actions that violate the Terms of Service.</li>
+            <li>At any time prior to the expiry of the Term, ARDC may:
+                <ul>
+                    <li>limit, attenuate, suspend or terminate Users' use of the Service at its discretion and without notice; or</li>
+                    <li>immediately remove any material on the Service (including any virtual environment Users create or contribute to) in any of the following circumstances:
+                        <ul>
+                            <li>inappropriate use of the Services (including any use that breaches this agreement);</li>
+                            <li>a detected vulnerability or compromise in the security of the Services;</li>
+                            <li>a request or direction by a law enforcement agency; or</li>
+                            <li>ARDC reasonably determines that there is an operational need for the content to be removed.</li>
+                        </ul>
+                    </li>
+                </ul>
+            </li>
+        </ol>
+    </div>
+    {% endblock %}
