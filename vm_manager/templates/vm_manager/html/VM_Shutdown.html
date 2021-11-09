@@ -1,29 +1,31 @@
-<p>
-    Your {{ requesting_feature }} has been shutdown, please start it to continue using it.
-</p>
-<p>
-    N.B. You don't need to shut down your {{ requesting_feature }} to exit your session, just close the tab/window.
-</p>
-<p>
-    <a class="button-small soft" data-modal-target="{{ app_name }}-{{ desktop_type.id }}-reboot-modal" href="#">
-        Start my {{ desktop_type.id }} {{ requesting_feature }}
-    </a>
-</p>
-<div class="modal__dialog" id="{{ app_name }}-{{ desktop_type.id }}-reboot-modal">
-    <h2>
-        Confirm Starting Your {{ desktop_type.id }} {{ requesting_feature }}
-    </h2>
+<div class="p-5 text-center d-inline-block">
     <p>
-        Your {{ requesting_feature }} will be unreachable for three minutes while it boots.
+        Your {{ requesting_feature }} has been shutdown, please start it to continue using it.
     </p>
     <p>
-        Please confirm your selection.
+        N.B. You don't need to shut down your {{ requesting_feature }} to exit your session, just close the tab/window.
     </p>
-    <div>
-        <button class="button-small warning"
-                title="Start {{ desktop_type.id }} {{ requesting_feature }}"
-                onclick="reboot_{{ app_name }}_{{ desktop_type.id }}(this)">
-            START
-        </button>
+    <p>
+        <a class="button-small soft" data-modal-target="{{ app_name }}-{{ desktop_type.id }}-reboot-modal" href="#">
+            Start my {{ desktop_type.id }} {{ requesting_feature }}
+        </a>
+    </p>
+    <div class="modal__dialog" id="{{ app_name }}-{{ desktop_type.id }}-reboot-modal">
+        <h2>
+            Confirm Starting Your {{ desktop_type.id }} {{ requesting_feature }}
+        </h2>
+        <p>
+            Your {{ requesting_feature }} will be unreachable for three minutes while it boots.
+        </p>
+        <p>
+            Please confirm your selection.
+        </p>
+        <div>
+            <button class="button-small warning"
+                    title="Start {{ desktop_type.id }} {{ requesting_feature }}"
+                    onclick="reboot_{{ app_name }}_{{ desktop_type.id }}(this)">
+                START
+            </button>
+        </div>
     </div>
 </div>

@@ -42,40 +42,42 @@
             <div class="col-12 col-sm-6 col-md-4 mb-3">
               {{ module }}
             </div>
-            <div class="col-12 col-sm-6 col-md-4 mb-3">
-              <div class="card h-100 shadow">
-                <div class="card-body h-100 d-flex flex-column">
-                  <div class="feature text-center">
-                    <div class="feature-icon">
-                      
-                    </div>
-                    <h2>RStudio</h2>
-                    <h6>OPERATING SYSTEM</h6>
-                    <p>Ubuntu 20.04 (Focal)</p>
-                    <h6>FEATURES</h6>
-                    <p>RStudio</p>
+          {% endfor %}
+          <div class="col-12 col-sm-6 col-md-4 mb-3">
+            <div class="card h-100 shadow">
+              <div class="card-body h-100 d-flex flex-column">
+                <div class="feature text-center">
+                  <div class="feature-icon">
+                    
                   </div>
-                  <a href="/desktop/rstudio" class="btn btn-link disabled mt-auto">Coming Soon</a>
+                  <h2>RStudio</h2>
+                  <h6>OPERATING SYSTEM</h6>
+                  <p>Ubuntu 20.04 (Focal)</p>
+                  <h6>FEATURES</h6>
+                  <p>RStudio</p>
                 </div>
+                <a href="/desktop/rstudio" class="btn btn-link disabled mt-auto">Coming Soon</a>
               </div>
             </div>
-            <div class="col-12 col-sm-6 col-md-4 mb-3">
-              <div class="card h-100 shadow">
-                <div class="card-body h-100 d-flex flex-column">
-                  <div class="feature text-center">
-                    <div class="feature-icon">
-                      
-                    </div>
-                    <h2>TERN</h2>
-                    <h6>OPERATING SYSTEM</h6>
-                    <p>Ubuntu 20.04 (Focal)</p>
-                    <h6>FEATURES</h6>
-                    <p>TERN</p>
+          </div>
+          <div class="col-12 col-sm-6 col-md-4 mb-3">
+            <div class="card h-100 shadow">
+              <div class="card-body h-100 d-flex flex-column">
+                <div class="feature text-center">
+                  <div class="feature-icon">
+                    
                   </div>
-                  <a href="/desktop/tern" class="btn btn-link disabled mt-auto">Coming Soon</a>
+                  <h2>TERN</h2>
+                  <h6>OPERATING SYSTEM</h6>
+                  <p>Ubuntu 20.04 (Focal)</p>
+                  <h6>FEATURES</h6>
+                  <p>TERN</p>
                 </div>
+                <a href="/desktop/tern" class="btn btn-link disabled mt-auto">Coming Soon</a>
               </div>
             </div>
+          </div>
+          {% for module in modules %}
             {% empty %}
             {% if selected_project %}
               <div>

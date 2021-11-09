@@ -483,6 +483,7 @@ class VMManagerViewTests(TestCase):
                          render_vm(request, self.user, self.desktop_type,
                                    buttons))
         context = {
+            'state': VM_OKAY,
             'what_to_show': {'url': url},
             'desktop_type': self.desktop_type,
             'vm_id': self.instance.id,
@@ -516,6 +517,7 @@ class VMManagerViewTests(TestCase):
             'extended_expiration': time2
         }
         context['vm_id'] = self.instance.id
+        context['state'] = VM_SUPERSIZED
         calls = [call(f"vm_manager/html/{VM_SUPERSIZED}.html",
                       context, request),
                  call(f"vm_manager/javascript/{VM_SUPERSIZED}.js",
@@ -541,6 +543,7 @@ class VMManagerViewTests(TestCase):
             'extended_expiration': time2
         }
         context['vm_id'] = self.instance.id
+        context['state'] = VM_SUPERSIZED
 
         mock_loader.render_to_string.assert_has_calls(calls)
         mock_messages.info.assert_called_with(

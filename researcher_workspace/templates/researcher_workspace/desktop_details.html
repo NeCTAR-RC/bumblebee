@@ -27,9 +27,9 @@
           </div>
           <div class="col-12 col-md-4 col-lg-3 col-xxl-2">
             <h6>DEFAULT SIZE</h6>
-            <p>{{ desktop_type.default_flavor.vcpus }} vCPU Cores | {{ desktop_type.default_flavor.ram }} GB</p>
+            <p>{{ desktop_type.default_flavor.vcpus }} vCPU Cores | {{ desktop_type.default_flavor.ram }} MB</p>
             <h6>BOOST SIZE</h6>
-            <p>{{ desktop_type.big_flavor.vcpus }} vCPU Cores | {{ desktop_type.big_flavor.ram }} GB</p>
+            <p>{{ desktop_type.big_flavor.vcpus }} vCPU Cores | {{ desktop_type.big_flavor.ram }} MB</p>
             {% if desktop_type.details.features.apps %}
               <h6>FEATURES</h6>
               <ul>
@@ -76,28 +76,30 @@
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="{{ app_name }}-{{ desktop_type.id }}-launch-modal-label">Launch</h5>
+        <h5 class="modal-title" id="{{ app_name }}-{{ desktop_type.id }}-launch-modal-label">Create Desktop</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-      <div class="modal-body">
+      <div class="modal-body text-center">
         {% if applicable_zones|length == 1 %}
           <p>Your desktop will be launched in the
             {{ applicable_zones.first.name }} availability zone.</p>
         {% elif applicable_zones|length > 1 %}
-          <p>You may select a preferred availability zone.</p>
-          <select id="{{ app_name }}-{{ desktop_type.id }}-zone">
-          <option value="">default</option>
-             {% for zone in applicable_zones %}
+        <p class="py-3"><strong>Please select your preferred availability zone...</strong></p>
+          <select id="{{ app_name }}-{{ desktop_type.id }}-zone" class="form-select"  aria-label="Select preffered availability zone">
+            <option value="" selected>Default zone</option>
+            {% for zone in applicable_zones %}
               <option value="{{ zone.name }}">{{ zone.name }}</option>
             {% endfor %}
           </select>
-          {% else %}
+        <p class="py-3">Select "Default zone" to let the system choose.</p>
+        <p class="h5 py-4">Are you ready to create a {{ desktop_type.name }} Desktop?</p>
+        {% else %}
           <p>No availability zones currently support this desktop type.</p>
         {% endif %}
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-        <button type="button" class="btn btn-danger" onclick="launch_{{ app_name }}_{{ desktop_type.id }}(this)">Launch</button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-success" onclick="launch_{{ app_name }}_{{ desktop_type.id }}(this)">Create</button>
       </div>
     </div>
   </div>

@@ -346,6 +346,7 @@ def render_vm(request, user, desktop_type, buttons_to_display):
             f'back to the default size on {what_to_show["expires"]}'))
 
     context = {
+        'state': state,
         'what_to_show': what_to_show,
         'desktop_type': desktop_type,
         'vm_id': vm_id,

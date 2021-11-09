@@ -1,20 +1,20 @@
 {% load mathfilters %}
-<div class="spinner-border" role="status" style="width: 3rem; height: 3rem;">
-  <span class="visually-hidden">Loading...</span>
-</div>
+<div class="p-5 text-center">
+  <div class="spinner-border" role="status" style="width: 3rem; height: 3rem;">
+    <span class="visually-hidden">Loading...</span>
+  </div>
 
-<div class="progress" style="height: 3em;">
-  <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100" style="width: 75%"></div>
-</div>
-
-<p>
-  <a class="button button-main disabled">
+  <p class="h5 py-4">
     Please wait <span id="{{ app_name }}-{{ desktop_type.id }}-time">
-    {{ what_to_show|intdiv:60 }}:{{ what_to_show|mod:60|stringformat:"02d" }}</span> for your {{ requesting_feature }} to be ready
-  </a>
-</p>
+    {{ what_to_show|intdiv:60 }}:{{ what_to_show|mod:60|stringformat:"02d" }}</span> for your {{ requesting_feature }} to be ready.
+  </p>
 
-<p>
-  The timer on the button will count down until your {{ desktop_type.name }} {{ requesting_feature }} is ready to launch,
-  at which point the page will auto-refresh. There is no need to refresh the page manually.
-</p>
+  <div class="progress" style="height: 3em;">
+    <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100" style="width: 75%"></div>
+  </div>
+
+  <p class="pt-3">
+    The timer on the button will count down until your {{ desktop_type.name }} {{ requesting_feature }} is ready to launch,
+    at which point the page will auto-refresh. There is no need to refresh the page manually.
+  </p>
+</div>

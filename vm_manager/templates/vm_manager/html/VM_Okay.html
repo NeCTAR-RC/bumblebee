@@ -16,7 +16,13 @@
       <tbody>
         <tr>
           <td>{{ desktop_type.name }}</td>
-          <td>{{ desktop_type.default_flavor.vcpus }} vCPU Cores | {{ desktop_type.default_flavor.ram }} GB</td>
+          <td>
+            {% if state == "VM_Supersized" %}
+              {{ desktop_type.big_flavor.vcpus }} vCPU Cores | {{ desktop_type.big_flavor.ram }} MB
+            {% else %}
+              {{ desktop_type.default_flavor.vcpus }} vCPU Cores | {{ desktop_type.default_flavor.ram }} MB
+            {% endif %}
+          </td>
         </tr>
       </tbody>
     </table>
@@ -31,6 +37,9 @@
           Open Desktop <i class="fas fa-arrow-right"></i>
         </a>
         <div class="mt-2">
+          {% block buttons %}
+          {% endblock buttons %}
+          
           {% if "REBOOT_BUTTON" in buttons_to_display %}
           <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#{{ app_name }}-{{ desktop_type.id }}-reboot-modal">
             Reboot
@@ -55,8 +64,6 @@
           </button>
           {% endif %}
 
-          {% block buttons %}
-          {% endblock buttons %}
         </div>
       </div>
     </div>
@@ -162,7 +169,7 @@
           <source src="{% static 'videos/action-boost.webm' %}" type="video/webm">
           <img src="{% static 'img/action-boost.gif' %}" class="img-fluid" />
         </video>
-        <p>Your can boost your Desktop size from {{ desktop_type.default_flavor.vcpus }} vCPU Cores {{ desktop_type.default_flavor.ram }} GB to {{ desktop_type.big_flavor.vcpus }} vCPU Cores {{ desktop_type.big_flavor.ram }} GB <strong>for 7 days</strong>.</p>
+        <p>Your can boost your Desktop size from {{ desktop_type.default_flavor.vcpus }} vCPU Cores {{ desktop_type.default_flavor.ram }} MB to {{ desktop_type.big_flavor.vcpus }} vCPU Cores {{ desktop_type.big_flavor.ram }} MB <strong>for 7 days</strong>.</p>
         <p>Please save any work and close the connection to your {{ requesting_feature }} before boosting it. Your {{ requesting_feature }} will be unreachable for five minutes while boosting.</p>
         <p class="h5 py-4">Are you sure you want to boost for 7 days?</p>
       </div>
