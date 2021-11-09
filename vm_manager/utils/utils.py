@@ -56,7 +56,6 @@ class Nectar(object):
         net_id = self.nova.neutron.find_network(settings.OS_NETWORK).id
         self.VM_PARAMS = {
             "metadata_volume": {'readonly': 'False'},
-            "availability_zone_volume": settings.OS_AVAILABILITY_ZONE,
             "size": 20,
             "block_device_mapping": [{
                 'source_type': "volume",
@@ -66,7 +65,6 @@ class Nectar(object):
                 'boot_index': '0',
                 'volume_size': 20,
             }],
-            "availability_zone_server": settings.OS_AVAILABILITY_ZONE,
             "id_net": net_id,
             "list_net": [{'net-id': net_id}],
         }

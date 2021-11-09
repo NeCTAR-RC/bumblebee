@@ -63,8 +63,6 @@ class FakeNectar(object):
         self.VM_PARAMS = {
             "size": 20,
             "metadata_volume": {'readonly': 'False'},
-            "availability_zone_volume": settings.OS_AVAILABILITY_ZONE,
-            "availability_zone_server": settings.OS_AVAILABILITY_ZONE,
             "block_device_mapping": [{
                 'source_type': "volume",
                 'destination_type': 'volume',
