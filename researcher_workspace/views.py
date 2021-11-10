@@ -256,7 +256,8 @@ def home(request):
     # Handle edge cases
     if request.user.id > settings.USER_LIMIT:
         return render(request, 'researcher_workspace/home/user_limit_home.html')
-    if hasattr(settings, 'GENERAL_WARNING_MESSAGE'):
+    if (hasattr(settings, 'GENERAL_WARNING_MESSAGE')
+            and settings.GENERAL_WARNING_MESSAGE != ''):
         messages.warning(
             request, format_html(settings.GENERAL_WARNING_MESSAGE))
 
