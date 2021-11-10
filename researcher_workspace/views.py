@@ -256,9 +256,9 @@ def home(request):
     # Handle edge cases
     if request.user.id > settings.USER_LIMIT:
         return render(request, 'researcher_workspace/home/user_limit_home.html')
-    if len(settings.GENERAL_WARNING_MESSAGE) != 0:
-        messages.warning(request,
-                         format_html(settings.GENERAL_WARNING_MESSAGE))
+    if hasattr(settings, 'GENERAL_WARNING_MESSAGE'):
+        messages.warning(
+            request, format_html(settings.GENERAL_WARNING_MESSAGE))
 
     # Get user's Project(s)
     project_id = request.POST.get('project', None)
