@@ -81,11 +81,13 @@
       </div>
       <div class="modal-body text-center">
         {% if applicable_zones|length == 1 %}
+          {% with applicable_zones|first as first_zone %} 
           <p>Your desktop will be launched in the
-            {{ applicable_zones.first.name }} availability zone.</p>
+            {{ first_zone.name }} availability zone.</p>
+          {% endwith %}
         {% elif applicable_zones|length > 1 %}
         <p class="py-3"><strong>Please select your preferred availability zone...</strong></p>
-          <select id="{{ app_name }}-{{ desktop_type.id }}-zone" class="form-select"  aria-label="Select preffered availability zone">
+          <select id="{{ app_name }}-{{ desktop_type.id }}-zone" class="form-select"  aria-label="Select prefered availability zone">
             <option value="" selected>Default zone</option>
             {% for zone in applicable_zones %}
               <option value="{{ zone.name }}">{{ zone.name }}</option>
@@ -111,7 +113,11 @@
         if (!beenClicked) {
             beenClicked = true;
             tag.disabled = true;
+            {% if applicable_zones|length > 1 %}
             selection = document.getElementById("{{ app_name }}-{{ desktop_type.id }}-zone").value;
+            {% else %}
+            selection = "";
+            {% endif %}
             if (selection == "") {
                 {% with "researcher_desktop:launch_vm_default" as url_path %}
                 window.location.href = '{% url url_path desktop=desktop_type.id %}';
