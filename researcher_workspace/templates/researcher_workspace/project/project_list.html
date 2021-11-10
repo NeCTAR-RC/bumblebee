@@ -11,12 +11,12 @@
 
 {% block content %}
 <div class="container py-5">
-    <div><a class="btn btn-small" style="float:right" href="{% url 'new_project' %}">New Workspace</a></div>
+    <div><a class="btn btn-primary btn-small" style="float:right" href="{% url 'new_project' %}">New Workspace</a></div>
     <h2>You have these current workspace:</h2>
     {% for project in user_projects %}
         <div>
             <h3>{{ project.title }}</h3>
-            <table class="zebra">
+            <table class="table">
                 <tr><td>Description</td><td>{{ project.description }}</td></tr>
                 <tr><td>Proposed on</td><td>{{ project.created }}</td></tr>
         {% if project.ARO_approval %}
