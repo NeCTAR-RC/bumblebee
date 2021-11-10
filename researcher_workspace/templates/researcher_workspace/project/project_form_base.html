@@ -2,8 +2,10 @@
 {% load crispy_forms_tags %}
 
 {% block content %}
-<h2>{% block form_title %}{% endblock %}</h2>
-<form action="{% block form_submit_url %}{% endblock %}" method="post">
-  {% crispy form %}
-</form>
+<div class="container py-5"></div>
+  <h2>{% block form_title %}{% endblock %}</h2>
+  <form action="{% block form_submit_url %}{% endblock %}" method="post">
+    {% crispy form %}
+  </form>
+</div>
 {% endblock %}

@@ -5,126 +5,121 @@
 {% block content %}
   {% load mathfilters %}
   {% if user.is_authenticated %}
-  <section class="desktop-section bg-secondary hex-bg">
-    <div class="desktop-container container">
-      <div class="row py-5">
-        <div class="workspace-info col-sm-12 col-md-4">
-          <h6 class="text-white mb-3">WORKSPACE</h6>
-          <h1 class="workspace-title h2 text-white mb-3">{{ selected_project.title }}</h1>
-          <p class="workspace-description text-white mb-3">{{ selected_project.description }}</p>
-        </div>
-        <div class="desktop-info col-sm-12 col-md-8">
-          <h2 class="text-center text-white">Good morning {{ user.first_name }}!</h2>
-          <div id="desktop-computer">
-            <img id="desktop-computer-frame" src="{% static 'img/desktop-computer.svg' %}">
-            <div id="desktop-computer-screen" class="bg-white d-flex align-items-center justify-content-center">
-            {% if active_module %}
-              {{ active_module }}
-            {% else %}
-              <div class="text-center">
-                <h4 class="mb-3">You haven't created a Desktop! Explore the Desktop Library...</h4>
-                <a href="#desktop-library" class="btn btn-link btn-lg">Explore <i class="fas fa-arrow-down"></i></a>
-              </div>
-            {% endif %}
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
     {% if projects %}
-    <section id="#desktop-library">
-      <div class="container py-5">
-        <div class="row">
-          <h1 class="mb-4">Desktop Library</h1>
-          {% for module in modules %}
-            <div class="col-12 col-sm-6 col-md-4 mb-3">
-              {{ module }}
+      <section class="desktop-section bg-secondary hex-bg">
+        <div class="desktop-container container">
+          <div class="row py-5">
+            <div class="workspace-info col-sm-12 col-md-4">
+              <h6 class="text-white mb-3">WORKSPACE</h6>
+              <h1 class="workspace-title h2 text-white mb-3">{{ selected_project.title }}</h1>
+              <p class="workspace-description text-white mb-3">{{ selected_project.description }}</p>
             </div>
-          {% endfor %}
-          <div class="col-12 col-sm-6 col-md-4 mb-3">
-            <div class="card h-100 shadow">
-              <div class="card-body h-100 d-flex flex-column">
-                <div class="feature text-center">
-                  <div class="feature-icon">
-                    
+            <div class="desktop-info col-sm-12 col-md-8">
+              <h2 class="text-center text-white">Hi {{ user.first_name }}!</h2>
+              <div id="desktop-computer">
+                <img id="desktop-computer-frame" src="{% static 'img/desktop-computer.svg' %}">
+                <div id="desktop-computer-screen" class="bg-white d-flex align-items-center justify-content-center">
+                {% if active_module %}
+                  {{ active_module }}
+                {% else %}
+                  <div class="text-center">
+                    <h4 class="mb-3">You haven't created a Desktop! Explore the Desktop Library...</h4>
+                    <a href="#desktop-library" class="btn btn-link btn-lg">Explore <i class="fas fa-arrow-down"></i></a>
                   </div>
-                  <h2>RStudio</h2>
-                  <h6>OPERATING SYSTEM</h6>
-                  <p>Ubuntu 20.04 (Focal)</p>
-                  <h6>FEATURES</h6>
-                  <p>RStudio</p>
+                {% endif %}
                 </div>
-                <a href="/desktop/rstudio" class="btn btn-link disabled mt-auto">Coming Soon</a>
               </div>
             </div>
           </div>
-          <div class="col-12 col-sm-6 col-md-4 mb-3">
-            <div class="card h-100 shadow">
-              <div class="card-body h-100 d-flex flex-column">
-                <div class="feature text-center">
-                  <div class="feature-icon">
-                    
-                  </div>
-                  <h2>TERN</h2>
-                  <h6>OPERATING SYSTEM</h6>
-                  <p>Ubuntu 20.04 (Focal)</p>
-                  <h6>FEATURES</h6>
-                  <p>TERN</p>
-                </div>
-                <a href="/desktop/tern" class="btn btn-link disabled mt-auto">Coming Soon</a>
-              </div>
-            </div>
-          </div>
-          {% for module in modules %}
-            {% empty %}
-            {% if selected_project %}
-              <div>
-                <h3>You don't have access to any features</h3>
-                <p>
-                  This project doesn't currently have access to any of the wonderful features of our service.
-                  Click on the <a href="/#Discover">Discover</a> tab above to get access to some of our great features.
-                </p>
-              </div>
-            {% elif projects %}
-              <div>
-                <h3>Your project(s) are pending approval by their ARO</h3>
-                <p>
-                  You can't access a project until we have received approval from the project's nominated ARO.
-                  The ARO specified in your project will be notified, and we will approve your project as
-                  soon as we receive confirmation from them.
-                </p>
-              </div>
-            {% else %}
-            <div>
-              <h3>You don't have a project yet</h3>
-              <p>
-                Please click the "Add New Project" button above to create a project. Once you have a project
-                you can start adding features to it in the "Discover" tab.
-              </p>
-            </div>
-            {% endif %}
-          {% endfor %}
         </div>
-      </div>
-    </section>
+      </section>
+      <section id="#desktop-library">
+        <div class="container py-5">
+          <div class="row">
+            <h1 class="mb-4">Desktop Library</h1>
+            {% for module in modules %}
+              <div class="col-12 col-sm-6 col-md-4 mb-3">
+                {{ module }}
+              </div>
+            {% endfor %}
+            <div class="col-12 col-sm-6 col-md-4 mb-3">
+              <div class="card h-100 shadow">
+                <div class="card-body h-100 d-flex flex-column">
+                  <div class="feature text-center">
+                    <div class="feature-icon">
+                      <img src="{% static 'img/vm-logo-rstudio.png' %}" class="img-fluid mb-3" />
+                    </div>
+                    <h6>OPERATING SYSTEM</h6>
+                    <p>Ubuntu 20.04 (Focal)</p>
+                    <h6>FEATURES</h6>
+                    <p>RStudio</p>
+                  </div>
+                  <a href="/desktop/rstudio" class="btn btn-link disabled mt-auto">Coming Soon</a>
+                </div>
+              </div>
+            </div>
+            <div class="col-12 col-sm-6 col-md-4 mb-3">
+              <div class="card h-100 shadow">
+                <div class="card-body h-100 d-flex flex-column">
+                  <div class="feature text-center">
+                    <div class="feature-icon">
+                      <img src="{% static 'img/vm-logo-tern.png' %}" class="img-fluid mb-3" />
+                    </div>
+                    <h2>TERN</h2>
+                    <h6>OPERATING SYSTEM</h6>
+                    <p>Ubuntu 20.04 (Focal)</p>
+                    <h6>FEATURES</h6>
+                    <p>TERN</p>
+                  </div>
+                  <a href="/desktop/tern" class="btn btn-link disabled mt-auto">Coming Soon</a>
+                </div>
+              </div>
+            </div>
+            {% for module in modules %}
+              {% empty %}
+              {% if selected_project %}
+                <div>
+                  <h3>You don't have access to any features</h3>
+                  <p>
+                    This project doesn't currently have access to any of the wonderful features of our service.
+                    Click on the <a href="/#Discover">Discover</a> tab above to get access to some of our great features.
+                  </p>
+                </div>
+              {% elif projects %}
+                <div>
+                  <h3>Your project(s) are pending approval by their ARO</h3>
+                  <p>
+                    You can't access a project until we have received approval from the project's nominated ARO.
+                    The ARO specified in your project will be notified, and we will approve your project as
+                    soon as we receive confirmation from them.
+                  </p>
+                </div>
+              {% else %}
+              <div>
+                <h3>You don't have a project yet</h3>
+                <p>
+                  Please click the "Add New Project" button above to create a project. Once you have a project
+                  you can start adding features to it in the "Discover" tab.
+                </p>
+              </div>
+              {% endif %}
+            {% endfor %}
+          </div>
+        </div>
+      </section>
     {% else %}
       <div class="container py-5">
         <div class="row">
           <div class="col-12 text-center align-items-center">
-            <h2 class="mb-3">Create a project to get started...</h2>
+            <h2 class="mb-3">Create a workspace to get started...</h2>
             <a class="btn btn-primary btn-lg" href="{% url 'new_project' %}" role="button" title="Create Project">
-              <span class="btn-label"><i class="fas fa-plus"></i></span> Create Project
+              <span class="btn-label"><i class="fas fa-plus"></i></span> Create Workspace
             </a>
           </div>
         </div>
       </div>
     {% endif %}
-
-    
-
-    {% endif %}
+  {% endif %}
 
 {% endblock content %}
 {% block script %}

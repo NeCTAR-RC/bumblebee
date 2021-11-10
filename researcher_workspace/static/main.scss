@@ -162,22 +162,40 @@ section.welcome {
         animation: fadeIn 0.5s linear 2s forwards, drawDashed 20s linear 2s infinite;
       }
     }
-    #gogs {
+    #cogs {
       path {
         &:nth-child(1) {
           opacity: 0;
-          animation: fadeIn 0.5s linear 2s forwards, spinGogs 4s linear infinite;
+          animation: fadeIn 0.5s linear 2s forwards, spinCogs 4s linear infinite;
           transform-origin: center;
           transform-box: fill-box;
         }
         &:nth-child(2) {
           opacity: 0;
-          animation: fadeIn 0.5s linear 2s forwards, spinGogs 4s linear infinite reverse;
+          animation: fadeIn 0.5s linear 2s forwards, spinCogs 4s linear infinite reverse;
           transform-origin: center;
           transform-box: fill-box;
         }
       }
     }
+    .flashing-light {
+      animation: flashingLight 0.5s linear infinite alternate;
+      &:nth-child(1) { animation-delay: 0.2s }
+      &:nth-child(2) { animation-delay: 0.4s }
+      &:nth-child(3) { animation-delay: 0.6s }
+      &:nth-child(4) { animation-delay: 0.8s }
+      &:nth-child(5) { animation-delay: 1s }
+      &:nth-child(6) { animation-delay: 1.2s }
+      &:nth-child(7) { animation-delay: 1.4s }
+      &:nth-child(8) { animation-delay: 1.6s }
+      &:nth-child(9) { animation-delay: 1.8s }
+    }
+  }
+}
+
+@for $i from 1 through 9 {
+  .flashing-light:nth-child(#{$i}n) {
+      animation-delay: #{$i * 0.5}s;
   }
 }
 
@@ -272,7 +290,7 @@ section.desktop-section {
 /*
  * CSS Functions
  */
-@keyframes spinGogs { 
+@keyframes spinCogs { 
   to { 
       transform:rotate(360deg); 
   } 
@@ -299,4 +317,12 @@ section.desktop-section {
 @keyframes fadeIn {
   from { opacity: 0; }
   to   { opacity: 1; }
+}
+
+@keyframes flashingLight {
+  0% { fill: #f8b20e; }
+  25% { fill: #f8b20e; }
+  50% { fill: #f8b20e; }
+  75% { fill: #f8b20e; }
+  100%   { fill: #ddd; }
 }
