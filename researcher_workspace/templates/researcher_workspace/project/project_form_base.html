@@ -3,7 +3,7 @@
 
 {% block content %}
 <div class="container py-5">
-  <h2>{% block form_title %}{% endblock %}</h2>
+  <h2 class="display-5 mb-4">{% block form_title %}{% endblock %}</h2>
   <form action="{% block form_submit_url %}{% endblock %}" method="post">
     {% crispy form %}
   </form>
