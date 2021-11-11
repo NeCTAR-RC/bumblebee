@@ -1,25 +1,34 @@
-<div class="card h-100 shadow">
-  <div class="card-body h-100 d-flex flex-column">
+
+  <div class="desktop-info d-block text-center position-relative">
     <div class="feature text-center">
-      <div class="feature-icon">
-        <img src="{{ desktop_type.logo }}" class="img-fluid mb-3" />
-      </div>
-      <h6>OPERATING SYSTEM</h6>
-      <p>{{ desktop_type.name }}</p>
-      {% if desktop_type.details.features.apps %}
-        <h6>FEATURES</h6>
-        <p>
-        {% for app in desktop_type.details.features.apps %}
-          {{ desktop_type.details.features.apps }}&nbsp;
-        {% endfor %}
-        </p>
-      {% endif %}
+      <h6 class="d-lg-none text-danger">Your Desktop is currently shelved.</h6>
+      <h3 class="d-none d-lg-block text-danger">Your Desktop is currently shelved.</h3>
+      <img src="{{ desktop_type.logo }}" class="d-lg-none w-50" />
+      <img src="{{ desktop_type.logo }}" class="d-none d-lg-inline-block w-75 mb-1" />
+      <table class="table my-1 my-md-2 my-lg-4"> 
+        <thead>
+          <tr>
+            <th scope="col">OPERATING SYSTEM</th>
+            <th scope="col">CURRENT SIZE</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>{{ desktop_type.name }}</td>
+            <td>
+              {% if state == "VM_Supersized" %}
+                {{ desktop_type.big_flavor.vcpus }} vCPU Cores | {{ desktop_type.big_flavor.ram }} GB of RAM
+              {% else %}
+                {{ desktop_type.default_flavor.vcpus }} vCPU Cores | {{ desktop_type.default_flavor.ram }} GB of RAM
+              {% endif %}
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
     <button type="button" class="btn btn-primary" onclick="unshelve_{{ app_name }}_{{ desktop_type.id }}(this)">
       Unshelve
     </button>
-    <a href="/desktop/{{ desktop_type.id }}" class="btn btn-link mt-auto">View Details <i class="fas fa-arrow-right"></i></a>
   </div>
-</div>
 
 

@@ -1,7 +1,7 @@
 {% extends 'vm_manager/html/VM_Okay.html' %}
 
 {% block supersize_message %}
-  <p><small>Your {{ desktop_type.id }} {{ requesting_feature }} is set to resize back to the default size after 11:59 pm on {{ what_to_show.expires }}.</small></p>
+  <p class="text-center"><small>Your {{ desktop_type.name }} {{ requesting_feature }} is set to resize back to the default size after 11:59 pm on {{ what_to_show.expires }}.</small></p>
 {% endblock supersize_message %}
 
 {% block buttons %}

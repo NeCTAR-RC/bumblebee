@@ -9,12 +9,12 @@
       <section class="desktop-section bg-secondary hex-bg">
         <div class="desktop-container container">
           <div class="row py-5">
-            <div class="workspace-info col-sm-12 col-md-4">
+            <div class="workspace-info col-md-12 col-lg-4">
               <h6 class="text-white mb-3">WORKSPACE</h6>
               <h1 class="workspace-title h2 text-white mb-3">{{ selected_project.title }}</h1>
               <p class="workspace-description text-white mb-3">{{ selected_project.description }}</p>
             </div>
-            <div class="desktop-info col-sm-12 col-md-8">
+            <div class="desktop-info col-md-12 col-lg-8">
               <h2 class="text-center text-white">Hi {{ user.first_name }}!</h2>
               <div id="desktop-computer">
                 <img id="desktop-computer-frame" src="{% static 'img/desktop-computer.svg' %}">
