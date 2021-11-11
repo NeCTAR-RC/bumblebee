@@ -260,6 +260,9 @@ NEXT_PAGE = '/home'
 # Empty warning message, should be filled in local_settings
 GENERAL_WARNING_MESSAGE = ""
 
+# Current version number for the terms and conditions
+TERMS_VERSION = 1
+
 # Values that need to be set in local_settings.py
 PROXY_URL = False
 SECRET_KEY = 'secret'

@@ -3,6 +3,7 @@ from django.contrib.auth.admin import UserAdmin
 from django.http import HttpResponse, HttpResponseRedirect
 from django.urls import reverse
 from django.utils.html import format_html
+from django.utils.translation import gettext as _
 
 from researcher_workspace.models import PermissionRequest, Project, Profile, AROWhitelist, add_username_to_whitelist, \
     remove_username_from_whitelist, Permission, Feature, User
@@ -107,6 +108,17 @@ class CustomUserAdmin(UserAdmin):
     inlines = (ProfileInline, )
     list_filter = UserAdmin.list_filter + ('date_joined',)
     list_display = UserAdmin.list_display + ('date_joined',)
+    fieldsets = (
+        (None, {'fields': ('username', 'password')}),
+        (_('Personal info'), {'fields': ('first_name', 'last_name', 'email')}),
+        (_('Permissions'), {
+            'fields': ('is_active', 'is_staff', 'is_superuser',
+                       'groups', 'user_permissions'),
+        }),
+        (_('Important dates'), {
+            'fields': ('last_login', 'date_joined', 'date_agreed_terms',
+                       'terms_version')}),
+    )
 
     def get_inline_instances(self, request, obj=None):
         if not obj:

@@ -18,7 +18,8 @@ logger = logging.getLogger(__name__)
 
 
 class User(AbstractUser):
-    pass
+    date_agreed_terms = models.DateTimeField(null=True)
+    terms_version = models.IntegerField(default=0)
 
 
 class FeatureOptions(models.Model):

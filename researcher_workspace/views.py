@@ -27,7 +27,7 @@ from researcher_workspace.models import PermissionRequest, Feature, Project, ARO
     add_username_to_whitelist, remove_username_from_whitelist, Permission, FeatureOptions, User
 
 from researcher_workspace.templatetags.group_filters import has_group
-from researcher_workspace.utils import redirect_home, not_support_staff, offset_month_and_year
+from researcher_workspace.utils import redirect_home, agreed_to_terms, not_support_staff, offset_month_and_year
 from researcher_workspace.utils.faculty_mapping import FACULTIES, FACULTY_MAPPING
 import researcher_desktop.views as rdesk_views
 from vm_manager.models import VMStatus
@@ -233,7 +233,8 @@ def on_login(sender, user, request, **kwargs):
     """
     The handler for the user_logged_in signal
     """
-    if request.user and hasattr(request.user, 'get_full_name'):
+    if (getattr(request, 'user', None)
+        and hasattr(request.user, 'get_full_name')):
         logger.info('User %s has logged in', request.user.get_full_name())
         messages.info(request, format_html(
             f'Welcome <strong>{request.user.first_name}</strong>'))
@@ -244,14 +245,18 @@ def on_logout(sender, user, request, **kwargs):
     """
     The handler for the user_logged_out signal
     """
-    if request.user and hasattr(request.user, 'get_full_name'):
+    if (getattr(request, 'user', None)
+        and hasattr(request.user, 'get_full_name')):
         messages.info(request, format_html(
             f'Goodbye <strong>{request.user.first_name}</strong>'))
         logger.info('User %s has logged out', request.user.get_full_name())
 
 
 @login_required(login_url='login')
-@user_passes_test(test_func=not_support_staff, login_url='staff_home', redirect_field_name=None)
+@user_passes_test(test_func=agreed_to_terms, login_url='terms',
+                  redirect_field_name=None)
+@user_passes_test(test_func=not_support_staff, login_url='staff_home',
+                  redirect_field_name=None)
 def home(request):
     # Handle edge cases
     if request.user.id > settings.USER_LIMIT:
@@ -350,8 +355,8 @@ def home(request):
     return render(request, 'researcher_workspace/home/home.html', context)
 
 
-def login(request):
-    return render(request, 'registration/login.html')
+# def login(request):
+#     return render(request, 'registration/login.html')
 
 
 def desktop_description(request):
@@ -359,7 +364,24 @@ def desktop_description(request):
 
 
 def terms(request):
-    return render(request, 'researcher_workspace/terms.html')
+    show_agree = (request.user
+                  and isinstance(request.user, User)
+                  and request.user.terms_version < settings.TERMS_VERSION)
+    return render(request, 'researcher_workspace/terms.html',
+                  {'show_agree': show_agree,
+                   'version': settings.TERMS_VERSION})
+
+
+def agree_terms(request, version):
+    if request.user and isinstance(request.user, User):
+        if (version == settings.TERMS_VERSION
+            and version > request.user.terms_version):
+            request.user.terms_version = version
+            request.user.date_agreed_terms = datetime.now(timezone.utc)
+            request.user.save()
+        return redirect_home(request)
+    else:
+        raise Http404()
 
 
 def help(request):
@@ -380,6 +402,8 @@ def custom_page_error(request, exception=None):
 
 
 @login_required(login_url='login')
+@user_passes_test(test_func=agreed_to_terms, login_url='terms',
+                  redirect_field_name=None)
 def desktop_details(request, desktop_name):
     desktop_type = get_desktop_type(desktop_name)
     zones = get_applicable_zones(desktop_type)
@@ -393,6 +417,8 @@ def desktop_details(request, desktop_name):
 
 
 @login_required(login_url='login')
+@user_passes_test(test_func=agreed_to_terms, login_url='terms',
+                  redirect_field_name=None)
 def request_feature_access(request, feature_app_name):
     if request.method == 'POST':
         feature = Feature.objects.get_feature_by_untrusted_feature_name(feature_app_name, request.user)
@@ -428,6 +454,8 @@ def _notify_managers_to_review_project(project, action):
 
 
 @login_required(login_url='login')
+@user_passes_test(test_func=agreed_to_terms, login_url='terms',
+                  redirect_field_name=None)
 def new_project(request):
     if request.method == 'POST':
         my_project = Project(project_admin=request.user)
@@ -446,12 +474,16 @@ def new_project(request):
 
 
 @login_required(login_url='login')
+@user_passes_test(test_func=agreed_to_terms, login_url='terms',
+                  redirect_field_name=None)
 def projects(request):
     user_projects = Project.objects.filter(project_admin=request.user).order_by('-created')
     return render(request, 'researcher_workspace/project/project_list.html', {'user_projects': user_projects})
 
 
 @login_required(login_url='login')
+@user_passes_test(test_func=agreed_to_terms, login_url='terms',
+                  redirect_field_name=None)
 def project_edit(request, project_id):
     if request.method == 'POST':
         project = Project.objects.get_project_by_untrusted_project_id(project_id, request.user)
@@ -479,10 +511,14 @@ def staff_home(request):
 
 
 @login_required(login_url='login')
+@user_passes_test(test_func=agreed_to_terms, login_url='terms',
+                  redirect_field_name=None)
 def report(request):
     return render(request, 'researcher_workspace/report.html', rdesk_views.rd_report_for_user(request.user))
 
 
 @login_required(login_url='login')
+@user_passes_test(test_func=agreed_to_terms, login_url='terms',
+                  redirect_field_name=None)
 def learn(request):
     return render(request, 'researcher_workspace/learn.html')

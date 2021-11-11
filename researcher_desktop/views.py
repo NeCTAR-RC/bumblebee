@@ -14,7 +14,8 @@ from researcher_desktop.utils.utils import desktop_types
 from researcher_desktop.utils.utils import desktops_feature
 
 from vm_manager import views as vm_man_views
-from researcher_workspace.utils import not_support_staff, redirect_home
+from researcher_workspace.utils import not_support_staff, redirect_home, \
+    agreed_to_terms
 from vm_manager.constants import LINUX, REBOOT_BUTTON, SHELVE_BUTTON, \
     DELETE_BUTTON, BOOST_BUTTON, DOWNSIZE_BUTTON
 
@@ -34,9 +35,8 @@ def render_modules(request):
 
 
 @login_required(login_url='login')
-# TODO - Is the 'user_passes_test' still needed?
-# Only need to stop support staff creating vms, as they can't use any
-# other function if they don't have a vm
+@user_passes_test(test_func=agreed_to_terms, login_url='terms',
+                  redirect_field_name=None)
 @user_passes_test(test_func=not_support_staff, login_url='staff_home',
                   redirect_field_name=None)
 def launch_vm(request, desktop, zone_name=None):
@@ -48,24 +48,32 @@ def launch_vm(request, desktop, zone_name=None):
 
 
 @login_required(login_url='login')
+@user_passes_test(test_func=agreed_to_terms, login_url='terms',
+                  redirect_field_name=None)
 def delete_vm(request, vm_id):
     vm_man_views.delete_vm(request.user, vm_id, desktops_feature())
     return redirect_home(request)
 
 
 @login_required(login_url='login')
+@user_passes_test(test_func=agreed_to_terms, login_url='terms',
+                  redirect_field_name=None)
 def shelve_vm(request, vm_id):
     vm_man_views.shelve_vm(request.user, vm_id, desktops_feature())
     return redirect_home(request)
 
 
 @login_required(login_url='login')
+@user_passes_test(test_func=agreed_to_terms, login_url='terms',
+                  redirect_field_name=None)
 def unshelve_vm(request, desktop):
     vm_man_views.unshelve_vm(request.user, get_desktop_type(desktop))
     return redirect_home(request)
 
 
 @login_required(login_url='login')
+@user_passes_test(test_func=agreed_to_terms, login_url='terms',
+                  redirect_field_name=None)
 def reboot_vm(request, vm_id, reboot_level):
     vm_man_views.reboot_vm(request.user, vm_id,
                            reboot_level, desktops_feature())
@@ -73,6 +81,8 @@ def reboot_vm(request, vm_id, reboot_level):
 
 
 @login_required(login_url='login')
+@user_passes_test(test_func=agreed_to_terms, login_url='terms',
+                  redirect_field_name=None)
 def get_rdp_file(request, vm_id):
     rdp_file = vm_man_views.get_rdp_file(request.user, vm_id,
                                          desktops_feature())
@@ -83,18 +93,24 @@ def get_rdp_file(request, vm_id):
 
 
 @login_required(login_url='login')
+@user_passes_test(test_func=agreed_to_terms, login_url='terms',
+                  redirect_field_name=None)
 def supersize_vm(request, vm_id):
     vm_man_views.supersize_vm(request.user, vm_id, desktops_feature())
     return redirect_home(request)
 
 
 @login_required(login_url='login')
+@user_passes_test(test_func=agreed_to_terms, login_url='terms',
+                  redirect_field_name=None)
 def downsize_vm(request, vm_id):
     vm_man_views.downsize_vm(request.user, vm_id, desktops_feature())
     return redirect_home(request)
 
 
 @login_required(login_url='login')
+@user_passes_test(test_func=agreed_to_terms, login_url='terms',
+                  redirect_field_name=None)
 def extend(request, vm_id):
     vm_man_views.extend(request.user, vm_id, desktops_feature())
     return redirect_home(request)
@@ -119,6 +135,8 @@ def phone_home(request):
 
 
 @login_required(login_url='login')
+@user_passes_test(test_func=agreed_to_terms, login_url='terms',
+                  redirect_field_name=None)
 def status_vm(request, desktop):
     state, what_to_show, vm_id = vm_man_views.get_vm_state(
         request.user, get_desktop_type(desktop))

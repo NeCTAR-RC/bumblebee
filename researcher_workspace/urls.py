@@ -37,6 +37,7 @@ urlpatterns = [
     path('orion_report/', views.orion_report, name='orion_report'),
     path('desktop_description/', views.desktop_description, name='desktop_description'),
     path('terms/', views.terms, name='terms'),
+    path('agree_terms/<int:version>', views.agree_terms, name='agree_terms'),
     path('help/', views.help, name='help'),
     path('contact_us/', views.help, name='contact_us'),
     path('contact/', views.help, name='contact'),
