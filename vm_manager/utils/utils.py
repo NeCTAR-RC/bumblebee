@@ -56,14 +56,12 @@ class Nectar(object):
         net_id = self.nova.neutron.find_network(settings.OS_NETWORK).id
         self.VM_PARAMS = {
             "metadata_volume": {'readonly': 'False'},
-            "size": 20,
             "block_device_mapping": [{
                 'source_type': "volume",
                 'destination_type': 'volume',
                 'delete_on_termination': False,
                 'uuid': None,
                 'boot_index': '0',
-                'volume_size': 20,
             }],
             "id_net": net_id,
             "list_net": [{'net-id': net_id}],

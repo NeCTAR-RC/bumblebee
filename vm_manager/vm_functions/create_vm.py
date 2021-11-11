@@ -68,7 +68,7 @@ def _create_volume(user, desktop_type, zone):
     n = get_nectar()
     volume_result = n.cinder.volumes.create(
         source_volid=source_volume_id,
-        size=n.VM_PARAMS["size"],
+        size=desktop_type.volume_size,
         name=name, metadata=n.VM_PARAMS["metadata_volume"],
         availability_zone=zone.name)
     n.cinder.volumes.set_bootable(volume=volume_result, flag=True)

@@ -67,7 +67,10 @@ GUACAMOLE_URL = ""  # ¡Change!
 #        'image_name': "<glance image name>",
 #        'description': "Generic Linux",
 #        'default_flavor_name': "<flavor_name>",
-#        'big_flavor_name': "<flavor_name>"
+#        'big_flavor_name': "<flavor_name>",
+#        'volume_size': "<size_in_GB>",
+#        'logo': "<a_url>",
+#        'details': { ... }    # JSON
 #    },
 #]
 
