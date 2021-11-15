@@ -85,7 +85,7 @@ def _resize_vm(instance, flavor, requesting_feature):
 
 
 def _wait_to_confirm_resize(instance, flavor, deadline, requesting_feature):
-    status = (VM_OKAY if flavor == instance.boot_volume.flavor
+    status = (VM_OKAY if str(flavor) == str(instance.boot_volume.flavor)
               else VM_SUPERSIZED)
     n = get_nectar()
     vm_status = VMStatus.objects.get_vm_status_by_instance(
