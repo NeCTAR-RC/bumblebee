@@ -17,8 +17,6 @@ from researcher_workspace.views import terms, agree_terms
 
 
 class ResearcherWorkspaceRequestTests(TestCase):
-    # TODO - I don't get why I don't need to prefix the url_paths with
-    # 'researcher_desktop:'.  But when I do the reverse(...) calls fail.
 
     def setUp(self, *args, **kwargs):
         super().setUp(*args, **kwargs)
