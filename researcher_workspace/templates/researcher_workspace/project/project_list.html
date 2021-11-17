@@ -11,7 +11,7 @@
 
 {% block content %}
 <div class="container py-5">
-    <div><a class="btn btn-primary btn-small" style="float:right" href="{% url 'new_project' %}">New Workspace</a></div>
+    {% if allow_new_projects %}<div><a class="btn btn-primary btn-small" style="float:right" href="{% url 'new_project' %}">New Workspace</a></div>{% endif %}
     <h2 class="display-5 mb-4">You have these current workspace:</h2>
     {% for project in user_projects %}
         <div>

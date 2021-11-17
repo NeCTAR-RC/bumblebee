@@ -457,6 +457,13 @@ def _notify_managers_to_review_project(project, action):
 @user_passes_test(test_func=agreed_to_terms, login_url='terms',
                   redirect_field_name=None)
 def new_project(request):
+    limit = getattr(settings, 'LIMIT_WORKSPACES_PER_USER', 0)
+    if limit:
+        if Project.objects.filter(project_admin=request.user).count() >= limit:
+            return render(request,
+                          'researcher_workspace/project/no_more_projects.html',
+                          {'limit': limit})
+
     if request.method == 'POST':
         my_project = Project(project_admin=request.user)
         form = ProjectForm(request.POST, instance=my_project)
@@ -477,8 +484,14 @@ def new_project(request):
 @user_passes_test(test_func=agreed_to_terms, login_url='terms',
                   redirect_field_name=None)
 def projects(request):
-    user_projects = Project.objects.filter(project_admin=request.user).order_by('-created')
-    return render(request, 'researcher_workspace/project/project_list.html', {'user_projects': user_projects})
+    limit = getattr(settings, 'LIMIT_WORKSPACES_PER_USER', 0)
+    user_projects = Project.objects.filter(project_admin=request.user) \
+                                   .order_by('-created')
+    allow_new_project = limit == 0 or limit < user_projects.count()
+    return render(request,
+                  'researcher_workspace/project/project_list.html',
+                  {'user_projects': user_projects,
+                   'allow_new_project': allow_new_project})
 
 
 @login_required(login_url='login')

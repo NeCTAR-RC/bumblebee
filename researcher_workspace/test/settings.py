@@ -263,6 +263,9 @@ GENERAL_WARNING_MESSAGE = ""
 # Current version number for the terms and conditions
 TERMS_VERSION = 1
 
+# Users are limited to this number of workspaces.  Use zero for unlimited
+LIMIT_WORKSPACES_PER_USER = 1
+
 # Values that need to be set in local_settings.py
 PROXY_URL = False
 SECRET_KEY = 'secret'

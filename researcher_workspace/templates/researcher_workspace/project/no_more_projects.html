@@ -1,0 +1,16 @@
+{% extends 'common/base.html' %}
+
+{% block breadcrumb %}
+<li itemprop="itemListElement" itemscope="" itemtype="http://schema.org/ListItem">
+    <a href="{% url 'projects' %}" itemprop="item" title="Workspaces">
+        <span itemprop="name">Workspaces</span>
+    </a>
+    <meta content="2" itemprop="position" />
+</li>
+{% endblock breadcrumb %}
+
+{% block content %}
+<div class="container py-5">
+  <p>Users are currently limited to {{ limit }} workspace{{ limit|pluralize }}.</p>
+</div>
+{% endblock %}
