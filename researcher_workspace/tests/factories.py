@@ -19,3 +19,11 @@ class FeatureFactory(factory.django.DjangoModelFactory):
     name = fuzzy.FuzzyText(length=16)
     description = fuzzy.FuzzyText(length=16)
     app_name = fuzzy.FuzzyText(length=8)
+
+
+class ProjectFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = 'researcher_workspace.Project'
+
+    title = fuzzy.FuzzyText(length=16)
+    description = fuzzy.FuzzyText(length=64)

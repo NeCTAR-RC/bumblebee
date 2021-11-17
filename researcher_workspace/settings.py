@@ -265,6 +265,13 @@ TERMS_VERSION = 1
 # Users are limited to this number of workspaces.  Use zero for unlimited
 LIMIT_WORKSPACES_PER_USER = 1
 
+# If True, requests for new workspaces will be auto-approved
+AUTO_APPROVE_WORKSPACES = True
+
+# A list of Features that are permitted by default when a Workspace
+# is approved.  (A list of the Feature 'app_name' values.)
+PROJECT_DEFAULT_FEATURES = ['researcher_desktop']
+
 # Values that need to be set in local_settings.py
 PROXY_URL = False
 SECRET_KEY = ''

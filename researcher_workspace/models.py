@@ -4,7 +4,7 @@ from datetime import datetime, timedelta, timezone
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.contrib.auth.models import AbstractUser, User, Group
+from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.http import Http404
 from django.utils.html import format_html
@@ -97,21 +97,28 @@ class Project(models.Model):
 
     objects = ProjectManager()
 
-    def accept(self):
+    def accept(self, enable_default_features=True):
         self.ARO_approval = True
         self.ARO_responded_on = datetime.now(timezone.utc)
         self.save()
-        self.project_admin.email_user("Orion Project Request - Approved",
-                                      f"Your project request - \"{self.title}\" has been approved. \n"
-                                      f"Please login to {settings.SITE_URL} to explore the features offered.")
+        if enable_default_features:
+            for app_name in settings.PROJECT_DEFAULT_FEATURES:
+                feature = Feature.objects.get(app_name=app_name)
+                permission = Permission(project=self, feature=feature)
+                permission.save()
+        self.project_admin.email_user(
+            "Orion Project Request - Approved",
+            f"Your project request - \"{self.title}\" has been approved. \n"
+            f"Please login to {settings.SITE_URL} to explore the features offered.")
 
     def deny(self):
         self.ARO_approval = False
         self.ARO_responded_on = datetime.now(timezone.utc)
         self.save()
-        self.project_admin.email_user("Orion Project Request - Denied",
-                                      f"Your project request - \"{self.title}\" has been denied. \n"
-                                      f"Please check with your ARO for further details.")
+        self.project_admin.email_user(
+            "Orion Project Request - Denied",
+            f"Your project request - \"{self.title}\" has been denied. \n"
+            f"Please check with your ARO for further details.")
 
     def __str__(self):
         return "Project(" + str(self.id) + ") " + str(self.title) + " for " + str(self.project_admin)

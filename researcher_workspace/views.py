@@ -457,7 +457,7 @@ def _notify_managers_to_review_project(project, action):
 @user_passes_test(test_func=agreed_to_terms, login_url='terms',
                   redirect_field_name=None)
 def new_project(request):
-    limit = getattr(settings, 'LIMIT_WORKSPACES_PER_USER', 0)
+    limit = settings.LIMIT_WORKSPACES_PER_USER
     if limit:
         if Project.objects.filter(project_admin=request.user).count() >= limit:
             return render(request,
@@ -469,15 +469,24 @@ def new_project(request):
         form = ProjectForm(request.POST, instance=my_project)
         if form.is_valid():
             form.save()
-            _notify_managers_to_review_project(my_project, "created")
-            messages.success(request, format_html(
-                f'Your project <strong>{my_project.title}</strong> has been created. '
-                f'You may start using it once it has been approved by the ARO'))
+            if settings.AUTO_APPROVE_WORKSPACES:
+                my_project.accept()
+                messages.success(request, format_html(
+                    f'Your workspace <strong>{my_project.title}</strong> '
+                    f'has been created and auto-approved.'))
+            else:
+                _notify_managers_to_review_project(my_project, "created")
+                messages.success(request, format_html(
+                    f'Your workspace <strong>{my_project.title}</strong> '
+                    f'has been created. '
+                    f'You may start using it once it has been approved.'))
             return HttpResponseRedirect(reverse('projects'))
     else:
         form = ProjectForm()
-    required_fields = [field_name for field_name, field in form.fields.items() if field.required]
-    return render(request, 'researcher_workspace/project/project_new.html', {'form': form, 'required_fields': required_fields})
+    required_fields = [field_name for field_name, field in form.fields.items()
+                       if field.required]
+    return render(request, 'researcher_workspace/project/project_new.html',
+                  {'form': form, 'required_fields': required_fields})
 
 
 @login_required(login_url='login')
