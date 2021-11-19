@@ -252,6 +252,12 @@ MESSAGE_TAGS = {
 # must be set to localhost if we want to use 'debug' in templates...
 INTERNAL_IPS = "127.0.0.1"
 
+# Freshdesk details for ticket interactions and / or email outbounding
+FRESHDESK_DOMAIN = "nectar.org.au"
+FRESHDESK_KEY = "secret"
+FRESHDESK_GROUP_ID = '1'
+FRESHDESK_EMAIL_CONFIG_ID = '123'
+
 USER_LIMIT = 350  # 200 researchers + 25 support staff + 25 non-valid users we've got so far
 
 # The page that users are redirected to after using invitation token
