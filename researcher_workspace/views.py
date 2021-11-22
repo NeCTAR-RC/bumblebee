@@ -480,7 +480,7 @@ def new_project(request):
                     f'Your workspace <strong>{my_project.title}</strong> '
                     f'has been created. '
                     f'You may start using it once it has been approved.'))
-            return HttpResponseRedirect(reverse('projects'))
+            return HttpResponseRedirect(reverse('home'))
     else:
         form = ProjectForm()
     required_fields = [field_name for field_name, field in form.fields.items()
