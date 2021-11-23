@@ -102,11 +102,11 @@
         {% if user.is_superuser %}
           <div class="debug_header"></div>
         {% endif %}
-      {% endif %}
+      {% endif %} 
       <div class="toast-container position-absolute top-0 end-0 pt-5 pe-3">
         {% for message in messages %}
-          <div class="message-toast toast align-items-center text-white bg-primary border-0" role="alert" aria-live="assertive" aria-atomic="true">
-            <div class="d-flex">
+          <div class="message-toast toast align-items-center text-white bg-{{ message.tags }} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-message d-flex">
               <div class="toast-body">
                 {{ message }}
               </div>
