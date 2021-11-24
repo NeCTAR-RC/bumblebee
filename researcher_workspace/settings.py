@@ -54,7 +54,6 @@ MANAGERS = ADMINS
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = bool(strtobool(get_setting('DEBUG', 'False')))
 
-
 ALLOWED_HOSTS = get_setting('ALLOWED_HOSTS', 'localhost').split(',')
 
 # Application definition
@@ -187,9 +186,6 @@ STATICFILES_DIRS = [
     os.path.join(BASE_DIR, "researcher_workspace/static"),
 ]
 
-COMPRESS_ENABLED = get_setting('COMPRESS_ENABLED', not DEBUG)
-COMPRESS_OFFLINE = get_setting('COMPRESS_OFFLINE', not DEBUG)
-
 COMPRESS_PRECOMPILERS = (
     ('text/x-scss', 'django_libsass.SassCompiler'),
 )
@@ -308,12 +304,17 @@ try:
 except ImportError:
     pass
 
+COMPRESS_ENABLED = get_setting('COMPRESS_ENABLED', not DEBUG)
+COMPRESS_OFFLINE = get_setting('COMPRESS_OFFLINE', not DEBUG)
+
+# If True, requests for new workspaces will be auto-approved
+AUTO_APPROVE_WORKSPACES = bool(strtobool(get_setting('DEBUG', 'True')))
+
 # OpenID Connect settings
 OIDC_OP_AUTHORIZATION_ENDPOINT = f'{OIDC_SERVER_URL}/auth'
 OIDC_OP_TOKEN_ENDPOINT = f'{OIDC_SERVER_URL}/token'
 OIDC_OP_USER_ENDPOINT = f'{OIDC_SERVER_URL}/userinfo'
 OIDC_OP_JWKS_ENDPOINT = f'{OIDC_SERVER_URL}/certs'
-
 
 # Expand settings based on DEBUG override from local_settings.py
 if DEBUG:

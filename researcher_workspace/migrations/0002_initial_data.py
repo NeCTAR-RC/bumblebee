@@ -3,7 +3,7 @@
 from django.db import migrations
 
 features = [
-    {"name": "Researcher Desktop", "app_name": "researcher_desktop", "currently_available": True,
+    {"name": "Virtual Desktop", "app_name": "researcher_desktop", "currently_available": True,
         "feature_or_service": True, "auto_approved": True, "beta": True, "closed_beta": False,
         "description": "Researcher desktop provides users access to an easy to use, quick to launch computer running in the Melbourne Research Cloud. This provides extra computing power for your research, a computer that's always on and always available to be running computation, scraping APIs, or running programs you can't run on your own computer."},
 ]

@@ -9,7 +9,18 @@ from researcher_desktop.constants import APP_NAME
 
 class Migration(migrations.Migration):
 
-    def addDesktopTypes(apps, schema_editor):
+    def add(apps, schema_editor):
+        AvailabilityZone = apps.get_model('researcher_desktop',
+                                          'AvailabilityZone')
+        Domain = apps.get_model('researcher_desktop', 'Domain')
+
+        if hasattr(settings, 'ZONES'):
+            for z in settings.ZONES:
+                (zone, _) = AvailabilityZone.objects.get_or_create(
+                    name=z['name'], zone_weight=int(z['zone_weight']))
+                for d in z.get('domains', []):
+                    domain = Domain.objects.create(name=d, zone=zone)
+
         Feature = apps.get_model('researcher_workspace', 'Feature')
         app_feature = Feature.objects.get(app_name=APP_NAME)
         DesktopType = apps.get_model('researcher_desktop', 'DesktopType')
@@ -24,17 +35,23 @@ class Migration(migrations.Migration):
                 filtered_desktop_type = {
                     key: value for (key, value) in desktop_type.items()
                     if key in field_names}
-                DesktopType.objects.create(**filtered_desktop_type,
-                                           feature=app_feature)
+                zone_list = filtered_desktop_type.pop('restrict_to_zones', [])
+                zones = AvailabilityZone.objects.filter(name__in=zone_list)
+                dt = DesktopType.objects.create(**filtered_desktop_type,
+                                                feature=app_feature)
+                dt.restrict_to_zones.set(zones)
 
-    def removeDesktopTypes(apps, schema_editor):
+    def remove(apps, schema_editor):
         DesktopType = apps.get_model('researcher_desktop', 'DesktopType')
         DesktopType.objects.all().delete()
+
+        AZ = apps.get_model('researcher_desktop', 'AvailabilityZone')
+        AZ.objects.all().delete()
 
     dependencies = [
         ('researcher_desktop', '0001_initial'),
     ]
 
     operations = [
-        migrations.RunPython(addDesktopTypes, removeDesktopTypes)
+        migrations.RunPython(add, remove)
     ]
