@@ -275,7 +275,8 @@ TERMS_VERSION = int(get_setting('TERMS_VERSION', 1))
 LIMIT_WORKSPACES_PER_USER = int(get_setting('LIMIT_WORKSPACES_PER_USER', 1))
 
 # If True, requests for new workspaces will be auto-approved
-AUTO_APPROVE_WORKSPACES = bool(strtobool(get_setting('DEBUG', 'True')))
+AUTO_APPROVE_WORKSPACES = bool(strtobool(
+    get_setting('AUTO_APPROVE_WORKSPACES', 'True')))
 
 # A list of Features that are permitted by default when a Workspace
 # is approved.  (A list of the Feature 'app_name' values.)
