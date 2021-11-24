@@ -1,0 +1,28 @@
+{% extends 'common/base.html' %}
+{% block content %}
+<div class="container py-5">
+  <h2 class="display-5 mb-4">User Settings</h2>
+  <form action="{% block form_submit_url %}{% endblock %}" method="post">
+    {% csrf_token %}
+    <fieldset>
+      <div class="mb-3">
+        <div class="form-label">Timezone</div>
+        <div>{{ form.timezone }}</div>
+      </div>
+    </fieldset>
+    <input class="btn btn-primary" type="submit" value="Save Settings">
+    <button class="btn btn-secondary" onclick="javascript:history.back(); return false;">Cancel</button>
+  </form>
+</div>
+{% endblock %}
+
+{% block script %}
+    <script type="text/javascript">
+        var req_fields = {{ required_fields|safe }};
+        for(i = 0; i < req_fields.length; i++){
+            document.querySelectorAll('label[for="id_' + req_fields[i] + '"]').forEach(x=>x.setAttribute('data-required', 'true'));
+            document.querySelectorAll('label[for="id_' + req_fields[i] + '_0"]').forEach(x=>x.setAttribute('data-required', 'true'));
+        };
+        document.querySelectorAll('label > span').forEach(x=>x.parentElement.removeAttribute('data-required'));
+    </script>
+{% endblock script %}

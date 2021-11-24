@@ -19,3 +19,5 @@ phone_home:
     - instance_id
     - hostname
   tries: 10
+
+timezone: {{ timezone }}

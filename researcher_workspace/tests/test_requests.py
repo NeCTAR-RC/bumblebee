@@ -10,7 +10,8 @@ from django.http import Http404, HttpResponseRedirect
 from django.test import TestCase
 from django.urls import reverse
 
-from researcher_workspace.tests.factories import FeatureFactory, UserFactory
+from researcher_workspace.tests.factories import FeatureFactory, UserFactory, \
+    ProfileFactory
 
 from researcher_workspace.models import User
 from researcher_workspace.views import terms, agree_terms
@@ -68,3 +69,19 @@ class ResearcherWorkspaceRequestTests(TestCase):
         user = User.objects.get(pk=self.user.pk)
         self.assertEqual(settings.TERMS_VERSION, user.terms_version)
         self.assertIsNotNone(user.date_agreed_terms)
+
+    def test_profile(self):
+        # with the AnonymousUser
+        url = reverse("profile")
+        response = self.client.get(url)
+        self.assertRedirects(response, f"/login/?next={url}",
+                             fetch_redirect_response=False)
+
+        # with real user
+        self.user.profile.timezone = "Australia/Brisbane"
+        self.user.profile.save()
+        self.client.force_login(self.user)
+        response = self.client.get(url)
+        self.assertEqual(200, response.status_code)
+        self.assertEqual("Australia/Brisbane",
+                         response.context['form'].initial['timezone'])

@@ -1,5 +1,6 @@
 import csv
 import logging
+import pytz
 from datetime import datetime, timezone
 from io import BytesIO
 from dateutil.relativedelta import relativedelta
@@ -22,9 +23,11 @@ from django.conf import settings
 from researcher_desktop.utils.utils import get_desktop_type, get_applicable_zones
 
 from researcher_workspace.constants import USAGE
-from researcher_workspace.forms import UserSearchForm, ProjectForm, PermissionRequestForm
-from researcher_workspace.models import PermissionRequest, Feature, Project, AROWhitelist, Profile, \
-    add_username_to_whitelist, remove_username_from_whitelist, Permission, FeatureOptions, User
+from researcher_workspace.forms import UserSearchForm, ProjectForm, \
+    ProfileForm, PermissionRequestForm
+from researcher_workspace.models import PermissionRequest, Feature, Project, \
+    AROWhitelist, Profile, add_username_to_whitelist, \
+    remove_username_from_whitelist, Permission, FeatureOptions, User
 
 from researcher_workspace.templatetags.group_filters import has_group
 from researcher_workspace.utils import redirect_home, agreed_to_terms, not_support_staff, offset_month_and_year
@@ -522,6 +525,22 @@ def project_edit(request, project_id):
         form = ProjectForm(instance=project)
     required_fields = [field_name for field_name, field in form.fields.items() if field.required]
     return render(request, 'researcher_workspace/project/project_edit.html', {'form': form, 'required_fields': required_fields})
+
+
+@login_required(login_url='login')
+def profile(request):
+    profile = request.user.profile
+    if request.method == 'POST':
+        form = ProfileForm(request.POST, instance=profile)
+        if form.is_valid():
+            form.save()
+            messages.success(request, format_html(
+                'Your profile has been updated.'))
+            return HttpResponseRedirect(reverse('home'))
+    else:
+        form = ProfileForm(instance=profile)
+    return render(request, 'researcher_workspace/profile.html',
+                  {'form': form, 'timezones': pytz.common_timezones, })
 
 
 @login_required(login_url='login')

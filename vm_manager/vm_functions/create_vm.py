@@ -195,6 +195,7 @@ def _create_instance(user, desktop_type, volume):
     block_device_mapping = copy.deepcopy(n.VM_PARAMS["block_device_mapping"])
     block_device_mapping[0]["uuid"] = volume.id
 
+    desktop_timezone = user.profile.timezone or settings.TIME_ZONE
     user_data_context = {
         'hostname': hostname,
         'notify_url': (settings.SITE_URL
@@ -203,6 +204,7 @@ def _create_instance(user, desktop_type, volume):
                            + reverse('researcher_desktop:phone_home')),
         'username': username,
         'password': crypt.crypt(password, crypt.mksalt(crypt.METHOD_SHA512)),
+        'timezone': desktop_timezone,
     }
     user_data = render_to_string('vm_manager/cloud-config',
                                  user_data_context)

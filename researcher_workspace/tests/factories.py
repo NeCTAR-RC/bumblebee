@@ -12,6 +12,11 @@ class UserFactory(factory.django.DjangoModelFactory):
     email = fuzzy.FuzzyText(length=8, suffix='@example.com')
 
 
+class ProfileFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = 'researcher_workspace.Profile'
+
+
 class FeatureFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = 'researcher_workspace.Feature'

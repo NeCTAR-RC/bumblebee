@@ -189,6 +189,7 @@ class PermissionRequest(models.Model):
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     last_selected_project = models.ForeignKey(Project, on_delete=models.SET_NULL, null=True, blank=True)
+    timezone = models.CharField(max_length=100, blank=True)
 
     def get_last_selected_project(self):
         last_selected = self.last_selected_project

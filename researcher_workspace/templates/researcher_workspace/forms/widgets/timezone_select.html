@@ -1,0 +1,4 @@
+<input name="{{ widget.name }}"{% include "django/forms/widgets/attrs.html" %} placeholder="Type a country or city ..." list="TimezoneOptions" value="{{ widget.value.0 }}">
+<datalist id="TimezoneOptions">
+  {% for group_name, group_choices, group_index in widget.optgroups %}{% for option in group_choices %}{% include option.template_name with widget=option %}{% endfor %}{% endfor %}
+</datalist>

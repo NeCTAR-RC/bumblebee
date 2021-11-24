@@ -1,8 +1,13 @@
+from pytz import common_timezones
+
 from django import forms
 from django.utils.safestring import mark_safe
 
-from .models import Project
+from .models import Project, Profile
 from .utils.FoR_codes import FOR_CODE_CHOICES
+
+WIDGETS = "researcher_workspace/forms/widgets"
+TIMEZONE_CHOICES = [(tz, tz) for tz in common_timezones]
 
 
 class SpanForm(forms.Form):
@@ -51,10 +56,10 @@ class UserSearchForm(SpanForm):
 
 
 class CustomRadioSelect(forms.RadioSelect):
-    # A copy of django/forms/widgets/multiple_input.html
-    template_name = "researcher_workspace/forms/widgets/custom_radio_select.html"
-    # A copy of django/forms/widgets/input_option.html
-    option_template_name = "researcher_workspace/forms/widgets/custom_radio_select_options.html"
+    # Based on django/forms/widgets/multiple_input.html
+    template_name = f"{WIDGETS}/custom_radio_select.html"
+    # Based on django/forms/widgets/input_option.html
+    option_template_name = f"{WIDGETS}/custom_radio_select_options.html"
 
 
 class ProjectForm(forms.ModelForm):
@@ -71,20 +76,28 @@ class ProjectForm(forms.ModelForm):
     chief_investigator = forms.EmailField(max_length=100)
     chief_investigator.widget.attrs['class'] = 'form-control'
     FoR_code = forms.ChoiceField(choices=FOR_CODE_CHOICES)
-    FoR_code.widget.template_name = \
-        "researcher_workspace/forms/widgets/FoR_code_select.html"
+    FoR_code.widget.template_name = f"{WIDGETS}/FoR_code_select.html"
     FoR_code.widget.option_template_name = \
-        "researcher_workspace/forms/widgets/FoR_code_select_option.html"
+        f"{WIDGETS}/FoR_code_select_option.html"
     FoR_code.widget.attrs['class'] = 'alt form-control'
     FoR_code2 = forms.ChoiceField(choices=FOR_CODE_CHOICES, required=False)
-    FoR_code2.widget.template_name = \
-        "researcher_workspace/forms/widgets/FoR_code_select.html"
+    FoR_code2.widget.template_name = f"{WIDGETS}/FoR_code_select.html"
     FoR_code2.widget.option_template_name = \
-        "researcher_workspace/forms/widgets/FoR_code_select_option.html"
+        f"{WIDGETS}/FoR_code_select_option.html"
     FoR_code2.widget.attrs['class'] = 'alt form-control'
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+
+class ProfileForm(forms.ModelForm):
+
+    class Meta:
+        model = Profile
+        fields = ['timezone']
+
+    timezone = forms.ChoiceField(choices=TIMEZONE_CHOICES)
+    timezone.widget.template_name = f"{WIDGETS}/timezone_select.html"
+    timezone.widget.option_template_name = \
+        f"{WIDGETS}/timezone_select_option.html"
+    timezone.widget.attrs['class'] = 'alt form-control'
 
 
 class PermissionRequestForm(forms.Form):
