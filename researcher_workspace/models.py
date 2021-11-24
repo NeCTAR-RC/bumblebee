@@ -88,12 +88,15 @@ class Project(models.Model):
     sensitive_data = models.BooleanField(default=False)
     FoR_code = models.CharField(max_length=6, choices=[])
     FoR_code2 = models.CharField(max_length=6, choices=[], blank=True)
-    ARO = models.CharField(max_length=100)
+    ARO = models.CharField(max_length=100, null=True, blank=True)
     ARO_approval = models.BooleanField(null=True, blank=True, )
     ARO_responded_on = models.DateTimeField(null=True, blank=True)
-    permissions = models.ManyToManyField(Feature, through='Permission', through_fields=('project', 'feature'))
+    permissions = models.ManyToManyField(
+        Feature, through='Permission', through_fields=('project', 'feature'))
     additional_comments = models.TextField(null=True, blank=True)
-    admin_comments = models.TextField(null=True, blank=True, verbose_name='Admin comments (not visible by users)')
+    admin_comments = models.TextField(
+        null=True, blank=True,
+        verbose_name='Admin comments (not visible to users)')
 
     objects = ProjectManager()
 

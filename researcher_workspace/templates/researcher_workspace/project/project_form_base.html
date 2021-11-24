@@ -5,7 +5,51 @@
 <div class="container py-5">
   <h2 class="display-5 mb-4">{% block form_title %}{% endblock %}</h2>
   <form action="{% block form_submit_url %}{% endblock %}" method="post">
-    {% crispy form %}
+    {% csrf_token %}
+    <fieldset>
+      <div class="mb-3">
+        <div class="form-label">Title</div>
+        <div>{{ form.title }}</div>
+      </div>
+      <div class="mb-3">
+        <div class="form-label">Description</div>
+        <div>{{ form.description }}</div>
+      </div>
+      <div class="mb-3 form-control">
+        <div class="form-label">Field of Research Codes</div>
+        <div class="form-text">
+          <p>Please use the following selectors to specify one or two
+          Field of Research (FoR) codes describing your work.  Note
+          that Nectar / ARDC needs codes for your "field of study"
+          rather than your "research methodology.  Please refer to
+          <a href="https://support.ehelp.edu.au/support/solutions/articles/6000241729">
+            How to use FoR codes in the Nectar Allocation request form</a>
+          for more information.
+          </p>
+        </div>
+        <div class="mb-3">
+          <div class="form-label">First Field of Research Code</div>
+          <div>{{ form.FoR_code }}</div>
+        </div>
+        <div class="mb-3">
+          <div class="form-label">Optional Second Field of Research Code</div>
+          <div>{{ form.FoR_code2 }}</div>
+        </div>
+      </div>
+    </fieldset>
+    <input class="btn btn-primary" type="submit" value="Submit">
+    <button class="btn btn-secondary" onclick="javascript:history.back(); return false;">Cancel</button>
   </form>
 </div>
 {% endblock %}
+
+{% block script %}
+    <script type="text/javascript">
+        var req_fields = {{ required_fields|safe }};
+        for(i = 0; i < req_fields.length; i++){
+            document.querySelectorAll('label[for="id_' + req_fields[i] + '"]').forEach(x=>x.setAttribute('data-required', 'true'));
+            document.querySelectorAll('label[for="id_' + req_fields[i] + '_0"]').forEach(x=>x.setAttribute('data-required', 'true'));
+        };
+        document.querySelectorAll('label > span').forEach(x=>x.parentElement.removeAttribute('data-required'));
+    </script>
+{% endblock script %}

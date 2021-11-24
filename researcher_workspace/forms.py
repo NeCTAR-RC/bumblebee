@@ -64,61 +64,24 @@ class CustomRadioSelect(forms.RadioSelect):
 
 
 class ProjectForm(forms.ModelForm):
+
     class Meta:
         model = Project
-        fields = ['title', 'description', 'FoR_code', 'FoR_code2',
-                  'ARO', 'sensitive_data', 'additional_comments']
+        fields = ['title', 'description', 'FoR_code', 'FoR_code2']
+
     title = forms.CharField(max_length=100)
     description = forms.CharField(widget=forms.Textarea)
-    FoR_code = forms.ChoiceField(choices=FOR_CODE_CHOICES, label="Field of Research Code",
-        help_text='Select up to two Field of Research (FOR) codes describing your work (minimum one).'
-                  ' For more information on FOR codes please refer to the '
-                  '<a href="https://www.abs.gov.au/AUSSTATS/abs@.nsf/Lookup/1297.0Main+Features12020?OpenDocument"'
-                  ' target="_blank">Australian Bureau of Statistics website</a>.',
-    )
-    # FoR_code.widget.option_template_name = "researcher_workspace/forms/widgets/FoR_code_select_option.html"
-    # FoR_code.widget.attrs['class'] = 'alt'
-    FoR_code2 = forms.ChoiceField(choices=FOR_CODE_CHOICES, required=False,
-                                  label="Optional second Field of Research Code"
-    )
-    # FoR_code2.widget.option_template_name = "researcher_workspace/forms/widgets/FoR_code_select_option.html"
-    # FoR_code2.widget.attrs['class'] = 'alt'
-    ARO = forms.EmailField(label="Accountable Resource Owner (ARO)", help_text=
-        '<div class="small">Please enter the email address of the project\'s ARO</div>'
-        '<ul style="padding-bottom:0;">'
-            '<li>For UoM academics on academic research projects specify the most senior University of Melbourne '
-        'investigator.</li>'
-            '<li>For PhD/Masters by Research on higher degree research projects specify the most senior University of '
-        'Melbourne supervisor.</li>'
-            '<li>For professional staff on other activities specify the academic sponsor, head of the managing '
-        'organisation unit, or line supervisor.</li>'
-        '</ul>',
-    )
-    BOOLEAN_CHOICES = ((True, mark_safe('<span>Yes</span>')), (False, mark_safe('<span>No</span>')))
-    # Filtering fields
-    sensitive_data = forms.ChoiceField(
-        label="Does your project involve sensitive data?",
-        label_suffix='',
-        # uses items in BOOLEAN_CHOICES
-        choices=BOOLEAN_CHOICES,
-        widget=CustomRadioSelect,
-    )
+    FoR_code = forms.ChoiceField(choices=FOR_CODE_CHOICES)
+    FoR_code.widget.option_template_name = \
+        "researcher_workspace/forms/widgets/FoR_code_select_option.html"
+    FoR_code.widget.attrs['class'] = 'alt'
+    FoR_code2 = forms.ChoiceField(choices=FOR_CODE_CHOICES, required=False)
+    FoR_code2.widget.option_template_name = \
+        "researcher_workspace/forms/widgets/FoR_code_select_option.html"
+    FoR_code2.widget.attrs['class'] = 'alt'
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['additional_comments'].help_text = "For any project related requests"
-        self.helper = FormHelper()
-        self.helper.form_tag = False
-        self.helper.add_input(Submit('submit', 'Submit'))
-        self.helper.layout = Layout(
-          FloatingField('title'),
-          FloatingField('description', css_class='ch-100'),
-          FloatingField('FoR_code'),
-          FloatingField('FoR_code2'),
-          FloatingField('ARO'),
-          InlineRadios('sensitive_data'),
-          FloatingField('additional_comments', css_class='ch-100'),
-        )
 
 
 class PermissionRequestForm(forms.Form):
