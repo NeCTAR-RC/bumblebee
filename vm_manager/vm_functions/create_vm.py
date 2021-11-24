@@ -100,17 +100,26 @@ def _create_volume(user, desktop_type, zone):
 def _get_source_volume_id(desktop_type, zone):
     n = get_nectar()
     res = n.cinder.volumes.list(
-        search_opts={'name': desktop_type.image_name,
+        search_opts={'name~': desktop_type.image_name,
                      'availability_zone': zone.name})
-    nos_found = len(res) if res else 0
+    # The 'name~' is supposed to be a "fuzzy match", but it doesn't work
+    # as expected.  (Maybe it is a Cinder config thing?)  At any rate,
+    # even if it did work, we still need to do our own filtering to
+    # 1) ensure we have a prefix match, and 2) pick the latest (tested)
+    # image based on the image metadata.
+    candidates = res or []
+    # Interim logic ...
+    matches = [v for v in candidates
+               if v.name.startswith(desktop_type.image_name)]
+    nos_found = len(matches)
     if nos_found != 1:
         prefix = "Multiple source volumes" if nos_found else "No source volume"
         msg = (
-            f"{prefix} with image_name {desktop_type.image_name} "
-            f"in availability zone {zone.name})")
+            f"{prefix} with image names starting with "
+            f"{desktop_type.image_name} in availability zone {zone.name})")
         logger.error(msg)
         raise RuntimeWarning(msg)
-    return res[0].id
+    return matches[0].id
 
 
 def wait_to_create_instance(user, desktop_type, volume, start_time):

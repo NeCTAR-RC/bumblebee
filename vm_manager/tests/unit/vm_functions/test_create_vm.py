@@ -233,6 +233,9 @@ class CreateVMTests(VMFunctionTestBase):
 
         fake = get_nectar()
         fake.cinder.volumes.create.reset_mock()
+        fake.cinder.volumes.list.return_value = [
+            FakeVolume(name=f"{self.UBUNTU.image_name} [42]",
+                       id=str(id))]
 
         result = _create_volume(self.user, self.UBUNTU, self.zone)
         self.assertNotEqual(fake_volume, result)
@@ -245,13 +248,15 @@ class CreateVMTests(VMFunctionTestBase):
         id = uuid.uuid4()
         fake = get_nectar()
         fake.cinder.volumes.list.reset_mock()
-        fake.cinder.volumes.list.return_value = [FakeVolume(id=str(id))]
+        fake.cinder.volumes.list.return_value = [
+            FakeVolume(name=f"{self.UBUNTU.image_name} [42]",
+                       id=str(id))]
 
         self.assertEqual(str(id),
                          _get_source_volume_id(self.UBUNTU, self.zone))
 
         fake.cinder.volumes.list.assert_called_once_with(
-            search_opts={'name': self.UBUNTU.image_name,
+            search_opts={'name~': self.UBUNTU.image_name,
                          'availability_zone': self.zone.name})
 
         fake.cinder.volumes.list.reset_mock()
@@ -261,7 +266,10 @@ class CreateVMTests(VMFunctionTestBase):
 
         fake.cinder.volumes.list.reset_mock()
         fake.cinder.volumes.list.return_value = [
-            FakeVolume(id=str(id)), FakeVolume(id=str(id))]
+            FakeVolume(name=f"{self.UBUNTU.image_name} [42]",
+                       id=str(id)),
+            FakeVolume(name=f"{self.UBUNTU.image_name} [43]",
+                       id=str(id))]
         with self.assertRaises(RuntimeWarning):
             _get_source_volume_id(self.UBUNTU, self.zone)
 
