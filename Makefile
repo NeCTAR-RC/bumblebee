@@ -1,11 +1,19 @@
-NAME     := nectar/bumblebee
-TAG      := $(shell git rev-parse --verify --short HEAD)
-IMG      := ${NAME}:${TAG}
-LATEST   := ${NAME}:latest
-REGISTRY := registry.rc.nectar.org.au/${LATEST}
+PROJECT=bumblebee
+REPO=registry.rc.nectar.org.au/nectar
+
+DESCRIBE=$(shell git describe --tags)
+IMAGE_TAG := $(if $(TAG),$(TAG),$(DESCRIBE))
+IMAGE=$(REPO)/$(PROJECT):$(IMAGE_TAG)
+BUILDER=docker
+BUILDER_ARGS=
 
 
 build:
-	@docker build -t ${IMG} .
-	@docker tag ${IMG} ${LATEST}
-	@docker tag ${IMG} ${REGISTRY}
+	echo "Derived image tag: $(DESCRIBE)"
+	echo "Actual image tag: $(IMAGE_TAG)"
+	$(BUILDER) build -f docker/Dockerfile $(BUILDER_ARGS) -t $(IMAGE) .
+
+push:
+	$(BUILDER) push $(IMAGE)
+
+.PHONY: build push
