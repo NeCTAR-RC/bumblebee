@@ -1,7 +1,7 @@
 PROJECT=bumblebee
 REPO=registry.rc.nectar.org.au/nectar
 
-DESCRIBE=$(shell git describe --tags)
+DESCRIBE=$(shell git describe --tags --always)
 IMAGE_TAG := $(if $(TAG),$(TAG),$(DESCRIBE))
 IMAGE=$(REPO)/$(PROJECT):$(IMAGE_TAG)
 BUILDER=docker
