@@ -1,0 +1,4 @@
+<input name="{{ widget.name }}"{% include "django/forms/widgets/attrs.html" %} placeholder="Type a FoR code or text ..." list="FoRCodeOptions">
+<datalist id="FoRCodeOptions">
+  {% for group_name, group_choices, group_index in widget.optgroups %}{% for option in group_choices %}{% include option.template_name with widget=option %}{% endfor %}{% endfor %}  
+</datalist>
