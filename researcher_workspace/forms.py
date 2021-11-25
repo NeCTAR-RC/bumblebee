@@ -70,15 +70,21 @@ class ProjectForm(forms.ModelForm):
         fields = ['title', 'description', 'FoR_code', 'FoR_code2']
 
     title = forms.CharField(max_length=100)
+    title.widget.attrs['class'] = 'form-control'
     description = forms.CharField(widget=forms.Textarea)
+    description.widget.attrs['class'] = 'form-control'
     FoR_code = forms.ChoiceField(choices=FOR_CODE_CHOICES)
+    FoR_code.widget.template_name = \
+        "researcher_workspace/forms/widgets/FoR_code_select.html"
     FoR_code.widget.option_template_name = \
         "researcher_workspace/forms/widgets/FoR_code_select_option.html"
-    FoR_code.widget.attrs['class'] = 'alt'
+    FoR_code.widget.attrs['class'] = 'alt form-control'
     FoR_code2 = forms.ChoiceField(choices=FOR_CODE_CHOICES, required=False)
+    FoR_code2.widget.template_name = \
+        "researcher_workspace/forms/widgets/FoR_code_select.html"
     FoR_code2.widget.option_template_name = \
         "researcher_workspace/forms/widgets/FoR_code_select_option.html"
-    FoR_code2.widget.attrs['class'] = 'alt'
+    FoR_code2.widget.attrs['class'] = 'alt form-control'
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
