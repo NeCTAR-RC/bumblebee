@@ -91,6 +91,8 @@ class Project(models.Model):
     ARO = models.CharField(max_length=100, null=True, blank=True)
     ARO_approval = models.BooleanField(null=True, blank=True, )
     ARO_responded_on = models.DateTimeField(null=True, blank=True)
+    chief_investigator = models.CharField(
+        max_length=100, null=True, blank=True)
     permissions = models.ManyToManyField(
         Feature, through='Permission', through_fields=('project', 'feature'))
     additional_comments = models.TextField(null=True, blank=True)
