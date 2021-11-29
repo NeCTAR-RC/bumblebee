@@ -12,18 +12,25 @@ var x = setInterval(function () {
 }, 1000);
 
 async function poll_status(url, interval) {
-  while(true) {
-    await new Promise(r => setTimeout(r, interval));
-    fetch(url)
-      .then(resp => resp.json())
-      .then(vmstatus => {
-         console.log(vmstatus);
-         if (vmstatus.state != "{{ VM_WAITING }}") {
-            reloaded = true;
-            window.location.reload(1);
-         }
-      });
-  }
+    while(true) {
+        await new Promise(r => setTimeout(r, interval));
+        fetch(url)
+            .then(resp => resp.json())
+            .then(vm_status => {
+                console.log(vm_status);
+                if (vm_status.status != "{{ VM_WAITING }}") {
+                    reloaded = true;
+                    window.location.reload(1);
+                } else {
+                    var bar = document.getElementById(
+                        "{{ app_name }}-{{ desktop_type.id }}-bar");
+                    var progress = vm_status.status_progress;
+                    bar.setAttribute("aria-valuenow", progress);
+                    bar.setAttribute("style", "width: " + progress + "%");
+                    bar.innerHTML = vm_status.status_message;
+                }
+            });
+    }
 }
 
 {% with app_name|add:":status_vm" as url_path %}

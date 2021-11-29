@@ -138,9 +138,8 @@ def phone_home(request):
 @user_passes_test(test_func=agreed_to_terms, login_url='terms',
                   redirect_field_name=None)
 def status_vm(request, desktop):
-    state, what_to_show, vm_id = vm_man_views.get_vm_state(
-        request.user, get_desktop_type(desktop))
-    result = {'state': state, 'status': what_to_show}
+    desktop_type = get_desktop_type(desktop)
+    result = vm_man_views.get_vm_status(request.user, desktop_type)
     return JsonResponse(result)
 
 

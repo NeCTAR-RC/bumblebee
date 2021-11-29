@@ -156,6 +156,8 @@ CRISPY_TEMPLATE_PACK = 'bootstrap5'
 LOGIN_REDIRECT_URL = reverse_lazy('home')
 LOGOUT_REDIRECT_URL = reverse_lazy('index')
 
+DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
+
 OS_AUTH_URL = "https://keystone.rc.nectar.org.au:5000/v3/"
 OS_AUTH_TYPE = 'v3applicationcredential'
 OS_AVAILABILITY_ZONE = 'some-az'

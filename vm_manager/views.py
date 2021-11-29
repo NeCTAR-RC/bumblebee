@@ -6,6 +6,7 @@ from math import ceil
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.forms.models import model_to_dict
 from django.http import HttpResponseRedirect, Http404
 from django.template import loader
 from django.urls import reverse
@@ -336,6 +337,11 @@ def get_vm_state(user, desktop_type):
     raise NotImplementedError
 
 
+def get_vm_status(user, desktop_type):
+    vm_status = VMStatus.objects.get_latest_vm_status(user, desktop_type)
+    return model_to_dict(vm_status)
+
+
 def render_vm(request, user, desktop_type, buttons_to_display):
     state, what_to_show, vm_id = get_vm_state(user, desktop_type)
     app_name = desktop_type.feature.app_name
@@ -353,7 +359,7 @@ def render_vm(request, user, desktop_type, buttons_to_display):
         "buttons_to_display": buttons_to_display,
         "app_name": app_name,
         "requesting_feature": desktop_type.feature,
-        "VM_WAITING": VM_WAITING
+        "VM_WAITING": VM_WAITING,
     }
 
     vm_module = loader.render_to_string(f'vm_manager/html/{state}.html',
@@ -426,6 +432,8 @@ def phone_home(request, requesting_feature):
     volume.save()
     vm_status = VMStatus.objects.get_vm_status_by_instance(
         instance, requesting_feature)
+    vm_status.status_progress = 100
+    vm_status.status_message = 'Instance ready'
     vm_status.status = VM_OKAY
     vm_status.save()
     result = f"Phone home for {instance} successful!"

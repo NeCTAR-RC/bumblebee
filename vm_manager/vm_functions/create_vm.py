@@ -9,8 +9,8 @@ from django.conf import settings
 from django.template.loader import render_to_string
 from django.urls import reverse
 
-from vm_manager.constants import VOLUME_CREATION_TIMEOUT, NO_VM, \
-    VM_OKAY, LINUX
+from vm_manager.constants import VOLUME_CREATION_TIMEOUT, \
+    INSTANCE_LAUNCH_TIMEOUT, NO_VM, VM_OKAY, LINUX
 from vm_manager.utils.utils import get_nectar, generate_server_name, \
     generate_hostname, generate_hostname_url, generate_password
 from vm_manager.models import Instance, Volume, VMStatus
@@ -61,6 +61,12 @@ def _create_volume(user, desktop_type, zone):
                 raise RuntimeWarning(msg)
 
             return volume
+
+    vm_status = VMStatus.objects.get_latest_vm_status(user, desktop_type)
+    if vm_status:
+        vm_status.status_progress = 25
+        vm_status.status_message = 'Creating volume'
+        vm_status.save()
 
     name = generate_server_name(user.username, operating_system)
     source_volume_id = _get_source_volume_id(desktop_type, zone)
@@ -133,8 +139,8 @@ def wait_to_create_instance(user, desktop_type, volume, start_time):
         instance = _create_instance(user, desktop_type, volume)
         vm_status = VMStatus.objects.get_latest_vm_status(user, desktop_type)
         vm_status.instance = instance
-        if volume.shelved:
-            vm_status.status = VM_OKAY
+        vm_status.status_progress = 50
+        vm_status.status_message = 'Volume created, launching instance'
         vm_status.save()
 
         # Set the Shelved flag to False
@@ -142,6 +148,10 @@ def wait_to_create_instance(user, desktop_type, volume, start_time):
         volume.save()
         logger.info(f'{desktop_type.name} VM creation initiated '
                     f'for {user.username}')
+        scheduler = django_rq.get_scheduler('default')
+        scheduler.enqueue_in(timedelta(seconds=5), wait_for_instance_active,
+                             user, desktop_type, instance,
+                             datetime.now(timezone.utc))
 
     elif (now - start_time > timedelta(seconds=VOLUME_CREATION_TIMEOUT)):
         logger.error(f"Volume took too long to create: user:{user} "
@@ -149,10 +159,11 @@ def wait_to_create_instance(user, desktop_type, volume, start_time):
                      f"volume.status:{openstack_volume.status} "
                      f"start_time:{start_time} "
                      f"datetime.now:{now}")
+        msg = "Volume took too long to create"
         vm_status = VMStatus.objects.get_latest_vm_status(user, desktop_type)
         vm_status.status = NO_VM
+        vm_status.status_message = msg
         vm_status.save()
-        msg = "Volume took too long to create"
         volume.error(msg)
         volume.save()
         raise TimeoutError(msg)
@@ -218,3 +229,31 @@ def _create_instance(user, desktop_type, volume):
     logger.info(f"Completed creating {instance}")
 
     return instance
+
+
+def wait_for_instance_active(user, desktop_type, instance, start_time):
+    now = datetime.now(timezone.utc)
+    if instance.check_active_status():
+        vm_status = VMStatus.objects.get_vm_status_by_instance(
+            instance, desktop_type.feature)
+        vm_status.status_progress = 75
+        vm_status.status_message = 'Instance launched; waiting for boot'
+        vm_status.save()
+    elif (now - start_time > timedelta(seconds=INSTANCE_LAUNCH_TIMEOUT)):
+        logger.error(f"Instance took too long to launch: user:{user} "
+                     f"operating_system:{desktop_type.id} instance:{instance} "
+                     f"instance.status:{instance.get_status()} "
+                     f"start_time:{start_time} "
+                     f"datetime.now:{now}")
+        msg = "Instance took too long to launch"
+        vm_status = VMStatus.objects.get_latest_vm_status(user, desktop_type)
+        vm_status.status = NO_VM
+        vm_status.status_message = msg
+        vm_status.save()
+        instance.error(msg)
+        instance.save()
+        raise TimeoutError(msg)
+    else:
+        scheduler = django_rq.get_scheduler('default')
+        scheduler.enqueue_in(timedelta(seconds=5), wait_for_instance_active,
+                             user, desktop_type, instance, start_time)
