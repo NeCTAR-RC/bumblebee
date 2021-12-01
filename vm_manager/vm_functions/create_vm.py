@@ -140,7 +140,10 @@ def wait_to_create_instance(user, desktop_type, volume, start_time):
         vm_status = VMStatus.objects.get_latest_vm_status(user, desktop_type)
         vm_status.instance = instance
         vm_status.status_progress = 50
-        vm_status.status_message = 'Volume created, launching instance'
+        if volume.shelved:
+            vm_status.status_message = 'Unshelving instance'
+        else:
+            vm_status.status_message = 'Volume created, launching instance'
         vm_status.save()
 
         # Set the Shelved flag to False

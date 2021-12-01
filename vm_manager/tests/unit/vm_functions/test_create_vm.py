@@ -149,6 +149,9 @@ class CreateVMTests(VMFunctionTestBase):
         mock_scheduler.enqueue_in.assert_called_once_with(
             timedelta(seconds=5), wait_for_instance_active,
             self.user, self.UBUNTU, fake_instance, now)
+        updated_status = VMStatus.objects.get(pk=fake_status.pk)
+        self.assertEqual(VM_SHELVED, updated_status.status)
+        self.assertEqual(50, updated_status.status_progress)
 
     @patch('vm_manager.utils.utils.Nectar', new=FakeNectar)
     @patch('vm_manager.vm_functions.create_vm.django_rq')
@@ -172,6 +175,7 @@ class CreateVMTests(VMFunctionTestBase):
 
         updated_status = VMStatus.objects.get(pk=fake_status.pk)
         self.assertEqual(NO_VM, updated_status.status)
+        self.assertEqual(0, updated_status.status_progress)
 
         updated_volume = Volume.objects.get(id=fake_volume.id)
         self.assertEqual("Volume took too long to create",
@@ -402,7 +406,8 @@ class CreateVMTests(VMFunctionTestBase):
         mock_scheduler = Mock()
         mock_rq.get_scheduler.return_value = mock_scheduler
         fake_nectar = get_nectar()
-        _, fake_instance, fake_status = self.build_fake_vol_inst_status()
+        _, fake_instance, fake_status = self.build_fake_vol_inst_status(
+            status=VM_WAITING)
         fake_nectar.nova.servers.get.return_value = FakeServer(
             id=fake_instance.id, status='ACTIVE')
 
@@ -413,6 +418,6 @@ class CreateVMTests(VMFunctionTestBase):
         mock_rq.get_scheduler.assert_not_called()
 
         updated_status = VMStatus.objects.get(pk=fake_status.pk)
-        self.assertEqual(VM_OKAY, updated_status.status)
         # (Still waiting for the boot callback ...)
+        self.assertEqual(VM_WAITING, updated_status.status)
         self.assertEqual(75, updated_status.status_progress)

@@ -52,9 +52,11 @@ class VMFunctionTestBase(TestCase):
         return fake_volume, fake_instance
 
     def build_fake_vol_inst_status(self, volume_id=None, instance_id=None,
-                                   status=VM_OKAY):
+                                   ip_address=None, status=VM_OKAY):
         fake_volume, fake_instance = self.build_fake_vol_instance(
-            volume_id=volume_id, instance_id=instance_id)
+            volume_id=volume_id,
+            instance_id=instance_id,
+            ip_address=ip_address)
         fake_vmstatus = VMStatusFactory.create(
             user=self.user,
             instance=fake_instance,

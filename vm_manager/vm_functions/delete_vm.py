@@ -12,6 +12,7 @@ from vm_manager.constants import INSTANCE_DELETION_RETRY_WAIT_TIME, \
     INSTANCE_DELETION_RETRY_COUNT, \
     INSTANCE_CHECK_SHUTOFF_RETRY_WAIT_TIME, \
     INSTANCE_CHECK_SHUTOFF_RETRY_COUNT, LINUX
+from vm_manager.models import VMStatus
 from vm_manager.utils.utils import get_nectar, generate_hostname_url
 
 from guacamole.models import GuacamoleConnection
@@ -53,7 +54,7 @@ def _check_instance_is_shutoff_and_delete(
         instance, retries, func, func_args):
     scheduler = django_rq.get_scheduler('default')
     if not instance.check_shutdown_status() and retries > 0:
-        # If the instance is not Shutoff, schedule the check after 10 seconds
+        # If the instance is not Shutoff, schedule the recheck
         logger.info(f"{instance} is not shutoff yet! Will check again in "
                     f"{INSTANCE_CHECK_SHUTOFF_RETRY_WAIT_TIME} seconds")
         scheduler.enqueue_in(
@@ -62,13 +63,22 @@ def _check_instance_is_shutoff_and_delete(
             retries - 1, func, func_args)
         return
     if retries <= 0:
+        # TODO - not sure we should delete the instance anyway ...
         logger.info(f"Ran out of retries. {instance} shutoff took too long."
                     f"Proceeding to delete Openstack instance anyway!")
 
-    # delete instance
+    # Delete the instance
+    vm_status = VMStatus.objects.get_vm_status_by_instance(
+        instance, instance.boot_volume.requesting_feature)
+    vm_status.status_progress = 66
+    # Hack: since this won't be displayed when we are deleting a
+    # desktop, use the progress message for the shelving case.
+    vm_status.status_message = 'Instance shelving'
+    vm_status.save()
     _delete_instance_worker(instance)
 
-    # delete volume
+    # The 'func' will do the next step; e.g. delete the volume
+    # or mark the volume as shelved.
     scheduler.enqueue_in(
         timedelta(seconds=INSTANCE_DELETION_RETRY_WAIT_TIME),
         func, *func_args)

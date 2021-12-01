@@ -29,6 +29,12 @@ def shelve_vm_worker(instance, requesting_feature):
         logger.error(f"Trying to shelve an instance that's missing "
                      f"from OpenStack {instance}")
 
+    vm_status = VMStatus.objects.get_vm_status_by_instance(
+        instance, requesting_feature)
+    vm_status.status_progress = 33
+    vm_status.status_message = 'Instance stopping'
+    vm_status.save()
+
     # Confirm instance is ShutOff and then Delete it
     scheduler = django_rq.get_scheduler('default')
     scheduler.enqueue_in(
@@ -39,8 +45,7 @@ def shelve_vm_worker(instance, requesting_feature):
         (instance, INSTANCE_DELETION_RETRY_COUNT, requesting_feature))
 
 
-def _confirm_instance_deleted(instance, instance_deletion_retries,
-                              requesting_feature):
+def _confirm_instance_deleted(instance, retries, requesting_feature):
     n = get_nectar()
     try:
         my_instance = n.nova.servers.get(instance.id)
@@ -57,6 +62,8 @@ def _confirm_instance_deleted(instance, instance_deletion_retries,
         volume.save()
         vm_status = VMStatus.objects.get_vm_status_by_instance(
             instance, requesting_feature)
+        vm_status.status_progress = 100
+        vm_status.staus_message = 'Instance shelved'
         vm_status.status = VM_SHELVED
         vm_status.save()
         return
@@ -65,30 +72,17 @@ def _confirm_instance_deleted(instance, instance_deletion_retries,
                      f"for {instance}, it returned {e}")
         return
 
-    # Openstack still has the instance, and was able to return it to us
-    if instance_deletion_retries == 0:
-        _delete_instance_worker(instance)
-        scheduler = django_rq.get_scheduler('default')
-        # Note in this case I'm using `minutes=` not `seconds=` to
-        # give a long wait time that should be sufficient
-        scheduler.enqueue_in(
-            timedelta(minutes=INSTANCE_DELETION_RETRY_WAIT_TIME),
-            _confirm_instance_deleted, instance,
-            instance_deletion_retries - 1, requesting_feature)
-        return
-
-    if instance_deletion_retries <= 0:
-        error_message = f"ran out of retries trying to shelve"
+    if retries <= 0:
+        error_message = (f"ran out of retries trying to "
+                         f"terminate shelved instance")
         instance.error(error_message)
         logger.error(error_message + " " + instance)
-        return
-
-    _delete_instance_worker(instance)
-    scheduler = django_rq.get_scheduler('default')
-    scheduler.enqueue_in(
-        timedelta(seconds=INSTANCE_DELETION_RETRY_WAIT_TIME),
-        _confirm_instance_deleted, instance,
-        instance_deletion_retries - 1, requesting_feature)
+    else:
+        scheduler = django_rq.get_scheduler('default')
+        scheduler.enqueue_in(
+            timedelta(seconds=INSTANCE_DELETION_RETRY_WAIT_TIME),
+            _confirm_instance_deleted, instance,
+            retries - 1, requesting_feature)
 
 
 def unshelve_vm_worker(user, desktop_type, zone):

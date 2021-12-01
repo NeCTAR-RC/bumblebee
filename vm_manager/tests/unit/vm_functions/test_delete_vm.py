@@ -16,7 +16,7 @@ from vm_manager.tests.fakes import Fake, FakeServer, FakeVolume, FakeNectar
 from vm_manager.tests.unit.vm_functions.base import VMFunctionTestBase
 
 from vm_manager.constants import ACTIVE, SHUTDOWN, \
-    VM_MISSING, VM_OKAY, VM_SHELVED, NO_VM, \
+    VM_MISSING, VM_OKAY, VM_SHELVED, VM_WAITING, NO_VM, \
     INSTANCE_CHECK_SHUTOFF_RETRY_WAIT_TIME, \
     INSTANCE_DELETION_RETRY_WAIT_TIME, \
     INSTANCE_CHECK_SHUTOFF_RETRY_COUNT, INSTANCE_DELETION_RETRY_COUNT
@@ -109,7 +109,8 @@ class DeleteVMTests(VMFunctionTestBase):
                                       mock_rq, mock_get_nectar):
         mock_scheduler = Mock()
         mock_rq.get_scheduler.return_value = mock_scheduler
-        _, fake_instance = self.build_fake_vol_instance(ip_address='10.0.0.99')
+        _, fake_instance, fake_status = self.build_fake_vol_inst_status(
+            ip_address='10.0.0.99', status=VM_WAITING)
         funky = Fake()
         funky_args = (1, 2)
 
@@ -128,6 +129,9 @@ class DeleteVMTests(VMFunctionTestBase):
         mock_scheduler.enqueue_in.assert_called_once_with(
             timedelta(seconds=INSTANCE_DELETION_RETRY_WAIT_TIME),
             funky, *funky_args)
+        updated_status = VMStatus.objects.get(pk=fake_status.pk)
+        self.assertEqual(66, updated_status.status_progress)
+        self.assertIsNotNone(updated_status.status_message)
 
     @patch('vm_manager.vm_functions.delete_vm.get_nectar')
     @patch('vm_manager.vm_functions.delete_vm.logger')
