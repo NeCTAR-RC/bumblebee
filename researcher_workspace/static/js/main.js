@@ -6,6 +6,11 @@ var alertMessages = alertMessageList.map(function (toastEl) {
   });
 });
 
+var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'))
+var popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
+  return new bootstrap.Popover(popoverTriggerEl)
+})
+
 // Window ready event
 window.onload = function() {
   alertMessages.forEach(toast => toast.show()); // Show any alert messages

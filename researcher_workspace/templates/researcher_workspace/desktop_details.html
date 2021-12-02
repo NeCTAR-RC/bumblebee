@@ -10,11 +10,13 @@
           <!-- <h1>{{ desktop_type.name }}</h1> -->
         </div>
         <div class="desktop-header-button d-none d-sm-inline-block align-self-center">
-          <button class="btn btn-success" title="Launch {{ desktop_type.name }}"
-                  data-bs-toggle="modal" {% if not launch_allowed %}disabled{% endif %}
-                  data-bs-target="#{{ app_name }}-{{ desktop_type.id }}-launch-modal">
-            Create Desktop <i class="fas fa-plus"></i>
-          </button>
+          {% if launch_allowed %}
+            <button class="btn btn-success" title="Launch {{ desktop_type.name }}" data-bs-toggle="modal" data-bs-target="#{{ app_name }}-{{ desktop_type.id }}-launch-modal">Create Desktop <i class="fas fa-plus"></i>
+          {% else %}
+            <span class="d-inline-block" tabindex="0" data-bs-toggle="popover" data-bs-trigger="hover focus" data-bs-content="You already have a Virtual Desktop.">
+              <button class="btn btn-success" disabled title="Launch {{ desktop_type.name }}">Create Desktop <i class="fas fa-plus"></i>
+            </span>
+          {% endif %}
         </div>
       </div>
     </div>

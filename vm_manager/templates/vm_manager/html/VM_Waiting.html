@@ -1,12 +1,11 @@
 {% load mathfilters %}
 <div class="p-5 text-center">
-  <div class="spinner-border" role="status" style="width: 3rem; height: 3rem;">
+  <div class="worker-loader align-middle" role="status">
     <span class="visually-hidden">Loading...</span>
   </div>
 
-  <p class="h5 py-4">
-    Please wait <span id="{{ app_name }}-{{ desktop_type.id }}-time">
-    {{ what_to_show|intdiv:60 }}:{{ what_to_show|mod:60|stringformat:"02d" }}</span> for your {{ requesting_feature }} to be ready.
+  <p class="h5 py-1 py-sm-2 py-md-3">
+    The worker is busy... 
   </p>
 
   <div class="progress" style="height: 3em;">
@@ -14,7 +13,6 @@
   </div>
 
   <p class="pt-3">
-    The timer on the button will count down until your {{ desktop_type.name }} {{ requesting_feature }} is ready to launch,
-    at which point the page will auto-refresh. There is no need to refresh the page manually.
+    Please wait for your {{ requesting_feature }} to be ready. When your it's ready, the page will refresh.
   </p>
 </div>
