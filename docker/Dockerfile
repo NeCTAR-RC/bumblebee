@@ -22,13 +22,13 @@ ENV PATH /env/bin:$PATH
 ENV PYTHONPATH /app
 ENV DJANGO_SETTINGS_MODULE researcher_workspace.settings
 
-COPY docker/docker-run.sh docker/docker-setup.sh /
+COPY docker/docker-*.sh /
 COPY docker/apache.conf /etc/apache2/sites-available/000-default.conf
 
-RUN chmod u+x /docker-run.sh /docker-setup.sh
+RUN chmod u+x /docker-*.sh
 RUN echo "ServerName localhost" >> /etc/apache2/apache2.conf
 RUN django-admin collectstatic --noinput && django-admin compress --force
 
 EXPOSE 80
 
-CMD ["/docker-run.sh"]
+CMD ["/docker-run-bumblebee.sh"]

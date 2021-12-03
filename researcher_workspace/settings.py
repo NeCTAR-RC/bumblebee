@@ -27,14 +27,8 @@ logger = logging.getLogger(__name__)
 
 def get_setting(setting, default=None, required=False):
     value = os.environ.get(setting, default)
-    if not value:
-        secret_file_name = setting.lower() + '_store'
-        secret_file_path = os.path.join('/vault/secrets', secret_file_name)
-        if os.path.isfile(secret_file_path):
-            value = secret_key.read_from_file(secret_file_path)
     if required and not value:
-        #raise Exception(f'Setting value for {setting} not found!')
-        logger.info('Setting value for %s not found!' % setting)
+        logger.info('Setting value for %s not found!', setting)
     return value
 
 
@@ -150,7 +144,7 @@ OS_APPLICATION_CREDENTIAL_SECRET = get_setting('OS_APPLICATION_CREDENTIAL_SECRET
 OS_AUTH_URL = get_setting('OS_AUTH_URL', 'https://keystone.rc.nectar.org.au:5000/v3/')
 OS_NETWORK = get_setting('OS_NETWORK', 'bumblebee')
 OS_SECGROUPS = get_setting('OS_SECGROUPS', 'bumblebee').split(',')
-OS_KEYNAME = get_setting('OS_KEYNAME', required=True)
+OS_KEYNAME = get_setting('OS_KEYNAME')
 
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
