@@ -90,6 +90,7 @@ class VMManagerViewTests(TestCase):
             self.user, self.desktop_type)
         self.assertTrue(vm_status != self.vm_status)
         self.assertEqual(VM_CREATING, vm_status.status)
+        self.assertEqual(0, vm_status.status_progress)
         self.assertEqual(self.desktop_type.id, vm_status.operating_system)
         self.assertEqual(self.feature, vm_status.requesting_feature)
         self.assertTrue(now <= vm_status.created)
@@ -141,8 +142,10 @@ class VMManagerViewTests(TestCase):
 
         vm_status = VMStatus.objects.get(pk=self.vm_status.pk)
         self.assertEqual(VM_DELETED, vm_status.status)
+        # No progress changes required when deleting
         self.assertIsNotNone(vm_status.instance.marked_for_deletion)
-        self.assertIsNotNone(vm_status.instance.boot_volume.marked_for_deletion)
+        self.assertIsNotNone(
+            vm_status.instance.boot_volume.marked_for_deletion)
 
         mock_rq.get_queue.assert_called_once_with("default")
         mock_queue.enqueue.assert_called_once_with(
@@ -186,6 +189,7 @@ class VMManagerViewTests(TestCase):
             shelve_vm_worker, self.instance, self.feature)
         vm_status = VMStatus.objects.get(pk=self.vm_status.id)
         self.assertEqual(VM_WAITING, vm_status.status)
+        self.assertEqual(0, vm_status.status_progress)
         self.assertIsNotNone(vm_status.instance.marked_for_deletion)
         self.assertIsNone(vm_status.instance.boot_volume.marked_for_deletion)
 
@@ -229,6 +233,7 @@ class VMManagerViewTests(TestCase):
             self.user, self.desktop_type)
         self.assertTrue(vm_status.pk != self.vm_status.pk)
         self.assertEqual(VM_CREATING, vm_status.status)
+        self.assertEqual(0, vm_status.status_progress)
         self.assertIsNone(vm_status.instance)
         self.assertEqual(vm_status.operating_system, self.desktop_type.id)
         self.assertEqual(vm_status.requesting_feature, self.feature)
@@ -248,7 +253,8 @@ class VMManagerViewTests(TestCase):
                 f"VMStatus for user {self.user}, feature {self.feature}, "
                 f"instance {self.instance.id} is in wrong state ({status}). "
                 f"Cannot reboot VM.",
-                reboot_vm(self.user, self.instance.id, REBOOT_SOFT, self.feature))
+                reboot_vm(self.user, self.instance.id,
+                          REBOOT_SOFT, self.feature))
 
         self.build_existing_vm(VM_OKAY)
         with self.assertRaises(Http404):
@@ -276,6 +282,7 @@ class VMManagerViewTests(TestCase):
             self.user, self.desktop_type)
         self.assertEqual(vm_status.pk, self.vm_status.pk)
         self.assertEqual(VM_OKAY, vm_status.status)
+        self.assertEqual(0, vm_status.status_progress)
         self.assertTrue(now < vm_status.wait_time)
 
     @patch('vm_manager.views.django_rq')
@@ -319,6 +326,7 @@ class VMManagerViewTests(TestCase):
             self.user, self.desktop_type)
         self.assertEqual(vm_status.pk, self.vm_status.pk)
         self.assertEqual(VM_RESIZING, vm_status.status)
+        self.assertEqual(0, vm_status.status_progress)
         self.assertTrue(now < vm_status.wait_time)
 
     @patch('vm_manager.views.django_rq')
@@ -362,6 +370,7 @@ class VMManagerViewTests(TestCase):
             self.user, self.desktop_type)
         self.assertEqual(vm_status.pk, self.vm_status.pk)
         self.assertEqual(VM_RESIZING, vm_status.status)
+        self.assertEqual(0, vm_status.status_progress)
         self.assertTrue(now < vm_status.wait_time)
 
     @patch('vm_manager.utils.utils.Nectar', new=FakeNectar)
@@ -593,6 +602,7 @@ class VMManagerViewTests(TestCase):
         self.assertTrue(volume.checked_in)
         self.assertFalse(volume.ready)
         self.assertEqual(VM_WAITING, vm_status.status)
+        self.assertEqual(0, vm_status.status_progress)  # unchanged
 
         mock_gen.reset_mock()
         mock_logger.error.reset_mock()
@@ -617,6 +627,7 @@ class VMManagerViewTests(TestCase):
         self.assertTrue(volume.checked_in)
         self.assertTrue(volume.ready)
         self.assertEqual(VM_OKAY, vm_status.status)
+        self.assertEqual(100, vm_status.status_progress)
 
         mock_gen.reset_mock()
         mock_logger.error.reset_mock()
@@ -685,6 +696,7 @@ class VMManagerViewTests(TestCase):
         vm_status = VMStatus.objects.get(pk=self.vm_status.pk)
         self.assertTrue(volume.ready)
         self.assertEqual(VM_OKAY, vm_status.status)
+        self.assertEqual(100, vm_status.status_progress)
 
     @patch('vm_manager.views.datetime')
     def test_rd_report_for_user(self, mock_datetime):
@@ -818,5 +830,6 @@ class VMManagerViewTests(TestCase):
         mock_queue.enqueue.assert_called_with(delete_vm_worker, self.instance)
         vms = VMStatus.objects.get(pk=self.vm_status.pk)
         self.assertEqual(VM_DELETED, vms.status)
+        # No progress updates required ...
         self.assertIsNotNone(vms.instance.marked_for_deletion)
         self.assertIsNotNone(vms.instance.boot_volume.marked_for_deletion)

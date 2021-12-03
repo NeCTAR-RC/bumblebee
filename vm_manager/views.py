@@ -76,7 +76,9 @@ def launch_vm(user, desktop_type, zone) -> str:
     vm_status = VMStatus(
         user=user, requesting_feature=desktop_type.feature,
         operating_system=desktop_type.id, status=VM_CREATING,
-        wait_time=after_time(LAUNCH_WAIT_SECONDS))
+        wait_time=after_time(LAUNCH_WAIT_SECONDS),
+        status_progress=0, status_message="Starting desktop creation"
+    )
     vm_status.save()
 
     # Check for race condition in previous statements and delete
@@ -113,6 +115,8 @@ def delete_vm(user, vm_id, requesting_feature) -> str:
     logger.info(f"Changing the VMStatus of {vm_id} from {vm_status.status} "
                 f"to {VM_DELETED} and Mark for Deletion is set on the "
                 f"Instance and Volume {vm_status.instance.boot_volume.id}")
+    # This is currently done out of the sight of the user.  Progress
+    # is not displayed.
     vm_status.status = VM_DELETED
     vm_status.save()
     vm_status.instance.set_marked_for_deletion()
@@ -172,6 +176,8 @@ def shelve_vm(user, vm_id, requesting_feature) -> str:
                 f"and Mark for Deletion is set on the Instance")
     vm_status.wait_time = after_time(SHELVE_WAIT_SECONDS)
     vm_status.status = VM_WAITING
+    vm_status.status_progress = 0
+    vm_status.status_message = "Starting desktop shelve"
     vm_status.save()
     vm_status.instance.set_marked_for_deletion()
 
@@ -193,7 +199,9 @@ def unshelve_vm(user, desktop_type) -> str:
                          requesting_feature=desktop_type.feature,
                          operating_system=desktop_type.id,
                          status=VM_CREATING,
-                         wait_time=after_time(LAUNCH_WAIT_SECONDS))
+                         wait_time=after_time(LAUNCH_WAIT_SECONDS),
+                         status_progress=0,
+                         status_message="Starting desktop unshelve")
     vm_status.save()
 
     queue = django_rq.get_queue('default')
@@ -218,6 +226,8 @@ def reboot_vm(user, vm_id, reboot_level, requesting_feature) -> str:
             vm_id=vm_id)
 
     vm_status.wait_time = after_time(REBOOT_WAIT_SECONDS)
+    vm_status.status_progress = 0
+    vm_status.status_message = "Starting desktop reboot"
     vm_status.save()
 
     queue = django_rq.get_queue('default')
@@ -243,6 +253,8 @@ def supersize_vm(user, vm_id, requesting_feature) -> str:
 
     vm_status.status = VM_RESIZING
     vm_status.wait_time = after_time(RESIZE_WAIT_SECONDS)
+    vm_status.status_progress = 0
+    vm_status.status_message = "Starting desktop boost"
     vm_status.save()
 
     queue = django_rq.get_queue('default')
@@ -268,6 +280,8 @@ def downsize_vm(user, vm_id, requesting_feature) -> str:
 
     vm_status.status = VM_RESIZING
     vm_status.wait_time = after_time(RESIZE_WAIT_SECONDS)
+    vm_status.status_progress = 0
+    vm_status.status_message = "Starting desktop downsize"
     vm_status.save()
 
     queue = django_rq.get_queue('default')
@@ -394,6 +408,8 @@ def notify_vm(request, requesting_feature):
             vm_status = VMStatus.objects.get_vm_status_by_instance(
                 instance, requesting_feature)
             vm_status.status = VM_OKAY
+            vm_status.status_progress = 100
+            vm_status.status_message = 'Instance ready'
             vm_status.save()
         elif msg == CLOUD_INIT_STARTED:
             volume.checked_in = True
