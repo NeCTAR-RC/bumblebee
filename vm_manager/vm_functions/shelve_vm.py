@@ -63,7 +63,7 @@ def _confirm_instance_deleted(instance, retries, requesting_feature):
         vm_status = VMStatus.objects.get_vm_status_by_instance(
             instance, requesting_feature)
         vm_status.status_progress = 100
-        vm_status.staus_message = 'Instance shelved'
+        vm_status.status_message = 'Instance shelved'
         vm_status.status = VM_SHELVED
         vm_status.save()
         return
