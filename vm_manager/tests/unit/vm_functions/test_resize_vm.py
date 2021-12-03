@@ -142,7 +142,8 @@ class ResizeVMTests(VMFunctionTestBase):
     @patch('vm_manager.vm_functions.resize_vm.django_rq')
     @patch('vm_manager.vm_functions.resize_vm.after_time')
     def test_resize_vm(self, mock_after_time, mock_rq):
-        _, fake_instance = self.build_fake_vol_instance()
+        _, fake_instance, fake_vm_status = self.build_fake_vol_inst_status(
+            status=VM_RESIZING, status_progress=0)
         default_flavor_id = self.UBUNTU.default_flavor.id
         big_flavor_id = self.UBUNTU.big_flavor.id
         mock_scheduler = Mock()
@@ -178,6 +179,8 @@ class ResizeVMTests(VMFunctionTestBase):
             fake_instance, big_flavor_id,
             after,
             self.FEATURE)
+        vm_status = VMStatus.objects.get(pk=fake_vm_status.pk)
+        self.assertEqual(50, vm_status.status_progress)
 
     @patch('vm_manager.utils.utils.Nectar', new=FakeNectar)
     @patch('vm_manager.vm_functions.resize_vm.logger')
@@ -188,7 +191,7 @@ class ResizeVMTests(VMFunctionTestBase):
         fake_nectar.nova.servers.confirm_resize.reset_mock()
 
         _, fake_instance, fake_vm_status = self.build_fake_vol_inst_status(
-            status=VM_RESIZING)
+            status=VM_RESIZING, status_progress=50)
 
         self.assertEqual(
             f"Status of [{self.FEATURE.name}][{self.UBUNTU.id}]"
@@ -200,6 +203,8 @@ class ResizeVMTests(VMFunctionTestBase):
             f"Confirming resize of {fake_instance}")
         fake_nectar.nova.servers.confirm_resize.assert_called_once_with(
             fake_instance.id)
+        vm_status = VMStatus.objects.get(pk=fake_vm_status.pk)
+        self.assertEqual(100, vm_status.status_progress)
 
     @patch('vm_manager.utils.utils.Nectar', new=FakeNectar)
     @patch('vm_manager.vm_functions.resize_vm.logger')
@@ -213,7 +218,7 @@ class ResizeVMTests(VMFunctionTestBase):
         fake_nectar.nova.servers.confirm_resize.reset_mock()
 
         _, fake_instance, fake_vm_status = self.build_fake_vol_inst_status(
-            status=VM_RESIZING)
+            status=VM_RESIZING, status_progress=50)
 
         deadline = after_time(10)
         self.assertEqual(
@@ -231,6 +236,8 @@ class ResizeVMTests(VMFunctionTestBase):
             timedelta(seconds=5), _wait_to_confirm_resize,
             fake_instance, self.UBUNTU.default_flavor.id,
             deadline, self.FEATURE)
+        vm_status = VMStatus.objects.get(pk=fake_vm_status.pk)
+        self.assertEqual(50, vm_status.status_progress)
 
     @patch('vm_manager.utils.utils.Nectar', new=FakeNectar)
     @patch('vm_manager.vm_functions.resize_vm.logger')
@@ -244,7 +251,7 @@ class ResizeVMTests(VMFunctionTestBase):
         fake_nectar.nova.servers.confirm_resize.reset_mock()
 
         _, fake_instance, fake_vm_status = self.build_fake_vol_inst_status(
-            status=VM_RESIZING)
+            status=VM_RESIZING, status_progress=50)
 
         deadline = after_time(-10)
         res = _wait_to_confirm_resize(
@@ -265,6 +272,7 @@ class ResizeVMTests(VMFunctionTestBase):
         self.assertEqual(VM_ERROR, vm_status.status)
         self.assertEqual(error, vm_status.instance.error_message)
         self.assertEqual(error, vm_status.instance.boot_volume.error_message)
+        self.assertEqual(50, vm_status.status_progress)
 
     @patch('vm_manager.utils.utils.Nectar', new=FakeNectar)
     @patch('vm_manager.vm_functions.resize_vm.logger')
@@ -282,7 +290,7 @@ class ResizeVMTests(VMFunctionTestBase):
         fake_nectar.nova.servers.confirm_resize.reset_mock()
 
         _, fake_instance, fake_vm_status = self.build_fake_vol_inst_status(
-            status=VM_RESIZING)
+            status=VM_RESIZING, status_progress=50)
 
         deadline = after_time(10)
         self.assertIsNone(_wait_to_confirm_resize(
@@ -293,6 +301,8 @@ class ResizeVMTests(VMFunctionTestBase):
         mock_logger.error.assert_called_once_with(error)
         fake_nectar.nova.servers.confirm_resize.assert_not_called()
         mock_rq.get_scheduler.assert_not_called()
+        vm_status = VMStatus.objects.get(pk=fake_vm_status.pk)
+        self.assertEqual(50, vm_status.status_progress)
 
     @patch('vm_manager.utils.utils.Nectar', new=FakeNectar)
     @patch('vm_manager.vm_functions.resize_vm.logger')
@@ -305,7 +315,7 @@ class ResizeVMTests(VMFunctionTestBase):
         fake_nectar.nova.servers.confirm_resize.reset_mock()
 
         _, fake_instance, fake_vm_status = self.build_fake_vol_inst_status(
-            status=VM_RESIZING)
+            status=VM_RESIZING, status_progress=50)
 
         deadline = after_time(10)
         res = _wait_to_confirm_resize(
@@ -324,6 +334,7 @@ class ResizeVMTests(VMFunctionTestBase):
         self.assertEqual(VM_ERROR, vm_status.status)
         self.assertEqual(error, vm_status.instance.error_message)
         self.assertEqual(error, vm_status.instance.boot_volume.error_message)
+        self.assertEqual(50, vm_status.status_progress)
 
     @patch('vm_manager.utils.utils.Nectar', new=FakeNectar)
     @patch('vm_manager.vm_functions.resize_vm.logger')
@@ -336,7 +347,7 @@ class ResizeVMTests(VMFunctionTestBase):
         fake_nectar.nova.servers.confirm_resize.reset_mock()
 
         _, fake_instance, fake_vm_status = self.build_fake_vol_inst_status(
-            status=VM_RESIZING)
+            status=VM_RESIZING, status_progress=50)
 
         deadline = after_time(10)
         res = _wait_to_confirm_resize(
@@ -350,6 +361,7 @@ class ResizeVMTests(VMFunctionTestBase):
         mock_rq.get_scheduler.assert_not_called()
         vm_status = VMStatus.objects.get(pk=fake_vm_status.pk)
         self.assertEqual(VM_SUPERSIZED, vm_status.status)
+        self.assertEqual(100, vm_status.status_progress)
 
     @patch('vm_manager.utils.utils.Nectar', new=FakeNectar)
     @patch('vm_manager.vm_functions.resize_vm.logger')
@@ -361,7 +373,7 @@ class ResizeVMTests(VMFunctionTestBase):
         fake_nectar.nova.servers.confirm_resize.reset_mock()
 
         _, fake_instance, fake_vm_status = self.build_fake_vol_inst_status(
-            status=VM_RESIZING)
+            status=VM_RESIZING, status_progress=50)
 
         deadline = after_time(10)
         res = _wait_to_confirm_resize(
@@ -379,6 +391,7 @@ class ResizeVMTests(VMFunctionTestBase):
         self.assertEqual(VM_ERROR, vm_status.status)
         self.assertEqual(error, vm_status.instance.error_message)
         self.assertEqual(error, vm_status.instance.boot_volume.error_message)
+        self.assertEqual(50, vm_status.status_progress)
 
     @patch('vm_manager.utils.utils.Nectar', new=FakeNectar)
     @patch('vm_manager.vm_functions.resize_vm.logger')

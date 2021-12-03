@@ -52,7 +52,8 @@ class VMFunctionTestBase(TestCase):
         return fake_volume, fake_instance
 
     def build_fake_vol_inst_status(self, volume_id=None, instance_id=None,
-                                   ip_address=None, status=VM_OKAY):
+                                   ip_address=None, status=VM_OKAY,
+                                   status_progress=0):
         fake_volume, fake_instance = self.build_fake_vol_instance(
             volume_id=volume_id,
             instance_id=instance_id,
@@ -62,5 +63,6 @@ class VMFunctionTestBase(TestCase):
             instance=fake_instance,
             operating_system=self.UBUNTU.id,
             requesting_feature=self.UBUNTU.feature,
-            status=status)
+            status=status,
+            status_progress=status_progress)
         return fake_volume, fake_instance, fake_vmstatus

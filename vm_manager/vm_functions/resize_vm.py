@@ -75,6 +75,11 @@ def _resize_vm(instance, flavor, requesting_feature):
         return message
 
     resize_result = n.nova.servers.resize(instance.id, flavor)
+    vm_status = VMStatus.objects.get_vm_status_by_instance(
+        instance, requesting_feature)
+    vm_status.status_progress = 50
+    vm_status.status_message = "Resize initiated; waiting to confirm"
+    vm_status.save()
     scheduler = django_rq.get_scheduler('default')
     scheduler.enqueue_in(timedelta(seconds=5),
                          _wait_to_confirm_resize,
@@ -95,6 +100,8 @@ def _wait_to_confirm_resize(instance, flavor, deadline, requesting_feature):
         logger.info(f"Confirming resize of {instance}")
         n.nova.servers.confirm_resize(instance.id)
         vm_status.status = status
+        vm_status.status_progress = 100
+        vm_status.status_message = "Resize completed"
         vm_status.save()
         return str(vm_status)
 
@@ -133,6 +140,8 @@ def _wait_to_confirm_resize(instance, flavor, deadline, requesting_feature):
         message = f"Resize of {instance} was confirmed automatically"
         logger.info(message)
         vm_status.status = status
+        vm_status.status_progress = 100
+        vm_status.status_message = "Resize completed"
         vm_status.save()
         return message
 
