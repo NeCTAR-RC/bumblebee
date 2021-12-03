@@ -14,7 +14,7 @@ class Migration(migrations.Migration):
                                           'AvailabilityZone')
         Domain = apps.get_model('researcher_desktop', 'Domain')
 
-        if hasattr(settings, 'ZONES'):
+        if getattr(settings, 'ZONES', None):
             for z in settings.ZONES:
                 (zone, _) = AvailabilityZone.objects.get_or_create(
                     name=z['name'], zone_weight=int(z['zone_weight']))
@@ -26,7 +26,7 @@ class Migration(migrations.Migration):
         DesktopType = apps.get_model('researcher_desktop', 'DesktopType')
 
         # Populate initial desktops from the settings.
-        if hasattr(settings, 'DESKTOP_TYPES'):
+        if getattr(settings, 'DESKTOP_TYPES', None):
             field_names = [f.name for f in DesktopType._meta.get_fields()]
             for desktop_type in settings.DESKTOP_TYPES:
                 # Make sure we only incorporate fields that have been defined
