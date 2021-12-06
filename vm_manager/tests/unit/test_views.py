@@ -270,8 +270,8 @@ class VMManagerViewTests(TestCase):
         now = datetime.now(timezone.utc)
 
         self.assertEqual(
-            f"Status of [{self.feature}][{self.desktop_type.id}][{self.user}] "
-            f"is {VM_OKAY}",
+            f"Status of [{self.feature}][{self.desktop_type.id}]"
+            f"[{self.user}] is {VM_WAITING}",
             reboot_vm(self.user, self.instance.id, REBOOT_SOFT, self.feature))
 
         mock_rq.get_queue.assert_called_once_with("default")
@@ -281,7 +281,7 @@ class VMManagerViewTests(TestCase):
         vm_status = VMStatus.objects.get_latest_vm_status(
             self.user, self.desktop_type)
         self.assertEqual(vm_status.pk, self.vm_status.pk)
-        self.assertEqual(VM_OKAY, vm_status.status)
+        self.assertEqual(VM_WAITING, vm_status.status)
         self.assertEqual(0, vm_status.status_progress)
         self.assertTrue(now < vm_status.wait_time)
 

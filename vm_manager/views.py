@@ -225,6 +225,7 @@ def reboot_vm(user, vm_id, reboot_level, requesting_feature) -> str:
             "reboot", user, feature=requesting_feature, vm_status=vm_status,
             vm_id=vm_id)
 
+    vm_status.status = VM_WAITING
     vm_status.wait_time = after_time(REBOOT_WAIT_SECONDS)
     vm_status.status_progress = 0
     vm_status.status_message = "Starting desktop reboot"
