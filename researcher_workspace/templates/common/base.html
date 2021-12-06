@@ -72,8 +72,8 @@
                 <span class="navbar-text ps-2">{{ user.email }}</span>
               </a>
               <ul class="dropdown-menu text-small" aria-labelledby="dropdownUser1">
-                <li><a class="dropdown-item" href="#">New workspace...</a></li>
-                <li><a class="dropdown-item" href="#">Profile</a></li>
+                <!-- <li><a class="dropdown-item" href="#">New workspace...</a></li> -->
+                <li><a class="dropdown-item disabled" href="#">Profile</a></li>
                 <li><hr class="dropdown-divider"></li>
                 <form class="form-inline my-2 my-lg-0" action="{% url 'oidc_logout' %}" method="post">
                   {% csrf_token %}

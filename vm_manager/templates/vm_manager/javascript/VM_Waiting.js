@@ -1,5 +1,6 @@
 var {{ app_name }}_{{ desktop_type.id }}_timer = {{ what_to_show }};
 var bar = document.getElementById("{{ app_name }}-{{ desktop_type.id }}-bar");
+var barMessage = document.getElementById("progress-bar-message");
 var reloaded = false;
 var progress = 0;
 
@@ -25,7 +26,7 @@ async function poll_status(url, interval) {
                 // console.log(progress);
                 bar.setAttribute("aria-valuenow", progress);
                 bar.setAttribute("style", "width: " + progress + "%");
-                bar.innerHTML = vm_status.status_message;
+                barMessage.innerHTML = vm_status.status_message;
                 if (vm_status.status != "{{ VM_WAITING }}") {
                     reloaded = true;
                     window.setTimeout(function() {
