@@ -288,6 +288,13 @@ GUACAMOLE_URL = get_setting('GUACAMOLE_URL', SITE_URL + '/guacamole')
 
 OIDC_RP_CLIENT_SECRET = get_setting('OIDC_RP_CLIENT_SECRET')
 
+FRESHDESK_DOMAIN = get_setting('FRESHDESK_DOMAIN')
+FRESHDESK_KEY = get_setting('FRESHDESK_KEY')
+FRESHDESK_GROUP_ID = get_setting('FRESHDESK_GROUP_ID')
+FRESHDESK_EMAIL_CONFIG_ID = get_setting('FRESHDESK_EMAIL_CONFIG_ID')
+
+EMAIL_BACKEND = 'researcher_workspace.utils.freshdesk.FreshdeskEmailBackend'
+
 if SITE_URL and SITE_URL.startswith('https'):
     USE_X_FORWARDED_HOST = True
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
