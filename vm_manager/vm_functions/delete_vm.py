@@ -13,7 +13,7 @@ from vm_manager.constants import INSTANCE_DELETION_RETRY_WAIT_TIME, \
     INSTANCE_CHECK_SHUTOFF_RETRY_WAIT_TIME, \
     INSTANCE_CHECK_SHUTOFF_RETRY_COUNT, LINUX
 from vm_manager.models import VMStatus
-from vm_manager.utils.utils import get_nectar, generate_hostname_url
+from vm_manager.utils.utils import get_nectar
 
 from guacamole.models import GuacamoleConnection
 

@@ -13,7 +13,7 @@ from vm_manager.constants import VOLUME_CREATION_TIMEOUT, \
     INSTANCE_LAUNCH_TIMEOUT, NO_VM, VM_OKAY, LINUX
 from vm_manager.utils.expiry import InstanceExpiryPolicy
 from vm_manager.utils.utils import get_nectar, generate_server_name, \
-    generate_hostname, generate_hostname_url, generate_password
+    generate_hostname, generate_password
 from vm_manager.models import Instance, Volume, VMStatus
 
 from guacamole.models import GuacamoleConnection
@@ -22,15 +22,15 @@ logger = logging.getLogger(__name__)
 
 
 def launch_vm_worker(user, desktop_type, zone):
-    operating_system = desktop_type.id
-    logger.info(f'Launching {operating_system} VM for {user.username}')
+    desktop_id = desktop_type.id
+    logger.info(f'Launching {desktop_id} VM for {user.username}')
 
     instance = Instance.objects.get_instance(user, desktop_type)
     if instance:
         vm_status = VMStatus.objects.get_vm_status_by_instance(
             instance, desktop_type.feature)
         if vm_status.status != NO_VM:
-            msg = f"A {operating_system} VM for {user} already exists"
+            msg = f"A {desktop_id} VM for {user} already exists"
             logger.error(msg)
             raise RuntimeWarning(msg)
 
@@ -39,12 +39,12 @@ def launch_vm_worker(user, desktop_type, zone):
     scheduler.enqueue_in(timedelta(seconds=5), wait_to_create_instance,
                          user, desktop_type, volume,
                          datetime.now(timezone.utc))
-    logger.info(f'{operating_system} VM creation scheduled '
+    logger.info(f'{desktop_id} VM creation scheduled '
                 f'for {user.username}')
 
 
 def _create_volume(user, desktop_type, zone):
-    operating_system = desktop_type.id
+    desktop_id = desktop_type.id
     requesting_feature = desktop_type.feature
     volume = Volume.objects.get_volume(user, desktop_type)
     if volume:
@@ -55,7 +55,7 @@ def _create_volume(user, desktop_type, zone):
                 # TODO - check if this scenario is possible ... and think
                 # about how to resolve it.
                 msg = (
-                    f"A live {operating_system} Volume for {user} already "
+                    f"A live {desktop_id} Volume for {user} already "
                     f"exists in a different availability zone ({volume.zone}) "
                     f"to the one requested ({zone.name})")
                 logger.error(msg)
@@ -69,7 +69,7 @@ def _create_volume(user, desktop_type, zone):
         vm_status.status_message = 'Creating volume'
         vm_status.save()
 
-    name = generate_server_name(user.username, operating_system)
+    name = generate_server_name(user.username, desktop_id)
     source_volume_id = _get_source_volume_id(desktop_type, zone)
 
     n = get_nectar()
@@ -85,7 +85,7 @@ def _create_volume(user, desktop_type, zone):
         id=volume_result.id, user=user,
         image=source_volume_id,
         requesting_feature=requesting_feature,
-        operating_system=operating_system,
+        operating_system=desktop_id,
         zone=zone.name,
         flavor=desktop_type.default_flavor.id)
     volume.save()
@@ -95,7 +95,7 @@ def _create_volume(user, desktop_type, zone):
         volume=volume_result,
         metadata={
             'hostname': generate_hostname(volume.hostname_id,
-                                          operating_system),
+                                          desktop_id),
             'allow_user': (user.username
                            + re.search("@.*", user.email).group()),
             'environment': settings.ENVIRONMENT_NAME,
@@ -159,7 +159,7 @@ def wait_to_create_instance(user, desktop_type, volume, start_time):
 
     elif (now - start_time > timedelta(seconds=VOLUME_CREATION_TIMEOUT)):
         logger.error(f"Volume took too long to create: user:{user} "
-                     f"operating_system:{desktop_type.id} volume:{volume} "
+                     f"desktop_id:{desktop_type.id} volume:{volume} "
                      f"volume.status:{openstack_volume.status} "
                      f"start_time:{start_time} "
                      f"datetime.now:{now}")
@@ -180,10 +180,9 @@ def wait_to_create_instance(user, desktop_type, volume, start_time):
 
 def _create_instance(user, desktop_type, volume):
     n = get_nectar()
-    operating_system = desktop_type.id
-    hostname = generate_hostname(volume.hostname_id, operating_system)
-    hostname_url = generate_hostname_url(volume.hostname_id,
-                                         operating_system)
+    desktop_id = desktop_type.id
+    hostname = generate_hostname(volume.hostname_id, desktop_id)
+    name = generate_server_name(user.username, desktop_id)
 
     # Reuse the previous username and password
     last_instance = Instance.objects.get_latest_instance_for_volume(volume)
@@ -219,14 +218,18 @@ def _create_instance(user, desktop_type, volume):
 
     # Create instance in OpenStack
     launch_result = n.nova.servers.create(
-        name=hostname, image="", flavor=desktop_type.default_flavor.id,
+        name=name,
+        image='',
+        flavor=desktop_type.default_flavor.id,
         userdata=user_data,
         security_groups=desktop_type.security_groups,
-        key_name=settings.OS_KEYNAME, block_device_mapping_v1=None,
+        block_device_mapping_v1=None,
         block_device_mapping_v2=block_device_mapping,
         nics=n.VM_PARAMS["list_net"],
         availability_zone=volume.zone,
-        meta=metadata_server)
+        meta=metadata_server,
+        key_name=settings.OS_KEYNAME,
+    )
 
     # Create guac connection
     guac_connection = GuacamoleConnection.objects.create(
@@ -257,7 +260,7 @@ def wait_for_instance_active(user, desktop_type, instance, start_time):
         instance.save()
     elif (now - start_time > timedelta(seconds=INSTANCE_LAUNCH_TIMEOUT)):
         logger.error(f"Instance took too long to launch: user:{user} "
-                     f"operating_system:{desktop_type.id} instance:{instance} "
+                     f"desktop:{desktop_type.id} instance:{instance} "
                      f"instance.status:{instance.get_status()} "
                      f"start_time:{start_time} "
                      f"datetime.now:{now}")

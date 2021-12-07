@@ -482,6 +482,7 @@ def phone_home(request, requesting_feature):
         logger.error(f"Instance ID not found in data")
         raise Http404
 
+    instance_id = request.POST['instance_id']
     instance = Instance.objects.get_instance_by_untrusted_vm_id_2(
         request.POST['instance_id'], requesting_feature)
 
