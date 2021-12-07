@@ -31,6 +31,7 @@ def get_setting(setting, default=None, required=False):
         logger.info('Setting value for %s not found!', setting)
     return value
 
+NAME = 'ARDC Nectar Virtual Desktop'
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

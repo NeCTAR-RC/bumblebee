@@ -1,0 +1,15 @@
+{% load settings %}
+Hi {{ project.project_admin.get_full_name }},
+<br>
+<br>
+Thanks for your feature request for the {% get_setting "NAME" %} service.
+<br>
+<br>
+Your request for the "{{ feature.requested_feature }}" feature in your
+"{{ feature.project.title }}" workspace has unfortunately been <b>declined</b>.
+<br>
+<br>
+Please reply to this email if you'd like to find out more information.
+<br>
+<br>
+The {% get_setting "NAME" %} service team

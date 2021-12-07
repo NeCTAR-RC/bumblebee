@@ -7,6 +7,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.http import Http404
+from django.template.loader import render_to_string
 from django.utils.html import format_html
 from django.utils.timezone import now
 from django_currentuser.db.models import CurrentUserField
@@ -111,19 +112,20 @@ class Project(models.Model):
                 feature = Feature.objects.get(app_name=app_name)
                 permission = Permission(project=self, feature=feature)
                 permission.save()
-        self.project_admin.email_user(
-            "Orion Project Request - Approved",
-            f"Your project request - \"{self.title}\" has been approved. \n"
-            f"Please login to {settings.SITE_URL} to explore the features offered.")
+
+        sub = f"Your {settings.NAME} Workspace Request has been approved"
+        context = {'project': self}
+        msg = render_to_string('email/project_approved.html', context)
+        self.project_admin.email_user(sub, msg)
 
     def deny(self):
         self.ARO_approval = False
         self.ARO_responded_on = datetime.now(timezone.utc)
         self.save()
-        self.project_admin.email_user(
-            "Orion Project Request - Denied",
-            f"Your project request - \"{self.title}\" has been denied. \n"
-            f"Please check with your ARO for further details.")
+        sub = f"Your {settings.NAME} Workspace Request has been declined"
+        context = {'project': self}
+        msg = render_to_string('email/project_declined.html', context)
+        self.project_admin.email_user(sub, msg)
 
     def __str__(self):
         return f"{self.title} ({self.project_admin})"
@@ -170,19 +172,21 @@ class PermissionRequest(models.Model):
         self.accepted = True
         self.responded_on = datetime.now(timezone.utc)
         self.save()
-        self.requesting_user.email_user("Orion Feature Request - Granted",
-                                        f"{self.requested_feature} access for your project "
-                                        f"\"{self.project.title}\" has been granted. \n"
-                                        f"Please login to {settings.SITE_URL} to access the feature.")
+
+        sub = f"Your {settings.NAME} feature request has been approved"
+        context = {'feature': self}
+        msg = render_to_string('email/feature_approved.html', context)
+        self.requesting_user.email_user(sub, msg)
 
     def deny(self):
         self.accepted = False
         self.responded_on = datetime.now(timezone.utc)
         self.save()
-        self.requesting_user.email_user("Orion Feature Request - Denied",
-                                        f"{self.requested_feature} access for your project "
-                                        f"\"{self.project.title}\" has been denied. \n"
-                                        f"Please check with your ARO for further details.")
+
+        sub = f"Your {settings.NAME} feature request has been declined"
+        context = {'feature': self}
+        msg = render_to_string('email/feature_declined.html', context)
+        self.requesting_user.email_user(sub, msg)
 
     def __str__(self):
         return (f"Permission Request for {self.project} requesting "

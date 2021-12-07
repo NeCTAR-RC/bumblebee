@@ -1,0 +1,14 @@
+{% load settings %}
+Hi {{ project.project_admin.get_full_name }},
+<br>
+<br>
+Thanks for your workspace request for the {% get_setting "NAME" %} service.
+<br>
+<br>
+Your workspace "{{ project.title }}" has now been <b>approved</b>.
+<br>
+<br>
+You can log in at {% get_setting "SITE_URL" %} to get started.
+<br>
+<br>
+The {% get_setting "NAME" %} service team

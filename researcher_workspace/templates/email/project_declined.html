@@ -1,0 +1,14 @@
+{% load settings %}
+Hi {{ project.project_admin.get_full_name }},
+<br>
+<br>
+Thanks for your workspace request for the {% get_setting "NAME" %} service.
+<br>
+<br>
+Your workspace "{{ project.title }}" has unfortunately been <b>declined</b>.
+<br>
+<br>
+Please reply to this email if you wish to find out more information.
+<br>
+<br>
+The {% get_setting "NAME" %} service team

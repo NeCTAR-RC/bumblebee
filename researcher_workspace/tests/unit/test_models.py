@@ -27,7 +27,7 @@ class WorkspaceModelTests(TestCase):
         self.assertEqual('researcher_desktop',
                          project.permissions.first().app_name)
         self.assertEqual(1, len(mail.outbox))
-        self.assertTrue("Approved" in mail.outbox[0].subject)
+        self.assertTrue("approved" in mail.outbox[0].subject)
         self.assertEqual(["test@test.test"],
                          mail.outbox[0].recipients())
         self.assertEqual(settings.DEFAULT_FROM_EMAIL,

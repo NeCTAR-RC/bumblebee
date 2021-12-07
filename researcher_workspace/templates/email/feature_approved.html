@@ -1,0 +1,15 @@
+{% load settings %}
+Hi {{ project.project_admin.get_full_name }},
+<br>
+<br>
+Thanks for your feature request for the {% get_setting "NAME" %} service.
+<br>
+<br>
+Your request for  the "{{ feature.requested_feature }}" feature in your
+"{{ feature.project.title }}" workspace has been <b>approved</b>.
+<br>
+<br>
+You can log in at {% get_setting "SITE_URL" %} to get started.
+<br>
+<br>
+The {% get_setting "NAME" %} service team
