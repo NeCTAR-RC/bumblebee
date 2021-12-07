@@ -1,6 +1,6 @@
 pbr
 wheel
-Django
+Django<4
 oslo.concurrency
 keystoneauth1
 python-cinderclient
@@ -20,6 +20,5 @@ pandas
 xlsxwriter
 django_compressor
 django-libsass
-crispy-bootstrap5
 Pillow
 python-freshdesk

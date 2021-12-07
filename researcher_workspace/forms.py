@@ -1,12 +1,6 @@
 from django import forms
 from django.utils.safestring import mark_safe
 
-from crispy_forms.bootstrap import InlineRadios
-from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Layout, Fieldset, ButtonHolder, Submit
-
-from crispy_bootstrap5.bootstrap5 import FloatingField
-
 from .models import Project
 from .utils.FoR_codes import FOR_CODE_CHOICES
 
