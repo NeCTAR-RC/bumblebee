@@ -7,31 +7,32 @@
         <div class="col-sm-12 col-md-6">
             <h3 class="mb-4">Contact Support Team</h3>
             <p class="lead">If you are experiencing issues with the Virtual Desktop Service, please submit a support ticket to the Nectar Support Team via the form below and we will endeavour to contact you within 24 hours (weekdays).</p>
-            <form class="mb-4">
-                <div class="mb-3">
-                    <label for="userEmail" class="form-label">Email address</label>
-                    <input type="email" class="form-control" id="userEmail" value="{{ user.email }}" placeholder="{{ user.email }}" disabled>
-                </div>
-                <div class="mb-3">
-                    <label for="supportMessage" class="form-label">What do you need help with?</label>
-                    <textarea class="form-control" id="supportMessage" rows="5" aria-describedby="messageHelp"></textarea>
-                    <div id="messageHelp" class="form-text">Please describe your support request in detail.</div>
-                </div>
-                <div class="mb-3">
-                    <label for="fsupportFile" class="form-label">Please attach a screenshot (optional)</label>
-                    <input class="form-control" type="file" id="supportFile">
-                </div>
+            <form class="mb-4" method="post" action="{% url 'help' %}" enctype="multipart/form-data">
+                {% csrf_token %}
+                {{ form.non_field_errors }}
+                {% for hidden in form.hidden_fields %}
+                    {{ hidden }}
+                {% endfor %}
+                {% for field in form.visible_fields %}
+                  <div class="mb-3">
+                    {{ field.label_tag }}
+                    {{ field }}
+                    {% if field.help_text %}
+                    <small class="form-text text-muted">{{ field.help_text }}</small>
+                    {% endif %}
+                  </div>
+                {% endfor %}
                 <button type="submit" class="btn btn-primary">Submit</button>
             </form>
         </div>
         <div class="col-sm-12 col-md-6">
             <h3 class="mb-4">Support Team</h3>
-            <p>Alternatively, you can contact the Nectar Support Team by emailing <a href="mailto: support@ehelp.edu.au">support@ehelp.edu.au</a>.</p>
+            <p>Alternatively, you can contact the Nectar Support Team by emailing <a href="mailto:support@ehelp.edu.au">support@ehelp.edu.au</a>.</p>
             <p>The support team operates between 7am to 6pm AEDT, Monday to Friday.</p>
             <h3 class="mt-5 mb-4">Self Help</h3>
             <p>This Nectar Virtual Desktop Service enables researchers to easily access a Virtual Machine, with Desktop interface ready to go.</p>
             <p>For more information on the Virtual Desktop Service, checkout <a href="https://support.ehelp.edu.au/support/solutions/articles/6000253856-nectar-virtual-desktop-service">this article</a> on the ARDC Nectar Research Cloud Support Website.</p>
-            <a role="button" class="btn btn-outline-primary" href="https://support.ehelp.edu.au/">Nectar Support Website  <i class="fas fa-arrow-right"></i></a>
+            <a role="button" class="btn btn-outline-primary" href="https://support.ehelp.edu.au/">Nectar Support Website <i class="fas fa-arrow-right"></i></a>
         </div>
     </div>
 </div>

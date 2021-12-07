@@ -107,3 +107,17 @@ class PermissionRequestForm(forms.Form):
         super(PermissionRequestForm, self).__init__(*args, **kwargs)
         if choices:
             self.fields['feature_options'].choices = choices
+
+
+class SupportRequestForm(forms.Form):
+    # Email is for show only as we use info from the User model after POST
+    email = forms.CharField(widget=forms.TextInput, label="Email address")
+    email.widget.attrs = {'class': 'form-control', 'readonly': ''}
+    message = forms.CharField(
+        widget=forms.Textarea, label="What do you need help with?",
+        help_text="Please describe your support request in detail.")
+    message.widget.attrs = {'class': 'form-control', 'rows': 5}
+    screenshot = forms.FileField(
+        label="Please attach a screenshot (optional)",
+        required=False)
+    screenshot.widget.attrs = {'class': 'form-control'}

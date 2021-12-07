@@ -4,13 +4,19 @@ from django.conf import settings
 from freshdesk.v2.api import API
 
 
+def get_api():
+    return API(settings.FRESHDESK_DOMAIN, settings.FRESHDESK_KEY)
+
+
+def create_ticket(**kwargs):
+    api = get_api()
+    return api.tickets.create_ticket(**kwargs)
+
+
 class FreshdeskEmailBackend(BaseEmailBackend):
 
     def __init__(self, fail_silently=False, **kwargs):
         super().__init__(fail_silently=fail_silently)
-
-        self.domain = settings.FRESHDESK_DOMAIN
-        self.key = settings.FRESHDESK_KEY
         self.email_config_id = int(settings.FRESHDESK_EMAIL_CONFIG_ID)
         self.group_id = int(settings.FRESHDESK_GROUP_ID)
         self.api = None
@@ -24,7 +30,7 @@ class FreshdeskEmailBackend(BaseEmailBackend):
             return 0
 
         if not self.api:
-            self.api = API(self.domain, self.key)
+            self.api = get_api()
 
         num_sent = 0
         for message in email_messages:

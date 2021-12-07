@@ -8,6 +8,9 @@ from dateutil.relativedelta import relativedelta
 import pandas
 import requests
 from django.apps import apps
+from django.conf import settings
+from django.core.files.uploadhandler import TemporaryFileUploadHandler
+from django.core.mail import mail_managers
 from django.contrib import messages
 from django.contrib.auth import user_logged_in, user_logged_out
 from django.contrib.auth.decorators import login_required, user_passes_test
@@ -17,26 +20,26 @@ from django.shortcuts import render
 from django.template import loader
 from django.urls import reverse
 from django.utils.html import format_html
-from django.core.mail import mail_managers
-from django.conf import settings
+from django.views.decorators.csrf import csrf_exempt
 
 from researcher_desktop.utils.utils import get_desktop_type, get_applicable_zones
 
-from researcher_workspace.constants import USAGE
-from researcher_workspace.forms import UserSearchForm, ProjectForm, \
-    ProfileForm, PermissionRequestForm
-from researcher_workspace.models import PermissionRequest, Feature, Project, \
+from .constants import USAGE
+from .forms import UserSearchForm, ProjectForm, \
+    ProfileForm, PermissionRequestForm, SupportRequestForm
+from .models import PermissionRequest, Feature, Project, \
     AROWhitelist, Profile, add_username_to_whitelist, \
     remove_username_from_whitelist, Permission, FeatureOptions, User
+from .templatetags.group_filters import has_group
+from .utils import redirect_home, agreed_to_terms, not_support_staff, \
+    offset_month_and_year
+from .utils.faculty_mapping import FACULTIES, FACULTY_MAPPING
+from .utils.freshdesk import create_ticket
 
-from researcher_workspace.templatetags.group_filters import has_group
-from researcher_workspace.utils import redirect_home, agreed_to_terms, not_support_staff, offset_month_and_year
-from researcher_workspace.utils.faculty_mapping import FACULTIES, FACULTY_MAPPING
 import researcher_desktop.views as rdesk_views
 from vm_manager.models import VMStatus
 from vm_manager.utils.utils import get_nectar
 from vm_manager.constants import NO_VM
-
 
 logger = logging.getLogger(__name__)
 
@@ -387,9 +390,50 @@ def agree_terms(request, version):
         raise Http404()
 
 
+@login_required(login_url='login')
+@csrf_exempt
 def help(request):
-    return render(request, 'researcher_workspace/help.html',
-                  {'kba_url': "https://unimelb.service-now.com/research?id=kb_article&article="})
+    # Force the upload form to use the Temp file upload handler (not memory)
+    # so we can read the temp file from disk
+    request.upload_handlers = [TemporaryFileUploadHandler(request)]
+    initial = {'email': request.user.email}
+    form = SupportRequestForm(initial=initial)
+
+    if request.method == 'POST':
+        form = SupportRequestForm(request.POST, request.FILES)
+        try:
+            # Convert \r\n to HTML br tags for Freshdesk
+            ticket_payload = {
+                'name': request.user.get_full_name(),
+                'email': request.user.email,
+                'subject': 'Virtual Desktop support request',
+                'description': '<br/>'.join(form.data['message'].splitlines()),
+                'tags': ['Virtual Desktop'],
+            }
+
+            # Handle uploaded file
+            screenshot = request.FILES.get('screenshot')
+            if screenshot:
+                ticket_payload['attachments'] = [
+                    screenshot.temporary_file_path()]
+
+            ticket = create_ticket(**ticket_payload)
+            if ticket:
+                messages.success(request,
+                    'Your support request has been submitted!')
+            else:
+                raise Exception('Freshdesk ticket creation failed.')
+
+        except Exception:
+            messages.error(
+                request,
+                'There was an error submitting your support request. '
+                'Please submit the request as an email.')
+            logger.exception('Error submitting ticket')
+
+        return HttpResponseRedirect(reverse('help'))
+
+    return render(request, 'researcher_workspace/help.html', {'form': form})
 
 
 def custom_page_not_found(request, exception=None):
