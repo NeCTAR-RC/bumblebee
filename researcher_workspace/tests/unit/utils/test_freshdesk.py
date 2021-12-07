@@ -36,12 +36,9 @@ class FreshdeskEmailBackendTests(TestCase):
         mock_api = Mock()
         mock_api_class.return_value = mock_api
         backend = FreshdeskEmailBackend()
-        self.assertEqual(mock_api, backend.api)
         self.assertEqual(settings.FRESHDESK_GROUP_ID, backend.group_id)
         self.assertEqual(settings.FRESHDESK_EMAIL_CONFIG_ID,
                          backend.email_config_id)
-        mock_api_class.assert_called_once_with(
-            settings.FRESHDESK_DOMAIN, settings.FRESHDESK_KEY)
 
     @patch('researcher_workspace.utils.freshdesk.API')
     def test_send_emails(self, mock_api_class):
@@ -49,13 +46,12 @@ class FreshdeskEmailBackendTests(TestCase):
         mock_api = Mock()
         mock_api_class.return_value = mock_api
         backend = FreshdeskEmailBackend()
-
         mail = self._create_mail("here@test.test", user.email,
                                  "subject", "body", backend)
         mail.send()
         mock_api.tickets.create_outbound_email.assert_called_once_with(
             subject='subject', description='body',
-            email=[user.email], cc_emails=[], bcc_emails=[],
+            email=user.email, cc_emails=[],
             email_config_id=settings.FRESHDESK_EMAIL_CONFIG_ID,
             group_id=settings.FRESHDESK_GROUP_ID)
 
@@ -66,7 +62,7 @@ class FreshdeskEmailBackendTests(TestCase):
         mail.send()
         mock_api.tickets.create_outbound_email.assert_called_once_with(
             subject='subject', description='body',
-            email=[user.email], cc_emails=[], bcc_emails=[],
+            email=user.email, cc_emails=[],
             email_config_id=settings.FRESHDESK_EMAIL_CONFIG_ID,
             group_id=settings.FRESHDESK_GROUP_ID)
 
@@ -77,6 +73,6 @@ class FreshdeskEmailBackendTests(TestCase):
         mail.send()
         mock_api.tickets.create_outbound_email.assert_called_once_with(
             subject='subject', description='html_body',
-            email=[user.email], cc_emails=[], bcc_emails=[],
+            email=user.email, cc_emails=[],
             email_config_id=settings.FRESHDESK_EMAIL_CONFIG_ID,
             group_id=settings.FRESHDESK_GROUP_ID)
