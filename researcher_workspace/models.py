@@ -126,7 +126,7 @@ class Project(models.Model):
             f"Please check with your ARO for further details.")
 
     def __str__(self):
-        return "Project(" + str(self.id) + ") " + str(self.title) + " for " + str(self.project_admin)
+        return f"{self.title} ({self.project_admin})"
 
     def __init__(self, *args, **kwargs):
         super(Project, self).__init__(*args, **kwargs)
@@ -135,9 +135,12 @@ class Project(models.Model):
 
 
 class Permission(models.Model):
-    project = models.ForeignKey(Project, on_delete=models.PROTECT, )
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, )
     feature = models.ForeignKey(Feature, on_delete=models.PROTECT, )
     feature_options = models.ManyToManyField(FeatureOptions, blank=True)
+
+    def __str__(self):
+        return f"{self.project} permission for {self.feature}"
 
 
 def get_permission_feature_options_for_latest_project(user, feature):
@@ -182,8 +185,8 @@ class PermissionRequest(models.Model):
                                         f"Please check with your ARO for further details.")
 
     def __str__(self):
-        return "Permission Request(" + str(self.id) + ") for " + str(self.project) \
-            + " requesting " + str(self.requested_feature)
+        return (f"Permission Request for {self.project} requesting "
+                "{self.requested_feature}")
 
 
 class Profile(models.Model):
