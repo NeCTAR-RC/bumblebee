@@ -84,10 +84,36 @@
           if (!beenClicked) {
               beenClicked = true;
               tag.disabled = true;
-              {% with "agree_terms" as url_path %}
-              window.location.href = '{% url url_path version=version %}'
-              {% endwith %}
+              var agree_url = '{% url "agree_terms" version=version %}';
+              var home_url = '{% url "home" %}';
+              var xhr = new XMLHttpRequest();
+              xhr.open("POST", agree_url, true);
+              xhr.setRequestHeader('X-CSRFTOKEN', getCookie('csrftoken'));
+              xhr.onreadystatechange = function() {
+                  if (this.readyState === XMLHttpRequest.DONE) {
+                      if (this.status === 200) {
+                          window.location.replace(home_url);
+                      }
+                  }
+              }
+              xhr.send();
           }
+      }
+      function getCookie(name) {
+          let cookieValue = null;
+          if (document.cookie && document.cookie !== '') {
+              const cookies = document.cookie.split(';');
+              for (let i = 0; i < cookies.length; i++) {
+                  const cookie = cookies[i].trim();
+                  // Does this cookie string begin with the name we want?
+                  if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                      cookieValue = decodeURIComponent(
+                          cookie.substring(name.length + 1));
+                      break;
+                  }
+              }
+          }
+          return cookieValue;
       }
     </script>
     {% endblock %}

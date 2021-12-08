@@ -20,7 +20,7 @@ from django.shortcuts import render
 from django.template import loader
 from django.urls import reverse
 from django.utils.html import format_html
-from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
 
 from researcher_desktop.utils.utils import get_desktop_type, get_applicable_zones
 
@@ -369,6 +369,7 @@ def desktop_description(request):
     return render(request, 'researcher_workspace/desktop_description.html')
 
 
+@ensure_csrf_cookie
 def terms(request):
     show_agree = (request.user
                   and isinstance(request.user, User)
@@ -379,15 +380,16 @@ def terms(request):
 
 
 def agree_terms(request, version):
-    if request.user and isinstance(request.user, User):
+    if (request.method == 'POST' and request.user
+        and isinstance(request.user, User)):
         if (version == settings.TERMS_VERSION
-            and version > request.user.terms_version):
+             and version > request.user.terms_version):
             request.user.terms_version = version
             request.user.date_agreed_terms = datetime.now(timezone.utc)
             request.user.save()
-        return redirect_home(request)
+        return HttpResponse(status=200)
     else:
-        raise Http404()
+        return HttpResponse(status=400)
 
 
 @login_required(login_url='login')
