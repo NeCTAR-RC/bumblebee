@@ -16,6 +16,8 @@ from django.contrib.messages import constants as messages
 
 from django.urls import reverse_lazy
 
+NAME = 'Bumblebee'
+
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -255,8 +257,8 @@ INTERNAL_IPS = "127.0.0.1"
 # Freshdesk details for ticket interactions and / or email outbounding
 FRESHDESK_DOMAIN = "nectar.org.au"
 FRESHDESK_KEY = "secret"
-FRESHDESK_GROUP_ID = '1'
-FRESHDESK_EMAIL_CONFIG_ID = '123'
+FRESHDESK_GROUP_ID = 1
+FRESHDESK_EMAIL_CONFIG_ID = 123
 
 USER_LIMIT = 350  # 200 researchers + 25 support staff + 25 non-valid users we've got so far
 
