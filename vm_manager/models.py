@@ -127,6 +127,15 @@ class InstanceManager(models.Manager):
             logger.error(error)
             raise error
 
+    def get_latest_instance_for_volume(self, volume):
+        '''Return the latest created Instance for a Volume, irrespective of
+        deletion status.
+        '''
+        try:
+            return self.filter(boot_volume=volume).order_by('-created').first()
+        except Instance.DoesNotExist:
+            return None
+
     def get_instance_by_ip_address(self, ip_address, requesting_feature):
         try:
             try:
