@@ -184,8 +184,15 @@ def _create_instance(user, desktop_type, volume):
     hostname_url = generate_hostname_url(volume.hostname_id,
                                          operating_system)
 
-    username = 'vdiuser'
-    password = generate_password()
+    # Reuse the previous username and password
+    last_instance = Instance.objects.get_latest_instance_for_volume(volume)
+    if last_instance:
+        username = last_instance.username
+        password = last_instance.password
+    else:
+        username = 'vdiuser'
+        password = generate_password()
+
     metadata_server = {
         'allow_user': user.username,
         'environment': settings.ENVIRONMENT_NAME,

@@ -8,11 +8,14 @@ from vm_manager.constants import INSTANCE_DELETION_RETRY_WAIT_TIME, \
     INSTANCE_DELETION_RETRY_COUNT, VM_SHELVED, \
     INSTANCE_CHECK_SHUTOFF_RETRY_WAIT_TIME, \
     INSTANCE_CHECK_SHUTOFF_RETRY_COUNT
-from vm_manager.vm_functions.delete_vm import _delete_instance_worker, \
+from vm_manager.vm_functions.delete_vm import \
     _check_instance_is_shutoff_and_delete
 from vm_manager.vm_functions.create_vm import launch_vm_worker
 from vm_manager.models import VMStatus
 from vm_manager.utils.utils import get_nectar
+
+from guacamole.models import GuacamoleConnection
+
 
 logger = logging.getLogger(__name__)
 
@@ -21,6 +24,11 @@ def shelve_vm_worker(instance, requesting_feature):
     logger.info(f"About to shelve {instance.boot_volume.operating_system} "
                 f"vm at addr: {instance.get_ip_addr()} "
                 f"for user {instance.user.username}")
+
+    if instance.guac_connection:
+        GuacamoleConnection.objects.filter(instance=instance).delete()
+        instance.guac_connection = None
+        instance.save()
 
     n = get_nectar()
     try:
