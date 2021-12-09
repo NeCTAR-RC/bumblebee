@@ -21,7 +21,9 @@ class ResearcherWorkspaceRequestTests(TestCase):
 
     def setUp(self, *args, **kwargs):
         super().setUp(*args, **kwargs)
-        self.user = UserFactory.create()
+        self.user = UserFactory.create(first_name="Luke",
+                                       last_name="Sleepwalker")
+        self.charset = settings.DEFAULT_CHARSET
 
     def test_terms(self):
         # with the AnonymousUser
@@ -126,3 +128,66 @@ class ResearcherWorkspaceRequestTests(TestCase):
                              fetch_redirect_response=False)
         profile = Profile.objects.get(pk=self.user.profile.pk)
         self.assertEqual("Australia/Perth", profile.timezone)
+
+    def test_help(self):
+        url = reverse("help")
+
+        # with the AnonymousUser
+        response = self.client.get(url)
+        self.assertRedirects(response, f"/login/?next={url}",
+                             fetch_redirect_response=False)
+
+        # with real user
+        self.client.force_login(self.user)
+        response = self.client.get(url)
+        self.assertEqual(200, response.status_code)
+        # match the user's email in the form
+        self.assertTrue(response.content.find(
+            bytes(f'value="{self.user.email}"', self.charset)) >= 0)
+
+    @patch('researcher_workspace.views.create_ticket')
+    @patch('researcher_workspace.views.messages')
+    def test_post_help_request(self, mock_messages, mock_create_ticket):
+        url = reverse("help")
+        params = {'message': "1\n2\n3"}
+
+        # with the AnonymousUser
+        response = self.client.post(url, params)
+        self.assertRedirects(response, f"/login/?next={url}",
+                             fetch_redirect_response=False)
+
+        # with real user
+        mock_create_ticket.return_value = 1234
+        self.client.force_login(self.user)
+        response = self.client.post(url, params)
+        self.assertRedirects(response, url, fetch_redirect_response=False)
+        mock_create_ticket.assert_called_once_with(
+            name="Luke Sleepwalker", email=self.user.email,
+            subject="Virtual Desktop support request",
+            description="1<br/>2<br/>3",
+            tags=["Virtual Desktop"]
+        )
+        mock_messages.success.assert_called_once()
+        mock_messages.error.assert_not_called()
+
+        # simulate ticket submission failures
+        mock_messages.success.reset_mock()
+        mock_messages.error.reset_mock()
+        mock_create_ticket.reset_mock()
+        mock_create_ticket.return_value = None
+        response = self.client.post(url, params)
+        self.assertRedirects(response, url, fetch_redirect_response=False)
+        mock_create_ticket.assert_called_once()
+        mock_messages.success.assert_not_called()
+        mock_messages.error.assert_called_once()
+
+        mock_messages.success.reset_mock()
+        mock_messages.error.reset_mock()
+        mock_create_ticket.reset_mock()
+        mock_create_ticket.return_value = 1234
+        mock_create_ticket.side_effect = Exception("something bad")
+        response = self.client.post(url, params)
+        self.assertRedirects(response, url, fetch_redirect_response=False)
+        mock_create_ticket.assert_called_once()
+        mock_messages.success.assert_not_called()
+        mock_messages.error.assert_called_once()
