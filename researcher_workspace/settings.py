@@ -307,9 +307,6 @@ except ImportError:
 COMPRESS_ENABLED = get_setting('COMPRESS_ENABLED', not DEBUG)
 COMPRESS_OFFLINE = get_setting('COMPRESS_OFFLINE', not DEBUG)
 
-# If True, requests for new workspaces will be auto-approved
-AUTO_APPROVE_WORKSPACES = bool(strtobool(get_setting('DEBUG', 'True')))
-
 # OpenID Connect settings
 OIDC_OP_AUTHORIZATION_ENDPOINT = f'{OIDC_SERVER_URL}/auth'
 OIDC_OP_TOKEN_ENDPOINT = f'{OIDC_SERVER_URL}/token'
