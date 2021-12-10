@@ -2,9 +2,10 @@ import logging
 from datetime import datetime, timedelta, timezone
 import django_rq
 
-from vm_manager.constants import DOWNSIZE_PERIOD, \
+from vm_manager.constants import DOWNSIZE_PERIOD, REBOOT_COMPLETE_SECONDS, \
     RESIZE_CONFIRM_WAIT_SECONDS, VM_SUPERSIZED, VM_RESIZING, VM_OKAY
 from vm_manager.utils.utils import after_time, get_nectar
+from vm_manager.vm_functions.other_vm_functions import wait_for_reboot
 from vm_manager.models import VMStatus, Instance, Resize
 
 logger = logging.getLogger(__name__)
@@ -15,7 +16,7 @@ def supersize_vm_worker(instance, desktop_type) -> str:
                 f"for user {instance.user.username}")
     supersize_result = _resize_vm(instance,
                                   desktop_type.big_flavor.id,
-                                  desktop_type.feature)
+                                  VM_SUPERSIZED, desktop_type.feature)
     resize = Resize(instance=instance,
                     expires=calculate_supersize_expiration_date(
                         datetime.now(timezone.utc).date()))
@@ -28,7 +29,7 @@ def downsize_vm_worker(instance, desktop_type) -> str:
                 f"for user {instance.user.username}")
     downsize_result = _resize_vm(instance,
                                  desktop_type.default_flavor.id,
-                                 desktop_type.feature)
+                                 VM_OKAY, desktop_type.feature)
 
     resize = Resize.objects.get_latest_resize(instance.id)
     if not resize:
@@ -63,7 +64,7 @@ def extend(user, vm_id, requesting_feature) -> str:
     return str(resize)
 
 
-def _resize_vm(instance, flavor, requesting_feature):
+def _resize_vm(instance, flavor, target_status, requesting_feature):
     n = get_nectar()
     server = n.nova.servers.get(instance.id)
     current_flavor = server.flavor['id']
@@ -77,21 +78,20 @@ def _resize_vm(instance, flavor, requesting_feature):
     resize_result = n.nova.servers.resize(instance.id, flavor)
     vm_status = VMStatus.objects.get_vm_status_by_instance(
         instance, requesting_feature)
-    vm_status.status_progress = 50
+    vm_status.status_progress = 33
     vm_status.status_message = "Resize initiated; waiting to confirm"
     vm_status.save()
     scheduler = django_rq.get_scheduler('default')
     scheduler.enqueue_in(timedelta(seconds=5),
                          _wait_to_confirm_resize,
-                         instance, flavor,
+                         instance, flavor, target_status,
                          after_time(RESIZE_CONFIRM_WAIT_SECONDS),
                          requesting_feature)
     return resize_result
 
 
-def _wait_to_confirm_resize(instance, flavor, deadline, requesting_feature):
-    status = (VM_OKAY if str(flavor) == str(instance.boot_volume.flavor)
-              else VM_SUPERSIZED)
+def _wait_to_confirm_resize(instance, flavor, target_status,
+                            deadline, requesting_feature):
     n = get_nectar()
     vm_status = VMStatus.objects.get_vm_status_by_instance(
         instance, requesting_feature)
@@ -99,10 +99,13 @@ def _wait_to_confirm_resize(instance, flavor, deadline, requesting_feature):
     if instance.check_verify_resize_status():
         logger.info(f"Confirming resize of {instance}")
         n.nova.servers.confirm_resize(instance.id)
-        vm_status.status = status
-        vm_status.status_progress = 100
-        vm_status.status_message = "Resize completed"
+        vm_status.status_progress = 66
+        vm_status.status_message = "Resize completed; waiting for reboot"
         vm_status.save()
+        scheduler = django_rq.get_scheduler('default')
+        scheduler.enqueue_in(timedelta(seconds=REBOOT_COMPLETE_SECONDS),
+                             wait_for_reboot, instance, target_status,
+                             requesting_feature)
         return str(vm_status)
 
     elif instance.check_resizing_status():
@@ -111,7 +114,7 @@ def _wait_to_confirm_resize(instance, flavor, deadline, requesting_feature):
             scheduler = django_rq.get_scheduler('default')
             scheduler.enqueue_in(timedelta(seconds=5),
                                  _wait_to_confirm_resize,
-                                 instance, flavor, deadline,
+                                 instance, flavor, target_status, deadline,
                                  requesting_feature)
             return str(vm_status)
         else:
@@ -139,10 +142,13 @@ def _wait_to_confirm_resize(instance, flavor, deadline, requesting_feature):
 
         message = f"Resize of {instance} was confirmed automatically"
         logger.info(message)
-        vm_status.status = status
-        vm_status.status_progress = 100
-        vm_status.status_message = "Resize completed"
+        vm_status.status_progress = 66
+        vm_status.status_message = "Resize completed; waiting for reboot"
         vm_status.save()
+        scheduler = django_rq.get_scheduler('default')
+        scheduler.enqueue_in(timedelta(seconds=REBOOT_COMPLETE_SECONDS),
+                             wait_for_reboot, instance, target_status,
+                             requesting_feature)
         return message
 
     message = (
@@ -174,7 +180,7 @@ def downsize_expired_supersized_vms(requesting_feature):
 
     for resize in resizes:
         _resize_vm(resize.instance, resize.instance.boot_volume.flavor,
-                   requesting_feature)
+                   VM_OKAY, requesting_feature)
         resize.reverted = datetime.now(timezone.utc)
         resize.save()
         vm_status = VMStatus.objects.get_vm_status_by_instance(

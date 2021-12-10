@@ -224,7 +224,7 @@ def reboot_vm(user, vm_id, reboot_level, requesting_feature) -> str:
         return _wrong_state_message(
             "reboot", user, feature=requesting_feature, vm_status=vm_status,
             vm_id=vm_id)
-
+    target_status = vm_status.status
     vm_status.status = VM_WAITING
     vm_status.wait_time = after_time(REBOOT_WAIT_SECONDS)
     vm_status.status_progress = 0
@@ -233,7 +233,7 @@ def reboot_vm(user, vm_id, reboot_level, requesting_feature) -> str:
 
     queue = django_rq.get_queue('default')
     queue.enqueue(reboot_vm_worker, user, vm_id, reboot_level,
-                  requesting_feature)
+                  target_status, requesting_feature)
 
     return str(vm_status)
 

@@ -14,7 +14,8 @@ from vm_manager.utils.utils import get_nectar
 logger = logging.getLogger(__name__)
 
 
-def reboot_vm_worker(user, vm_id, reboot_level, requesting_feature):
+def reboot_vm_worker(user, vm_id, reboot_level,
+                     target_status, requesting_feature):
     instance = Instance.objects.get_instance_by_untrusted_vm_id(
         vm_id, user, requesting_feature)
     volume = instance.boot_volume
@@ -40,12 +41,12 @@ def reboot_vm_worker(user, vm_id, reboot_level, requesting_feature):
     scheduler.enqueue_in(
         timedelta(seconds=REBOOT_CONFIRM_WAIT_SECONDS),
         check_power_state, REBOOT_CONFIRM_RETRIES,
-        instance, requesting_feature)
+        instance, target_status, requesting_feature)
 
     return reboot_result
 
 
-def check_power_state(retries, instance, requesting_feature):
+def check_power_state(retries, instance, target_status, requesting_feature):
     vm_status = VMStatus.objects.get_vm_status_by_instance(
         instance, requesting_feature)
     active = instance.check_active_status()
@@ -61,12 +62,13 @@ def check_power_state(retries, instance, requesting_feature):
         scheduler = django_rq.get_scheduler('default')
         scheduler.enqueue_in(
             timedelta(seconds=REBOOT_COMPLETE_SECONDS),
-            wait_for_reboot, instance, requesting_feature)
+            wait_for_reboot, instance, target_status, requesting_feature)
     elif retries > 0:
         scheduler = django_rq.get_scheduler('default')
         scheduler.enqueue_in(
             timedelta(seconds=REBOOT_CONFIRM_WAIT_SECONDS),
-            check_power_state, retries - 1, instance, requesting_feature)
+            check_power_state, retries - 1, instance, target_status,
+            requesting_feature)
     else:
         msg = "VM {instance.id} has not gone ACTIVE after reboot."
         logger.error(msg)
@@ -74,12 +76,16 @@ def check_power_state(retries, instance, requesting_feature):
         vm_status.save()
 
 
-def wait_for_reboot(instance, requesting_feature):
+def wait_for_reboot(instance, target_status, requesting_feature):
+    # FIXME - see above ...
+    # Fake wait for reboot.  Currently we just pause for a fix period,
+    # then say it is rebooted.
+    # Note that this is also used by the resize workflows.
+
     vm_status = VMStatus.objects.get_vm_status_by_instance(
         instance, requesting_feature)
     logger.info(f"VM {instance.id} should have rebooted by now")
-    # FIXME - see above ...
     vm_status.status_progress = 100
     vm_status.status_message = "Reboot has completed"
-    vm_status.status = VM_OKAY
+    vm_status.status = target_status
     vm_status.save()

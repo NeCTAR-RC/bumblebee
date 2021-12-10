@@ -277,7 +277,7 @@ class VMManagerViewTests(TestCase):
         mock_rq.get_queue.assert_called_once_with("default")
         mock_queue.enqueue.assert_called_once_with(
             reboot_vm_worker, self.user, self.instance.id, REBOOT_SOFT,
-            self.feature)
+            VM_OKAY, self.feature)
         vm_status = VMStatus.objects.get_latest_vm_status(
             self.user, self.desktop_type)
         self.assertEqual(vm_status.pk, self.vm_status.pk)

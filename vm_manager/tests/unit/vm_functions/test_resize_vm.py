@@ -18,8 +18,10 @@ from vm_manager.tests.unit.vm_functions.base import VMFunctionTestBase
 
 from vm_manager.constants import ACTIVE, SHUTDOWN, RESIZE, VERIFY_RESIZE, \
     VM_ERROR, VM_RESIZING, VM_MISSING, VM_OKAY, VM_SHELVED, NO_VM, \
-    VM_SUPERSIZED, DOWNSIZE_PERIOD, RESIZE_CONFIRM_WAIT_SECONDS
+    VM_WAITING, VM_SUPERSIZED, DOWNSIZE_PERIOD, RESIZE_CONFIRM_WAIT_SECONDS, \
+    REBOOT_COMPLETE_SECONDS
 from vm_manager.models import VMStatus, Volume, Instance, Resize
+from vm_manager.vm_functions.other_vm_functions import wait_for_reboot
 from vm_manager.vm_functions.resize_vm import supersize_vm_worker, \
     downsize_vm_worker, calculate_supersize_expiration_date, \
     extend, _resize_vm, _wait_to_confirm_resize, \
@@ -42,7 +44,8 @@ class ResizeVMTests(VMFunctionTestBase):
 
         self.assertEqual("x", supersize_vm_worker(fake_instance, self.UBUNTU))
         mock_resize.assert_called_once_with(
-            fake_instance, self.UBUNTU.big_flavor.id, self.FEATURE)
+            fake_instance, self.UBUNTU.big_flavor.id, VM_SUPERSIZED,
+            self.FEATURE)
 
         mock_logger.info.assert_called_once_with(
             f"About to supersize {self.UBUNTU.id} vm "
@@ -60,7 +63,8 @@ class ResizeVMTests(VMFunctionTestBase):
     @patch('vm_manager.utils.utils.Nectar', new=FakeNectar)
     @patch('vm_manager.vm_functions.resize_vm._resize_vm')
     @patch('vm_manager.vm_functions.resize_vm.logger')
-    def test_downsize_vm_worker_no_resize(self, mock_logger, mock_resize):
+    def test_downsize_vm_worker_no_resize_record(
+            self, mock_logger, mock_resize):
         fake_nectar = get_nectar()
 
         _, fake_instance = self.build_fake_vol_instance(ip_address='10.0.0.99')
@@ -68,7 +72,8 @@ class ResizeVMTests(VMFunctionTestBase):
 
         self.assertEqual("x", downsize_vm_worker(fake_instance, self.UBUNTU))
         mock_resize.assert_called_once_with(
-            fake_instance, self.UBUNTU.default_flavor.id, self.FEATURE)
+            fake_instance, self.UBUNTU.default_flavor.id,
+            VM_OKAY, self.FEATURE)
 
         mock_logger.info.assert_called_once_with(
             f"About to downsize {self.UBUNTU.id} vm "
@@ -89,7 +94,8 @@ class ResizeVMTests(VMFunctionTestBase):
 
         self.assertEqual("x", downsize_vm_worker(fake_instance, self.UBUNTU))
         mock_resize.assert_called_once_with(
-            fake_instance, self.UBUNTU.default_flavor.id, self.FEATURE)
+            fake_instance, self.UBUNTU.default_flavor.id,
+            VM_OKAY, self.FEATURE)
 
         mock_logger.info.assert_called_once_with(
             f"About to downsize {self.UBUNTU.id} vm "
@@ -156,7 +162,8 @@ class ResizeVMTests(VMFunctionTestBase):
         self.assertEqual(
             f"Instance {fake_instance.id} already has flavor "
             f"{default_flavor_id}. Skipping the resize.",
-            _resize_vm(fake_instance, default_flavor_id, self.FEATURE))
+            _resize_vm(fake_instance, default_flavor_id,
+                       VM_OKAY, self.FEATURE))
         fake_nectar.nova.servers.get.assert_called_with(fake_instance.id)
         fake_nectar.nova.servers.get.reset_mock()
 
@@ -166,7 +173,8 @@ class ResizeVMTests(VMFunctionTestBase):
 
         self.assertEqual(
             "whatever",
-            _resize_vm(fake_instance, big_flavor_id, self.FEATURE))
+            _resize_vm(fake_instance, big_flavor_id,
+                       VM_SUPERSIZED, self.FEATURE))
 
         fake_nectar.nova.servers.get.assert_called_with(fake_instance.id)
         fake_nectar.nova.servers.resize.assert_called_with(
@@ -174,17 +182,18 @@ class ResizeVMTests(VMFunctionTestBase):
 
         mock_rq.get_scheduler.assert_called_once_with("default")
         mock_scheduler.enqueue_in.assert_called_once_with(
-            timedelta(seconds=5),
-            _wait_to_confirm_resize,
-            fake_instance, big_flavor_id,
-            after,
+            timedelta(seconds=5), _wait_to_confirm_resize,
+            fake_instance, big_flavor_id, VM_SUPERSIZED, after,
             self.FEATURE)
         vm_status = VMStatus.objects.get(pk=fake_vm_status.pk)
-        self.assertEqual(50, vm_status.status_progress)
+        self.assertEqual(33, vm_status.status_progress)
 
     @patch('vm_manager.utils.utils.Nectar', new=FakeNectar)
     @patch('vm_manager.vm_functions.resize_vm.logger')
-    def test_wait_to_confirm_resize(self, mock_logger):
+    @patch('vm_manager.vm_functions.resize_vm.django_rq')
+    def test_wait_to_confirm_resize(self, mock_rq, mock_logger):
+        mock_scheduler = Mock()
+        mock_rq.get_scheduler.return_value = mock_scheduler
         fake_nectar = get_nectar()
         fake_nectar.nova.servers.get.return_value = FakeServer(
             status=VERIFY_RESIZE)
@@ -195,16 +204,20 @@ class ResizeVMTests(VMFunctionTestBase):
 
         self.assertEqual(
             f"Status of [{self.FEATURE.name}][{self.UBUNTU.id}]"
-            f"[{self.user}] is {VM_OKAY}",
+            f"[{self.user}] is {VM_WAITING}",
             _wait_to_confirm_resize(
                 fake_instance, self.UBUNTU.default_flavor.id,
-                after_time(10), self.FEATURE))
+                VM_OKAY, after_time(10), self.FEATURE))
         mock_logger.info.assert_called_once_with(
             f"Confirming resize of {fake_instance}")
         fake_nectar.nova.servers.confirm_resize.assert_called_once_with(
             fake_instance.id)
+        mock_rq.get_scheduler.assert_called_once_with("default")
+        mock_scheduler.enqueue_in.assert_called_once_with(
+            timedelta(seconds=REBOOT_COMPLETE_SECONDS), wait_for_reboot,
+            fake_instance, VM_OKAY, self.FEATURE)
         vm_status = VMStatus.objects.get(pk=fake_vm_status.pk)
-        self.assertEqual(100, vm_status.status_progress)
+        self.assertEqual(66, vm_status.status_progress)
 
     @patch('vm_manager.utils.utils.Nectar', new=FakeNectar)
     @patch('vm_manager.vm_functions.resize_vm.logger')
@@ -226,7 +239,7 @@ class ResizeVMTests(VMFunctionTestBase):
             f"[{self.user}] is {VM_RESIZING}",
             _wait_to_confirm_resize(
                 fake_instance, self.UBUNTU.default_flavor.id,
-                deadline, self.FEATURE))
+                VM_OKAY, deadline, self.FEATURE))
         mock_logger.info.assert_called_once_with(
             f"Waiting for resize of {fake_instance}")
         mock_logger.error.assert_not_called()
@@ -235,7 +248,7 @@ class ResizeVMTests(VMFunctionTestBase):
         mock_scheduler.enqueue_in.assert_called_once_with(
             timedelta(seconds=5), _wait_to_confirm_resize,
             fake_instance, self.UBUNTU.default_flavor.id,
-            deadline, self.FEATURE)
+            VM_OKAY, deadline, self.FEATURE)
         vm_status = VMStatus.objects.get(pk=fake_vm_status.pk)
         self.assertEqual(50, vm_status.status_progress)
 
@@ -256,7 +269,7 @@ class ResizeVMTests(VMFunctionTestBase):
         deadline = after_time(-10)
         res = _wait_to_confirm_resize(
             fake_instance, self.UBUNTU.default_flavor.id,
-            deadline, self.FEATURE)
+            VM_OKAY, deadline, self.FEATURE)
         error = (f"Instance ({fake_instance}) resize failed instance in "
                  f"state: {RESIZE}")
         self.assertEqual(error, res)
@@ -295,7 +308,7 @@ class ResizeVMTests(VMFunctionTestBase):
         deadline = after_time(10)
         self.assertIsNone(_wait_to_confirm_resize(
             fake_instance, self.UBUNTU.default_flavor.id,
-            deadline, self.FEATURE))
+            VM_OKAY, deadline, self.FEATURE))
         error = (f"Something went wrong with the instance get call "
                  f"for {fake_instance}: it raised bad")
         mock_logger.error.assert_called_once_with(error)
@@ -320,7 +333,7 @@ class ResizeVMTests(VMFunctionTestBase):
         deadline = after_time(10)
         res = _wait_to_confirm_resize(
             fake_instance, self.UBUNTU.default_flavor.id,
-            deadline, self.FEATURE)
+            VM_OKAY, deadline, self.FEATURE)
         error = (f"Instance ({fake_instance}) resize failed as "
                  f"instance hasn't changed flavor: "
                  f"Actual Flavor: {self.UBUNTU.big_flavor.id}, "
@@ -340,6 +353,8 @@ class ResizeVMTests(VMFunctionTestBase):
     @patch('vm_manager.vm_functions.resize_vm.logger')
     @patch('vm_manager.vm_functions.resize_vm.django_rq')
     def test_wait_to_confirm_resize_6(self, mock_rq, mock_logger):
+        mock_scheduler = Mock()
+        mock_rq.get_scheduler.return_value = mock_scheduler
         fake_nectar = get_nectar()
         fake_nectar.nova.servers.get.side_effect = None
         fake_nectar.nova.servers.get.return_value = FakeServer(
@@ -352,16 +367,20 @@ class ResizeVMTests(VMFunctionTestBase):
         deadline = after_time(10)
         res = _wait_to_confirm_resize(
             fake_instance, self.UBUNTU.big_flavor.id,
-            deadline, self.FEATURE)
+            VM_SUPERSIZED, deadline, self.FEATURE)
         msg = f"Resize of {fake_instance} was confirmed automatically"
         self.assertEqual(msg, res)
         mock_logger.info.assert_called_once_with(msg)
         mock_logger.error.assert_not_called()
         fake_nectar.nova.servers.confirm_resize.assert_not_called()
-        mock_rq.get_scheduler.assert_not_called()
+        mock_rq.get_scheduler.assert_called_once_with("default")
+        mock_scheduler.enqueue_in.assert_called_once_with(
+            timedelta(seconds=REBOOT_COMPLETE_SECONDS), wait_for_reboot,
+            fake_instance, VM_SUPERSIZED, self.FEATURE)
+
         vm_status = VMStatus.objects.get(pk=fake_vm_status.pk)
-        self.assertEqual(VM_SUPERSIZED, vm_status.status)
-        self.assertEqual(100, vm_status.status_progress)
+        self.assertEqual(VM_WAITING, vm_status.status)
+        self.assertEqual(66, vm_status.status_progress)
 
     @patch('vm_manager.utils.utils.Nectar', new=FakeNectar)
     @patch('vm_manager.vm_functions.resize_vm.logger')
@@ -378,7 +397,7 @@ class ResizeVMTests(VMFunctionTestBase):
         deadline = after_time(10)
         res = _wait_to_confirm_resize(
             fake_instance, self.UBUNTU.big_flavor.id,
-            deadline, self.FEATURE)
+            VM_SUPERSIZED, deadline, self.FEATURE)
         error = (
             f"Instance ({fake_instance}) resize failed instance in "
             f"state: {SHUTDOWN}")
@@ -409,7 +428,8 @@ class ResizeVMTests(VMFunctionTestBase):
 
         self.assertEqual(1, downsize_expired_supersized_vms(self.FEATURE))
         mock_resize.assert_called_once_with(
-            fake_instance, self.UBUNTU.default_flavor.id, self.FEATURE)
+            fake_instance, self.UBUNTU.default_flavor.id,
+            VM_OKAY, self.FEATURE)
         resize = Resize.objects.get(pk=resize.pk)
         self.assertIsNotNone(resize.reverted)
         vm_status = VMStatus.objects.get(pk=fake_vm_status.pk)
