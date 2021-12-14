@@ -1,12 +1,14 @@
 import uuid
 import copy
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 
 from unittest.mock import Mock, patch, call
 
 from django.http import Http404, HttpResponseRedirect
+from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
 from django.test import TestCase
+from django.utils.timezone import utc
 
 from researcher_workspace.tests.factories import FeatureFactory, UserFactory
 from researcher_desktop.tests.factories import DesktopTypeFactory, \
@@ -16,12 +18,13 @@ from vm_manager.tests.factories import InstanceFactory, VolumeFactory, \
 from vm_manager.tests.fakes import Fake, FakeNectar
 
 from vm_manager.constants import ERROR, ACTIVE, SHUTDOWN, VERIFY_RESIZE, \
-    BUILD, REBUILD, RESIZE, REBOOT, RESCUE, REBOOT_HARD, REBOOT_SOFT
-
-from vm_manager.constants import VM_OKAY, VM_DELETED, VM_WAITING, \
+    BUILD, REBUILD, RESIZE, REBOOT, RESCUE, REBOOT_HARD, REBOOT_SOFT, \
+    VM_OKAY, VM_DELETED, VM_WAITING, \
     VM_CREATING, VM_RESIZING, NO_VM, VM_SHELVED, VM_MISSING, VM_ERROR, \
     VM_SHUTDOWN, VM_SUPERSIZED, ALL_VM_STATES, LAUNCH_WAIT_SECONDS, \
-    DOWNSIZE_PERIOD, CLOUD_INIT_STARTED, CLOUD_INIT_FINISHED, SCRIPT_OKAY
+    CLOUD_INIT_STARTED, CLOUD_INIT_FINISHED, SCRIPT_OKAY, \
+    EXTEND_BUTTON, EXTEND_BOOST_BUTTON, BOOST_BUTTON
+
 from vm_manager.models import VMStatus, Instance, Volume
 from vm_manager.utils.utils import get_nectar, after_time
 from vm_manager.views import launch_vm_worker, delete_vm_worker, \
@@ -46,7 +49,7 @@ class VMManagerViewTests(TestCase):
         self.zone = AvailabilityZoneFactory.create(name="a_zone",
                                                    zone_weight=1)
 
-    def build_existing_vm(self, status):
+    def build_existing_vm(self, status, expires=None):
         self.volume = VolumeFactory.create(
             id=uuid.uuid4(), user=self.user,
             operating_system=self.desktop_type.id,
@@ -54,7 +57,7 @@ class VMManagerViewTests(TestCase):
             zone=self.zone.name)
         self.instance = InstanceFactory.create(
             id=uuid.uuid4(), user=self.user, boot_volume=self.volume,
-            ip_address='10.0.0.1')
+            ip_address='10.0.0.1', expires=expires)
         if status:
             self.vm_status = VMStatusFactory.create(
                 instance=self.instance,
@@ -80,7 +83,7 @@ class VMManagerViewTests(TestCase):
 
         mock_queue = Mock()
         mock_rq.get_queue.return_value = mock_queue
-        now = datetime.now(timezone.utc)
+        now = datetime.now(utc)
 
         self.assertEqual(
             f"Status of [feature][desktop][{self.user}] "
@@ -267,7 +270,7 @@ class VMManagerViewTests(TestCase):
         mock_queue = Mock()
         mock_rq.get_queue.return_value = mock_queue
         self.build_existing_vm(VM_OKAY)
-        now = datetime.now(timezone.utc)
+        now = datetime.now(utc)
 
         self.assertEqual(
             f"Status of [{self.feature}][{self.desktop_type.id}]"
@@ -311,7 +314,7 @@ class VMManagerViewTests(TestCase):
         mock_queue = Mock()
         mock_rq.get_queue.return_value = mock_queue
         self.build_existing_vm(VM_OKAY)
-        now = datetime.now(timezone.utc)
+        now = datetime.now(utc)
 
         self.assertEqual(
             f"Status of [{self.feature}][{self.desktop_type.id}][{self.user}] "
@@ -355,7 +358,7 @@ class VMManagerViewTests(TestCase):
         mock_queue = Mock()
         mock_rq.get_queue.return_value = mock_queue
         self.build_existing_vm(VM_SUPERSIZED)
-        now = datetime.now(timezone.utc)
+        now = datetime.now(utc)
 
         self.assertEqual(
             f"Status of [{self.feature}][{self.desktop_type.id}][{self.user}] "
@@ -374,8 +377,7 @@ class VMManagerViewTests(TestCase):
         self.assertTrue(now < vm_status.wait_time)
 
     @patch('vm_manager.utils.utils.Nectar', new=FakeNectar)
-    @patch('vm_manager.models.Instance.get_url')
-    def test_get_vm_state_2(self, mock_get_url):
+    def test_get_vm_state(self):
         self.assertEqual((NO_VM, "No VM", None),
                          get_vm_state(self.user, self.desktop_type))
 
@@ -413,7 +415,7 @@ class VMManagerViewTests(TestCase):
             status=VM_WAITING, user=self.user,
             operating_system=self.desktop_type.id,
             requesting_feature=self.feature,
-            instance=self.instance, wait_time=datetime.now(timezone.utc))
+            instance=self.instance, wait_time=datetime.now(utc))
         self.assertEqual((VM_ERROR, "VM Not Ready", self.instance.id),
                          get_vm_state(self.user, self.desktop_type))
 
@@ -421,7 +423,7 @@ class VMManagerViewTests(TestCase):
             status=VM_WAITING, user=self.user,
             operating_system=self.desktop_type.id,
             requesting_feature=self.feature,
-            wait_time=datetime.now(timezone.utc))
+            wait_time=datetime.now(utc))
         self.assertEqual((VM_MISSING, "VM has Errored", None),
                          get_vm_state(self.user, self.desktop_type))
         # Changes the state to VM_ERROR
@@ -438,12 +440,35 @@ class VMManagerViewTests(TestCase):
         self.assertEqual((VM_SHUTDOWN, "VM Shutdown", self.instance.id),
                          get_vm_state(self.user, self.desktop_type))
 
+    @patch('vm_manager.utils.utils.Nectar', new=FakeNectar)
+    @patch('vm_manager.models.Instance.get_url')
+    @patch('vm_manager.views.InstanceExpiryPolicy')
+    def test_get_vm_state_2(self, mock_policy_class, mock_get_url):
         url = "https://foo/bar"
         mock_get_url.return_value = url
 
+        fake_nectar = get_nectar()
         fake_nectar.nova.servers.get.return_value = Fake(status=ACTIVE)
-        self.build_existing_vm(VM_OKAY)
-        self.assertEqual((VM_OKAY, {'url': url}, self.instance.id),
+
+        # Not testing the expiration policy decisions
+        mock_policy = Mock()
+        mock_policy_class.return_value = mock_policy
+
+        now = datetime.now(utc)
+        mock_policy.permitted_extension.return_value = timedelta(days=2)
+        mock_policy.new_expiry.return_value = now + timedelta(days=2)
+
+        date1 = now + timedelta(days=1)
+        date2 = now + timedelta(days=2)
+
+        self.build_existing_vm(VM_OKAY, expires=date1)
+        self.assertEqual((VM_OKAY,
+                          {'url': url,
+                           'extension': timedelta(days=2),
+                           'expires': date1,
+                           'extended_expiration': date2
+                          },
+                          self.instance.id),
                          get_vm_state(self.user, self.desktop_type))
 
         for os_status in [BUILD, REBOOT, REBUILD, RESCUE]:   # just some
@@ -457,46 +482,83 @@ class VMManagerViewTests(TestCase):
                              instance.error_message)
             self.assertIsNone(instance.boot_volume.error_message)
 
+    @patch('vm_manager.utils.utils.Nectar', new=FakeNectar)
+    @patch('vm_manager.models.Instance.get_url')
+    @patch('vm_manager.views.BoostExpiryPolicy')
+    def test_get_vm_state_3(self, mock_policy_class, mock_get_url):
+        url = "https://foo/bar"
+        mock_get_url.return_value = url
+
+        fake_nectar = get_nectar()
         fake_nectar.nova.servers.get.return_value = Fake(status=ACTIVE)
         self.build_existing_vm(VM_SUPERSIZED)
-        time1 = (datetime.now(timezone.utc)
-                 + timedelta(days=DOWNSIZE_PERIOD)).date()
-        time2 = (datetime.now(timezone.utc)
-                 + timedelta(days=DOWNSIZE_PERIOD * 2)).date()
-        resize = ResizeFactory.create(instance=self.instance, expires=time1)
-        self.assertEqual((VM_SUPERSIZED,
-                          {
-                              'url': url,
-                              'is_eligible': False,
-                              'expires': time1,
-                              'extended_expiration': time2
-                          },
-                          self.instance.id),
-                         get_vm_state(self.user, self.desktop_type))
+
+        # Not testing the expiration policy decisions
+        mock_policy = Mock()
+        mock_policy_class.return_value = mock_policy
+
+        now = datetime.now(utc)
+        mock_policy.permitted_extension.return_value = timedelta(days=2)
+        mock_policy.new_expiry.return_value = now + timedelta(days=2)
+
+        date1 = now + timedelta(days=1)
+        date2 = now + timedelta(days=2)
+        resize = ResizeFactory.create(instance=self.instance, expires=date1)
+
+        res = get_vm_state(self.user, self.desktop_type)
+
+        self.assertEqual(
+            (VM_SUPERSIZED,
+             {'url': url,
+              'extension': timedelta(days=2),
+              'expires': date1,
+              'extended_expiration': date2
+             },
+             self.instance.id),
+            get_vm_state(self.user, self.desktop_type))
 
     @patch('vm_manager.views.loader')
     @patch('vm_manager.models.Instance.get_url')
     @patch('vm_manager.views.messages')
-    def test_render_vm(self, mock_messages, mock_get_url, mock_loader):
+    @patch('vm_manager.views.InstanceExpiryPolicy')
+    def test_render_vm_okay(self, mock_policy_class, mock_messages,
+                            mock_get_url, mock_loader):
         url = "https://foo/bar"
         mock_get_url.return_value = url
 
         # Not testing what is actually rendered.
         mock_loader.render_to_string.return_value = "rendered"
 
-        request = "The Request"
-        buttons = ["ONE", "TWO"]
+        # Not testing the expiration policy decisions
+        mock_policy = Mock()
+        mock_policy_class.return_value = mock_policy
+        now = datetime.now(utc)
+        date1 = now + timedelta(days=settings.BOOST_EXPIRY)
+        date2 = now + timedelta(days=settings.BOOST_EXPIRY)
 
-        self.build_existing_vm(VM_OKAY)
+        mock_policy.permitted_extension.return_value = \
+            timedelta(days=settings.BOOST_EXPIRY)
+        mock_policy.new_expiry.return_value = \
+            now + timedelta(days=settings.BOOST_EXPIRY)
+
+        request = "The Request"
+        buttons = ["ONE", "TWO", EXTEND_BUTTON,
+                   EXTEND_BOOST_BUTTON, BOOST_BUTTON]
+
+        self.build_existing_vm(VM_OKAY, expires=date1)
         self.assertEqual(("rendered", "rendered", VM_OKAY),
                          render_vm(request, self.user, self.desktop_type,
                                    buttons))
         context = {
             'state': VM_OKAY,
-            'what_to_show': {'url': url},
+            'what_to_show': {
+                'url': url,
+                'extension': timedelta(days=settings.BOOST_EXTENSION),
+                'expires': date1,
+                'extended_expiration': date2},
             'desktop_type': self.desktop_type,
             'vm_id': self.instance.id,
-            'buttons_to_display': buttons,
+            'buttons_to_display': ['ONE', 'TWO', EXTEND_BUTTON, BOOST_BUTTON],
             'app_name': self.feature.app_name,
             'requesting_feature': self.feature,
             'VM_WAITING': VM_WAITING,
@@ -506,63 +568,101 @@ class VMManagerViewTests(TestCase):
                       context, request),
                  call(f"vm_manager/javascript/{VM_OKAY}.js",
                       context, request)]
+        mock_policy.permitted_extension.assert_called_once_with(self.instance)
+        mock_policy.new_expiry.assert_called_once_with(self.instance)
         mock_loader.render_to_string.assert_has_calls(calls)
-        mock_loader.render_to_string.reset_mock()
         mock_messages.info.assert_not_called()
 
-        # Reset for supersized (non extendable)
-        self.build_existing_vm(VM_SUPERSIZED)
-        time1 = (datetime.now(timezone.utc)
-                 + timedelta(days=DOWNSIZE_PERIOD)).date()
-        time2 = (datetime.now(timezone.utc)
-                 + timedelta(days=DOWNSIZE_PERIOD * 2)).date()
-        resize = ResizeFactory.create(instance=self.instance, expires=time1)
+    @patch('vm_manager.views.loader')
+    @patch('vm_manager.models.Instance.get_url')
+    @patch('vm_manager.views.messages')
+    @patch('vm_manager.views.BoostExpiryPolicy')
+    def test_render_vm_supersized(self, mock_policy_class, mock_messages,
+                                  mock_get_url, mock_loader):
+        url = "https://foo/bar"
+        mock_get_url.return_value = url
 
+        # Not testing what is actually rendered.
+        mock_loader.render_to_string.return_value = "rendered"
+
+        # Not testing the expiration policy decisions
+        mock_policy = Mock()
+        mock_policy_class.return_value = mock_policy
+
+        self.build_existing_vm(VM_SUPERSIZED)
+        now = datetime.now(utc)
+        date1 = now + timedelta(days=settings.BOOST_EXPIRY)
+        date2 = now + timedelta(days=settings.BOOST_EXPIRY)
+        resize = ResizeFactory.create(instance=self.instance, expires=date1)
+
+        mock_policy.permitted_extension.return_value = \
+            timedelta(days=settings.BOOST_EXPIRY)
+        mock_policy.new_expiry.return_value = \
+            now + timedelta(days=settings.BOOST_EXPIRY)
+
+        request = "The Request"
+        buttons = ["ONE", "TWO", EXTEND_BUTTON,
+                   EXTEND_BOOST_BUTTON, BOOST_BUTTON]
         self.assertEqual(("rendered", "rendered", VM_SUPERSIZED),
                          render_vm(request, self.user, self.desktop_type,
                                    buttons))
-        context['what_to_show'] = {
-            'url': url,
-            'is_eligible': False,
-            'expires': time1,
-            'extended_expiration': time2
+        context = {
+            'state': VM_SUPERSIZED,
+            'what_to_show': {
+                'url': url,
+                'extension': timedelta(days=settings.BOOST_EXTENSION),
+                'expires': date1,
+                'extended_expiration': date2},
+            'desktop_type': self.desktop_type,
+            'vm_id': self.instance.id,
+            'buttons_to_display': ['ONE', 'TWO', EXTEND_BOOST_BUTTON],
+            'app_name': self.feature.app_name,
+            'requesting_feature': self.feature,
+            'VM_WAITING': VM_WAITING,
+            'vm_status': self.vm_status,
         }
-        context['vm_id'] = self.instance.id
-        context['state'] = VM_SUPERSIZED
-        context['vm_status'] = VMStatus.objects.get(pk=self.vm_status.pk)
         calls = [call(f"vm_manager/html/{VM_SUPERSIZED}.html",
                       context, request),
                  call(f"vm_manager/javascript/{VM_SUPERSIZED}.js",
                       context, request)]
+        mock_policy.permitted_extension.assert_called_once_with(resize)
+        mock_policy.new_expiry.assert_called_once_with(resize)
         mock_loader.render_to_string.assert_has_calls(calls)
-        mock_messages.info.assert_not_called()
+        mock_messages.info.assert_called_once_with(
+            'The Request',
+            f'Your Desktop vm is set to resize back to the default '
+            f'size on {date1}')
 
-        # Reset for supersized (extendable)
-        self.build_existing_vm(VM_SUPERSIZED)
-        time1 = (datetime.now(timezone.utc)
-                 + timedelta(days=DOWNSIZE_PERIOD - 1)).date()
-        time2 = (datetime.now(timezone.utc)
-                 + timedelta(days=DOWNSIZE_PERIOD * 2 - 1)).date()
-        resize = ResizeFactory.create(instance=self.instance, expires=time1)
+        # Reset for supersized (not allowed)
+        mock_policy.permitted_extension.reset_mock()
+        mock_policy.new_expiry.reset_mock()
+        mock_loader.render_to_string.reset_mock()
+        mock_messages.info.reset_mock()
+
+        mock_policy.permitted_extension.return_value = timedelta(seconds=0)
+        mock_policy.new_expiry.return_value = date1
 
         self.assertEqual(("rendered", "rendered", VM_SUPERSIZED),
                          render_vm(request, self.user, self.desktop_type,
                                    buttons))
         context['what_to_show'] = {
             'url': url,
-            'is_eligible': True,
-            'expires': time1,
-            'extended_expiration': time2
+            'extension': timedelta(seconds=0),
+            'expires': date1,
+            'extended_expiration': date1
         }
-        context['vm_id'] = self.instance.id
-        context['state'] = VM_SUPERSIZED
-        context['vm_status'] = VMStatus.objects.get(pk=self.vm_status.pk)
-
+        context['buttons_to_display'] = ['ONE', 'TWO']
+        calls = [call(f"vm_manager/html/{VM_SUPERSIZED}.html",
+                      context, request),
+                 call(f"vm_manager/javascript/{VM_SUPERSIZED}.js",
+                      context, request)]
+        mock_policy.permitted_extension.assert_called_once_with(resize)
+        mock_policy.new_expiry.assert_called_once_with(resize)
         mock_loader.render_to_string.assert_has_calls(calls)
-        mock_messages.info.assert_called_with(
-            request,
-            f'Your {str(self.desktop_type).capitalize()} vm is set to resize '
-            f'back to the default size on {time1}')
+        mock_messages.info.assert_called_once_with(
+            'The Request',
+            f'Your Desktop vm is set to resize back to the default '
+            f'size on {date1}')
 
     @patch('vm_manager.views.logger')
     @patch('vm_manager.views.generate_hostname')
@@ -705,7 +805,7 @@ class VMManagerViewTests(TestCase):
     @patch('vm_manager.views.datetime')
     def test_rd_report_for_user(self, mock_datetime):
         # Freeze time ...
-        now = datetime.now(timezone.utc)
+        now = datetime.now(utc)
         mock_datetime.now.return_value = now
 
         dt_1 = DesktopTypeFactory.create(

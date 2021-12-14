@@ -1,23 +1,9 @@
-import datetime
-import pytz
-from django import VERSION as DJANGO_VERSION
 from django import template
 from django.conf import settings
 from django.urls import reverse, NoReverseMatch
 from django.utils.encoding import escape_uri_path
 
 register = template.Library()
-
-
-@register.simple_tag
-def time_of_day():
-    cur_time = datetime.datetime.now(tz=pytz.timezone(str(settings.TIME_ZONE)))
-    if cur_time.hour < 12:
-        return 'Morning'
-    elif 12 <= cur_time.hour < 18:
-        return 'Afternoon'
-    else:
-        return 'Evening'
 
 
 @register.simple_tag(takes_context=True)

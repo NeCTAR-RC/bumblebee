@@ -11,6 +11,7 @@ from django.urls import reverse
 
 from vm_manager.constants import VOLUME_CREATION_TIMEOUT, \
     INSTANCE_LAUNCH_TIMEOUT, NO_VM, VM_OKAY, LINUX
+from vm_manager.utils.expiry import InstanceExpiryPolicy
 from vm_manager.utils.utils import get_nectar, generate_server_name, \
     generate_hostname, generate_hostname_url, generate_password
 from vm_manager.models import Instance, Volume, VMStatus
@@ -251,6 +252,9 @@ def wait_for_instance_active(user, desktop_type, instance, start_time):
         vm_status.status_progress = 75
         vm_status.status_message = 'Instance launched; waiting for boot'
         vm_status.save()
+        instance.expires = InstanceExpiryPolicy().initial_expiry(
+            now=instance.created)
+        instance.save()
     elif (now - start_time > timedelta(seconds=INSTANCE_LAUNCH_TIMEOUT)):
         logger.error(f"Instance took too long to launch: user:{user} "
                      f"operating_system:{desktop_type.id} instance:{instance} "
@@ -269,3 +273,15 @@ def wait_for_instance_active(user, desktop_type, instance, start_time):
         scheduler = django_rq.get_scheduler('default')
         scheduler.enqueue_in(timedelta(seconds=5), wait_for_instance_active,
                              user, desktop_type, instance, start_time)
+
+
+# TODO - Analyse for possible race conditions with create/delete
+def extend_instance(user, vm_id, requesting_feature) -> str:
+    instance = Instance.objects.get_instance_by_untrusted_vm_id(
+        vm_id, user, requesting_feature)
+    logger.info(f"Extending the expiration of boosted "
+                f"{instance.boot_volume.operating_system} vm "
+                f"for user {user.username}")
+    instance.expires = InstanceExpiryPolicy().new_expiry(instance)
+    instance.save()
+    return str(instance)

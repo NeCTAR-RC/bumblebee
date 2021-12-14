@@ -5,14 +5,15 @@ from datetime import datetime, timezone, timedelta
 
 from django.conf import settings
 from vm_manager.constants import INSTANCE_DELETION_RETRY_WAIT_TIME, \
-    INSTANCE_DELETION_RETRY_COUNT, VM_SHELVED, \
+    INSTANCE_DELETION_RETRY_COUNT, VM_SHELVED, VM_WAITING, VM_OKAY, \
     INSTANCE_CHECK_SHUTOFF_RETRY_WAIT_TIME, \
-    INSTANCE_CHECK_SHUTOFF_RETRY_COUNT
+    INSTANCE_CHECK_SHUTOFF_RETRY_COUNT, \
+    FORCED_SHELVE_WAIT_SECONDS
 from vm_manager.vm_functions.delete_vm import \
     _check_instance_is_shutoff_and_delete
 from vm_manager.vm_functions.create_vm import launch_vm_worker
-from vm_manager.models import VMStatus
-from vm_manager.utils.utils import get_nectar
+from vm_manager.models import VMStatus, Instance
+from vm_manager.utils.utils import get_nectar, after_time
 
 from guacamole.models import GuacamoleConnection
 
@@ -97,3 +98,34 @@ def unshelve_vm_worker(user, desktop_type, zone):
     logger.info(f'Unshelving {desktop_type.id} VM '
                 f'for {user.username}')
     launch_vm_worker(user, desktop_type, zone)
+
+
+# TODO - The current implementation will potentially fire off
+# a number of simultaneous shelve requests.  Assuming that this method
+# is asynchronous, it could send the requests one by one, and wait
+# for each resize to complete (or fail) before starting the next one.
+def shelve_expired_vms(requesting_feature):
+    instances = Instance.objects.filter(
+        marked_for_deletion=None,
+        expires__lte=datetime.now(timezone.utc))
+    shelve_count = 0
+    for instance in instances:
+        vm_status = VMStatus.objects.get_vm_status_by_instance(
+            instance, requesting_feature)
+        if vm_status.status == VM_SHELVED:
+            continue
+        if vm_status.status != VM_OKAY:
+            logger.info(f"Skipping shelving of instance in unexpected state: "
+                        f"{vm_status}")
+            continue
+        # Simulate the vm_status behavior of a normal shelve (with a
+        # longer timeout) in case the user does a browser refresh while
+        # the auto-shelve is happening.
+        vm_status.wait_time = after_time(FORCED_SHELVE_WAIT_SECONDS)
+        vm_status.status_progress = 0
+        vm_status.status_message = "Forced shelve starting"
+        vm_status.status = VM_WAITING
+        vm_status.save()
+        shelve_vm_worker(instance, requesting_feature)
+        shelve_count += 1
+    return shelve_count

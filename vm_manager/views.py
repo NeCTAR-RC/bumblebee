@@ -25,7 +25,9 @@ from vm_manager.constants import VM_ERROR, VM_OKAY, VM_WAITING, \
     VM_CREATING, VM_MISSING, VM_RESIZING, LAUNCH_WAIT_SECONDS, \
     CLOUD_INIT_FINISHED, CLOUD_INIT_STARTED, REBOOT_WAIT_SECONDS, \
     RESIZE_WAIT_SECONDS, SHELVE_WAIT_SECONDS, \
-    REBOOT_SOFT, REBOOT_HARD, SCRIPT_ERROR, SCRIPT_OKAY
+    REBOOT_SOFT, REBOOT_HARD, SCRIPT_ERROR, SCRIPT_OKAY, \
+    BOOST_BUTTON, EXTEND_BUTTON, EXTEND_BOOST_BUTTON
+from vm_manager.utils.expiry import BoostExpiryPolicy, InstanceExpiryPolicy
 from vm_manager.utils.utils import after_time
 from vm_manager.utils.utils import generate_hostname
 
@@ -33,15 +35,13 @@ from vm_manager.utils.utils import generate_hostname
 from vm_manager.vm_functions.admin_functionality import test_function, \
     admin_worker, start_downsizing_cron_job, \
     vm_report_for_page, vm_report_for_csv, db_check
-from vm_manager.vm_functions.create_vm import launch_vm_worker
+from vm_manager.vm_functions.create_vm import launch_vm_worker, extend_instance
 from vm_manager.vm_functions.delete_vm import delete_vm_worker
 from vm_manager.vm_functions.other_vm_functions import reboot_vm_worker
 from vm_manager.vm_functions.shelve_vm import shelve_vm_worker, \
     unshelve_vm_worker
-from vm_manager.vm_functions.resize_vm import can_extend_supersize_period, \
-    calculate_supersize_expiration_date, \
-    supersize_vm_worker, downsize_vm_worker, \
-    extend, downsize_expired_supersized_vms
+from vm_manager.vm_functions.resize_vm import supersize_vm_worker, \
+    downsize_vm_worker, extend_boost
 
 logger = logging.getLogger(__name__)
 
@@ -292,6 +292,39 @@ def downsize_vm(user, vm_id, requesting_feature) -> str:
     return str(vm_status)
 
 
+def extend_vm(user, vm_id, requesting_feature) -> str:
+    try:
+        vm_status = VMStatus.objects.get_vm_status_by_untrusted_vm_id(
+            vm_id, user, requesting_feature)
+    except VMStatus.DoesNotExist:
+        vm_status = None
+
+    if not vm_status or vm_status.status != VM_OKAY:
+        return _wrong_state_message(
+            "extend", user, feature=requesting_feature, vm_status=vm_status,
+            vm_id=vm_id)
+    expiry = extend_instance(user, vm_id, requesting_feature)
+    return str(vm_status)
+
+
+def extend_boost_vm(user, vm_id, requesting_feature) -> str:
+    try:
+        vm_status = VMStatus.objects.get_vm_status_by_untrusted_vm_id(
+            vm_id, user, requesting_feature)
+    except VMStatus.DoesNotExist:
+        vm_status = None
+
+    if not vm_status or vm_status.status != VM_SUPERSIZED:
+        return _wrong_state_message(
+            "extend_boost", user, feature=requesting_feature,
+            vm_status=vm_status, vm_id=vm_id)
+    expiry = extend_boost(user, vm_id, requesting_feature)
+
+    # Also extend the instance expiry
+    instance_expiry = extend_instance(user, vm_id, requesting_feature)
+    return str(vm_status)
+
+
 def get_vm_state(user, desktop_type):
     vm_status = VMStatus.objects.get_latest_vm_status(user, desktop_type)
     logger.debug(f"VM Status: {vm_status}")
@@ -299,9 +332,10 @@ def get_vm_state(user, desktop_type):
     if (not vm_status) or (vm_status.status == VM_DELETED):
         return NO_VM, "No VM", None
 
+    instance = vm_status.instance
     if vm_status.status == VM_ERROR:
-        if vm_status.instance:
-            return VM_ERROR, "VM has Errored", vm_status.instance.id
+        if instance:
+            return VM_ERROR, "VM has Errored", instance.id
         else:
             return VM_MISSING, "VM has Errored", None
 
@@ -312,9 +346,9 @@ def get_vm_state(user, desktop_type):
             return VM_WAITING, time, None
         else:  # Time up waiting
             if vm_status.instance:
-                vm_status.error(f"VM {vm_status.instance.id} not ready "
+                vm_status.error(f"VM {instance.id} not ready "
                                 f"at {vm_status.wait_time} timeout")
-                return VM_ERROR, "VM Not Ready", vm_status.instance.id
+                return VM_ERROR, "VM Not Ready", instance.id
             else:
                 vm_status.status = VM_ERROR
                 vm_status.save()
@@ -323,30 +357,34 @@ def get_vm_state(user, desktop_type):
                 return VM_MISSING, "VM has Errored", None
 
     if vm_status.status == VM_SHELVED:
-        return VM_SHELVED, "VM SHELVED", vm_status.instance.id
+        return VM_SHELVED, "VM SHELVED", instance.id
 
-    if vm_status.instance.check_shutdown_status():
-        return VM_SHUTDOWN, "VM Shutdown", vm_status.instance.id
+    if instance.check_shutdown_status():
+        return VM_SHUTDOWN, "VM Shutdown", instance.id
 
     if vm_status.status == VM_OKAY:
-        return VM_OKAY, {'url': vm_status.instance.get_url()}, \
-            vm_status.instance.id
+        policy = InstanceExpiryPolicy()
+        return VM_OKAY, {
+            'url': instance.get_url(),
+            'extension': policy.permitted_extension(instance),
+            'expires': instance.expires,
+            'extended_expiration': policy.new_expiry(instance)
+        }, instance.id
 
-    if not vm_status.instance.check_active_or_resize_statuses():
-        instance_status = vm_status.instance.get_status()
-        vm_status.instance.error(f"Error at OpenStack level. "
-                                 f"Status: {instance_status}")
-        return VM_ERROR, "Error at OpenStack level", vm_status.instance.id
+    if not instance.check_active_or_resize_statuses():
+        instance_status = instance.get_status()
+        instance.error(f"Error at OpenStack level. Status: {instance_status}")
+        return VM_ERROR, "Error at OpenStack level", instance.id
 
     if vm_status.status == VM_SUPERSIZED:
-        resize = Resize.objects.get_latest_resize(vm_status.instance)
+        policy = BoostExpiryPolicy()
+        resize = Resize.objects.get_latest_resize(instance)
         return VM_SUPERSIZED, {
-            'url': vm_status.instance.get_url(),
-            'is_eligible': can_extend_supersize_period(resize.expires),
+            'url': instance.get_url(),
+            'extension': policy.permitted_extension(resize),
             'expires': resize.expires,
-            'extended_expiration':
-                calculate_supersize_expiration_date(resize.expires)
-            }, vm_status.instance.id
+            'extended_expiration': policy.new_expiry(resize),
+        }, instance.id
     logger.error(f"get_vm_state for to an unhandled state "
                  f"for {user} requesting {desktop_type}")
     raise NotImplementedError
@@ -357,21 +395,33 @@ def get_vm_status(user, desktop_type):
     return model_to_dict(vm_status)
 
 
-def render_vm(request, user, desktop_type, buttons_to_display):
+def render_vm(request, user, desktop_type, buttons):
     state, what_to_show, vm_id = get_vm_state(user, desktop_type)
     app_name = desktop_type.feature.app_name
 
-    if state == VM_SUPERSIZED and what_to_show["is_eligible"]:
+    if state == VM_SUPERSIZED:
         messages.info(request, format_html(
             f'Your {str(desktop_type).capitalize()} vm is set to resize '
             f'back to the default size on {what_to_show["expires"]}'))
+
+    # Remove buttons that are not allowed in the current context
+    forbidden = []
+    if state == VM_SUPERSIZED:
+        forbidden.append(BOOST_BUTTON)
+        forbidden.append(EXTEND_BUTTON)
+        if what_to_show.get('extension').total_seconds() == 0:
+            forbidden.append(EXTEND_BOOST_BUTTON)
+    elif state == VM_OKAY:
+        forbidden.append(EXTEND_BOOST_BUTTON)
+        if what_to_show.get('extension').total_seconds() == 0:
+            forbidden.append(EXTEND_BUTTON)
 
     context = {
         'state': state,
         'what_to_show': what_to_show,
         'desktop_type': desktop_type,
         'vm_id': vm_id,
-        "buttons_to_display": buttons_to_display,
+        "buttons_to_display": [b for b in buttons if b not in forbidden],
         "app_name": app_name,
         "requesting_feature": desktop_type.feature,
         "VM_WAITING": VM_WAITING,

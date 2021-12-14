@@ -6,6 +6,7 @@ from unittest.mock import Mock, patch
 
 from django.conf import settings
 from django.test import TestCase
+from django.http import Http404
 
 from researcher_workspace.tests.factories import UserFactory
 from researcher_desktop.tests.factories import AvailabilityZoneFactory
@@ -22,7 +23,7 @@ from vm_manager.constants import VM_MISSING, VM_OKAY, VM_SHELVED, NO_VM, \
 from vm_manager.models import VMStatus, Volume, Instance
 from vm_manager.vm_functions.create_vm import launch_vm_worker, \
     wait_to_create_instance, _create_volume, _create_instance, \
-    wait_for_instance_active, _get_source_volume_id
+    wait_for_instance_active, _get_source_volume_id, extend_instance
 from vm_manager.utils.utils import get_nectar
 
 
@@ -421,3 +422,29 @@ class CreateVMTests(VMFunctionTestBase):
         # (Still waiting for the boot callback ...)
         self.assertEqual(VM_WAITING, updated_status.status)
         self.assertEqual(75, updated_status.status_progress)
+
+    @patch('vm_manager.models.logger')
+    @patch('vm_manager.vm_functions.create_vm.InstanceExpiryPolicy')
+    def test_extend(self, mock_policy_class, mock_logger):
+        mock_policy = Mock()
+        mock_policy_class.return_value = mock_policy
+        now = datetime.now(timezone.utc)
+        new_expiry = now + timedelta(days=settings.BOOST_EXPIRY)
+        mock_policy.new_expiry.return_value = new_expiry
+
+        id = uuid.uuid4()
+        with self.assertRaises(Http404):
+            extend_instance(self.user, id, self.FEATURE)
+
+        mock_logger.error.assert_called_with(
+            f"Trying to get a vm that doesn't exist with vm_id: {id}, "
+            f"called by {self.user}")
+
+        _, fake_instance = self.build_fake_vol_instance()
+        fake_instance.expires = now
+        fake_instance.save()
+        self.assertEqual(
+            str(fake_instance),
+            extend_instance(self.user, fake_instance.id, self.FEATURE))
+        instance = Instance.objects.get(pk=fake_instance.pk)
+        self.assertEqual(instance.expires, new_expiry)

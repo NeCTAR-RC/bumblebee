@@ -86,6 +86,8 @@ def _check_instance_is_shutoff_and_delete(
 
 def _delete_instance_worker(instance):
     n = get_nectar()
+    instance.marked_for_deletion = datetime.now(timezone.utc)
+    instance.save()
     try:
         n.nova.servers.delete(instance.id)
         logger.info(f"Instructed OpenStack to delete {instance}")

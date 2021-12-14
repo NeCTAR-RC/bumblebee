@@ -2,9 +2,11 @@ import logging
 from datetime import datetime, timedelta, timezone
 import django_rq
 
-from vm_manager.constants import DOWNSIZE_PERIOD, REBOOT_COMPLETE_SECONDS, \
-    RESIZE_CONFIRM_WAIT_SECONDS, VM_SUPERSIZED, VM_RESIZING, VM_OKAY
+from vm_manager.constants import REBOOT_COMPLETE_SECONDS, \
+    RESIZE_CONFIRM_WAIT_SECONDS, FORCED_DOWNSIZE_WAIT_SECONDS, \
+    VM_SUPERSIZED, VM_RESIZING, VM_OKAY
 from vm_manager.utils.utils import after_time, get_nectar
+from vm_manager.utils.expiry import BoostExpiryPolicy
 from vm_manager.vm_functions.other_vm_functions import wait_for_reboot
 from vm_manager.models import VMStatus, Instance, Resize
 
@@ -17,9 +19,10 @@ def supersize_vm_worker(instance, desktop_type) -> str:
     supersize_result = _resize_vm(instance,
                                   desktop_type.big_flavor.id,
                                   VM_SUPERSIZED, desktop_type.feature)
+    now = datetime.now(timezone.utc)
     resize = Resize(instance=instance,
-                    expires=calculate_supersize_expiration_date(
-                        datetime.now(timezone.utc).date()))
+                    requested=now,
+                    expires=BoostExpiryPolicy().initial_expiry(now=now))
     resize.save()
     return supersize_result
 
@@ -40,10 +43,8 @@ def downsize_vm_worker(instance, desktop_type) -> str:
     return downsize_result
 
 
-# TODO - This is not wired up.  I think it really belongs in
-# vm_manager.views because it doesn't involve any asynchrony.
 # TODO - Analyse for possible race conditions with supersize/downsize
-def extend(user, vm_id, requesting_feature) -> str:
+def extend_boost(user, vm_id, requesting_feature) -> str:
     instance = Instance.objects.get_instance_by_untrusted_vm_id(
         vm_id, user, requesting_feature)
     logger.info(f"Extending the expiration of "
@@ -54,12 +55,7 @@ def extend(user, vm_id, requesting_feature) -> str:
         message = f"No Resize is current for instance {instance}"
         logger.error(message)
         return message
-    exp_date = resize.expires
-    if not can_extend_supersize_period(exp_date):
-        message = f"Resize (id {resize.id}) date too far in future: {exp_date}"
-        logger.error(message)
-        return message
-    resize.expires = calculate_supersize_expiration_date(exp_date)
+    resize.expires = BoostExpiryPolicy().new_expiry(resize)
     resize.save()
     return str(resize)
 
@@ -160,15 +156,6 @@ def _wait_to_confirm_resize(instance, flavor, target_status,
     return message
 
 
-def calculate_supersize_expiration_date(date):
-    return date + timedelta(days=DOWNSIZE_PERIOD)
-
-
-def can_extend_supersize_period(date):
-    return date < (datetime.now(timezone.utc).date()
-                   + timedelta(days=DOWNSIZE_PERIOD))
-
-
 # TODO - The current implementation will potentially fire off
 # a number of simultaneous downsizes.  Assuming that this method
 # is asynchronous, it could send the resizes one by one, and wait
@@ -176,16 +163,27 @@ def can_extend_supersize_period(date):
 def downsize_expired_supersized_vms(requesting_feature):
     resizes = Resize.objects.filter(
         reverted=None, instance__marked_for_deletion=None,
-        expires__lte=datetime.now(timezone.utc).date())
+        expires__lte=datetime.now(timezone.utc))
 
+    resize_count = 0
     for resize in resizes:
+        vm_status = VMStatus.objects.get_vm_status_by_instance(
+            resize.instance, requesting_feature)
+        if vm_status.status != VM_SUPERSIZED:
+            logger.info(f"Skipping downsize of instance in wrong state: "
+                        f"{vm_status}")
+            continue
+        # Simulate the vm_status behavior of a normal downsize (with a
+        # longer timeout) in case the user does a browser refresh while
+        # the auto-downsize is happening.
+        vm_status.wait_time = after_time(FORCED_DOWNSIZE_WAIT_SECONDS)
+        vm_status.status_progress = 0
+        vm_status.status_message = "Forced downsize starting"
+        vm_status.status = VM_RESIZING
+        vm_status.save()
         _resize_vm(resize.instance, resize.instance.boot_volume.flavor,
                    VM_OKAY, requesting_feature)
         resize.reverted = datetime.now(timezone.utc)
         resize.save()
-        vm_status = VMStatus.objects.get_vm_status_by_instance(
-            resize.instance, requesting_feature)
-        vm_status.status = VM_RESIZING
-        vm_status.save()
-    logger.info(f"Downsized {len(resizes)} instances")
-    return len(resizes)
+        resize_count += 1
+    return resize_count

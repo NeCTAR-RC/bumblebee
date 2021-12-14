@@ -17,7 +17,8 @@ from vm_manager import views as vm_man_views
 from researcher_workspace.utils import not_support_staff, redirect_home, \
     agreed_to_terms
 from vm_manager.constants import LINUX, REBOOT_BUTTON, SHELVE_BUTTON, \
-    DELETE_BUTTON, BOOST_BUTTON, DOWNSIZE_BUTTON
+    DELETE_BUTTON, BOOST_BUTTON, DOWNSIZE_BUTTON, EXTEND_BUTTON, \
+    EXTEND_BOOST_BUTTON
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +27,7 @@ def render_modules(request):
     modules = []
     for desktop_type in desktop_types():
         buttons = [REBOOT_BUTTON, SHELVE_BUTTON, DELETE_BUTTON, BOOST_BUTTON,
-                   DOWNSIZE_BUTTON]
+                   DOWNSIZE_BUTTON, EXTEND_BUTTON, EXTEND_BOOST_BUTTON]
         modules.append(
             vm_man_views.render_vm(
                 request, request.user, desktop_type, buttons)
@@ -112,7 +113,15 @@ def downsize_vm(request, vm_id):
 @user_passes_test(test_func=agreed_to_terms, login_url='terms',
                   redirect_field_name=None)
 def extend(request, vm_id):
-    vm_man_views.extend(request.user, vm_id, desktops_feature())
+    vm_man_views.extend_vm(request.user, vm_id, desktops_feature())
+    return redirect_home(request)
+
+
+@login_required(login_url='login')
+@user_passes_test(test_func=agreed_to_terms, login_url='terms',
+                  redirect_field_name=None)
+def extend_boost(request, vm_id):
+    vm_man_views.extend_boost_vm(request.user, vm_id, desktops_feature())
     return redirect_home(request)
 
 

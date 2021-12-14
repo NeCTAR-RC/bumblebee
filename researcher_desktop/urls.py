@@ -18,6 +18,7 @@ urlpatterns = [
     path('supersize_vm/<uuid:vm_id>', views.supersize_vm, name='supersize_vm'),
     path('downsize_vm/<uuid:vm_id>', views.downsize_vm, name='downsize_vm'),
     path('extend/<uuid:vm_id>', views.extend, name='extend'),
+    path('extend_boost/<uuid:vm_id>', views.extend_boost, name='extend_boost'),
     path('notify_vm/', views.notify_vm, name='notify_vm'),
     path('phone_home/', views.phone_home, name='phone_home'),
     path('status_vm/<str:desktop>', views.status_vm, name='status_vm'),

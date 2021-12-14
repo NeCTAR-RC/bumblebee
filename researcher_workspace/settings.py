@@ -307,6 +307,16 @@ except ImportError:
 COMPRESS_ENABLED = get_setting('COMPRESS_ENABLED', not DEBUG)
 COMPRESS_OFFLINE = get_setting('COMPRESS_OFFLINE', not DEBUG)
 
+# Expiry policy constants.  The units are days
+
+BOOST_EXPIRY = 7           # Initial boot expiry
+BOOST_EXTENSION = 7        # Boost extension period
+BOOST_LIFETIME = 14        # Max lifetime for a boosted instance
+
+INSTANCE_EXPIRY = 14       # Initial instance expiry
+INSTANCE_EXTENSION = 14    # Instance extension period
+INSTANCE_LIFETIME = None   # Max lifetime for an instance
+
 # OpenID Connect settings
 OIDC_OP_AUTHORIZATION_ENDPOINT = f'{OIDC_SERVER_URL}/auth'
 OIDC_OP_TOKEN_ENDPOINT = f'{OIDC_SERVER_URL}/token'

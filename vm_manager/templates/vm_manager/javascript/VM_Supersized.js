@@ -14,12 +14,12 @@ function downsize_{{ app_name }}_{{ desktop_type.id }}(tag) {
     }
 }
 {% endif %}
-{% if "EXTEND_BUTTON" in buttons_to_display %}
-function extend_{{ app_name }}_{{ desktop_type.id }}(tag) {
+{% if "EXTEND_BOOST_BUTTON" in buttons_to_display %}
+function extend_boost_{{ app_name }}_{{ desktop_type.id }}(tag) {
     if (!beenClicked) {
         beenClicked = true;
         tag.disabled = true;
-        {% with app_name|add:":extend" as url_path %}
+        {% with app_name|add:":extend_boost" as url_path %}
         window.location.href = "{% url url_path vm_id %}";
         {% endwith %}
     }

@@ -40,7 +40,7 @@ class VMFunctionTestBase(TestCase):
             flavor=self.UBUNTU.default_flavor.id)
 
     def build_fake_vol_instance(self, volume_id=None, instance_id=None,
-                                ip_address=None):
+                                ip_address=None, expires=None):
         if instance_id is None:
             instance_id = UUID_4
         fake_volume = self.build_fake_volume(id=volume_id)
@@ -48,16 +48,18 @@ class VMFunctionTestBase(TestCase):
             id=instance_id,
             boot_volume=fake_volume,
             user=self.user,
-            ip_address=ip_address)
+            ip_address=ip_address,
+            expires=expires)
         return fake_volume, fake_instance
 
     def build_fake_vol_inst_status(self, volume_id=None, instance_id=None,
                                    ip_address=None, status=VM_OKAY,
-                                   status_progress=0):
+                                   status_progress=0, expires=None):
         fake_volume, fake_instance = self.build_fake_vol_instance(
             volume_id=volume_id,
             instance_id=instance_id,
-            ip_address=ip_address)
+            ip_address=ip_address,
+            expires=expires)
         fake_vmstatus = VMStatusFactory.create(
             user=self.user,
             instance=fake_instance,

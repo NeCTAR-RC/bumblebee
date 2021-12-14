@@ -388,14 +388,14 @@ class ResizeModelTests(VMManagerModelTestBase):
         self.assertTrue(now <= resize.requested)
         self.assertFalse(resize.expired())
         self.assertEqual(f"Resize (Current) of Instance ({id}) "
-                         f"requested on {resize.requested.date()}",
+                         f"requested on {resize.requested}",
                          str(resize))
 
         fake_instance.deleted = datetime.now(timezone.utc)
         fake_instance.save()
         self.assertTrue(resize.expired())
         self.assertEqual(f"Resize (Expired) of Instance ({id}) "
-                         f"requested on {resize.requested.date()}",
+                         f"requested on {resize.requested}",
                          str(resize))
 
         fake_instance.deleted = None
@@ -406,7 +406,7 @@ class ResizeModelTests(VMManagerModelTestBase):
         resize.save()
         self.assertTrue(resize.expired())
         self.assertEqual(f"Resize (Expired) of Instance ({id}) "
-                         f"requested on {resize.requested.date()}",
+                         f"requested on {resize.requested}",
                          str(resize))
 
     def test_get_latest_resize(self):

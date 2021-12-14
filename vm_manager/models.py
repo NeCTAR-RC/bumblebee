@@ -30,6 +30,7 @@ class CloudResource(models.Model):
     id = models.UUIDField(primary_key=True, editable=False)
     user = models.ForeignKey(User, on_delete=models.PROTECT, )
     created = models.DateTimeField(auto_now_add=True)
+    expires = models.DateTimeField(null=True, blank=True)
     marked_for_deletion = models.DateTimeField(null=True, blank=True)
     deleted = models.DateTimeField(null=True, blank=True)
     error_flag = models.DateTimeField(null=True, blank=True)
@@ -115,7 +116,7 @@ class InstanceManager(models.Manager):
                 user=user,
                 boot_volume__operating_system=desktop_type.id,
                 boot_volume__requesting_feature=desktop_type.feature,
-                marked_for_deletion=None, error_flag=None)
+                deleted=None, marked_for_deletion=None, error_flag=None)
             return instance
         except Instance.DoesNotExist:
             return None
@@ -320,7 +321,7 @@ class ResizeManager(models.Manager):
 class Resize(models.Model):
     instance = models.ForeignKey(Instance, on_delete=models.PROTECT, )
     requested = models.DateTimeField(auto_now_add=True)
-    expires = models.DateField(null=True, blank=True)
+    expires = models.DateTimeField(null=True, blank=True)
     reverted = models.DateTimeField(null=True, blank=True)
 
     objects = ResizeManager()
@@ -335,7 +336,7 @@ class Resize(models.Model):
             current = "Current"
         return (
             f"Resize ({current}) of Instance ({self.instance.id}) "
-            f"requested on {self.requested.date()}")
+            f"requested on {self.requested}")
 
 
 class VMStatusManager(models.Manager):
