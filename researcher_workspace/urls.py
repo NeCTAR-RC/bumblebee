@@ -37,6 +37,8 @@ urlpatterns = [
     path('profile/', views.profile, name='profile'),
     path('report/', views.report, name='report'),
     path('learn/', views.learn, name='learn'),
+    path('healthcheck/status', include('health_check.urls')),
+    path('healthcheck/', views.healthcheck, name='healthcheck'),
     # OIDC auth
     path('oidc/', include('mozilla_django_oidc.urls')),
     path('login/', oidc_views.OIDCAuthenticationRequestView.as_view(), name='login'),

@@ -617,3 +617,7 @@ def report(request):
                   redirect_field_name=None)
 def learn(request):
     return render(request, 'researcher_workspace/learn.html')
+
+
+def healthcheck(request):
+    return HttpResponse('OK')

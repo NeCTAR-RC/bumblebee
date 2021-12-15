@@ -68,6 +68,12 @@ INSTALLED_APPS = [
     'mathfilters',
     'django_rq',
     'researcher_desktop',
+    'health_check',
+    'health_check.db',
+    'health_check.cache',
+    'health_check.storage',
+    'health_check.contrib.migrations',
+    'health_check.contrib.redis',
 ]
 
 MIDDLEWARE = [
@@ -127,14 +133,18 @@ DATABASES = {
 }
 
 # Redis queue
+REDIS_HOST = get_setting('REDIS_HOST', 'localhost')
+REDIS_PORT = get_setting('REDIS_PORT', '6379')
+REDIS_URL = f'redis://{REDIS_HOST}:{REDIS_PORT}'
 RQ_QUEUES = {
     'default': {
-        'HOST': get_setting('REDIS_HOST', 'localhost'),
-        'PORT': get_setting('REDIS_PORT', '6379'),
+        'HOST': REDIS_HOST,
+        'PORT': REDIS_PORT,
         'DB': 0,
         'DEFAULT_TIMEOUT': 360,
     },
 }
+
 
 # OpenStack config
 OS_APPLICATION_CREDENTIAL_ID = get_setting('OS_APPLICATION_CREDENTIAL_ID')
@@ -200,7 +210,7 @@ LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
     'formatters': {
-        'simple': {
+        'console': {
             'format': '[%(asctime)s] %(levelname)s %(message)s',
             'datefmt': '%Y-%m-%d %H:%M:%S'
         },
@@ -209,7 +219,7 @@ LOGGING = {
         'console': {
             'level': 'DEBUG',
             'class': 'logging.StreamHandler',
-            'formatter': 'simple'
+            'formatter': 'console'
         },
     },
     'loggers': {
