@@ -403,37 +403,45 @@ def help(request):
 
     if request.method == 'POST':
         form = SupportRequestForm(request.POST, request.FILES)
-        try:
-            # Convert \r\n to HTML br tags for Freshdesk
-            ticket_payload = {
-                'name': request.user.get_full_name(),
-                'email': request.user.email,
-                'subject': 'Virtual Desktop support request',
-                'description': '<br/>'.join(form.data['message'].splitlines()),
-                'tags': ['Virtual Desktop'],
-            }
+        if form.is_valid():
+            try:
+                # Massage subject into one line or provide a default subject
+                subject = form.cleaned_data['subject'].strip()
+                if subject:
+                    subject = '; '.join(subject.splitlines())
+                else:
+                    subject = "Virtual Desktop support request"
+                # Convert linebreaks in the message to HTML <br> tags.
+                body = '<br/>'.join(form.cleaned_data['message'].splitlines())
+                ticket_payload = {
+                    'name': request.user.get_full_name(),
+                    'email': request.user.email,
+                    'subject': subject,
+                    'description': body,
+                    'tags': ['Virtual Desktop'],
+                }
 
-            # Handle uploaded file
-            screenshot = request.FILES.get('screenshot')
-            if screenshot:
-                ticket_payload['attachments'] = [
-                    screenshot.temporary_file_path()]
+                # Handle uploaded file
+                screenshot = request.FILES.get('screenshot')
+                if screenshot:
+                    ticket_payload['attachments'] = [
+                        screenshot.temporary_file_path()]
 
-            ticket = create_ticket(**ticket_payload)
-            if ticket:
-                messages.success(request,
-                    'Your support request has been submitted!')
-            else:
-                raise Exception('Freshdesk ticket creation failed.')
+                ticket = create_ticket(**ticket_payload)
+                if ticket:
+                    messages.success(
+                        request,
+                        'Your support request has been submitted!')
+                    return HttpResponseRedirect(reverse('help'))
+                else:
+                    raise Exception('Freshdesk ticket creation failed.')
 
-        except Exception:
-            messages.error(
-                request,
-                'There was an error submitting your support request. '
-                'Please submit the request as an email.')
-            logger.exception('Error submitting ticket')
-
-        return HttpResponseRedirect(reverse('help'))
+            except Exception:
+                messages.error(
+                    request,
+                    'There was an error submitting your support request. '
+                    'Please submit the request as an email.')
+                logger.exception('Error submitting ticket')
 
     return render(request, 'researcher_workspace/help.html', {'form': form})
 

@@ -170,13 +170,39 @@ class ResearcherWorkspaceRequestTests(TestCase):
         mock_messages.success.assert_called_once()
         mock_messages.error.assert_not_called()
 
+        params = {'message': '123', 'subject': 'to be announced'}
+        mock_messages.success.reset_mock()
+        mock_messages.error.reset_mock()
+        mock_create_ticket.reset_mock()
+        response = self.client.post(url, params)
+        self.assertRedirects(response, url, fetch_redirect_response=False)
+        mock_create_ticket.assert_called_once_with(
+            name="Luke Sleepwalker", email=self.user.email,
+            subject="to be announced",
+            description="123",
+            tags=["Virtual Desktop"]
+        )
+        mock_messages.success.assert_called_once()
+        mock_messages.error.assert_not_called()
+
+        params = {'message': '', 'subject': 'to be announced'}
+        mock_messages.success.reset_mock()
+        mock_messages.error.reset_mock()
+        mock_create_ticket.reset_mock()
+        response = self.client.post(url, params)
+        self.assertEqual(200, response.status_code)
+        mock_create_ticket.assert_not_called()
+        mock_messages.success.assert_not_called()
+        mock_messages.error.assert_not_called()
+
         # simulate ticket submission failures
+        params = {'message': "1\n2\n3"}
         mock_messages.success.reset_mock()
         mock_messages.error.reset_mock()
         mock_create_ticket.reset_mock()
         mock_create_ticket.return_value = None
         response = self.client.post(url, params)
-        self.assertRedirects(response, url, fetch_redirect_response=False)
+        self.assertEqual(200, response.status_code)
         mock_create_ticket.assert_called_once()
         mock_messages.success.assert_not_called()
         mock_messages.error.assert_called_once()
@@ -187,7 +213,7 @@ class ResearcherWorkspaceRequestTests(TestCase):
         mock_create_ticket.return_value = 1234
         mock_create_ticket.side_effect = Exception("something bad")
         response = self.client.post(url, params)
-        self.assertRedirects(response, url, fetch_redirect_response=False)
+        self.assertEqual(200, response.status_code)
         mock_create_ticket.assert_called_once()
         mock_messages.success.assert_not_called()
         mock_messages.error.assert_called_once()

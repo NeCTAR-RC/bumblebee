@@ -17,6 +17,11 @@
                   <div class="mb-3">
                     {{ field.label_tag }}
                     {{ field }}
+                    {% for error in field.errors %}
+                    <div class="alert alert-danger">
+                      <strong>{{ error|escape }}</strong>
+                    </div>
+                    {% endfor %}
                     {% if field.help_text %}
                     <small class="form-text text-muted">{{ field.help_text }}</small>
                     {% endif %}

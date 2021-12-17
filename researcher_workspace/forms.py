@@ -1,6 +1,9 @@
+import re
+
 from pytz import common_timezones
 
 from django import forms
+from django.core.validators import RegexValidator
 from django.utils.safestring import mark_safe
 
 from .models import Project, Profile
@@ -111,11 +114,28 @@ class PermissionRequestForm(forms.Form):
 
 class SupportRequestForm(forms.Form):
     # Email is for show only as we use info from the User model after POST
-    email = forms.CharField(widget=forms.TextInput, label="Email address")
+    email = forms.CharField(widget=forms.TextInput, label="Email address",
+                            required=False)
     email.widget.attrs = {'class': 'form-control', 'readonly': ''}
+    subject = forms.CharField(
+        widget=forms.Textarea,
+        label="Support request subject",
+        required=False,
+        help_text="Please provide a subject for your support request.")
+    subject.widget.attrs = {'class': 'form-control', 'rows': 1}
     message = forms.CharField(
-        widget=forms.Textarea, label="What do you need help with?",
-        help_text="Please describe your support request in detail.")
+        widget=forms.Textarea,
+        label="What do you need help with?",
+        help_text="Please describe your problem you need help with in as "
+        "much detail as you can.  If it would help, please add a screenshot "
+        "as well to illustrate the problem.",
+        validators=[
+            # Check for message consisting of just white-space ...
+            RegexValidator(r'^\s*$', flags=re.M, inverse_match=True,
+                           message="We will not be able to help you unless "
+                           "you describe the problem you are having."),
+        ]
+    )
     message.widget.attrs = {'class': 'form-control', 'rows': 5}
     screenshot = forms.FileField(
         label="Please attach a screenshot (optional)",
