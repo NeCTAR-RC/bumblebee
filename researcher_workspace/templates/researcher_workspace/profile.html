@@ -1,18 +1,37 @@
 {% extends 'common/base.html' %}
 {% block content %}
 <div class="container py-5">
-  <h2 class="display-5 mb-4">User Settings</h2>
-  <form action="{% block form_submit_url %}{% endblock %}" method="post">
-    {% csrf_token %}
-    <fieldset>
-      <div class="mb-3">
-        <div class="form-label">Timezone</div>
-        <div>{{ form.timezone }}</div>
-      </div>
-    </fieldset>
-    <input class="btn btn-primary" type="submit" value="Save Settings">
-    <button class="btn btn-secondary" onclick="javascript:history.back(); return false;">Cancel</button>
-  </form>
+  <h2 class="display-5 mb-4">User Profile</h2>
+  <div class="row">
+    <div class="col-md-4">
+      <p><strong>Name</strong> {{ user.first_name }} {{ user.last_name }}</p>
+      <p><strong>Email</strong> {{ user.email }}</p>
+      
+      <form action="{% block form_submit_url %}{% endblock %}" method="post" class="mb-3">
+        {% csrf_token %}
+        <div class="mb-3">
+          <label class="form-label">Set Timezone</label>
+          <div>{{ form.timezone }}</div>
+        </div>
+        <input class="btn btn-primary" type="submit" value="Save" />
+      </form>
+    </div>
+    <div class="col-md-8">
+      <h4>Your Workspace</h4>
+      <table class="table">
+        <tr><th>Title</th><td>{{ user.profile.last_selected_project.title }}</td></tr>
+        <tr><th>Description</th><td>{{ user.profile.last_selected_project.description }}</td></tr>
+        <tr><th>Proposed on</th><td>{{ user.profile.last_selected_project.created }}</td></tr>
+        {% if user.profile.last_selected_project.ARO_approval %}
+          <tr><th>Status</th><td>Accepted</td></tr>
+        {% elif user.profile.last_selected_project.ARO_approval is null %}
+          <tr><th>Status</th><td>Pending approval</td></tr>
+        {% else %}
+          <tr><th>Status</th><td>Rejected</td></tr>
+        {% endif %}
+      </table>
+    </div>
+  </div>
 </div>
 {% endblock %}
 

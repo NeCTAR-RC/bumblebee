@@ -12,7 +12,7 @@
     {% block content %}
     <div class="container py-5">
       <h1 class="display-5 mb-4">Terms of Service</h1>
-        <p>Version {{ version }}.</p>
+        <p><strong class="text-muted">Version {{ version }}.</strong></p>
         <p>By signing into or otherwise using the Service, you agree to the terms of this Service Schedule and <a href="https://ardc.edu.au/wp-content/uploads/2020/10/ARDC_Service_agreement.pdf">ARDC's Standard Terms of Service</a>.</p>
         <h3>User</h3>
         <p>User means any end user of the Service.</p>
@@ -70,11 +70,15 @@
                 </ul>
             </li>
         </ol>
-    {% if show_agree %}
-        <button type="button" class="btn btn-success" onclick="agree(this)">I agree to the above Terms of Service.</button>
-    {% else %}
-        <p>Note: you have previously agreed to these Terms of Service</p>    
-    {% endif %}
+    </div>
+    <div class="position-sticky bottom-0 bg-primary py-3">
+        <div class="container text-center">
+            {% if show_agree %}
+                <button type="button" class="btn btn-success" onclick="agree(this)">I agree to the above Terms of Service.</button>
+            {% else %}
+                <p class="mb-0">Note: you have previously agreed to these Terms of Service</p>    
+            {% endif %}
+        </div>
     </div>
     {% endblock %}
     {% block script %}
