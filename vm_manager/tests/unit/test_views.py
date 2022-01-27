@@ -499,7 +499,9 @@ class VMManagerViewTests(TestCase):
             'buttons_to_display': buttons,
             'app_name': self.feature.app_name,
             'requesting_feature': self.feature,
-            'VM_WAITING': VM_WAITING}
+            'VM_WAITING': VM_WAITING,
+            'vm_status': self.vm_status,
+        }
         calls = [call(f"vm_manager/html/{VM_OKAY}.html",
                       context, request),
                  call(f"vm_manager/javascript/{VM_OKAY}.js",
@@ -527,6 +529,7 @@ class VMManagerViewTests(TestCase):
         }
         context['vm_id'] = self.instance.id
         context['state'] = VM_SUPERSIZED
+        context['vm_status'] = VMStatus.objects.get(pk=self.vm_status.pk)
         calls = [call(f"vm_manager/html/{VM_SUPERSIZED}.html",
                       context, request),
                  call(f"vm_manager/javascript/{VM_SUPERSIZED}.js",
@@ -553,6 +556,7 @@ class VMManagerViewTests(TestCase):
         }
         context['vm_id'] = self.instance.id
         context['state'] = VM_SUPERSIZED
+        context['vm_status'] = VMStatus.objects.get(pk=self.vm_status.pk)
 
         mock_loader.render_to_string.assert_has_calls(calls)
         mock_messages.info.assert_called_with(

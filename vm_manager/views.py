@@ -375,6 +375,7 @@ def render_vm(request, user, desktop_type, buttons_to_display):
         "app_name": app_name,
         "requesting_feature": desktop_type.feature,
         "VM_WAITING": VM_WAITING,
+        "vm_status": VMStatus.objects.get_latest_vm_status(user, desktop_type),
     }
 
     vm_module = loader.render_to_string(f'vm_manager/html/{state}.html',
