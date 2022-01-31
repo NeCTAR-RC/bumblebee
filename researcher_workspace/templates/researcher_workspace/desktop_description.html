@@ -1,11 +1,62 @@
 {% extends 'common/base.html' %}
+{% load static %}
 
 {% block content %}
 <div class="container py-5">
-    <h1 class="display-5 mb-4">ARDC Nectar Research Cloud Virtual Desktop Service</h1>
-    <p>
-        This service allows you to easily and quickly create a Virtual Desktop - A Personal Computer in the cloud that you can use as an extra compute resource for your research. You may find this useful to free up your laptop/workstation or to have a computer that you can leave running for uninterrupted processing for up to 14 days and then choose to renew after 14 days. The Virtual Desktop runs on the Nectar Research Cloud and offers a number of different desktop environments.
-    </p>
+    <div class="row mb-5">
+        <div class="col-12">
+            <h1 class="display-5 mb-4 text-center">What is the Virtual Desktop Service?</h1>
+            <p class="lead text-center">The <em>Virtual Desktop Service</em> is a service of the <a href="https://ardc.edu.au/">Australian Research Data Commons (ARDC)</a> and utilises the ARDC Nectar Research Cloud. This service allows researchers to easily and quickly create a Virtual Desktop - A Personal Computer in the cloud.</p>
+        </div>
+    </div>
+    <div class="row mb-5">
+        <div class="col-12 col-md-6 my-auto">
+            <h2 class="h1 mb-xl-5">Enhance your research with quick and easy access to extra computational capabilities.</h2>   
+            <p>Need another computer to carry out compute processes for your research? You may find the Virtual Desktop Service useful to free up your laptop/workstation or to have a computer that you can leave running for uninterrupted processing for up to 14 days (with the ability to extend). The Virtual Desktop runs on the ARDC Nectar Research Cloud and offers a number of different desktop environments.</p>
+        </div>
+        <div class="col-12 col-md-6">
+            <img src="{% static 'img/about-cloud.svg' %}" class="img-fluid" />
+        </div>
+    </div>
+    <div class="row mb-5">
+        <div class="col-12 col-md-6 my-auto order-md-2">
+            <h2 class="h1 mb-xl-5">Who can use this service?</h2>
+            <p>The Virtual Desktop Service has been developed by ARDC for Australian based researchers, to support and enhance their research practices. To access this service, anyone with a AAF account can log in and create Virtual Desktop.</p>
+            <p>For a tutorial on how to use the Virtual Desktop Service, <a href="https://tutorials.rc.nectar.org.au/virtual-desktop-service/01-overview">click here</a>.</p>
+        </div>
+        <div class="col-12 col-md-6 order-md-1">
+            <img src="{% static 'img/about-researcher.svg' %}" class="img-fluid" />
+        </div>
+    </div>
+    <div class="col-12 col-md-8 offset-md-2">
+        <h2 class="h1">What is available?</h2>
+        <dl>
+            <dt>Desktop</dt>
+            <dd>Currently there are 3 desktops to choose from: Ubuntu 20.04, Centos7 and Neurodesktop (provided by <a href="https://ardc.edu.au/project/australian-electrophysiology-data-analytics-platform-aedapt/">AEDAPT</a>). However, more desktops will become available as we work with our users and partnering organisations to determine what's needed.</dd>
+            <dt>Size</dt>
+            <dd>The default size of a Virtual Desktop is 4 virtual CPU Cores & 8GB RAM. Users will have the option to increase resources if the default is not sufficient for their computing needs. This can be done via the boost function, doubling the desktop size to 8 virtual CPU Cores and 16GB ram.</dd>
+            <dt>Storage and Applications</dt>
+            <dd>A single 50GB volume will be included for the Operating System and Working Storage. Transferring files to your desktop can be done via "drag and drop" to the desktop interface. You can also download and install whatever software you wish onto your Virtual Desktop.</dd>
+            <dt>Time Frames</dt>
+            <dd>Once a user has created a Virtual Desktop, this desktop will be available for 14 days. After 14 days, the desktop will initiate an expiry process, with the instance shelved for 3 months, and then deleted. You will receive email reminders at each stage of the expiry process, and you will have the option to extend access to your active Virtual Desktop.</dd>
+        </dl>
+    </div>
+</div>
+<div class="container-fluid bg-info text-white">
+    <div class="row py-5">
+        <div class="col-12 text-center">
+          <h3 class="mb-4">Ready to get started?</h3>
+          {% if user.is_authenticated %}
+            <a href="{% url 'home' %}" class="btn btn-outline-primary mb-4">
+                Desktop Home
+            </a>
+          {% else %}
+            <a href="{% url 'login' %}" class="btn btn-outline-primary mb-4">
+                Sign In
+            </a>
+          {% endif %}
+        </div>
+    </div>
 </div>
 
 {% endblock %}

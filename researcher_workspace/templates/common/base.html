@@ -59,15 +59,15 @@
               {% endif %}
             {% endif %}
             <li class="nav-item {% active_link 'desktop_description' %}">
-              <a class="nav-link" href="{% url 'desktop_description' %}">Overview</a>
-            </li>
-            <li class="nav-item {% active_link 'help' %}">
-              <a class="nav-link" href="{% url 'help' %}"><i class="fas fa-question-circle"></i> Help</a>
+              <a class="nav-link" href="{% url 'desktop_description' %}">About</a>
             </li>
           </ul>
 
           {% if user.is_authenticated %}
           <ul class="navbar-nav navbar-right">
+            <li class="nav-item {% active_link 'help' %}">
+              <a class="nav-link" href="{% url 'help' %}"><i class="fas fa-question-circle"></i> Help</a>
+            </li>
             <div class="dropdown">
               <a href="#" class="d-block text-decoration-none dropdown-toggle nav-link" id="dropdownUser1" data-bs-toggle="dropdown" aria-expanded="false">
                 <!-- <img src="{{ user|gravatar:50 }}" alt="{{ user.email }}" width="32" height="32" class="rounded-circle"> -->
