@@ -1,9 +1,11 @@
 import django_rq
 import novaclient
 import logging
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta
 
 from django.conf import settings
+from django.utils.timezone import utc
+
 from vm_manager.constants import INSTANCE_DELETION_RETRY_WAIT_TIME, \
     INSTANCE_DELETION_RETRY_COUNT, VM_SHELVED, VM_WAITING, VM_OKAY, \
     INSTANCE_CHECK_SHUTOFF_RETRY_WAIT_TIME, \
@@ -13,6 +15,7 @@ from vm_manager.vm_functions.delete_vm import \
     _check_instance_is_shutoff_and_delete
 from vm_manager.vm_functions.create_vm import launch_vm_worker
 from vm_manager.models import VMStatus, Instance
+from vm_manager.utils.expiry import VolumeExpiryPolicy
 from vm_manager.utils.utils import get_nectar, after_time
 
 from guacamole.models import GuacamoleConnection
@@ -64,10 +67,12 @@ def _confirm_instance_deleted(instance, retries, requesting_feature):
     except novaclient.exceptions.NotFound:
         logger.info(f"Instance {instance.id} successfully deleted, "
                     f"we can mark the volume as shelved now!")
-        instance.deleted = datetime.now(timezone.utc)
+        now = datetime.now(utc)
+        instance.deleted = now
         instance.save()
         volume = instance.boot_volume
-        volume.shelved = True
+        volume.shelved_at = now
+        volume.expires = VolumeExpiryPolicy().initial_expiry()
         volume.save()
         vm_status = VMStatus.objects.get_vm_status_by_instance(
             instance, requesting_feature)
@@ -107,11 +112,15 @@ def unshelve_vm_worker(user, desktop_type, zone):
 def shelve_expired_vms(requesting_feature, dry_run=False):
     instances = Instance.objects.filter(
         marked_for_deletion=None,
-        expires__lte=datetime.now(timezone.utc))
+        expires__lte=datetime.now(utc))
     shelve_count = 0
     for instance in instances:
-        vm_status = VMStatus.objects.get_vm_status_by_instance(
-            instance, requesting_feature)
+        try:
+            vm_status = VMStatus.objects.get_vm_status_by_instance(
+                instance, requesting_feature)
+        except Exception:
+            logger.exception(f"Cannot retrieve vm_status for {instance}")
+            continue
         if vm_status.status == VM_SHELVED:
             continue
         if vm_status.status != VM_OKAY:

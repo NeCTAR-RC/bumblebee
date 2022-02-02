@@ -19,6 +19,13 @@ SHUTDOWN = "SHUTOFF"
 VERIFY_RESIZE = "VERIFY_RESIZE"
 # (There are more ...)
 
+# These are Openstack Cinder status values that the
+# python client library doesn't define constants for.
+VOLUME_AVAILABLE = "available"
+BACKUP_AVAILABLE = "available"
+BACKUP_CREATING = "creating"
+# (There are more ...)
+
 NO_VM = VM_DELETED = "No_VM"
 VM_WAITING = VM_CREATING = VM_RESIZING = "VM_Waiting"
 VM_OKAY = "VM_Okay"
@@ -48,6 +55,9 @@ FORCED_DOWNSIZE_WAIT_SECONDS = 600
 FORCED_SHELVE_WAIT_SECONDS = 600
 
 SHELVE_WAIT_SECONDS = 180
+
+ARCHIVE_WAIT_SECONDS = 18000
+ARCHIVE_POLL_SECONDS = 60
 
 CLOUD_INIT_FINISHED = "finished"
 CLOUD_INIT_STARTED = "started"

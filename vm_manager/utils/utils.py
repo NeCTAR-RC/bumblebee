@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 
 from cinderclient import client as cinder_client
 from glanceclient import client as glance_client
@@ -10,6 +10,7 @@ from novaclient import client as nova_client
 
 from django.conf import settings
 from django.utils.crypto import get_random_string
+from django.utils.timezone import utc
 
 from vm_manager.constants import LINUX
 
@@ -97,7 +98,7 @@ class FlavorDetails(object):
 
 
 def after_time(seconds):
-    return datetime.now(timezone.utc) + timedelta(seconds=seconds)
+    return datetime.now(utc) + timedelta(seconds=seconds)
 
 
 def generate_password() -> str:

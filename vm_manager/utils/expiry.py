@@ -70,6 +70,14 @@ class ExpiryPolicy(object):
             return self._get_expires(resource)
 
 
+class VolumeExpiryPolicy(ExpiryPolicy):
+
+    def __init__(self):
+        super().__init__(expiry_period=settings.SHELVED_VOLUME_EXPIRY,
+                         extend_period=0,
+                         max_lifetime=None)
+
+
 class InstanceExpiryPolicy(ExpiryPolicy):
 
     def __init__(self):

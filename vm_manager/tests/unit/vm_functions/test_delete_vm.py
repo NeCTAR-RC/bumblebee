@@ -24,7 +24,7 @@ from guacamole.models import GuacamoleConnection
 from vm_manager.models import VMStatus, Volume, Instance
 from vm_manager.vm_functions.delete_vm import delete_vm_worker, \
     _check_instance_is_shutoff_and_delete, _delete_instance_worker, \
-    _delete_volume_once_instance_is_deleted, _delete_volume
+    _delete_volume_once_instance_is_deleted, delete_volume
 from vm_manager.utils.utils import get_nectar
 
 
@@ -182,7 +182,7 @@ class DeleteVMTests(VMFunctionTestBase):
 
     @patch('vm_manager.vm_functions.delete_vm.get_nectar')
     @patch('vm_manager.vm_functions.delete_vm.logger')
-    @patch('vm_manager.vm_functions.delete_vm._delete_volume')
+    @patch('vm_manager.vm_functions.delete_vm.delete_volume')
     def test_delete_volume_once_instance_is_deleted(
             self, mock_delete, mock_logger, mock_get_nectar):
         fake_nectar = FakeNectar()
@@ -206,7 +206,7 @@ class DeleteVMTests(VMFunctionTestBase):
 
     @patch('vm_manager.vm_functions.delete_vm.get_nectar')
     @patch('vm_manager.vm_functions.delete_vm.logger')
-    @patch('vm_manager.vm_functions.delete_vm._delete_volume')
+    @patch('vm_manager.vm_functions.delete_vm.delete_volume')
     def test_delete_volume_once_instance_is_deleted_2(
             self, mock_delete, mock_logger, mock_get_nectar):
         fake_nectar = FakeNectar()
@@ -230,7 +230,7 @@ class DeleteVMTests(VMFunctionTestBase):
     @patch('vm_manager.vm_functions.delete_vm.get_nectar')
     @patch('vm_manager.vm_functions.delete_vm.django_rq')
     @patch('vm_manager.vm_functions.delete_vm.logger')
-    @patch('vm_manager.vm_functions.delete_vm._delete_volume')
+    @patch('vm_manager.vm_functions.delete_vm.delete_volume')
     @patch('vm_manager.vm_functions.delete_vm._delete_instance_worker')
     def test_delete_volume_once_instance_is_deleted_3(
             self, mock_delete_instance, mock_delete_volume,
@@ -263,7 +263,7 @@ class DeleteVMTests(VMFunctionTestBase):
     @patch('vm_manager.vm_functions.delete_vm.get_nectar')
     @patch('vm_manager.vm_functions.delete_vm.django_rq')
     @patch('vm_manager.vm_functions.delete_vm.logger')
-    @patch('vm_manager.vm_functions.delete_vm._delete_volume')
+    @patch('vm_manager.vm_functions.delete_vm.delete_volume')
     @patch('vm_manager.vm_functions.delete_vm._delete_instance_worker')
     def test_delete_volume_once_instance_is_deleted_4(
             self, mock_delete_instance, mock_delete_volume,
@@ -297,7 +297,7 @@ class DeleteVMTests(VMFunctionTestBase):
     @patch('vm_manager.vm_functions.delete_vm.get_nectar')
     @patch('vm_manager.vm_functions.delete_vm.django_rq')
     @patch('vm_manager.vm_functions.delete_vm.logger')
-    @patch('vm_manager.vm_functions.delete_vm._delete_volume')
+    @patch('vm_manager.vm_functions.delete_vm.delete_volume')
     @patch('vm_manager.vm_functions.delete_vm._delete_instance_worker')
     def test_delete_volume_once_instance_is_deleted_5(
             self, mock_delete_instance, mock_delete_volume,
@@ -335,7 +335,7 @@ class DeleteVMTests(VMFunctionTestBase):
         mock_get_nectar.return_value = fake_nectar
         fake_nectar.cinder.volumes.return_value = 99
 
-        self.assertIsNone(_delete_volume(fake_volume))
+        self.assertIsNone(delete_volume(fake_volume))
         mock_get_nectar.assert_called_once()
         fake_nectar.cinder.volumes.delete.assert_called_once_with(
             fake_volume.id)

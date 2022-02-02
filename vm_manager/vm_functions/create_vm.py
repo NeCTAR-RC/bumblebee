@@ -10,7 +10,7 @@ from django.template.loader import render_to_string
 from django.urls import reverse
 
 from vm_manager.constants import VOLUME_CREATION_TIMEOUT, \
-    INSTANCE_LAUNCH_TIMEOUT, NO_VM, VM_OKAY, LINUX
+    INSTANCE_LAUNCH_TIMEOUT, NO_VM, VM_OKAY, VOLUME_AVAILABLE
 from vm_manager.utils.expiry import InstanceExpiryPolicy
 from vm_manager.utils.utils import get_nectar, generate_server_name, \
     generate_hostname, generate_password
@@ -58,6 +58,11 @@ def _create_volume(user, desktop_type, zone):
                     f"A live {desktop_id} Volume for {user} already "
                     f"exists in a different availability zone ({volume.zone}) "
                     f"to the one requested ({zone.name})")
+                logger.error(msg)
+                raise RuntimeWarning(msg)
+
+            if volume.archived_at:
+                msg = f"Cannot launch vm from an archived volume: {volume}"
                 logger.error(msg)
                 raise RuntimeWarning(msg)
 
@@ -136,19 +141,19 @@ def wait_to_create_instance(user, desktop_type, volume, start_time):
     logger.info(f"Volume created in {now-start_time}s; "
                 f"volume status is {openstack_volume.status}")
 
-    if openstack_volume.status == 'available':
+    if openstack_volume.status == VOLUME_AVAILABLE:
         instance = _create_instance(user, desktop_type, volume)
         vm_status = VMStatus.objects.get_latest_vm_status(user, desktop_type)
         vm_status.instance = instance
         vm_status.status_progress = 50
-        if volume.shelved:
+        if volume.shelved_at:
             vm_status.status_message = 'Unshelving instance'
         else:
             vm_status.status_message = 'Volume created, launching instance'
         vm_status.save()
 
-        # Set the Shelved flag to False
-        volume.shelved = False
+        volume.shelved_at = None
+        volume.expiry = None
         volume.save()
         logger.info(f'{desktop_type.name} VM creation initiated '
                     f'for {user.username}')

@@ -74,8 +74,10 @@ class Volume(CloudResource):
     checked_in = models.BooleanField(default=False)
     ready = models.BooleanField(default=False)
     hostname_id = models.CharField(max_length=6, unique=True, null=True)
-    shelved = models.BooleanField(default=False)
-    rebooted = models.DateTimeField(null=True, blank=True)
+    shelved_at = models.DateTimeField(null=True, blank=True)
+    archived_at = models.DateTimeField(null=True, blank=True)
+    backup_id = models.UUIDField(null=True, blank=True)
+    rebooted_at = models.DateTimeField(null=True, blank=True)
 
     objects = VolumeManager()
 

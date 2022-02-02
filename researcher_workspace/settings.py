@@ -327,6 +327,9 @@ INSTANCE_EXPIRY = 14       # Initial instance expiry
 INSTANCE_EXTENSION = 14    # Instance extension period
 INSTANCE_LIFETIME = None   # Max lifetime for an instance
 
+SHELVED_VOLUME_EXPIRY = 90 # Expiry for shelved instances (there
+                           # is no provision for extending ...)
+
 # OpenID Connect settings
 OIDC_OP_AUTHORIZATION_ENDPOINT = f'{OIDC_SERVER_URL}/auth'
 OIDC_OP_TOKEN_ENDPOINT = f'{OIDC_SERVER_URL}/token'

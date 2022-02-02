@@ -160,8 +160,13 @@ def downsize_expired_supersized_vms(requesting_feature, dry_run=False):
 
     resize_count = 0
     for resize in resizes:
-        vm_status = VMStatus.objects.get_vm_status_by_instance(
-            resize.instance, requesting_feature)
+        try:
+            vm_status = VMStatus.objects.get_vm_status_by_instance(
+                resize.instance, requesting_feature)
+        except Exception:
+            logger.exception(
+                f"Cannot retrieve vm_status for {resize.instance}")
+            continue
         if vm_status.status != VM_SUPERSIZED:
             logger.info(f"Skipping downsize of instance in wrong state: "
                         f"{vm_status}")

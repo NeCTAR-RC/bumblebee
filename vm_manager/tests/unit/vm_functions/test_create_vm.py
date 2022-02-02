@@ -19,7 +19,8 @@ from vm_manager.tests.factories import InstanceFactory, VMStatusFactory, \
 from vm_manager.tests.unit.vm_functions.base import VMFunctionTestBase
 
 from vm_manager.constants import VM_MISSING, VM_OKAY, VM_SHELVED, NO_VM, \
-    VM_WAITING, BUILD, VOLUME_CREATION_TIMEOUT, INSTANCE_LAUNCH_TIMEOUT
+    VM_WAITING, BUILD, VOLUME_CREATION_TIMEOUT, INSTANCE_LAUNCH_TIMEOUT, \
+    VOLUME_AVAILABLE
 from vm_manager.models import VMStatus, Volume, Instance
 from vm_manager.vm_functions.create_vm import launch_vm_worker, \
     wait_to_create_instance, _create_volume, _create_instance, \
@@ -98,7 +99,7 @@ class CreateVMTests(VMFunctionTestBase):
             self.build_fake_vol_inst_status()
         fake_nectar.cinder.volumes.get.return_value = FakeVolume(
             volume_id=fake_volume.id,
-            status='available')
+            status=VOLUME_AVAILABLE)
         fake_nectar.cinder.volumes.get.reset_mock()
         mock_create_instance.return_value = fake_instance
 
@@ -131,10 +132,10 @@ class CreateVMTests(VMFunctionTestBase):
         fake_nectar = get_nectar()
         fake_volume, fake_instance, fake_status = \
             self.build_fake_vol_inst_status(status=VM_SHELVED)
-        fake_volume.shelved = True
+        fake_volume.shelved_at = now
         fake_nectar.cinder.volumes.get.return_value = FakeVolume(
             volume_id=fake_volume.id,
-            status='available')
+            status=VOLUME_AVAILABLE)
         mock_create_instance.return_value = fake_instance
 
         wait_to_create_instance(self.user, self.UBUNTU, fake_volume, now)
@@ -144,7 +145,7 @@ class CreateVMTests(VMFunctionTestBase):
         mock_create_instance.assert_called_once_with(
             self.user, self.UBUNTU, fake_volume)
 
-        self.assertFalse(fake_volume.shelved)
+        self.assertIsNone(fake_volume.shelved_at)
 
         mock_rq.get_scheduler.assert_called_once_with('default')
         mock_scheduler.enqueue_in.assert_called_once_with(

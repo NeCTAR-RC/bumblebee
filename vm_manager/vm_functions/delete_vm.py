@@ -109,7 +109,7 @@ def _delete_volume_once_instance_is_deleted(instance, retries):
                     f"we can delete the volume now!")
         instance.deleted = datetime.now(timezone.utc)
         instance.save()
-        _delete_volume(instance.boot_volume)
+        delete_volume(instance.boot_volume)
         return
     except Exception as e:
         logger.error(f"something went wrong with the instance get "
@@ -142,9 +142,11 @@ def _delete_volume_once_instance_is_deleted(instance, retries):
         _delete_volume_once_instance_is_deleted, instance, retries - 1)
 
 
-def _delete_volume(volume):
+def delete_volume(volume):
     n = get_nectar()
     delete_result = str(n.cinder.volumes.delete(volume.id))
+    # TODO ... should set to mark for deletion, then wait for delete
+    # to complete
     volume.deleted = datetime.now(timezone.utc)
     volume.save()
     logger.debug(f"Delete result is {delete_result}")
