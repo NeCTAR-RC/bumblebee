@@ -481,21 +481,11 @@ def phone_home(request, requesting_feature):
     if 'instance_id' not in request.POST:
         logger.error(f"Instance ID not found in data")
         raise Http404
-    if 'hostname' not in request.POST:
-        logger.error(f"Hostname not found in data")
-        raise Http404
 
     instance = Instance.objects.get_instance_by_untrusted_vm_id_2(
         request.POST['instance_id'], requesting_feature)
 
-    hostname = request.POST['hostname']
     volume = instance.boot_volume
-    if generate_hostname(volume.hostname_id,
-                         volume.operating_system) != hostname:
-        logger.error(f"Hostname provided in request does not match "
-                     f"hostname of volume {instance}, {hostname}")
-        raise Http404
-
     volume.ready = True
     volume.save()
     vm_status = VMStatus.objects.get_vm_status_by_instance(

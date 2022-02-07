@@ -1,6 +1,10 @@
 ## template: jinja
 #cloud-config
 
+fqdn: {{ hostname }}
+hostname: {{ hostname }}
+timezone: {{ timezone }}
+
 users:
 - default
 - name: {{ username }}
@@ -17,7 +21,25 @@ phone_home:
   url: {{ phone_home_url }}
   post:
     - instance_id
-    - hostname
   tries: 10
 
-timezone: {{ timezone }}
+write_files:
+- path: /etc/systemd/system/bumblebee-phone-home.service
+  content: |
+    [Unit]
+    Description=Bumblebee Phone Home
+    After=network-online.target cloud-init.service rc-local.service
+    Wants=network-online.target cloud-init.service
+    
+    [Service]
+    Type=oneshot
+    ExecStart=/usr/bin/curl -s --retry 10 -d instance_id={% verbatim %}{{ ds.meta_data.instance_id }}{% endverbatim %} {{ phone_home_url }}
+    RemainAfterExit=yes
+    KillMode=process
+    StandardOutput=journal+console
+    
+    [Install]
+    WantedBy=multi-user.target
+
+runcmd:
+  - systemctl enable bumblebee-phone-home.service

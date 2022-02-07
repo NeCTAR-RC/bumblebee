@@ -770,25 +770,12 @@ class VMManagerViewTests(TestCase):
         fake_request = Fake(POST={'instance_id': fake_id})
         with self.assertRaises(Http404):
             phone_home(fake_request, self.feature)
-        mock_logger.error.assert_called_with("Hostname not found in data")
-
-        fake_request = Fake(POST={'instance_id': fake_id,
-                                  'hostname': "foo"})
-        with self.assertRaises(Http404):
-            phone_home(fake_request, self.feature)
         mock_logger_2.error.assert_called_with(
             f"Trying to get a vm that doesn't exist with vm_id: "
             f"{fake_id}, called by internal")
 
         self.build_existing_vm(VM_WAITING)
-        fake_request = Fake(POST={'instance_id': self.instance.id,
-                                  'hostname': "foo"})
-        with self.assertRaises(Http404):
-            phone_home(fake_request, self.feature)
-        mock_logger.error.assert_called_with(
-            f"Hostname provided in request does not match "
-            f"hostname of volume {self.instance}, foo")
-
+        fake_request = Fake(POST={'instance_id': self.instance.id})
         mock_gen.return_value = "foo"
         self.assertFalse(self.volume.ready)
         self.assertEqual(VM_WAITING, self.vm_status.status)
