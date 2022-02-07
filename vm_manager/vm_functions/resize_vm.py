@@ -153,7 +153,7 @@ def _wait_to_confirm_resize(instance, flavor, target_status,
 # a number of simultaneous downsizes.  Assuming that this method
 # is asynchronous, it could send the resizes one by one, and wait
 # for each resize to complete (or fail) before starting the next one.
-def downsize_expired_supersized_vms(requesting_feature):
+def downsize_expired_supersized_vms(requesting_feature, dry_run=False):
     resizes = Resize.objects.filter(
         reverted=None, instance__marked_for_deletion=None,
         expires__lte=datetime.now(timezone.utc))
@@ -166,17 +166,18 @@ def downsize_expired_supersized_vms(requesting_feature):
             logger.info(f"Skipping downsize of instance in wrong state: "
                         f"{vm_status}")
             continue
-        # Simulate the vm_status behavior of a normal downsize (with a
-        # longer timeout) in case the user does a browser refresh while
-        # the auto-downsize is happening.
-        vm_status.wait_time = after_time(FORCED_DOWNSIZE_WAIT_SECONDS)
-        vm_status.status_progress = 0
-        vm_status.status_message = "Forced downsize starting"
-        vm_status.status = VM_RESIZING
-        vm_status.save()
-        _resize_vm(resize.instance, resize.instance.boot_volume.flavor,
-                   VM_OKAY, requesting_feature)
-        resize.reverted = datetime.now(timezone.utc)
-        resize.save()
+        if not dry_run:
+            # Simulate the vm_status behavior of a normal downsize (with a
+            # longer timeout) in case the user does a browser refresh while
+            # the auto-downsize is happening.
+            vm_status.wait_time = after_time(FORCED_DOWNSIZE_WAIT_SECONDS)
+            vm_status.status_progress = 0
+            vm_status.status_message = "Forced downsize starting"
+            vm_status.status = VM_RESIZING
+            vm_status.save()
+            _resize_vm(resize.instance, resize.instance.boot_volume.flavor,
+                       VM_OKAY, requesting_feature)
+            resize.reverted = datetime.now(timezone.utc)
+            resize.save()
         resize_count += 1
     return resize_count

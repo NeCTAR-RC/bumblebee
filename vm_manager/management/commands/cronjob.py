@@ -18,8 +18,14 @@ class Command(BaseCommand):
                             help='Run the shelve job')
         parser.add_argument('--downsize', action='store_true',
                             help='Run the downsize job')
+        parser.add_argument('--dry-run', action='store_true',
+                            help='Only count the affected objects')
 
     def handle(self, *args, **options):
+        self.dry_run = options['dry_run']
+        if self.dry_run:
+            print("Running in --dry-run mode: affected objects "
+                  "will only be counted")
         if options['shelve']:
             self.shelve_job()
         if options['downsize']:
@@ -27,13 +33,12 @@ class Command(BaseCommand):
 
     def downsize_job(self):
         feature = desktops_feature()
-        logger.info(f"Starting tasks to downsize expired boost instances "
-                    f"of {feature}")
-        count = downsize_expired_supersized_vms(feature)
-        logger.info(f"Started downsizing {count} instances")
+        logger.info("Starting boost expiry")
+        count = downsize_expired_supersized_vms(feature, dry_run=self.dry_run)
+        logger.info(f"Downsizing {count} instances")
 
     def shelve_job(self):
         feature = desktops_feature()
-        logger.info(f"Starting tasks to shelve expired instances of {feature}")
-        count = shelve_expired_vms(feature)
-        logger.info(f"Started shelving {count} instances")
+        logger.info("Starting instance expiry")
+        count = shelve_expired_vms(feature, dry_run=self.dry_run)
+        logger.info(f"Shelving {count} instances")

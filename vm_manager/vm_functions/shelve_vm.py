@@ -104,7 +104,7 @@ def unshelve_vm_worker(user, desktop_type, zone):
 # a number of simultaneous shelve requests.  Assuming that this method
 # is asynchronous, it could send the requests one by one, and wait
 # for each resize to complete (or fail) before starting the next one.
-def shelve_expired_vms(requesting_feature):
+def shelve_expired_vms(requesting_feature, dry_run=False):
     instances = Instance.objects.filter(
         marked_for_deletion=None,
         expires__lte=datetime.now(timezone.utc))
@@ -118,14 +118,15 @@ def shelve_expired_vms(requesting_feature):
             logger.info(f"Skipping shelving of instance in unexpected state: "
                         f"{vm_status}")
             continue
-        # Simulate the vm_status behavior of a normal shelve (with a
-        # longer timeout) in case the user does a browser refresh while
-        # the auto-shelve is happening.
-        vm_status.wait_time = after_time(FORCED_SHELVE_WAIT_SECONDS)
-        vm_status.status_progress = 0
-        vm_status.status_message = "Forced shelve starting"
-        vm_status.status = VM_WAITING
-        vm_status.save()
-        shelve_vm_worker(instance, requesting_feature)
+        if not dry_run:
+            # Simulate the vm_status behavior of a normal shelve (with a
+            # longer timeout) in case the user does a browser refresh while
+            # the auto-shelve is happening.
+            vm_status.wait_time = after_time(FORCED_SHELVE_WAIT_SECONDS)
+            vm_status.status_progress = 0
+            vm_status.status_message = "Forced shelve starting"
+            vm_status.status = VM_WAITING
+            vm_status.save()
+            shelve_vm_worker(instance, requesting_feature)
         shelve_count += 1
     return shelve_count
