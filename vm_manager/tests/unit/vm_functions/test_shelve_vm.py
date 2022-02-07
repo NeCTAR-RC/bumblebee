@@ -19,7 +19,6 @@ from vm_manager.tests.unit.vm_functions.base import VMFunctionTestBase
 from vm_manager.constants import VM_OKAY, VM_WAITING, VM_ERROR, \
     FORCED_SHELVE_WAIT_SECONDS
 from vm_manager.models import VMStatus
-from vm_manager.vm_functions.other_vm_functions import wait_for_reboot
 from vm_manager.vm_functions.shelve_vm import shelve_vm_worker, \
     shelve_expired_vms
 from vm_manager.utils.utils import get_nectar, after_time

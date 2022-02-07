@@ -7,7 +7,6 @@ from vm_manager.constants import REBOOT_COMPLETE_SECONDS, \
     VM_SUPERSIZED, VM_RESIZING, VM_OKAY
 from vm_manager.utils.utils import after_time, get_nectar
 from vm_manager.utils.expiry import BoostExpiryPolicy
-from vm_manager.vm_functions.other_vm_functions import wait_for_reboot
 from vm_manager.models import VMStatus, Instance, Resize
 
 logger = logging.getLogger(__name__)
@@ -98,10 +97,7 @@ def _wait_to_confirm_resize(instance, flavor, target_status,
         vm_status.status_progress = 66
         vm_status.status_message = "Resize completed; waiting for reboot"
         vm_status.save()
-        scheduler = django_rq.get_scheduler('default')
-        scheduler.enqueue_in(timedelta(seconds=REBOOT_COMPLETE_SECONDS),
-                             wait_for_reboot, instance, target_status,
-                             requesting_feature)
+        # The final step is done in response to a phone_home request
         return str(vm_status)
 
     elif instance.check_resizing_status():
@@ -141,10 +137,7 @@ def _wait_to_confirm_resize(instance, flavor, target_status,
         vm_status.status_progress = 66
         vm_status.status_message = "Resize completed; waiting for reboot"
         vm_status.save()
-        scheduler = django_rq.get_scheduler('default')
-        scheduler.enqueue_in(timedelta(seconds=REBOOT_COMPLETE_SECONDS),
-                             wait_for_reboot, instance, target_status,
-                             requesting_feature)
+        # The final step is done in response to a phone_home request
         return message
 
     message = (

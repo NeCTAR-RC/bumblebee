@@ -52,17 +52,10 @@ def check_power_state(retries, instance, target_status, requesting_feature):
     active = instance.check_active_status()
     if active:
         logger.info(f"VM {instance.id} is ACTIVE")
-        # FIXME - we should be waiting for a phone_home from the VM,
-        # but the desktop images don't (yet) phone_home on a soft or
-        # hard reboot.  In the mean time, we will just assume that the
-        # reboot has completed.
         vm_status.status_progress = 66
         vm_status.status_message = "Instance restarted; waiting for reboot"
         vm_status.save()
-        scheduler = django_rq.get_scheduler('default')
-        scheduler.enqueue_in(
-            timedelta(seconds=REBOOT_COMPLETE_SECONDS),
-            wait_for_reboot, instance, target_status, requesting_feature)
+        # The final stage is done in response to a phone_home request
     elif retries > 0:
         scheduler = django_rq.get_scheduler('default')
         scheduler.enqueue_in(
@@ -74,18 +67,3 @@ def check_power_state(retries, instance, target_status, requesting_feature):
         logger.error(msg)
         vm_status.error(msg)
         vm_status.save()
-
-
-def wait_for_reboot(instance, target_status, requesting_feature):
-    # FIXME - see above ...
-    # Fake wait for reboot.  Currently we just pause for a fix period,
-    # then say it is rebooted.
-    # Note that this is also used by the resize workflows.
-
-    vm_status = VMStatus.objects.get_vm_status_by_instance(
-        instance, requesting_feature)
-    logger.info(f"VM {instance.id} should have rebooted by now")
-    vm_status.status_progress = 100
-    vm_status.status_message = "Reboot has completed"
-    vm_status.status = target_status
-    vm_status.save()

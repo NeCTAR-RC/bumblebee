@@ -21,7 +21,6 @@ from vm_manager.constants import ACTIVE, SHUTDOWN, RESIZE, VERIFY_RESIZE, \
     VM_WAITING, VM_SUPERSIZED, RESIZE_CONFIRM_WAIT_SECONDS, \
     REBOOT_COMPLETE_SECONDS, FORCED_DOWNSIZE_WAIT_SECONDS
 from vm_manager.models import VMStatus, Volume, Instance, Resize
-from vm_manager.vm_functions.other_vm_functions import wait_for_reboot
 from vm_manager.vm_functions.resize_vm import supersize_vm_worker, \
     downsize_vm_worker, extend_boost, _resize_vm, _wait_to_confirm_resize, \
     downsize_expired_supersized_vms
@@ -213,10 +212,7 @@ class ResizeVMTests(VMFunctionTestBase):
             f"Confirming resize of {fake_instance}")
         fake_nectar.nova.servers.confirm_resize.assert_called_once_with(
             fake_instance.id)
-        mock_rq.get_scheduler.assert_called_once_with("default")
-        mock_scheduler.enqueue_in.assert_called_once_with(
-            timedelta(seconds=REBOOT_COMPLETE_SECONDS), wait_for_reboot,
-            fake_instance, VM_OKAY, self.FEATURE)
+        mock_scheduler.enqueue_in.assert_not_called()
         vm_status = VMStatus.objects.get(pk=fake_vm_status.pk)
         self.assertEqual(66, vm_status.status_progress)
 
@@ -374,10 +370,7 @@ class ResizeVMTests(VMFunctionTestBase):
         mock_logger.info.assert_called_once_with(msg)
         mock_logger.error.assert_not_called()
         fake_nectar.nova.servers.confirm_resize.assert_not_called()
-        mock_rq.get_scheduler.assert_called_once_with("default")
-        mock_scheduler.enqueue_in.assert_called_once_with(
-            timedelta(seconds=REBOOT_COMPLETE_SECONDS), wait_for_reboot,
-            fake_instance, VM_SUPERSIZED, self.FEATURE)
+        mock_scheduler.enqueue_in.assert_not_called()
 
         vm_status = VMStatus.objects.get(pk=fake_vm_status.pk)
         self.assertEqual(VM_WAITING, vm_status.status)

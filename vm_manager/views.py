@@ -485,14 +485,24 @@ def phone_home(request, requesting_feature):
     instance = Instance.objects.get_instance_by_untrusted_vm_id_2(
         request.POST['instance_id'], requesting_feature)
 
+    vm_status = VMStatus.objects.get_vm_status_by_instance(
+        instance, requesting_feature)
+    if vm_status.status != VM_WAITING:
+        result = (f"Unexpected phone home for {instance}. "
+                  f"VM_status is {vm_status}")
+        logger.error(result)
+        return result
+
     volume = instance.boot_volume
     volume.ready = True
     volume.save()
-    vm_status = VMStatus.objects.get_vm_status_by_instance(
-        instance, requesting_feature)
+
+    resize = Resize.objects.get_latest_resize(instance.id)
+    status = VM_SUPERSIZED if resize and not resize.reverted else VM_OKAY
+
     vm_status.status_progress = 100
     vm_status.status_message = 'Instance ready'
-    vm_status.status = VM_OKAY
+    vm_status.status = status
     vm_status.save()
     result = f"Phone home for {instance} successful!"
     logger.info(result)

@@ -774,12 +774,15 @@ class VMManagerViewTests(TestCase):
             f"Trying to get a vm that doesn't exist with vm_id: "
             f"{fake_id}, called by internal")
 
+        self.build_existing_vm(VM_OKAY)
+        fake_request = Fake(POST={'instance_id': self.instance.id})
+        self.assertEqual(
+            f"Unexpected phone home for {self.instance}. "
+            f"VM_status is {self.vm_status}",
+            phone_home(fake_request, self.feature))
+
         self.build_existing_vm(VM_WAITING)
         fake_request = Fake(POST={'instance_id': self.instance.id})
-        mock_gen.return_value = "foo"
-        self.assertFalse(self.volume.ready)
-        self.assertEqual(VM_WAITING, self.vm_status.status)
-
         self.assertEqual(
             f"Phone home for {self.instance} successful!",
             phone_home(fake_request, self.feature))
@@ -787,6 +790,18 @@ class VMManagerViewTests(TestCase):
         vm_status = VMStatus.objects.get(pk=self.vm_status.pk)
         self.assertTrue(volume.ready)
         self.assertEqual(VM_OKAY, vm_status.status)
+        self.assertEqual(100, vm_status.status_progress)
+
+        self.build_existing_vm(VM_WAITING)
+        resize = ResizeFactory.create(instance=self.instance)
+        fake_request = Fake(POST={'instance_id': self.instance.id})
+        self.assertEqual(
+            f"Phone home for {self.instance} successful!",
+            phone_home(fake_request, self.feature))
+        volume = Volume.objects.get(pk=self.volume.pk)
+        vm_status = VMStatus.objects.get(pk=self.vm_status.pk)
+        self.assertTrue(volume.ready)
+        self.assertEqual(VM_SUPERSIZED, vm_status.status)
         self.assertEqual(100, vm_status.status_progress)
 
     @patch('vm_manager.views.datetime')
