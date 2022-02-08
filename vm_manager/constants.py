@@ -17,6 +17,7 @@ RESCUE = "RESCUE"
 RESIZE = "RESIZE"
 SHUTDOWN = "SHUTOFF"
 VERIFY_RESIZE = "VERIFY_RESIZE"
+MISSING = "MISSING"
 # (There are more ...)
 
 # These are Openstack Cinder status values that the

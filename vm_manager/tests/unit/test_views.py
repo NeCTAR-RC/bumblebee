@@ -86,7 +86,7 @@ class VMManagerViewTests(TestCase):
         now = datetime.now(utc)
 
         self.assertEqual(
-            f"Status of [feature][desktop][{self.user}] "
+            f"Status of desktop for {self.user} "
             f"is {VM_WAITING}",
             launch_vm(self.user, self.desktop_type, self.zone))
         vm_status = VMStatus.objects.get_latest_vm_status(
@@ -139,8 +139,8 @@ class VMManagerViewTests(TestCase):
 
         self.build_existing_vm(VM_OKAY)
         self.assertEqual(
-            f"Status of [{self.feature}][{self.desktop_type.id}]"
-            f"[{self.user}] is {NO_VM}",
+            f"Status of {self.desktop_type.id} for "
+            f"{self.user} is {NO_VM}",
             delete_vm(self.user, self.instance.id, self.feature))
 
         vm_status = VMStatus.objects.get(pk=self.vm_status.pk)
@@ -183,7 +183,7 @@ class VMManagerViewTests(TestCase):
         self.build_existing_vm(VM_OKAY)
 
         self.assertEqual(
-            f"Status of [{self.feature}][{self.desktop_type.id}][{self.user}] "
+            f"Status of {self.desktop_type.id} for {self.user} "
             f"is {VM_WAITING}",
             shelve_vm(self.user, self.instance.id, self.feature))
 
@@ -224,7 +224,7 @@ class VMManagerViewTests(TestCase):
         self.build_existing_vm(VM_SHELVED)
 
         self.assertEqual(
-            f"Status of [{self.feature}][{self.desktop_type.id}][{self.user}] "
+            f"Status of {self.desktop_type.id} for {self.user} "
             f"is {VM_CREATING}",
             unshelve_vm(self.user, self.desktop_type))
 
@@ -273,8 +273,8 @@ class VMManagerViewTests(TestCase):
         now = datetime.now(utc)
 
         self.assertEqual(
-            f"Status of [{self.feature}][{self.desktop_type.id}]"
-            f"[{self.user}] is {VM_WAITING}",
+            f"Status of {self.desktop_type.id} for "
+            f"{self.user} is {VM_WAITING}",
             reboot_vm(self.user, self.instance.id, REBOOT_SOFT, self.feature))
 
         mock_rq.get_queue.assert_called_once_with("default")
@@ -317,7 +317,7 @@ class VMManagerViewTests(TestCase):
         now = datetime.now(utc)
 
         self.assertEqual(
-            f"Status of [{self.feature}][{self.desktop_type.id}][{self.user}] "
+            f"Status of {self.desktop_type.id} for {self.user} "
             f"is {VM_RESIZING}",
             supersize_vm(self.user, self.instance.id, self.feature))
 
@@ -361,7 +361,7 @@ class VMManagerViewTests(TestCase):
         now = datetime.now(utc)
 
         self.assertEqual(
-            f"Status of [{self.feature}][{self.desktop_type.id}][{self.user}] "
+            f"Status of {self.desktop_type.id} for {self.user} "
             f"is {VM_RESIZING}",
             downsize_vm(self.user, self.instance.id, self.feature))
 
@@ -416,7 +416,7 @@ class VMManagerViewTests(TestCase):
             operating_system=self.desktop_type.id,
             requesting_feature=self.feature,
             instance=self.instance, wait_time=datetime.now(utc))
-        self.assertEqual((VM_ERROR, "VM Not Ready", self.instance.id),
+        self.assertEqual((VM_ERROR, "Instance Not Ready", self.instance.id),
                          get_vm_state(self.user, self.desktop_type))
 
         vm_status = VMStatusFactory.create(
@@ -630,7 +630,7 @@ class VMManagerViewTests(TestCase):
         mock_loader.render_to_string.assert_has_calls(calls)
         mock_messages.info.assert_called_once_with(
             'The Request',
-            f'Your Desktop vm is set to resize back to the default '
+            f'Your some desktop desktop is set to resize back to the default '
             f'size on {date1}')
 
         # Reset for supersized (not allowed)
@@ -661,7 +661,7 @@ class VMManagerViewTests(TestCase):
         mock_loader.render_to_string.assert_has_calls(calls)
         mock_messages.info.assert_called_once_with(
             'The Request',
-            f'Your Desktop vm is set to resize back to the default '
+            f'Your some desktop desktop is set to resize back to the default '
             f'size on {date1}')
 
     @patch('vm_manager.views.logger')
@@ -677,7 +677,7 @@ class VMManagerViewTests(TestCase):
         with self.assertRaises(Http404):
             notify_vm(fake_request, self.feature)
         mock_logger.error.assert_called_with(
-            "No current Instance found with ip address 10.0.0.1")
+            "No current Instance found with IP address 10.0.0.1")
 
         mock_gen.return_value = "bzzzt"
         self.build_existing_vm(VM_WAITING)
@@ -751,7 +751,7 @@ class VMManagerViewTests(TestCase):
         mock_gen.assert_called_with(
             self.volume.hostname_id, self.desktop_type.id)
         mock_logger.error.assert_called_with(
-            f"notify_vm error: Other Message for instance: "
+            f"Notify VM Error: Other Message for instance: "
             f"\"{self.instance}\"")
         vm_status = VMStatus.objects.get(pk=self.vm_status.pk)
         self.assertEqual(VM_ERROR, vm_status.status)

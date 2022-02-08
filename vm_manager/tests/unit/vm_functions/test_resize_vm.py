@@ -47,7 +47,7 @@ class ResizeVMTests(VMFunctionTestBase):
             self.FEATURE)
 
         mock_logger.info.assert_called_once_with(
-            f"About to supersize {self.UBUNTU.id} vm "
+            f"About to supersize {self.UBUNTU.id} instance "
             f"for user {self.user.username}"
         )
         self.assertEqual(
@@ -77,7 +77,7 @@ class ResizeVMTests(VMFunctionTestBase):
             VM_OKAY, self.FEATURE)
 
         mock_logger.info.assert_called_once_with(
-            f"About to downsize {self.UBUNTU.id} vm "
+            f"About to downsize {self.UBUNTU.id} instance "
             f"for user {self.user.username}"
         )
         mock_logger.error_assert_called_once_with(
@@ -99,7 +99,7 @@ class ResizeVMTests(VMFunctionTestBase):
             VM_OKAY, self.FEATURE)
 
         mock_logger.info.assert_called_once_with(
-            f"About to downsize {self.UBUNTU.id} vm "
+            f"About to downsize {self.UBUNTU.id} instance "
             f"for user {self.user.username}"
         )
         mock_logger.error_assert_not_called()
@@ -123,7 +123,7 @@ class ResizeVMTests(VMFunctionTestBase):
 
         _, fake_instance = self.build_fake_vol_instance()
         self.assertEqual(
-            f"No Resize is current for instance {fake_instance}",
+            f"No current resize job for instance {fake_instance}",
             extend_boost(self.user, fake_instance.id, self.FEATURE))
 
         now = datetime.now(timezone.utc)
@@ -132,7 +132,7 @@ class ResizeVMTests(VMFunctionTestBase):
 
         resize = ResizeFactory.create(instance=fake_instance, reverted=now)
         self.assertEqual(
-            f"No Resize is current for instance {fake_instance}",
+            f"No current resize job for instance {fake_instance}",
             extend_boost(self.user, fake_instance.id, self.FEATURE))
 
         resize = ResizeFactory.create(instance=fake_instance)
@@ -203,8 +203,7 @@ class ResizeVMTests(VMFunctionTestBase):
             status=VM_RESIZING, status_progress=50)
 
         self.assertEqual(
-            f"Status of [{self.FEATURE.name}][{self.UBUNTU.id}]"
-            f"[{self.user}] is {VM_WAITING}",
+            f"Status of {self.UBUNTU.id} for {self.user} is {VM_WAITING}",
             _wait_to_confirm_resize(
                 fake_instance, self.UBUNTU.default_flavor.id,
                 VM_OKAY, after_time(10), self.FEATURE))
@@ -232,8 +231,7 @@ class ResizeVMTests(VMFunctionTestBase):
 
         deadline = after_time(10)
         self.assertEqual(
-            f"Status of [{self.FEATURE.name}][{self.UBUNTU.id}]"
-            f"[{self.user}] is {VM_RESIZING}",
+            f"Status of {self.UBUNTU.id} for {self.user} is {VM_RESIZING}",
             _wait_to_confirm_resize(
                 fake_instance, self.UBUNTU.default_flavor.id,
                 VM_OKAY, deadline, self.FEATURE))

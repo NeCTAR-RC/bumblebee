@@ -25,11 +25,7 @@ def reboot_vm_worker(user, vm_id, reboot_level,
                 f"for user {user.username}")
     n = get_nectar()
     nova_server = n.nova.servers.get(instance.id)
-    if reboot_level == REBOOT_HARD:
-        reboot_result = nova_server.reboot(REBOOT_HARD)
-    else:
-        reboot_result = nova_server.reboot(REBOOT_SOFT)
-    logger.info(str(reboot_result))
+    reboot_result = nova_server.reboot(reboot_level)
 
     vm_status = VMStatus.objects.get_vm_status_by_instance(
         instance, requesting_feature)
@@ -51,7 +47,7 @@ def check_power_state(retries, instance, target_status, requesting_feature):
         instance, requesting_feature)
     active = instance.check_active_status()
     if active:
-        logger.info(f"VM {instance.id} is ACTIVE")
+        logger.info(f"Instance {instance.id} is ACTIVE")
         vm_status.status_progress = 66
         vm_status.status_message = "Instance restarted; waiting for reboot"
         vm_status.save()
@@ -63,7 +59,7 @@ def check_power_state(retries, instance, target_status, requesting_feature):
             check_power_state, retries - 1, instance, target_status,
             requesting_feature)
     else:
-        msg = "VM {instance.id} has not gone ACTIVE after reboot."
+        msg = "Instance {instance.id} has not gone ACTIVE after reboot."
         logger.error(msg)
         vm_status.error(msg)
         vm_status.save()

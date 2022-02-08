@@ -10,10 +10,12 @@ from django.db.utils import IntegrityError
 from django.http import Http404
 from django.template.defaultfilters import safe
 
+from novaclient import exceptions as nova_exceptions
+
 from researcher_workspace.models import Feature, User
 from researcher_desktop.models import DesktopType
 from vm_manager.constants import ERROR, ACTIVE, SHUTDOWN, VERIFY_RESIZE, \
-    RESIZE, VM_WAITING, VM_ERROR, VM_DELETED
+    RESIZE, MISSING, VM_WAITING, VM_ERROR, VM_DELETED
 
 from vm_manager.utils.utils import get_nectar
 from vm_manager.utils.utils import generate_password
@@ -34,7 +36,7 @@ class CloudResource(models.Model):
     marked_for_deletion = models.DateTimeField(null=True, blank=True)
     deleted = models.DateTimeField(null=True, blank=True)
     error_flag = models.DateTimeField(null=True, blank=True)
-    error_message = models.CharField(max_length=200, null=True, blank=True)
+    error_message = models.TextField(null=True, blank=True)
 
     def error(self, msg):
         self.error_flag = datetime.now(timezone.utc)
@@ -82,7 +84,7 @@ class Volume(CloudResource):
     objects = VolumeManager()
 
     def __str__(self):
-        return (f"({self.id}) Volume of {self.operating_system} "
+        return (f"Volume {self.id} of {self.operating_system} "
                 f"for {self.user}")
 
     def save(self, *args, **kwargs):
@@ -281,8 +283,11 @@ class Instance(CloudResource):
 
     def get_status(self):
         n = get_nectar()
-        instance_result = n.nova.servers.get(self.id)
-        return instance_result.status
+        try:
+            instance_result = n.nova.servers.get(self.id)
+            return instance_result.status
+        except nova_exceptions.NotFound:
+            return MISSING
 
     def check_active_status(self):
         return self.get_status() == ACTIVE
@@ -306,9 +311,8 @@ class Instance(CloudResource):
              for field in self.boot_volume._meta.fields]))
 
     def __str__(self):
-        return (
-            f"({self.id}) Instance of {self.boot_volume.operating_system}"
-            f" for {self.user} at {self.ip_address}")
+        return (f" Instance {self.id} of {self.boot_volume.operating_system}"
+                f" for {self.user}")
 
 
 class ResizeManager(models.Manager):
@@ -425,6 +429,7 @@ class VMStatusManager(models.Manager):
 
 
 class VMStatus(models.Model):
+
     user = models.ForeignKey(User, on_delete=models.PROTECT)
     created = models.DateTimeField(auto_now_add=True)
     requesting_feature = models.ForeignKey(Feature, on_delete=models.PROTECT)
@@ -448,6 +453,5 @@ class VMStatus(models.Model):
     objects = VMStatusManager()
 
     def __str__(self):
-        return (
-            f"Status of [{self.requesting_feature}]"
-            f"[{self.operating_system}][{self.user}] is {self.status}")
+        return (f"Status of {self.operating_system} for {self.user} is "
+                f"{self.status}")
