@@ -310,11 +310,13 @@ class CreateVMTests(VMFunctionTestBase):
 
     @patch('vm_manager.utils.utils.Nectar', new=FakeNectar)
     @patch('vm_manager.vm_functions.create_vm.generate_hostname')
+    @patch('vm_manager.vm_functions.create_vm.generate_server_name')
     @patch('vm_manager.vm_functions.create_vm.generate_password')
     @patch('vm_manager.vm_functions.create_vm.render_to_string')
     def test_create_instance(self, mock_render, mock_gen_password,
-                             mock_gen_hostname):
+                             mock_gen_server_name, mock_gen_hostname):
         mock_gen_hostname.return_value = "mullion"
+        mock_gen_server_name.return_value = "foobar"
         mock_gen_password.return_value = "secret"
         mock_render.return_value = "RENDERED_USER_DATA"
         fake = get_nectar()
@@ -342,7 +344,7 @@ class CreateVMTests(VMFunctionTestBase):
             userdata="RENDERED_USER_DATA",
             security_groups=self.UBUNTU.security_groups,
             key_name=settings.OS_KEYNAME,
-            name="mullion",
+            name="foobar",
             flavor=self.UBUNTU.default_flavor.id,
             image='',
             block_device_mapping_v1=None,

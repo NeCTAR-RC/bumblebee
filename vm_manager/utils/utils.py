@@ -74,16 +74,12 @@ def get_nectar():
     return get_nectar.nectar
 
 
-def generate_server_name(username, operating_system):
-    return f"{operating_system}_{username}_{settings.ENVIRONMENT_NAME[0]}"
+def generate_server_name(username, desktop_id):
+    return f"{username}_{desktop_id}"
 
 
-def generate_hostname_url(hostname_id, operating_system) -> str:
-    return f"{generate_hostname(hostname_id, operating_system)}"
-
-
-def generate_hostname(hostname_id, operating_system) -> str:
-    return f"rd{operating_system[0]}-{hostname_id}"
+def generate_hostname(hostname_id, desktop_id) -> str:
+    return f"vd{desktop_id[0]}-{hostname_id}"
 
 
 def get_domain(user) -> str:
