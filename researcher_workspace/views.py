@@ -619,5 +619,9 @@ def learn(request):
     return render(request, 'researcher_workspace/learn.html')
 
 
+def login_fail(request):
+    return render(request, 'researcher_workspace/login_fail.html')
+
+
 def healthcheck(request):
     return HttpResponse('OK')

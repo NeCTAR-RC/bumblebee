@@ -109,7 +109,7 @@ class CustomUserAdmin(UserAdmin):
     list_filter = UserAdmin.list_filter + ('date_joined',)
     list_display = UserAdmin.list_display + ('date_joined',)
     fieldsets = (
-        (None, {'fields': ('username', 'password')}),
+        (None, {'fields': ('username', 'sub',)}),
         (_('Personal info'), {'fields': ('first_name', 'last_name', 'email')}),
         (_('Permissions'), {
             'fields': ('is_active', 'is_staff', 'is_superuser',

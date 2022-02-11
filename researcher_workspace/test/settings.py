@@ -155,6 +155,7 @@ CRISPY_TEMPLATE_PACK = 'bootstrap5'
 
 LOGIN_REDIRECT_URL = reverse_lazy('home')
 LOGOUT_REDIRECT_URL = reverse_lazy('index')
+LOGIN_REDIRECT_URL_FAILURE = reverse_lazy('login_fail')
 
 DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 

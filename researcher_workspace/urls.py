@@ -37,6 +37,7 @@ urlpatterns = [
     path('profile/', views.profile, name='profile'),
     path('report/', views.report, name='report'),
     path('learn/', views.learn, name='learn'),
+    path('login/fail/', views.login_fail, name='login_fail'),
     path('healthcheck/status', include('health_check.urls')),
     path('healthcheck/', views.healthcheck, name='healthcheck'),
     # OIDC auth
