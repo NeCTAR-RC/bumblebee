@@ -15,6 +15,8 @@ urlpatterns = [
          views.reboot_vm, name='reboot_vm'),
     path('shelve_vm/<uuid:vm_id>', views.shelve_vm, name='shelve_vm'),
     path('unshelve_vm/<str:desktop>', views.unshelve_vm, name='unshelve_vm'),
+    path('delete_shelved_vm/<str:desktop>',
+         views.delete_shelved_vm, name='delete_shelved_vm'),
     path('supersize_vm/<uuid:vm_id>', views.supersize_vm, name='supersize_vm'),
     path('downsize_vm/<uuid:vm_id>', views.downsize_vm, name='downsize_vm'),
     path('extend/<uuid:vm_id>', views.extend, name='extend'),
