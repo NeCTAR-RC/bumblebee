@@ -2,7 +2,6 @@
 {% load compress %}
 {% load group_filters %}
 {% load active_link %}
-{% load gravatar %}
 {% load git_tags %}
 <!doctype html>
 <html lang="en">
@@ -71,7 +70,6 @@
             </li>
             <div class="dropdown">
               <a href="#" class="d-block text-decoration-none dropdown-toggle nav-link" id="dropdownUser1" data-bs-toggle="dropdown" aria-expanded="false">
-                <!-- <img src="{{ user|gravatar:50 }}" alt="{{ user.email }}" width="32" height="32" class="rounded-circle"> -->
                 <span class="navbar-text ps-2">{{ user.email }}</span>
               </a>
               <ul class="dropdown-menu text-small" aria-labelledby="dropdownUser1">
