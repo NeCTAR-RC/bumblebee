@@ -3,6 +3,7 @@
 {% load group_filters %}
 {% load active_link %}
 {% load gravatar %}
+{% load git_tags %}
 <!doctype html>
 <html lang="en">
   <head>
@@ -191,5 +192,6 @@
     {% block script %}
     {% endblock script %}
 
+    <!-- Git SHA: {% current_commit %} -->
   </body>
 </html>
