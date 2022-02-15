@@ -327,7 +327,7 @@ def extend_boost_vm(user, vm_id, requesting_feature) -> str:
 
 def get_vm_state(user, desktop_type):
     vm_status = VMStatus.objects.get_latest_vm_status(user, desktop_type)
-    logger.debug(f"VM Status: {vm_status}")
+    logger.debug(vm_status)
 
     if (not vm_status) or (vm_status.status == VM_DELETED):
         return NO_VM, "No VM", None
@@ -346,13 +346,13 @@ def get_vm_state(user, desktop_type):
             return VM_WAITING, time, None
         else:  # Time up waiting
             if vm_status.instance:
-                vm_status.error(f"VM {instance.id} not ready "
+                vm_status.error(f"Instance {instance.id} not ready "
                                 f"at {vm_status.wait_time} timeout")
-                return VM_ERROR, "VM Not Ready", instance.id
+                return VM_ERROR, "Instance Not Ready", instance.id
             else:
                 vm_status.status = VM_ERROR
                 vm_status.save()
-                logger.error(f"VM is missing at timeout {vm_status.id}, "
+                logger.error(f"Instance is missing at timeout {vm_status.id}, "
                              f"{user}, {desktop_type}")
                 return VM_MISSING, "VM has Errored", None
 
@@ -401,7 +401,7 @@ def render_vm(request, user, desktop_type, buttons):
 
     if state == VM_SUPERSIZED:
         messages.info(request, format_html(
-            f'Your {str(desktop_type).capitalize()} vm is set to resize '
+            f'Your {desktop_type.name} desktop is set to resize '
             f'back to the default size on {what_to_show["expires"]}'))
 
     # Remove buttons that are not allowed in the current context
@@ -445,7 +445,7 @@ def notify_vm(request, requesting_feature):
         ip_address, requesting_feature)
     if not instance:
         logger.error(f"No current Instance found with "
-                     f"ip address {ip_address}")
+                     f"IP address {ip_address}")
         raise Http404
     volume = instance.boot_volume
     if generate_hostname(volume.hostname_id,
@@ -470,7 +470,7 @@ def notify_vm(request, requesting_feature):
         vm_status = VMStatus.objects.get_vm_status_by_instance(
             instance, requesting_feature)
         vm_status.error(msg)
-        logger.error(f"notify_vm error: {msg} for instance: \"{instance}\"")
+        logger.error(f"Notify VM Error: {msg} for instance: \"{instance}\"")
     result = f"{ip_address}, {operating_system}, {state}, {msg}"
     logger.info(result)
     return result

@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 
 def supersize_vm_worker(instance, desktop_type) -> str:
-    logger.info(f"About to supersize {desktop_type.id} vm "
+    logger.info(f"About to supersize {desktop_type.id} instance "
                 f"for user {instance.user.username}")
     supersize_result = _resize_vm(instance,
                                   desktop_type.big_flavor.id,
@@ -27,7 +27,7 @@ def supersize_vm_worker(instance, desktop_type) -> str:
 
 
 def downsize_vm_worker(instance, desktop_type) -> str:
-    logger.info(f"About to downsize {desktop_type.id} vm "
+    logger.info(f"About to downsize {desktop_type.id} instance "
                 f"for user {instance.user.username}")
     downsize_result = _resize_vm(instance,
                                  desktop_type.default_flavor.id,
@@ -47,11 +47,11 @@ def extend_boost(user, vm_id, requesting_feature) -> str:
     instance = Instance.objects.get_instance_by_untrusted_vm_id(
         vm_id, user, requesting_feature)
     logger.info(f"Extending the expiration of "
-                f"{instance.boot_volume.operating_system} vm "
+                f"{instance.boot_volume.operating_system} instance "
                 f"for user {user.username}")
     resize = Resize.objects.get_latest_resize(instance.id)
     if not resize or resize.reverted:
-        message = f"No Resize is current for instance {instance}"
+        message = f"No current resize job for instance {instance}"
         logger.error(message)
         return message
     resize.expires = BoostExpiryPolicy().new_expiry(resize)

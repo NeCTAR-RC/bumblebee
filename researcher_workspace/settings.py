@@ -193,9 +193,6 @@ COMPRESS_PRECOMPILERS = (
     ('text/x-scss', 'django_libsass.SassCompiler'),
 )
 
-CRISPY_ALLOWED_TEMPLATE_PACKS = 'bootstrap5'
-CRISPY_TEMPLATE_PACK = 'bootstrap5'
-
 LOGIN_REDIRECT_URL = reverse_lazy('home')
 LOGOUT_REDIRECT_URL = reverse_lazy('index')
 
@@ -211,20 +208,19 @@ LOGGING = {
     'disable_existing_loggers': False,
     'formatters': {
         'console': {
-            'format': '[%(asctime)s] %(levelname)s %(message)s',
-            'datefmt': '%Y-%m-%d %H:%M:%S'
+            'format': '[%(asctime)s] [%(levelname)s] %(message)s',
         },
     },
     'handlers': {
         'console': {
-            'level': 'DEBUG',
             'class': 'logging.StreamHandler',
             'formatter': 'console'
         },
     },
     'loggers': {
-        '': {
+        'root': {
             'handlers': ['console'],
+            'level': 'INFO',
         },
         'researcher_workspace': {
             'handlers': ['console'],
@@ -238,7 +234,15 @@ LOGGING = {
         },
         'mozilla_django_oidc': {
             'handlers': ['console'],
-            'level': 'DEBUG'
+            'level': 'DEBUG',
+        },
+        'rq.worker': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+        },
+        'rq.scheduler': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
         },
     }
 }
