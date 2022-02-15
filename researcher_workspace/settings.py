@@ -327,17 +327,17 @@ COMPRESS_OFFLINE = get_setting('COMPRESS_OFFLINE', not DEBUG)
 # - The 'lifetime' is the upper limit for extensions ... or -1 which
 #   means no limit
 
-BOOST_EXPIRY = int(get_setting('BOOST_EXPIRY'))
-BOOST_EXTENSION = int(get_setting('BOOST_EXTENSION'))
-BOOST_LIFETIME = int(get_setting('BOOT_LIFETIME'))
+BOOST_EXPIRY = int(get_setting('BOOST_EXPIRY', '7'))
+BOOST_EXTENSION = int(get_setting('BOOST_EXTENSION', '7'))
+BOOST_LIFETIME = int(get_setting('BOOT_LIFETIME', '14'))
 
-INSTANCE_EXPIRY = int(get_setting('INSTANCE_EXPIRY'))
-INSTANCE_EXTENSION = int(get_setting('INSTANCE_EXTENSION'))
-INSTANCE_LIFETIME = int(get_setting('INSTANCE_LIFETIME'))
+INSTANCE_EXPIRY = int(get_setting('INSTANCE_EXPIRY', '14'))
+INSTANCE_EXTENSION = int(get_setting('INSTANCE_EXTENSION', '14'))
+INSTANCE_LIFETIME = int(get_setting('INSTANCE_LIFETIME', '-1'))
 
 # There is no 'extend' functionality for shelved volumes, so only
 # the 'expiry' setting is meaningful.
-SHELVED_VOLUME_EXPIRY = int(get_setting('SHELVED_VOLUME_EXPIRY'))
+SHELVED_VOLUME_EXPIRY = int(get_setting('SHELVED_VOLUME_EXPIRY', '90'))
 
 # OpenID Connect settings
 OIDC_OP_AUTHORIZATION_ENDPOINT = f'{OIDC_SERVER_URL}/auth'
