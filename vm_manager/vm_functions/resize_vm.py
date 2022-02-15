@@ -14,7 +14,8 @@ logger = logging.getLogger(__name__)
 
 def supersize_vm_worker(instance, desktop_type) -> str:
     logger.info(f"About to supersize {desktop_type.id} instance "
-                f"for user {instance.user.username}")
+                f"for user {instance.user.username} to "
+                f"flavor {desktop_type.big_flavor_name}")
     supersize_result = _resize_vm(instance,
                                   desktop_type.big_flavor.id,
                                   VM_SUPERSIZED, desktop_type.feature)
@@ -28,7 +29,8 @@ def supersize_vm_worker(instance, desktop_type) -> str:
 
 def downsize_vm_worker(instance, desktop_type) -> str:
     logger.info(f"About to downsize {desktop_type.id} instance "
-                f"for user {instance.user.username}")
+                f"for user {instance.user.username} to "
+                f"flavor {desktop_type.default_flavor_name}")
     downsize_result = _resize_vm(instance,
                                  desktop_type.default_flavor.id,
                                  VM_OKAY, desktop_type.feature)
@@ -68,6 +70,10 @@ def _resize_vm(instance, flavor, target_status, requesting_feature):
             f"Instance {instance.id} already has flavor {flavor}. "
             f"Skipping the resize.")
         logger.error(message)
+        vm_status = VMStatus.objects.get_vm_status_by_instance(
+            instance, requesting_feature)
+        vm_status.status = target_status
+        vm_status.save()
         return message
 
     resize_result = n.nova.servers.resize(instance.id, flavor)

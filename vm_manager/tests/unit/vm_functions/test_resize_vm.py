@@ -1,5 +1,5 @@
 import copy
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 import uuid
 
 import novaclient
@@ -9,6 +9,7 @@ from unittest.mock import Mock, patch, call
 from django.conf import settings
 from django.test import TestCase
 from django.http import Http404
+from django.utils.timezone import utc
 
 from researcher_desktop.utils.utils import get_desktop_type, desktops_feature
 from vm_manager.tests.factories import ResizeFactory
@@ -47,8 +48,8 @@ class ResizeVMTests(VMFunctionTestBase):
             self.FEATURE)
 
         mock_logger.info.assert_called_once_with(
-            f"About to supersize {self.UBUNTU.id} instance "
-            f"for user {self.user.username}"
+            f"About to supersize {self.UBUNTU.id} instance for user "
+            f"{self.user.username} to flavor {self.UBUNTU.big_flavor_name}"
         )
         self.assertEqual(
             1, Resize.objects.filter(instance=fake_instance).count())
@@ -77,8 +78,8 @@ class ResizeVMTests(VMFunctionTestBase):
             VM_OKAY, self.FEATURE)
 
         mock_logger.info.assert_called_once_with(
-            f"About to downsize {self.UBUNTU.id} instance "
-            f"for user {self.user.username}"
+            f"About to downsize {self.UBUNTU.id} instance for user "
+            f"{self.user.username} to flavor {self.UBUNTU.default_flavor_name}"
         )
         mock_logger.error_assert_called_once_with(
             f"Missing resize record for instance {fake_instance}")
@@ -99,8 +100,8 @@ class ResizeVMTests(VMFunctionTestBase):
             VM_OKAY, self.FEATURE)
 
         mock_logger.info.assert_called_once_with(
-            f"About to downsize {self.UBUNTU.id} instance "
-            f"for user {self.user.username}"
+            f"About to downsize {self.UBUNTU.id} instance for user "
+            f"{self.user.username} to flavor {self.UBUNTU.default_flavor_name}"
         )
         mock_logger.error_assert_not_called()
 
@@ -126,7 +127,7 @@ class ResizeVMTests(VMFunctionTestBase):
             f"No current resize job for instance {fake_instance}",
             extend_boost(self.user, fake_instance.id, self.FEATURE))
 
-        now = datetime.now(timezone.utc)
+        now = datetime.now(utc)
         new_expiry = now + timedelta(days=settings.BOOST_EXPIRY)
         mock_policy.new_expiry.return_value = new_expiry
 
@@ -165,11 +166,14 @@ class ResizeVMTests(VMFunctionTestBase):
             _resize_vm(fake_instance, default_flavor_id,
                        VM_OKAY, self.FEATURE))
         fake_nectar.nova.servers.get.assert_called_with(fake_instance.id)
-        fake_nectar.nova.servers.get.reset_mock()
+        vm_status = VMStatus.objects.get(pk=fake_vm_status.pk)
+        self.assertEqual(VM_OKAY, vm_status.status)
 
-        after = (datetime.now(timezone.utc)
-                 + timedelta(RESIZE_CONFIRM_WAIT_SECONDS))
+        fake_nectar.nova.servers.get.reset_mock()
+        after = datetime.now(utc) + timedelta(RESIZE_CONFIRM_WAIT_SECONDS)
         mock_after_time.return_value = after
+        fake_vm_status.status = VM_RESIZING
+        fake_vm_status.save()
 
         self.assertEqual(
             "whatever",
@@ -408,7 +412,7 @@ class ResizeVMTests(VMFunctionTestBase):
     @patch('vm_manager.vm_functions.resize_vm.logger')
     @patch('vm_manager.vm_functions.resize_vm._resize_vm')
     def test_downsize_expired_supersized_vms(self, mock_resize, mock_logger):
-        now = datetime.now(timezone.utc)
+        now = datetime.now(utc)
         fake_nectar = get_nectar()
         self.assertEqual(0, downsize_expired_supersized_vms(self.FEATURE))
 
@@ -435,7 +439,7 @@ class ResizeVMTests(VMFunctionTestBase):
     @patch('vm_manager.vm_functions.resize_vm.logger')
     @patch('vm_manager.vm_functions.resize_vm._resize_vm')
     def test_downsize_expired_supersized_vms_2(self, mock_resize, mock_logger):
-        now = datetime.now(timezone.utc)
+        now = datetime.now(utc)
         fake_nectar = get_nectar()
         self.assertEqual(0, downsize_expired_supersized_vms(self.FEATURE))
 
