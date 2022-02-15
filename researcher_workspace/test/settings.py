@@ -282,16 +282,13 @@ AUTO_APPROVE_WORKSPACES = True
 PROJECT_DEFAULT_FEATURES = ['researcher_desktop']
 
 # Expiry policy constants.  Units are days
-BOOST_EXPIRY = 7           # Initial boot expiry
-BOOST_EXTENSION = 7        # Boost extension period
-BOOST_LIFETIME = 14        # Max lifetime for a boosted instance
-
-INSTANCE_EXPIRY = 14       # Initial instance expiry
-INSTANCE_EXTENSION = 14    # Instance extension period
-INSTANCE_LIFETIME = None   # Max lifetime for an instance
-
-SHELVED_VOLUME_EXPIRY = 90 # Expiry for shelved instances (there
-                           # is no provision for extending ...)
+BOOST_EXPIRY = 7
+BOOST_EXTENSION = 7
+BOOST_LIFETIME = 14
+INSTANCE_EXPIRY = 14
+INSTANCE_EXTENSION = 14
+INSTANCE_LIFETIME = -1
+SHELVED_VOLUME_EXPIRY = 90
 
 # Values that need to be set in local_settings.py
 PROXY_URL = False

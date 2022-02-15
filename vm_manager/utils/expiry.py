@@ -4,7 +4,7 @@ from django.conf import settings
 
 class ExpiryPolicy(object):
 
-    def __init__(self, expiry_period, extend_period, max_lifetime=None):
+    def __init__(self, expiry_period, extend_period, max_lifetime=-1):
         '''Construct an expiry policy.  The arguments are the number
         of days to for the initial expiry, for extensions, and an (optional)
         lifetime limit in days for the resource.
@@ -25,8 +25,9 @@ class ExpiryPolicy(object):
         the 'extend' button is pressed.
 
         The default amount to add is 'expiry_period', but that should not
-        take the resource beyond the 'max_lifetime' (if set).  If no expiry
-        is currently set, extension is not permitted.
+        take the resource beyond the 'max_lifetime'.  If no expiry
+        is currently set, extension is not permitted.  If 'max_lifetime'
+        is -1, indefinite extension is permitted.
         '''
 
         if not now:
@@ -44,7 +45,7 @@ class ExpiryPolicy(object):
             # by hand.  We don't want the user to see an "extend"
             # button that actually >reduces< the expiration time.
             return timedelta(seconds=0)
-        if self.max_lifetime:
+        if self.max_lifetime >= 0:
             limit = created + timedelta(days=self.max_lifetime)
             new_expires = min(new_expires, limit)
         seconds = (new_expires - now).total_seconds()
@@ -75,7 +76,7 @@ class VolumeExpiryPolicy(ExpiryPolicy):
     def __init__(self):
         super().__init__(expiry_period=settings.SHELVED_VOLUME_EXPIRY,
                          extend_period=0,
-                         max_lifetime=None)
+                         max_lifetime=-1)
 
 
 class InstanceExpiryPolicy(ExpiryPolicy):

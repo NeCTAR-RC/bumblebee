@@ -67,7 +67,7 @@ class ExpiryTests(TestCase):
         mock_datetime.now.return_value = now
 
         limited_policy = ExpiryPolicy(1, 1, 5)
-        unlimited_policy = ExpiryPolicy(1, 1, None)
+        unlimited_policy = ExpiryPolicy(1, 1, -1)
 
         # A resource with no expiry set cannot be extended
         resource = DummyResource(now, None)

@@ -317,18 +317,23 @@ except ImportError:
 COMPRESS_ENABLED = get_setting('COMPRESS_ENABLED', not DEBUG)
 COMPRESS_OFFLINE = get_setting('COMPRESS_OFFLINE', not DEBUG)
 
-# Expiry policy constants.  The units are days
+# Expiry policy constants.  The values are (integer) days.
+# - The 'expiry' is the initial expiry period.
+# - The 'extension' is the (max) period added by the 'extend' button.
+# - The 'lifetime' is the upper limit for extensions ... or -1 which
+#   means no limit
 
-BOOST_EXPIRY = 7           # Initial boot expiry
-BOOST_EXTENSION = 7        # Boost extension period
-BOOST_LIFETIME = 14        # Max lifetime for a boosted instance
+BOOST_EXPIRY = int(get_setting('BOOST_EXPIRY'))
+BOOST_EXTENSION = int(get_setting('BOOST_EXTENSION'))
+BOOST_LIFETIME = int(get_setting('BOOT_LIFETIME'))
 
-INSTANCE_EXPIRY = 14       # Initial instance expiry
-INSTANCE_EXTENSION = 14    # Instance extension period
-INSTANCE_LIFETIME = None   # Max lifetime for an instance
+INSTANCE_EXPIRY = int(get_setting('INSTANCE_EXPIRY'))
+INSTANCE_EXTENSION = int(get_setting('INSTANCE_EXTENSION'))
+INSTANCE_LIFETIME = int(get_setting('INSTANCE_LIFETIME'))
 
-SHELVED_VOLUME_EXPIRY = 90 # Expiry for shelved instances (there
-                           # is no provision for extending ...)
+# There is no 'extend' functionality for shelved volumes, so only
+# the 'expiry' setting is meaningful.
+SHELVED_VOLUME_EXPIRY = int(get_setting('SHELVED_VOLUME_EXPIRY'))
 
 # OpenID Connect settings
 OIDC_OP_AUTHORIZATION_ENDPOINT = f'{OIDC_SERVER_URL}/auth'
