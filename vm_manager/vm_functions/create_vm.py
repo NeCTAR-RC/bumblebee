@@ -99,10 +99,9 @@ def _create_volume(user, desktop_type, zone):
     n.cinder.volumes.set_metadata(
         volume=volume_result,
         metadata={
-            'hostname': generate_hostname(volume.hostname_id,
-                                          desktop_id),
-            'allow_user': (user.username
-                           + re.search("@.*", user.email).group()),
+            'hostname': generate_hostname(volume.hostname_id, desktop_id),
+            'user': user.email,
+            'desktop': desktop_id,
             'environment': settings.ENVIRONMENT_NAME,
             'requesting_feature': requesting_feature.name,
         })
@@ -121,17 +120,21 @@ def _get_source_volume_id(desktop_type, zone):
     # image based on the image metadata.
     candidates = res or []
     # Interim logic ...
-    matches = [v for v in candidates
-               if v.name.startswith(desktop_type.image_name)]
-    nos_found = len(matches)
-    if nos_found != 1:
-        prefix = "Multiple source volumes" if nos_found else "No source volume"
+    matches = sorted(
+        [v for v in candidates if v.name.startswith(desktop_type.image_name)],
+        key=lambda v: int(v.metadata.get('nectar_build', 0)), reverse=True)
+
+    if len(matches) < 1:
         msg = (
-            f"{prefix} with image names starting with "
+            f"No source volume with image names starting with "
             f"{desktop_type.image_name} in availability zone {zone.name})")
         logger.error(msg)
         raise RuntimeWarning(msg)
-    return matches[0].id
+
+    match = matches[0]
+    logger.debug(f"Found source volume: {match.name} ({match.id}) in "
+                 f"availability zone {zone.name}")
+    return match.id
 
 
 def wait_to_create_instance(user, desktop_type, volume, start_time):
