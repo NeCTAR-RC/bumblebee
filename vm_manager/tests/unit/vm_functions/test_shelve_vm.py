@@ -1,5 +1,5 @@
 import copy
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 import uuid
 
 import novaclient
@@ -9,6 +9,7 @@ from unittest.mock import Mock, patch, call
 from django.conf import settings
 from django.test import TestCase
 from django.http import Http404
+from django.utils.timezone import utc
 
 from researcher_desktop.utils.utils import get_desktop_type, desktops_feature
 from vm_manager.tests.factories import ResizeFactory
@@ -29,7 +30,7 @@ class ShelveVMTests(VMFunctionTestBase):
     @patch('vm_manager.utils.utils.Nectar', new=FakeNectar)
     @patch('vm_manager.vm_functions.shelve_vm.shelve_vm_worker')
     def test_shelve_expired_vms(self, mock_shelve):
-        now = datetime.now(timezone.utc)
+        now = datetime.now(utc)
         fake_nectar = get_nectar()
         self.assertEqual(0, shelve_expired_vms(self.FEATURE))
 
@@ -48,7 +49,7 @@ class ShelveVMTests(VMFunctionTestBase):
     @patch('vm_manager.utils.utils.Nectar', new=FakeNectar)
     @patch('vm_manager.vm_functions.shelve_vm.shelve_vm_worker')
     def test_downsize_expired_supersized_vms_2(self, mock_shelve):
-        now = datetime.now(timezone.utc)
+        now = datetime.now(utc)
         fake_nectar = get_nectar()
         self.assertEqual(0, shelve_expired_vms(self.FEATURE))
 

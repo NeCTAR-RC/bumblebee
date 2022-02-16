@@ -1,12 +1,13 @@
 import uuid
 import copy
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 
 from unittest.mock import Mock, patch
 
 from django.conf import settings
 from django.http import Http404
 from django.test import TestCase
+from django.utils.timezone import utc
 
 from researcher_workspace.tests.factories import FeatureFactory, UserFactory
 from researcher_desktop.tests.factories import DesktopTypeFactory
@@ -35,7 +36,7 @@ class VMManagerModelTestBase(TestCase):
     def do_superclass_method_tests(self, resource):
         self.assertIsNone(resource.error_flag)
         self.assertIsNone(resource.error_message)
-        now = datetime.now(timezone.utc)
+        now = datetime.now(utc)
         resource.error("Bad troubles")
         self.assertEqual("Bad troubles", resource.error_message)
         self.assertTrue(now <= resource.error_flag)
@@ -366,7 +367,7 @@ class InstanceModelTests(VMManagerModelTestBase):
 
         with self.assertRaises(Http404):
             instance = Instance.objects.get(id=id)
-            instance.deleted = datetime.now(timezone.utc)
+            instance.deleted = datetime.now(utc)
             instance.save()
             Instance.objects.get_instance_by_untrusted_vm_id(
                 id, self.user, self.feature)
@@ -383,7 +384,7 @@ class ResizeModelTests(VMManagerModelTestBase):
         fake_instance = InstanceFactory.create(
             id=id, user=self.user, boot_volume=fake_volume)
 
-        now = datetime.now(timezone.utc)
+        now = datetime.now(utc)
         resize = ResizeFactory.create(instance=fake_instance)
         self.assertTrue(now <= resize.requested)
         self.assertFalse(resize.expired())
@@ -391,7 +392,7 @@ class ResizeModelTests(VMManagerModelTestBase):
                          f"requested on {resize.requested}",
                          str(resize))
 
-        fake_instance.deleted = datetime.now(timezone.utc)
+        fake_instance.deleted = datetime.now(utc)
         fake_instance.save()
         self.assertTrue(resize.expired())
         self.assertEqual(f"Resize (Expired) of Instance ({id}) "

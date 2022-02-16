@@ -1,6 +1,6 @@
 import hashlib
 import logging
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 import uuid
 
 from django.conf import settings
@@ -10,7 +10,7 @@ from django.db import models
 from django.http import Http404
 from django.template.loader import render_to_string
 from django.utils.html import format_html
-from django.utils.timezone import now
+from django.utils.timezone import utc
 from django_currentuser.db.models import CurrentUserField
 
 from researcher_workspace.utils.FoR_codes import FOR_CODE_CHOICES
@@ -107,7 +107,7 @@ class Project(models.Model):
 
     def accept(self, enable_default_features=True):
         self.ARO_approval = True
-        self.ARO_responded_on = datetime.now(timezone.utc)
+        self.ARO_responded_on = datetime.now(utc)
         self.save()
         if enable_default_features:
             for app_name in settings.PROJECT_DEFAULT_FEATURES:
@@ -122,7 +122,7 @@ class Project(models.Model):
 
     def deny(self):
         self.ARO_approval = False
-        self.ARO_responded_on = datetime.now(timezone.utc)
+        self.ARO_responded_on = datetime.now(utc)
         self.save()
         sub = f"Your {settings.NAME} Workspace Request has been declined"
         context = {'project': self}
@@ -172,7 +172,7 @@ class PermissionRequest(models.Model):
             permission.save()
             permission.feature_options.set(self.feature_options.all())
         self.accepted = True
-        self.responded_on = datetime.now(timezone.utc)
+        self.responded_on = datetime.now(utc)
         self.save()
 
         sub = f"Your {settings.NAME} feature request has been approved"
@@ -182,7 +182,7 @@ class PermissionRequest(models.Model):
 
     def deny(self):
         self.accepted = False
-        self.responded_on = datetime.now(timezone.utc)
+        self.responded_on = datetime.now(utc)
         self.save()
 
         sub = f"Your {settings.NAME} feature request has been declined"

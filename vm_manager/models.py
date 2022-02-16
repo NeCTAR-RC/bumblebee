@@ -3,12 +3,13 @@ import nanoid
 import socket
 import string
 
-from datetime import datetime, timezone
+from datetime import datetime
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.utils import IntegrityError
 from django.http import Http404
 from django.template.defaultfilters import safe
+from django.utils.timezone import utc
 
 from novaclient import exceptions as nova_exceptions
 
@@ -39,12 +40,12 @@ class CloudResource(models.Model):
     error_message = models.TextField(null=True, blank=True)
 
     def error(self, msg):
-        self.error_flag = datetime.now(timezone.utc)
+        self.error_flag = datetime.now(utc)
         self.error_message = msg
         self.save()
 
     def set_marked_for_deletion(self):
-        self.marked_for_deletion = datetime.now(timezone.utc)
+        self.marked_for_deletion = datetime.now(utc)
         self.save()
 
 

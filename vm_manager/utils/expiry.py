@@ -1,5 +1,6 @@
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from django.conf import settings
+from django.utils.timezone import utc
 
 
 class ExpiryPolicy(object):
@@ -31,7 +32,7 @@ class ExpiryPolicy(object):
         '''
 
         if not now:
-            now = datetime.now(timezone.utc)
+            now = datetime.now(utc)
         expires = self._get_expires(resource)
         created = self._get_created(resource)
         if not expires:
@@ -55,14 +56,14 @@ class ExpiryPolicy(object):
         '''Compute the initial expiry datetime for the resource.
         '''
         if not now:
-            now = datetime.now(timezone.utc)
+            now = datetime.now(utc)
         return now + timedelta(days=self.expiry_period)
 
     def new_expiry(self, resource, now=None) -> datetime:
         '''Compute the new expiry datetime for the resource after extending.
         '''
         if not now:
-            now = datetime.now(timezone.utc)
+            now = datetime.now(utc)
         permitted_extension = self.permitted_extension(resource, now=now)
         if permitted_extension.total_seconds() > 0:
             return now + permitted_extension

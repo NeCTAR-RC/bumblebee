@@ -1,7 +1,7 @@
 import django_rq
 import logging
 
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from math import ceil
 
 from django.contrib import messages
@@ -11,6 +11,7 @@ from django.http import HttpResponseRedirect, Http404
 from django.template import loader
 from django.urls import reverse
 from django.utils.html import format_html
+from django.utils.timezone import utc
 from django.views.decorators.csrf import csrf_exempt
 
 from operator import itemgetter
@@ -361,7 +362,7 @@ def get_vm_state(user, desktop_type):
         else:
             return VM_MISSING, "VM has Errored", None
 
-    curr_time = datetime.now(timezone.utc)
+    curr_time = datetime.now(utc)
     if vm_status.status == VM_WAITING:
         if vm_status.wait_time > curr_time:
             time = str(ceil((vm_status.wait_time - curr_time).seconds))
@@ -552,6 +553,6 @@ def rd_report_for_user(user, desktop_type_ids, requesting_feature):
             count += date_obj['count']
             date_obj['count'] = count
             vm_graph.append(date_obj)
-        vm_graph.append({'date': datetime.now(timezone.utc), 'count': count})
+        vm_graph.append({'date': datetime.now(utc), 'count': count})
         rd_report_info[id] = vm_graph
     return {'user_vm_info': rd_report_info}

@@ -1,7 +1,7 @@
 import csv
 import logging
 import pytz
-from datetime import datetime, timezone
+from datetime import datetime
 from io import BytesIO
 from dateutil.relativedelta import relativedelta
 
@@ -20,6 +20,7 @@ from django.shortcuts import render
 from django.template import loader
 from django.urls import reverse
 from django.utils.html import format_html
+from django.utils.timezone import utc
 from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
 
 from researcher_desktop.utils.utils import get_desktop_type, get_applicable_zones
@@ -172,7 +173,7 @@ def orion_report(request):
     writer = pandas.ExcelWriter(output, engine='xlsxwriter')
     vm_report = rdesk_views.rd_report(reporting_months)
     users = _get_users_for_report()
-    now = datetime.now(timezone.utc)
+    now = datetime.now(utc)
     user_count = dict([(offset_month_and_year(month_offset, now.month, now.year), FACULTIES.copy())
                        for month_offset in range(reporting_months, 0, -1)])
     for user in users:
@@ -385,7 +386,7 @@ def agree_terms(request, version):
         if (version == settings.TERMS_VERSION
              and version > request.user.terms_version):
             request.user.terms_version = version
-            request.user.date_agreed_terms = datetime.now(timezone.utc)
+            request.user.date_agreed_terms = datetime.now(utc)
             request.user.save()
         return HttpResponse(status=200)
     else:

@@ -4,10 +4,11 @@ import django_rq
 import logging
 import re
 
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from django.conf import settings
 from django.template.loader import render_to_string
 from django.urls import reverse
+from django.utils.timezone import utc
 
 from vm_manager.constants import VOLUME_CREATION_TIMEOUT, \
     INSTANCE_LAUNCH_TIMEOUT, NO_VM, VM_OKAY, VOLUME_AVAILABLE
@@ -38,7 +39,7 @@ def launch_vm_worker(user, desktop_type, zone):
     scheduler = django_rq.get_scheduler('default')
     scheduler.enqueue_in(timedelta(seconds=5), wait_to_create_instance,
                          user, desktop_type, volume,
-                         datetime.now(timezone.utc))
+                         datetime.now(utc))
     logger.info(f'{desktop_id} VM creation scheduled '
                 f'for {user.username}')
 
@@ -139,7 +140,7 @@ def _get_source_volume_id(desktop_type, zone):
 
 def wait_to_create_instance(user, desktop_type, volume, start_time):
     n = get_nectar()
-    now = datetime.now(timezone.utc)
+    now = datetime.now(utc)
     openstack_volume = n.cinder.volumes.get(volume_id=volume.id)
     logger.info(f"Volume created in {now-start_time}s; "
                 f"volume status is {openstack_volume.status}")
@@ -163,7 +164,7 @@ def wait_to_create_instance(user, desktop_type, volume, start_time):
         scheduler = django_rq.get_scheduler('default')
         scheduler.enqueue_in(timedelta(seconds=5), wait_for_instance_active,
                              user, desktop_type, instance,
-                             datetime.now(timezone.utc))
+                             datetime.now(utc))
 
     elif (now - start_time > timedelta(seconds=VOLUME_CREATION_TIMEOUT)):
         logger.error(f"Volume took too long to create: user:{user} "
@@ -256,7 +257,7 @@ def _create_instance(user, desktop_type, volume):
 
 
 def wait_for_instance_active(user, desktop_type, instance, start_time):
-    now = datetime.now(timezone.utc)
+    now = datetime.now(utc)
     if instance.check_active_status():
         vm_status = VMStatus.objects.get_vm_status_by_instance(
             instance, desktop_type.feature)

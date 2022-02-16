@@ -1,10 +1,11 @@
 import uuid
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta
 
 from unittest.mock import Mock, patch
 
 from django.test import TestCase
 from django.conf import settings
+from django.utils.timezone import utc
 
 from researcher_desktop.utils.utils import get_desktop_type, desktops_feature
 from researcher_desktop.tests.factories import AvailabilityZoneFactory
@@ -47,7 +48,7 @@ class ExpiryTests(TestCase):
         return fake_instance
 
     def test_initial_expiry(self):
-        now = datetime.now(timezone.utc)
+        now = datetime.now(utc)
         boost_policy = BoostExpiryPolicy()
         instance_policy = InstanceExpiryPolicy()
 
@@ -63,7 +64,7 @@ class ExpiryTests(TestCase):
 
     @patch('vm_manager.utils.expiry.datetime')
     def test_permitted_extension(self, mock_datetime):
-        now = datetime.now(timezone.utc)
+        now = datetime.now(utc)
         mock_datetime.now.return_value = now
 
         limited_policy = ExpiryPolicy(1, 1, 5)
@@ -111,7 +112,7 @@ class ExpiryTests(TestCase):
 
     @patch('vm_manager.utils.expiry.datetime')
     def test_new_expiry(self, mock_datetime):
-        now = datetime.now(timezone.utc)
+        now = datetime.now(utc)
         mock_datetime.now.return_value = now
 
         limited_policy = ExpiryPolicy(1, 1, 5)

@@ -1,6 +1,8 @@
 import logging
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 import django_rq
+
+from django.utils.timezone import utc
 
 from vm_manager.constants import REBOOT_COMPLETE_SECONDS, \
     RESIZE_CONFIRM_WAIT_SECONDS, FORCED_DOWNSIZE_WAIT_SECONDS, \
@@ -19,7 +21,7 @@ def supersize_vm_worker(instance, desktop_type) -> str:
     supersize_result = _resize_vm(instance,
                                   desktop_type.big_flavor.id,
                                   VM_SUPERSIZED, desktop_type.feature)
-    now = datetime.now(timezone.utc)
+    now = datetime.now(utc)
     resize = Resize(instance=instance,
                     requested=now,
                     expires=BoostExpiryPolicy().initial_expiry(now=now))
@@ -39,7 +41,7 @@ def downsize_vm_worker(instance, desktop_type) -> str:
     if not resize:
         logger.error("Missing resize record for instance {instance}")
     else:
-        resize.reverted = datetime.now(timezone.utc)
+        resize.reverted = datetime.now(utc)
         resize.save()
     return downsize_result
 
@@ -108,7 +110,7 @@ def _wait_to_confirm_resize(instance, flavor, target_status,
 
     elif instance.check_resizing_status():
         logger.info(f"Waiting for resize of {instance}")
-        if datetime.now(timezone.utc) < deadline:
+        if datetime.now(utc) < deadline:
             scheduler = django_rq.get_scheduler('default')
             scheduler.enqueue_in(timedelta(seconds=5),
                                  _wait_to_confirm_resize,
@@ -162,7 +164,7 @@ def _wait_to_confirm_resize(instance, flavor, target_status,
 def downsize_expired_supersized_vms(requesting_feature, dry_run=False):
     resizes = Resize.objects.filter(
         reverted=None, instance__marked_for_deletion=None,
-        expires__lte=datetime.now(timezone.utc))
+        expires__lte=datetime.now(utc))
 
     resize_count = 0
     for resize in resizes:
@@ -188,7 +190,7 @@ def downsize_expired_supersized_vms(requesting_feature, dry_run=False):
             vm_status.save()
             _resize_vm(resize.instance, resize.instance.boot_volume.flavor,
                        VM_OKAY, requesting_feature)
-            resize.reverted = datetime.now(timezone.utc)
+            resize.reverted = datetime.now(utc)
             resize.save()
         resize_count += 1
     return resize_count
