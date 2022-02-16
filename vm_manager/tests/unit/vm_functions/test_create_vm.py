@@ -271,6 +271,7 @@ class CreateVMTests(VMFunctionTestBase):
         fake.cinder.volumes.create.reset_mock()
         fake.cinder.volumes.list.return_value = [
             FakeVolume(name=f"{self.UBUNTU.image_name} [42]",
+                       metadata={'nectar_build': '42'},
                        id=str(id))]
 
         result = _create_volume(self.user, self.UBUNTU, self.zone)
@@ -281,14 +282,15 @@ class CreateVMTests(VMFunctionTestBase):
 
     @patch('vm_manager.utils.utils.Nectar', new=FakeNectar)
     def test_get_source_volume_id(self):
-        id = uuid.uuid4()
+        id = str(uuid.uuid4())
         fake = get_nectar()
         fake.cinder.volumes.list.reset_mock()
         fake.cinder.volumes.list.return_value = [
             FakeVolume(name=f"{self.UBUNTU.image_name} [42]",
-                       id=str(id))]
+                       metadata={'nectar_build': '42'},
+                       id=id)]
 
-        self.assertEqual(str(id),
+        self.assertEqual(id,
                          _get_source_volume_id(self.UBUNTU, self.zone))
 
         fake.cinder.volumes.list.assert_called_once_with(
@@ -296,16 +298,19 @@ class CreateVMTests(VMFunctionTestBase):
                          'availability_zone': self.zone.name})
 
         fake.cinder.volumes.list.reset_mock()
-        fake.cinder.volumes.list.return_value = []
-        with self.assertRaises(RuntimeWarning):
-            _get_source_volume_id(self.UBUNTU, self.zone)
-
-        fake.cinder.volumes.list.reset_mock()
+        id2 = str(uuid.uuid4())
         fake.cinder.volumes.list.return_value = [
             FakeVolume(name=f"{self.UBUNTU.image_name} [42]",
-                       id=str(id)),
+                       metadata={'nectar_build': '42'},
+                       id=id),
             FakeVolume(name=f"{self.UBUNTU.image_name} [43]",
-                       id=str(id))]
+                       metadata={'nectar_build': '43'},
+                       id=id2)]
+        self.assertEqual(id2,
+                         _get_source_volume_id(self.UBUNTU, self.zone))
+
+        fake.cinder.volumes.list.reset_mock()
+        fake.cinder.volumes.list.return_value = []
         with self.assertRaises(RuntimeWarning):
             _get_source_volume_id(self.UBUNTU, self.zone)
 
