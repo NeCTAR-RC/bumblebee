@@ -69,7 +69,8 @@ ROOT_URLCONF = 'researcher_workspace.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR, 'researcher_workspace', 'templates')],
+        'DIRS': [os.path.join(BASE_DIR, 'templates'),
+                 os.path.join(BASE_DIR, 'test', 'templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [

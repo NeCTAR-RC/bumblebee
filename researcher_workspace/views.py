@@ -34,6 +34,7 @@ from .models import PermissionRequest, Feature, Project, \
 from .templatetags.group_filters import has_group
 from .utils import redirect_home, agreed_to_terms, not_support_staff, \
     offset_month_and_year
+from .utils import send_notification
 from .utils.faculty_mapping import FACULTIES, FACULTY_MAPPING
 from .utils.freshdesk import create_ticket
 
@@ -385,6 +386,11 @@ def agree_terms(request, version):
         and isinstance(request.user, User)):
         if (version == settings.TERMS_VERSION
              and version > request.user.terms_version):
+            if request.user.terms_version == 0:
+                # If this is the first time they have agreed to the T&C's
+                # send the "Welcome" email to the user
+                context = {'user': request.user}
+                send_notification(request.user, 'email/welcome.html', context)
             request.user.terms_version = version
             request.user.date_agreed_terms = datetime.now(utc)
             request.user.save()
@@ -528,7 +534,7 @@ def new_project(request):
         if form.is_valid():
             form.save()
             if settings.AUTO_APPROVE_WORKSPACES:
-                my_project.accept()
+                my_project.accept(auto_approved=True)
                 messages.success(request, format_html(
                     f'Your workspace <strong>{my_project.title}</strong> '
                     f'has been created and auto-approved.'))

@@ -1,5 +1,7 @@
 {% load settings %}
-Hi {{ project.project_admin.get_full_name }},
+Your {% get_setting "NAME" %} feature request has been approved
+
+Hi {{ user.get_full_name }},
 <br>
 <br>
 Thanks for your feature request for the {% get_setting "NAME" %} service.
