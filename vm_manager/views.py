@@ -18,7 +18,7 @@ from operator import itemgetter
 from researcher_desktop.models import DesktopType, AvailabilityZone
 from researcher_desktop.utils.utils import get_desktop_type
 
-from vm_manager.models import VMStatus, Instance, Resize
+from vm_manager.models import VMStatus, Instance, Resize, Volume
 
 from vm_manager.constants import VM_ERROR, VM_OKAY, VM_WAITING, \
     VM_SHELVED, NO_VM, VM_SHUTDOWN, VM_SUPERSIZED, VM_DELETED, \
@@ -36,7 +36,7 @@ from vm_manager.vm_functions.admin_functionality import test_function, \
     admin_worker, start_downsizing_cron_job, \
     vm_report_for_page, vm_report_for_csv, db_check
 from vm_manager.vm_functions.create_vm import launch_vm_worker, extend_instance
-from vm_manager.vm_functions.delete_vm import delete_vm_worker
+from vm_manager.vm_functions.delete_vm import delete_vm_worker, delete_volume
 from vm_manager.vm_functions.other_vm_functions import reboot_vm_worker
 from vm_manager.vm_functions.shelve_vm import shelve_vm_worker, \
     unshelve_vm_worker
@@ -208,6 +208,28 @@ def unshelve_vm(user, desktop_type) -> str:
     queue.enqueue(unshelve_vm_worker, user=user, desktop_type=desktop_type,
                   zone=zone)
 
+    return str(vm_status)
+
+
+def delete_shelved_vm(user, desktop_type) -> str:
+    vm_status = VMStatus.objects.get_latest_vm_status(user, desktop_type)
+    if not vm_status or vm_status.status != VM_SHELVED:
+        return _wrong_state_message(
+            "delete shelved", user, desktop_type=desktop_type,
+            vm_status=vm_status)
+
+    if not vm_status.instance.deleted:
+        logger.error(f"Instance still exists for shelved {desktop_type}, "
+                     f"vm_status: {vm_status}")
+        return str(vm_status)
+
+    vm_status.status = VM_DELETED
+    vm_status.save()
+
+    volume = Volume.objects.get_volume(user, desktop_type)
+    if volume:
+        logger.info(f"Deleting volume {volume}")
+        delete_volume(volume)
     return str(vm_status)
 
 

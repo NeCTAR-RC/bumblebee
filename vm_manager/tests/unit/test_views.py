@@ -33,7 +33,7 @@ from vm_manager.views import launch_vm_worker, delete_vm_worker, \
 
 from vm_manager.views import launch_vm, delete_vm, shelve_vm, unshelve_vm, \
     reboot_vm, supersize_vm, downsize_vm, get_vm_state, render_vm, notify_vm, \
-    phone_home, rd_report_for_user, admin_delete_vm
+    phone_home, rd_report_for_user, admin_delete_vm, delete_shelved_vm
 
 
 class VMManagerViewTests(TestCase):
@@ -939,3 +939,50 @@ class VMManagerViewTests(TestCase):
         # No progress updates required ...
         self.assertIsNotNone(vms.instance.marked_for_deletion)
         self.assertIsNotNone(vms.instance.boot_volume.marked_for_deletion)
+
+    @patch('vm_manager.views.logger')
+    def test_delete_shelved_vm_inconsistent(self, mock_logger):
+        self.assertEqual(
+            f"VMStatus for user {self.user}, "
+            f"desktop_type {self.desktop_type.id} "
+            f"is missing. Cannot delete shelved VM.",
+            delete_shelved_vm(self.user, self.desktop_type))
+
+        self.build_existing_vm(None)
+
+        for status in ALL_VM_STATES - {VM_SHELVED}:
+            self.build_existing_vm(status)
+            self.assertEqual(
+                f"VMStatus for user {self.user}, "
+                f"desktop_type {self.desktop_type.id}, "
+                f"instance {self.instance.id} "
+                f"is in wrong state ({status}). Cannot delete shelved VM.",
+                delete_shelved_vm(self.user, self.desktop_type))
+
+        mock_logger.error.reset_mock()
+        self.build_existing_vm(VM_SHELVED)
+        self.assertEqual(
+            f"Status of {self.desktop_type.id} for {self.user} "
+            f"is {VM_SHELVED}",
+            delete_shelved_vm(self.user, self.desktop_type))
+        mock_logger.error.assert_called_once_with(
+            f"Instance still exists for shelved {self.desktop_type.id}, "
+            f"vm_status: Status of {self.desktop_type.id} for {self.user} "
+            f"is {VM_SHELVED}")
+
+    @patch('vm_manager.views.logger')
+    @patch('vm_manager.views.delete_volume')
+    def test_delete_shelved_vm(self, mock_delete, mock_logger):
+        self.build_existing_vm(VM_SHELVED)
+        self.instance.deleted = datetime.now(utc)
+        self.instance.save()
+
+        self.assertEqual(
+            f"Status of {self.desktop_type.id} for {self.user} "
+            f"is {VM_DELETED}",
+            delete_shelved_vm(self.user, self.desktop_type))
+
+        mock_logger.error.assert_not_called()
+        mock_logger.info.assert_called_once_with(
+            f"Deleting volume {self.volume}")
+        mock_delete.assert_called_once_with(self.volume)

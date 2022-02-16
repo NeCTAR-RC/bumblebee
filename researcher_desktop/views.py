@@ -75,6 +75,14 @@ def unshelve_vm(request, desktop):
 @login_required(login_url='login')
 @user_passes_test(test_func=agreed_to_terms, login_url='terms',
                   redirect_field_name=None)
+def delete_shelved_vm(request, desktop):
+    vm_man_views.delete_shelved_vm(request.user, get_desktop_type(desktop))
+    return redirect_home(request)
+
+
+@login_required(login_url='login')
+@user_passes_test(test_func=agreed_to_terms, login_url='terms',
+                  redirect_field_name=None)
 def reboot_vm(request, vm_id, reboot_level):
     vm_man_views.reboot_vm(request.user, vm_id,
                            reboot_level, desktops_feature())
