@@ -54,7 +54,8 @@ class VolumeManager(models.Manager):
         try:
             volume = self.get(user=user, operating_system=desktop_type.id,
                               requesting_feature=desktop_type.feature,
-                              marked_for_deletion=None, error_flag=None)
+                              deleted=None, marked_for_deletion=None,
+                              error_flag=None)
             return volume
         except Volume.DoesNotExist:
             return None
