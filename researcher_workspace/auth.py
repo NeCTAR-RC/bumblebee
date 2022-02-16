@@ -59,6 +59,7 @@ class NectarAuthBackend(OIDCAuthenticationBackend):
         user.first_name = claims.get('given_name')
         user.last_name = claims.get('family_name')
         user.email = claims.get('email')
+        user.sub = claims.get('sub')
         user.username = generate_username(user.email)
 
         # Automatically assign staff/admin from Keycloak
@@ -73,10 +74,16 @@ class NectarAuthBackend(OIDCAuthenticationBackend):
 
     def filter_users_by_claims(self, claims):
         """Return all users matching the specified sub."""
+        email = claims.get('email')
         sub = claims.get('sub')
-        if not sub:
+        if not sub or not email:
             return self.UserModel.objects.none()
-        return self.UserModel.objects.filter(sub__iexact=sub)
+
+        users = self.UserModel.objects.filter(sub__iexact=sub)
+        if not users:
+            users = self.UserModel.objects.filter(
+                email__iexact=email).filter(sub__isnull=True)
+        return users
 
     def verify_claims(self, claims):
         verified = super(NectarAuthBackend, self).verify_claims(claims)
