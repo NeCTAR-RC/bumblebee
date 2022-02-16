@@ -23,4 +23,3 @@ django-libsass
 Pillow
 python-freshdesk
 django-health-check
-gitpython
