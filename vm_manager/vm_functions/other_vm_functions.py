@@ -1,9 +1,9 @@
 import logging
 
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta
 
 import django_rq
-from django.http import Http404
+from django.utils.timezone import utc
 from novaclient.v2.servers import REBOOT_HARD, REBOOT_SOFT
 
 from vm_manager.constants import VM_OKAY, REBOOT_CONFIRM_WAIT_SECONDS, \
@@ -19,7 +19,7 @@ def reboot_vm_worker(user, vm_id, reboot_level,
     instance = Instance.objects.get_instance_by_untrusted_vm_id(
         vm_id, user, requesting_feature)
     volume = instance.boot_volume
-    volume.rebooted = datetime.now(timezone.utc)
+    volume.rebooted = datetime.now(utc)
     volume.save()
     logger.info(f"About to {reboot_level} reboot VM {instance.id} "
                 f"for user {user.username}")

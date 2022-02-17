@@ -3,12 +3,13 @@ from uuid import UUID
 import django_rq
 import logging
 
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta
 from django.core.mail import mail_managers
 from django.db.models import Count
 from django.db.models.functions import TruncDay
 from django.http import HttpResponse, HttpResponseRedirect, Http404
 from django.shortcuts import render
+from django.utils.timezone import utc
 from operator import itemgetter
 
 from researcher_workspace.utils import offset_month_and_year
@@ -95,13 +96,13 @@ def _generate_weekly_availability_report():
 
 
 def vm_report_for_csv(reporting_months, operating_systems):
-    now = datetime.now(timezone.utc)
+    now = datetime.now(utc)
     # A dict of zero values for the last year and this month so far
     date_list = [
         (offset_month_and_year(month_offset, now.month, now.year), 0)
         for month_offset in range(reporting_months, 0, -1)]
     start_date = datetime(day=1, month=date_list[0][0][0],
-                          year=date_list[0][0][1], tzinfo=timezone.utc)
+                          year=date_list[0][0][1], tzinfo=utc)
     empty_date_dict = dict(date_list)
     results = []
 
@@ -136,7 +137,7 @@ def vm_report_for_csv(reporting_months, operating_systems):
             if resize.expired():
                 resize.end = resize.expired()
             else:
-                resize.end = datetime.now(timezone.utc)
+                resize.end = datetime.now(utc)
             resize.end = resize.end.month + 12 * resize.end.year
         for (month, year) in resize_count.keys():
             resize_count_month = month + 12 * year

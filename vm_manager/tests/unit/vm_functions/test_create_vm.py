@@ -1,5 +1,5 @@
 import copy
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 import uuid
 
 from unittest.mock import Mock, patch
@@ -7,6 +7,7 @@ from unittest.mock import Mock, patch
 from django.conf import settings
 from django.test import TestCase
 from django.http import Http404
+from django.utils.timezone import utc
 
 from researcher_workspace.tests.factories import UserFactory
 from researcher_desktop.tests.factories import AvailabilityZoneFactory
@@ -34,7 +35,7 @@ class CreateVMTests(VMFunctionTestBase):
     @patch('vm_manager.vm_functions.create_vm.django_rq')
     @patch('vm_manager.vm_functions.create_vm.datetime')
     def test_launch_vm_worker(self, mock_datetime, mock_rq, mock_create):
-        now = datetime.now(timezone.utc)
+        now = datetime.now(utc)
         mock_datetime.now.return_value = now
         mock_scheduler = Mock()
         mock_rq.get_scheduler.return_value = mock_scheduler
@@ -90,7 +91,7 @@ class CreateVMTests(VMFunctionTestBase):
     @patch('vm_manager.vm_functions.create_vm.datetime')
     def test_wait_to_create(self, mock_datetime,
                             mock_rq, mock_create_instance):
-        now = datetime.now(timezone.utc)
+        now = datetime.now(utc)
         mock_datetime.now.return_value = now
         mock_scheduler = Mock()
         mock_rq.get_scheduler.return_value = mock_scheduler
@@ -104,7 +105,7 @@ class CreateVMTests(VMFunctionTestBase):
         mock_create_instance.return_value = fake_instance
 
         wait_to_create_instance(self.user, self.UBUNTU, fake_volume,
-                                datetime.now(timezone.utc))
+                                datetime.now(utc))
 
         fake_nectar.cinder.volumes.get.assert_called_once_with(
             volume_id=fake_volume.id)
@@ -125,7 +126,7 @@ class CreateVMTests(VMFunctionTestBase):
     @patch('vm_manager.vm_functions.create_vm.datetime')
     def test_wait_to_create_unshelve(self, mock_datetime, mock_rq,
                                      mock_create_instance):
-        now = datetime.now(timezone.utc)
+        now = datetime.now(utc)
         mock_datetime.now.return_value = now
         mock_scheduler = Mock()
         mock_rq.get_scheduler.return_value = mock_scheduler
@@ -166,7 +167,7 @@ class CreateVMTests(VMFunctionTestBase):
             status='unavailable')
 
         with self.assertRaises(TimeoutError) as cm:
-            time = (datetime.now(timezone.utc)
+            time = (datetime.now(utc)
                     - timedelta(seconds=VOLUME_CREATION_TIMEOUT + 1))
             wait_to_create_instance(self.user, self.UBUNTU, fake_volume, time)
         self.assertEqual("Volume took too long to create", str(cm.exception))
@@ -197,7 +198,7 @@ class CreateVMTests(VMFunctionTestBase):
             volume_id=fake_volume.id,
             status='unavailable')
 
-        start = datetime.now(timezone.utc) - timedelta(seconds=5)
+        start = datetime.now(utc) - timedelta(seconds=5)
         wait_to_create_instance(self.user, self.UBUNTU, fake_volume, start)
 
         fake_nectar.cinder.volumes.get.assert_called_with(
@@ -371,7 +372,7 @@ class CreateVMTests(VMFunctionTestBase):
             id=fake_instance.id, status='BOOTING')
 
         with self.assertRaises(TimeoutError) as cm:
-            time = (datetime.now(timezone.utc)
+            time = (datetime.now(utc)
                     - timedelta(seconds=VOLUME_CREATION_TIMEOUT + 1))
             wait_for_instance_active(
                 self.user, self.UBUNTU, fake_instance, time)
@@ -399,7 +400,7 @@ class CreateVMTests(VMFunctionTestBase):
         fake_nectar.nova.servers.get.return_value = FakeServer(
             id=fake_instance.id, status='BOOTING')
 
-        start = datetime.now(timezone.utc) - timedelta(seconds=5)
+        start = datetime.now(utc) - timedelta(seconds=5)
         wait_for_instance_active(self.user, self.UBUNTU, fake_instance, start)
 
         fake_nectar.nova.servers.get.assert_called_with(fake_instance.id)
@@ -420,7 +421,7 @@ class CreateVMTests(VMFunctionTestBase):
         fake_nectar.nova.servers.get.return_value = FakeServer(
             id=fake_instance.id, status='ACTIVE')
 
-        start = datetime.now(timezone.utc) - timedelta(seconds=5)
+        start = datetime.now(utc) - timedelta(seconds=5)
         wait_for_instance_active(self.user, self.UBUNTU, fake_instance, start)
 
         fake_nectar.nova.servers.get.assert_called_with(fake_instance.id)
@@ -436,7 +437,7 @@ class CreateVMTests(VMFunctionTestBase):
     def test_extend(self, mock_policy_class, mock_logger):
         mock_policy = Mock()
         mock_policy_class.return_value = mock_policy
-        now = datetime.now(timezone.utc)
+        now = datetime.now(utc)
         new_expiry = now + timedelta(days=settings.BOOST_EXPIRY)
         mock_policy.new_expiry.return_value = new_expiry
 

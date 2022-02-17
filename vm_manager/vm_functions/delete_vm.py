@@ -1,13 +1,14 @@
 import logging
 import os
 import subprocess
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta
 from pathlib import Path
 
 import django_rq
 import novaclient
 
-import vm_manager
+from django.utils.timezone import utc
+
 from vm_manager.constants import INSTANCE_DELETION_RETRY_WAIT_TIME, \
     INSTANCE_DELETION_RETRY_COUNT, \
     INSTANCE_CHECK_SHUTOFF_RETRY_WAIT_TIME, \
@@ -86,7 +87,7 @@ def _check_instance_is_shutoff_and_delete(
 
 def _delete_instance_worker(instance):
     n = get_nectar()
-    instance.marked_for_deletion = datetime.now(timezone.utc)
+    instance.marked_for_deletion = datetime.now(utc)
     instance.save()
     try:
         n.nova.servers.delete(instance.id)
@@ -107,7 +108,7 @@ def _delete_volume_once_instance_is_deleted(instance, retries):
     except novaclient.exceptions.NotFound:
         logger.info(f"Instance {instance.id} successfully deleted, "
                     f"we can delete the volume now!")
-        instance.deleted = datetime.now(timezone.utc)
+        instance.deleted = datetime.now(utc)
         instance.save()
         delete_volume(instance.boot_volume)
         return
@@ -147,7 +148,7 @@ def delete_volume(volume):
     delete_result = str(n.cinder.volumes.delete(volume.id))
     # TODO ... should set to mark for deletion, then wait for delete
     # to complete
-    volume.deleted = datetime.now(timezone.utc)
+    volume.deleted = datetime.now(utc)
     volume.save()
     logger.debug(f"Delete result is {delete_result}")
     return
