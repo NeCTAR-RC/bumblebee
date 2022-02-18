@@ -111,11 +111,21 @@ AUTHENTICATION_BACKENDS = [
     'researcher_workspace.auth.NectarAuthBackend',
 ]
 
+AUTH_USER_MODEL = 'researcher_workspace.User'
+
 # OpenID Connect Auth settings
+OIDC_SERVER_URL = 'https://sso.example.com/'
+OIDC_RP_CLIENT_ID = 'bumblebee'
 OIDC_RP_SIGN_ALGO = 'RS256'
+OIDC_OP_AUTHORIZATION_ENDPOINT = f'{OIDC_SERVER_URL}/auth'
+OIDC_OP_TOKEN_ENDPOINT = f'{OIDC_SERVER_URL}/token'
+OIDC_OP_USER_ENDPOINT = f'{OIDC_SERVER_URL}/userinfo'
+OIDC_OP_JWKS_ENDPOINT = f'{OIDC_SERVER_URL}/certs'
+
+
 OIDC_USERNAME_ALGO = 'researcher_workspace.auth.generate_username'
 
-AUTH_USER_MODEL = 'researcher_workspace.User'
+
 
 # Internationalization
 # https://docs.djangoproject.com/en/2.2/topics/i18n/

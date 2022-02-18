@@ -3,13 +3,20 @@ import random
 import factory
 from factory import fuzzy
 
+from faker import Faker
+
+fake = Faker()
+
 
 class UserFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = 'researcher_workspace.User'
 
-    username = fuzzy.FuzzyText(length=8)
-    email = fuzzy.FuzzyText(length=8, suffix='@example.com')
+    email = factory.LazyAttribute(lambda _: fake.email())
+    username = factory.SelfAttribute('email')
+    first_name = factory.LazyAttribute(lambda _: fake.first_name())
+    last_name = factory.LazyAttribute(lambda _: fake.last_name())
+    sub = factory.LazyAttribute(lambda _: fake.unique.uuid4())
 
 
 class ProfileFactory(factory.django.DjangoModelFactory):
