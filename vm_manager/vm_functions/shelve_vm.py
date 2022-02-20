@@ -72,7 +72,7 @@ def _confirm_instance_deleted(instance, retries, requesting_feature):
         instance.save()
         volume = instance.boot_volume
         volume.shelved_at = now
-        volume.expires = VolumeExpiryPolicy().initial_expiry()
+        volume.set_expires(VolumeExpiryPolicy().initial_expiry())
         volume.save()
         vm_status = VMStatus.objects.get_vm_status_by_instance(
             instance, requesting_feature)
@@ -105,29 +105,13 @@ def unshelve_vm_worker(user, desktop_type, zone):
     launch_vm_worker(user, desktop_type, zone)
 
 
-# TODO - The current implementation will potentially fire off
-# a number of simultaneous shelve requests.  Assuming that this method
-# is asynchronous, it could send the requests one by one, and wait
-# for each resize to complete (or fail) before starting the next one.
-def shelve_expired_vms(requesting_feature, dry_run=False):
-    instances = Instance.objects.filter(
-        marked_for_deletion=None,
-        expires__lte=datetime.now(utc))
-    shelve_count = 0
-    for instance in instances:
-        try:
-            vm_status = VMStatus.objects.get_vm_status_by_instance(
-                instance, requesting_feature)
-        except Exception:
-            logger.exception(f"Cannot retrieve vm_status for {instance}")
-            continue
-        if vm_status.status == VM_SHELVED:
-            continue
+def shelve_expired_vm(instance, requesting_feature):
+    try:
+        vm_status = VMStatus.objects.get_vm_status_by_instance(
+            instance, requesting_feature)
         if vm_status.status != VM_OKAY:
-            logger.info(f"Skipping shelving of instance in unexpected state: "
-                        f"{vm_status}")
-            continue
-        if not dry_run:
+            logger.info(f"Instance in unexpected state: {vm_status}")
+        else:
             # Simulate the vm_status behavior of a normal shelve (with a
             # longer timeout) in case the user does a browser refresh while
             # the auto-shelve is happening.
@@ -137,5 +121,7 @@ def shelve_expired_vms(requesting_feature, dry_run=False):
             vm_status.status = VM_WAITING
             vm_status.save()
             shelve_vm_worker(instance, requesting_feature)
-        shelve_count += 1
-    return shelve_count
+            return True
+    except Exception:
+        logger.exception(f"Problem shelving expired instance {instance}")
+    return False

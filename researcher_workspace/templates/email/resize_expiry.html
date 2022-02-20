@@ -1,0 +1,25 @@
+{% load settings %}
+Your ARDC Nectar Virtual Desktop will be downsized on {{ adjusted }}
+
+Hi {{ user.get_full_name }},
+<br>
+<br>
+Your boosted ARDC Nectar Virtual Desktop is now due to downsized
+on {{ adjusted }}.  All current jobs will be terminated,
+your interactive session will be disconnected.  The desktop will
+then reboot.
+<br>
+<br>
+If you wish to keep the instance boosted, please visit the
+<a href="{% get_setting "SITE_URL" %}">ARDC Virtual Desktop Service</a> site
+and use the <b>Extend</b> button to extend the boost.  A boosted instance can
+remain boosted for a maximum of 14 days.  If you no longer need the Desktop,
+please use the <b>Delete</b> button to delete it immediately.
+<br>
+<br>
+This is the {{ warning }} warning.
+<br>
+<br> 
+Yours sincerely,
+<br>
+ARDC’s Nectar Research Cloud team

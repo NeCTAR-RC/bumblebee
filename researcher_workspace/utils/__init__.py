@@ -32,7 +32,11 @@ def send_notification(user, template_name, context):
     a blank line and then multiple lines comprising an HTML message body.
     '''
 
-    context['user'] = user
-    text = loader.render_to_string(template_name, context)
+    text = format_notification(user, template_name, context)
     subject, _, body = text.partition('\n\n')
     user.email_user(subject.strip(), body.strip())
+
+
+def format_notification(user, template_name, context):
+    context['user'] = user
+    return loader.render_to_string(template_name, context)

@@ -105,6 +105,27 @@ class VolumeModelTests(VMManagerModelTestBase):
             f"user={self.user} and os={self.desktop_type.id}",
             str(cm.exception))
 
+    def test_set_expires(self):
+        volume = self.make_volume()
+        self.assertIsNone(volume.expiration)
+
+        now = datetime.now(utc)
+        volume.set_expires(now)
+        self.assertIsNotNone(volume.expiration)
+        self.assertEqual(now, volume.expiration.expires)
+        self.assertEqual(0, volume.expiration.stage)
+        self.assertIsNotNone(volume.expiration.stage_date)
+
+        now = datetime.now(utc)
+        volume.set_expires(now)
+        self.assertIsNotNone(volume.expiration)
+        self.assertEqual(now, volume.expiration.expires)
+        self.assertEqual(0, volume.expiration.stage)
+        self.assertIsNotNone(volume.expiration.stage_date)
+
+        volume.set_expires(None)
+        self.assertIsNone(volume.expiration)
+
 
 class InstanceModelTests(VMManagerModelTestBase):
 
@@ -434,6 +455,31 @@ class ResizeModelTests(VMManagerModelTestBase):
 
         self.assertEqual(resize2,
                          Resize.objects.get_latest_resize(fake_instance))
+
+    def test_set_expires(self):
+        fake_volume = self.make_volume()
+        fake_instance = InstanceFactory.create(
+            id=uuid.uuid4(), user=self.user, boot_volume=fake_volume)
+        resize = ResizeFactory.create(instance=fake_instance)
+
+        self.assertIsNone(resize.expiration)
+
+        now = datetime.now(utc)
+        resize.set_expires(now)
+        self.assertIsNotNone(resize.expiration)
+        self.assertEqual(now, resize.expiration.expires)
+        self.assertEqual(0, resize.expiration.stage)
+        self.assertIsNotNone(resize.expiration.stage_date)
+
+        now = datetime.now(utc)
+        resize.set_expires(now)
+        self.assertIsNotNone(resize.expiration)
+        self.assertEqual(now, resize.expiration.expires)
+        self.assertEqual(0, resize.expiration.stage)
+        self.assertIsNotNone(resize.expiration.stage_date)
+
+        resize.set_expires(None)
+        self.assertIsNone(resize.expiration)
 
 
 class VMStatusModelTests(VMManagerModelTestBase):

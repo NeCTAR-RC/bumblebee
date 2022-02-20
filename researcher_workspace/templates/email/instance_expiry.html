@@ -1,0 +1,28 @@
+{% load settings %}
+Your ARDC Nectar Virtual Desktop will be shelved on {{ adjusted }}
+
+Hi {{ user.get_full_name }},
+<br>
+<br>
+Your ARDC Nectar Virtual Desktop is now due to be shelved on {{ adjusted }}.
+All currently running jobs will be terminated, your interactive session will
+be disconnected and the desktop will be turned off.
+<br>
+<br>
+The shelved desktop will be kept for a further 30 days.  Finally, if the
+desktop has not been unshelved in the interim, the it will then be deleted.
+<br>
+<br>
+If you wish to continue using it beyond that time, please visit the
+<a href="{% get_setting "SITE_URL" %}">ARDC Virtual Desktop Service</a>
+site and use the <b>Extend</b> button to extend the lifetime for
+a further 14 days.  If you no longer need the Desktop, please use the
+<b>Delete</b> button to delete it immediately.
+<br>
+<br>
+This is the {{ warning }} warning.
+<br>
+<br> 
+Yours sincerely,
+<br>
+ARDC’s Nectar Research Cloud team

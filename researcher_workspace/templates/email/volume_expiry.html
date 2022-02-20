@@ -1,0 +1,22 @@
+{% load settings %}
+Your shelved ARDC Nectar Virtual Desktop will be deleted on {{ adjusted }}
+
+Hi {{ user.get_full_name }},
+<br>
+<br>
+Your shelved ARDC Nectar Virtual Desktop is now due to be deleted
+on {{ adjusted }}.
+<br>
+<br>
+If you wish to continue using the desktop, please visit the
+<a href="{% get_setting "SITE_URL" %}">ARDC Virtual Desktop Service</a>
+site and use the <b>Unshelve</b> button to relaunch it.  If you no longer
+need the Desktop, please use the <b>Delete</b> button to delete it immediately.
+<br>
+<br>
+This is the {{ warning }} warning.
+<br>
+<br>
+Yours sincerely,
+<br>
+ARDC’s Nectar Research Cloud team

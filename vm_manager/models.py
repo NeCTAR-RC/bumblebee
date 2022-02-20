@@ -29,11 +29,32 @@ from guacamole import utils as guac_utils
 logger = logging.getLogger(__name__)
 
 
+class Expiration(models.Model):
+    expires = models.DateTimeField()
+    stage = models.IntegerField(default=0)
+    stage_date = models.DateTimeField()
+
+    def __str__(self):
+        return (f"Expires on {self.expires}, stage {self.stage}, "
+                f"stage_date {self.stage_date}")
+
+
+class ResourceExpiration(Expiration):
+    pass
+
+
+class ResizeExpiration(Expiration):
+    pass
+
+
 class CloudResource(models.Model):
     id = models.UUIDField(primary_key=True, editable=False)
     user = models.ForeignKey(User, on_delete=models.PROTECT, )
     created = models.DateTimeField(auto_now_add=True)
-    expires = models.DateTimeField(null=True, blank=True)
+    expiration = models.OneToOneField(ResourceExpiration,
+                                      on_delete=models.CASCADE,
+                                      null=True,
+                                      related_name='expiration_for')
     marked_for_deletion = models.DateTimeField(null=True, blank=True)
     deleted = models.DateTimeField(null=True, blank=True)
     error_flag = models.DateTimeField(null=True, blank=True)
@@ -47,6 +68,25 @@ class CloudResource(models.Model):
     def set_marked_for_deletion(self):
         self.marked_for_deletion = datetime.now(utc)
         self.save()
+
+    def set_expires(self, expires):
+        if expires is None:
+            self.expiration = None
+            self.save()
+        elif self.expiration:
+            self.expiration.expires = expires
+            self.expiration.stage = 0
+            self.expiration.stage_date = datetime.now(utc)
+            self.expiration.save()
+        else:
+            self.expiration = ResourceExpiration(expires=expires)
+            self.expiration.stage = 0
+            self.expiration.stage_date = datetime.now(utc)
+            self.expiration.save()
+            self.save()
+
+    def get_expires(self):
+        return self.expiration.expires if self.expiration else None
 
 
 class VolumeManager(models.Manager):
@@ -329,13 +369,35 @@ class ResizeManager(models.Manager):
 class Resize(models.Model):
     instance = models.ForeignKey(Instance, on_delete=models.PROTECT, )
     requested = models.DateTimeField(auto_now_add=True)
-    expires = models.DateTimeField(null=True, blank=True)
+    expiration = models.OneToOneField(ResizeExpiration,
+                                      on_delete=models.CASCADE,
+                                      null=True,
+                                      related_name='expiration_for')
     reverted = models.DateTimeField(null=True, blank=True)
 
     objects = ResizeManager()
 
     def expired(self):
         return self.reverted or self.instance.deleted
+
+    def set_expires(self, expires):
+        if expires is None:
+            self.expiration = None
+            self.save()
+        elif self.expiration:
+            self.expiration.expires = expires
+            self.expiration.stage = 0
+            self.expiration.stage_date = datetime.now(utc)
+            self.expiration.save()
+        else:
+            self.expiration = ResizeExpiration(expires=expires)
+            self.expiration.stage = 0
+            self.expiration.stage_date = datetime.now(utc)
+            self.expiration.save()
+            self.save()
+
+    def get_expires(self):
+        return self.expiration.expires if self.expiration else None
 
     def __str__(self):
         if self.expired():

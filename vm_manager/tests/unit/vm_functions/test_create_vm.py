@@ -450,10 +450,10 @@ class CreateVMTests(VMFunctionTestBase):
             f"called by {self.user}")
 
         _, fake_instance = self.build_fake_vol_instance()
-        fake_instance.expires = now
-        fake_instance.save()
+        fake_instance.set_expires(now)
         self.assertEqual(
             str(fake_instance),
             extend_instance(self.user, fake_instance.id, self.FEATURE))
         instance = Instance.objects.get(pk=fake_instance.pk)
-        self.assertEqual(instance.expires, new_expiry)
+        self.assertIsNotNone(instance.expiration)
+        self.assertEqual(instance.expiration.expires, new_expiry)

@@ -3,21 +3,54 @@ from django.http import HttpResponseRedirect
 
 from vm_manager.constants import VM_OKAY
 from vm_manager.models import *
+from vm_manager.utils.expiry import InstanceExpiryPolicy, \
+    VolumeExpiryPolicy, BoostExpiryPolicy
 from vm_manager.views import admin_delete_vm
+
+
+def set_expiry(modelAdmin, request, queryset):
+    for r in queryset:
+        if isinstance(r, Instance):
+            expiry = InstanceExpiryPolicy().initial_expiry()
+        elif isinstance(r, Volume):
+            expiry = VolumeExpiryPolicy().initial_expiry()
+        elif isinstance(r, Resize):
+            expiry = ResizeExpiryPolicy().initial_expiry()
+        else:
+            raise Exception(f"{r.__class_name__} not supported")
+        r.set_expires(expiry)
+
+
+def unset_expiry(modelAdmin, request, queryset):
+    for r in queryset:
+        r.set_expires(None)
+
+
+class ExpirationAdmin(admin.ModelAdmin):
+    list_filter = ['id', 'stage', 'stage_date']
+    fields = ['expires', 'stage', 'stage_date']
+    readonly_fields = ['id']
+    ordering = ('-id', )
+
+    list_display = (
+        '__str__',
+    )
 
 
 class ResourceAdmin(admin.ModelAdmin):
     list_filter = [
         'created', 'deleted', 'error_flag', 'error_message',
         'user', 'marked_for_deletion']
-    readonly_fields = ['id', 'created']
+    readonly_fields = ['id', 'created', 'expiration']
     ordering = ('-created', )
+    actions = [set_expiry, unset_expiry]
 
     list_display = (
         '__str__',
         'user',
         'created',
         'deleted',
+        'expiration',
         'error_flag',
         'error_message',
     )
@@ -27,7 +60,7 @@ class InstanceAdmin(ResourceAdmin):
     list_filter = ResourceAdmin.list_filter + [
         'boot_volume__image', 'boot_volume__operating_system',
         'boot_volume__requesting_feature']
-    actions = ["admin_delete_selected_instances"]
+    actions = ResourceAdmin.actions + ["admin_delete_selected_instances"]
     readonly_fields = ResourceAdmin.readonly_fields + [
         "boot_volume_fields"]
 
@@ -91,14 +124,14 @@ class VolumeAdmin(ResourceAdmin):
 class ResizeAdmin(admin.ModelAdmin):
     list_filter = [
         'instance__boot_volume__operating_system', 'reverted',
-        'instance__deleted', 'requested', 'expires', 'instance__user']
-    readonly_fields = ('requested',)
+        'instance__deleted', 'requested', 'instance__user']
+    readonly_fields = ('requested', 'expiration')
     ordering = ('-requested',)
-
+    actions = [set_expiry, unset_expiry]
     list_display = (
         '__str__',
         'requested',
-        'expires',
+        'expiration',
         'reverted',
         'instance',
     )
@@ -150,4 +183,5 @@ admin.site.register(Instance, InstanceAdmin)
 admin.site.register(Volume, VolumeAdmin)
 admin.site.register(Resize, ResizeAdmin)
 admin.site.register(VMStatus, VMStatusAdmin)
+admin.site.register(Expiration, ExpirationAdmin)
 admin.site.disable_action('delete_selected')

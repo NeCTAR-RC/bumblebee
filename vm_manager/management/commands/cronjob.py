@@ -4,9 +4,8 @@ from django.core.management.base import BaseCommand, CommandError
 from django.contrib.auth import get_user_model
 
 from researcher_desktop.utils.utils import desktops_feature
-from vm_manager.vm_functions.resize_vm import downsize_expired_supersized_vms
-from vm_manager.vm_functions.shelve_vm import shelve_expired_vms
-from vm_manager.vm_functions.archive_vm import archive_expired_vms
+from vm_manager.utils.expirer import VolumeExpirer, InstanceExpirer, \
+    ResizeExpirer
 
 logger = logging.getLogger(__name__)
 
@@ -23,9 +22,12 @@ class Command(BaseCommand):
                             help='Run the archive job')
         parser.add_argument('--dry-run', action='store_true',
                             help='Only count the affected objects')
+        parser.add_argument('--verbose', action='store_true',
+                            help='In dry-run mode, output the emails')
 
     def handle(self, *args, **options):
         self.dry_run = options['dry_run']
+        self.verbose = options['verbose']
         if self.dry_run:
             print("Running in --dry-run mode: affected objects "
                   "will only be counted")
@@ -39,17 +41,20 @@ class Command(BaseCommand):
     def downsize_job(self):
         feature = desktops_feature()
         logger.info("Starting boost expiry")
-        count = downsize_expired_supersized_vms(feature, dry_run=self.dry_run)
+        expirer = ResizeExpirer(dry_run=self.dry_run, verbose=self.verbose)
+        count = expirer.run(feature)
         logger.info(f"Downsizing {count} instances")
 
     def shelve_job(self):
         feature = desktops_feature()
         logger.info("Starting instance expiry")
-        count = shelve_expired_vms(feature, dry_run=self.dry_run)
+        expirer = InstanceExpirer(dry_run=self.dry_run, verbose=self.verbose)
+        count = expirer.run(feature)
         logger.info(f"Shelving {count} instances")
 
     def archive_job(self):
         feature = desktops_feature()
         logger.info(f"Starting volume archiving")
-        count = archive_expired_vms(feature, dry_run=self.dry_run)
+        expirer = VolumeExpirer(dry_run=self.dry_run, verbose=self.verbose)
+        count = expirer.run(feature)
         logger.info(f"Archiving {count} volumes")

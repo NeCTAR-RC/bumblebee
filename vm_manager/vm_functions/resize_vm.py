@@ -22,10 +22,8 @@ def supersize_vm_worker(instance, desktop_type) -> str:
                                   desktop_type.big_flavor.id,
                                   VM_SUPERSIZED, desktop_type.feature)
     now = datetime.now(utc)
-    resize = Resize(instance=instance,
-                    requested=now,
-                    expires=BoostExpiryPolicy().initial_expiry(now=now))
-    resize.save()
+    resize = Resize(instance=instance, requested=now)
+    resize.set_expires(BoostExpiryPolicy().initial_expiry(now=now))
     return supersize_result
 
 
@@ -58,7 +56,7 @@ def extend_boost(user, vm_id, requesting_feature) -> str:
         message = f"No current resize job for instance {instance}"
         logger.error(message)
         return message
-    resize.expires = BoostExpiryPolicy().new_expiry(resize)
+    resize.set_expires(BoostExpiryPolicy().new_expiry(resize))
     resize.save()
     return str(resize)
 
@@ -157,29 +155,14 @@ def _wait_to_confirm_resize(instance, flavor, target_status,
     return message
 
 
-# TODO - The current implementation will potentially fire off
-# a number of simultaneous downsizes.  Assuming that this method
-# is asynchronous, it could send the resizes one by one, and wait
-# for each resize to complete (or fail) before starting the next one.
-def downsize_expired_supersized_vms(requesting_feature, dry_run=False):
-    resizes = Resize.objects.filter(
-        reverted=None, instance__marked_for_deletion=None,
-        expires__lte=datetime.now(utc))
-
-    resize_count = 0
-    for resize in resizes:
-        try:
-            vm_status = VMStatus.objects.get_vm_status_by_instance(
-                resize.instance, requesting_feature)
-        except Exception:
-            logger.exception(
-                f"Cannot retrieve vm_status for {resize.instance}")
-            continue
+def downsize_expired_vm(resize, requesting_feature):
+    try:
+        vm_status = VMStatus.objects.get_vm_status_by_instance(
+            resize.instance, requesting_feature)
         if vm_status.status != VM_SUPERSIZED:
             logger.info(f"Skipping downsize of instance in wrong state: "
                         f"{vm_status}")
-            continue
-        if not dry_run:
+        else:
             # Simulate the vm_status behavior of a normal downsize (with a
             # longer timeout) in case the user does a browser refresh while
             # the auto-downsize is happening.
@@ -192,5 +175,9 @@ def downsize_expired_supersized_vms(requesting_feature, dry_run=False):
                        VM_OKAY, requesting_feature)
             resize.reverted = datetime.now(utc)
             resize.save()
-        resize_count += 1
-    return resize_count
+            return True
+    except Exception:
+        logger.exception(
+            f"Cannot retrieve vm_status for {resize.instance}")
+
+    return False

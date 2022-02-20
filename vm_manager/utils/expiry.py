@@ -16,7 +16,7 @@ class ExpiryPolicy(object):
         self.max_lifetime = max_lifetime
 
     def _get_expires(self, resource) -> datetime:
-        return resource.expires
+        return resource.get_expires()
 
     def _get_created(self, resource) -> datetime:
         return resource.created
@@ -75,7 +75,7 @@ class ExpiryPolicy(object):
 class VolumeExpiryPolicy(ExpiryPolicy):
 
     def __init__(self):
-        super().__init__(expiry_period=settings.SHELVED_VOLUME_EXPIRY,
+        super().__init__(expiry_period=settings.VOLUME_EXPIRY,
                          extend_period=0,
                          max_lifetime=-1)
 

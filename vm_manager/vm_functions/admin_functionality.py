@@ -15,7 +15,6 @@ from operator import itemgetter
 from researcher_workspace.utils import offset_month_and_year
 from vm_manager.models import Instance, Resize, Volume
 from vm_manager.utils.utils import get_nectar
-from vm_manager.vm_functions.resize_vm import downsize_expired_supersized_vms
 from vm_manager.utils.Check_ResearchDesktop_Availability import \
     check_availability
 
@@ -75,15 +74,6 @@ def db_check(request):
                    'missing_volumes': missing_volumes,
                    'deleted_instances': deleted_instances,
                    'deleted_volumes': deleted_volumes, })
-
-
-def start_downsizing_cron_job(requesting_feature):
-    scheduler = django_rq.get_scheduler('default')
-    # Uncomment this line temporarily to activate this function
-    """scheduler.cron("59 13 * * *", downsize_expired_supersized_vms, requesting_feature)"""
-    # Set cron job to 13:59 UTC as the server runs on UTC
-    # and that translates to 23:59 AEST or 0:59 AEDT (during daylight savings)
-    return scheduler.get_jobs(with_times=True)
 
 
 def _generate_weekly_availability_report():

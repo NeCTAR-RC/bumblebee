@@ -24,7 +24,7 @@ from vm_manager.constants import ACTIVE, SHUTDOWN, RESIZE, VERIFY_RESIZE, \
 from vm_manager.models import VMStatus, Volume, Instance, Resize
 from vm_manager.vm_functions.resize_vm import supersize_vm_worker, \
     downsize_vm_worker, extend_boost, _resize_vm, _wait_to_confirm_resize, \
-    downsize_expired_supersized_vms
+    downsize_expired_vm
 from vm_manager.utils.utils import get_nectar, after_time
 from vm_manager.utils.expiry import BoostExpiryPolicy
 
@@ -60,7 +60,9 @@ class ResizeVMTests(VMFunctionTestBase):
         exp_date = BoostExpiryPolicy().initial_expiry(now=resize.requested)
         # Getting the resize expiry date to exactly match in this context
         # is too tricky ... and unnecessary.
-        self.assertTrue(abs((exp_date - resize.expires).seconds) < 2)
+        self.assertIsNotNone(resize.expiration)
+        self.assertTrue(abs((exp_date
+                             - resize.expiration.expires).seconds) < 2)
 
     @patch('vm_manager.utils.utils.Nectar', new=FakeNectar)
     @patch('vm_manager.vm_functions.resize_vm._resize_vm')
@@ -142,7 +144,8 @@ class ResizeVMTests(VMFunctionTestBase):
             f"Resize (Current) of Instance ({fake_instance.id})"))
 
         updated_resize = Resize.objects.get(pk=resize.pk)
-        self.assertEqual(new_expiry, updated_resize.expires)
+        self.assertIsNotNone(updated_resize.expiration)
+        self.assertEqual(new_expiry, updated_resize.expiration.expires)
         mock_policy.new_expiry.assert_called_once_with(resize)
 
     @patch('vm_manager.utils.utils.Nectar', new=FakeNectar)
@@ -411,19 +414,17 @@ class ResizeVMTests(VMFunctionTestBase):
     @patch('vm_manager.utils.utils.Nectar', new=FakeNectar)
     @patch('vm_manager.vm_functions.resize_vm.logger')
     @patch('vm_manager.vm_functions.resize_vm._resize_vm')
-    def test_downsize_expired_supersized_vms(self, mock_resize, mock_logger):
+    def test_downsize_expired_vm(self, mock_resize, mock_logger):
         now = datetime.now(utc)
         fake_nectar = get_nectar()
-        self.assertEqual(0, downsize_expired_supersized_vms(self.FEATURE))
 
         _, fake_instance, fake_vm_status = self.build_fake_vol_inst_status(
             status=VM_SUPERSIZED)
 
-        resize = ResizeFactory.create(
-            instance=fake_instance,
-            expires=(now - timedelta(days=1)))
+        resize = ResizeFactory.create(instance=fake_instance)
+        resize.set_expires(now - timedelta(days=1))
 
-        self.assertEqual(1, downsize_expired_supersized_vms(self.FEATURE))
+        self.assertEqual(1, downsize_expired_vm(resize, self.FEATURE))
         mock_resize.assert_called_once_with(
             fake_instance, self.UBUNTU.default_flavor.id,
             VM_OKAY, self.FEATURE)
@@ -438,17 +439,15 @@ class ResizeVMTests(VMFunctionTestBase):
     @patch('vm_manager.utils.utils.Nectar', new=FakeNectar)
     @patch('vm_manager.vm_functions.resize_vm.logger')
     @patch('vm_manager.vm_functions.resize_vm._resize_vm')
-    def test_downsize_expired_supersized_vms_2(self, mock_resize, mock_logger):
+    def test_downsize_expired_vm_2(self, mock_resize, mock_logger):
         now = datetime.now(utc)
         fake_nectar = get_nectar()
-        self.assertEqual(0, downsize_expired_supersized_vms(self.FEATURE))
 
         _, fake_instance, fake_vm_status = self.build_fake_vol_inst_status(
             status=VM_ERROR)
 
-        resize = ResizeFactory.create(
-            instance=fake_instance,
-            expires=(now - timedelta(days=1)))
+        resize = ResizeFactory.create(instance=fake_instance)
+        resize.set_expires(now - timedelta(days=1))
 
-        self.assertEqual(0, downsize_expired_supersized_vms(self.FEATURE))
+        self.assertEqual(0, downsize_expired_vm(resize, self.FEATURE))
         mock_resize.assert_not_called()

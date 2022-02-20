@@ -18,6 +18,11 @@ logger = logging.getLogger(__name__)
 
 
 def archive_vm_worker(volume, requesting_feature):
+    # This "hides" the volume from the get_volume method allowing
+    # another one to be created / launched without errors.
+    volume.marked_for_deletion = datetime.now(utc)
+    volume.save()
+
     n = get_nectar()
     openstack_volume = n.cinder.volumes.get(volume_id=volume.id)
     if openstack_volume.status != VOLUME_AVAILABLE:
@@ -65,24 +70,16 @@ def wait_for_backup(volume, backup_id, deadline):
                      f"unexpected state {details.status}")
 
 
-def archive_expired_vms(requesting_feature, dry_run=False):
-    volumes = Volume.objects.filter(
-        marked_for_deletion=None,
-        deleted=None,
-        expires__lte=datetime.now(utc))
-    shelve_count = 0
-    for volume in volumes:
-        try:
-            vm_status = VMStatus.objects.get_vm_status_by_volume(
-                volume, requesting_feature)
-        except Exception:
-            logger.exception(f"Cannot retrieve vm_status for {volume}")
-            continue
+def archive_expired_vm(volume, requesting_feature, dry_run=False):
+    try:
+        vm_status = VMStatus.objects.get_vm_status_by_volume(
+            volume, requesting_feature)
         if vm_status.status != VM_SHELVED:
             logger.info(f"Skipping archiving of {volume} "
                         f"in unexpected state: {vm_status}")
-            continue
-        if not dry_run:
+        elif not dry_run:
             archive_vm_worker(volume, requesting_feature)
-        shelve_count += 1
-    return shelve_count
+            return True
+    except Exception:
+        logger.exception(f"Cannot retrieve vm_status for {volume}")
+    return False

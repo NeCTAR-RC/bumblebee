@@ -329,18 +329,27 @@ COMPRESS_OFFLINE = get_setting('COMPRESS_OFFLINE', not DEBUG)
 # - The 'extension' is the (max) period added by the 'extend' button.
 # - The 'lifetime' is the upper limit for extensions ... or -1 which
 #   means no limit
+# - The 'warnings' are the first and final warnings ... or -1 which
+#   means no warnings.  The value is the time >before< the expiry deadline
+#   that the warning notification will be sent.
 
 BOOST_EXPIRY = int(get_setting('BOOST_EXPIRY', '7'))
 BOOST_EXTENSION = int(get_setting('BOOST_EXTENSION', '7'))
 BOOST_LIFETIME = int(get_setting('BOOT_LIFETIME', '14'))
+BOOST_WARNING_1 = int(get_setting('BOOST_WARNING_1', '-1'))
+BOOST_WARNING_2 = int(get_setting('BOOST_WARNING_2', '1'))
 
 INSTANCE_EXPIRY = int(get_setting('INSTANCE_EXPIRY', '14'))
 INSTANCE_EXTENSION = int(get_setting('INSTANCE_EXTENSION', '14'))
 INSTANCE_LIFETIME = int(get_setting('INSTANCE_LIFETIME', '-1'))
+INSTANCE_WARNING_1 = int(get_setting('INSTANCE_WARNING_1', '7'))
+INSTANCE_WARNING_2 = int(get_setting('INSTANCE_WARNING_2', '1'))
 
-# There is no 'extend' functionality for shelved volumes, so only
-# the 'expiry' setting is meaningful.
-SHELVED_VOLUME_EXPIRY = int(get_setting('SHELVED_VOLUME_EXPIRY', '90'))
+# There is no 'extend' functionality for shelved volumes, so the
+# the 'extension' and 'lifetime' settings would not be meaningful.
+VOLUME_EXPIRY = int(get_setting('SHELVED_VOLUME_EXPIRY', '90'))
+VOLUME_WARNING_1 = int(get_setting('SHELVED_VOLUME_WARNING_1', '7'))
+VOLUME_WARNING_2 = int(get_setting('SHELVED_VOLUME_WARNING_2', '1'))
 
 # OpenID Connect settings
 OIDC_OP_AUTHORIZATION_ENDPOINT = f'{OIDC_SERVER_URL}/auth'

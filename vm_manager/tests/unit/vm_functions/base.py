@@ -48,8 +48,9 @@ class VMFunctionTestBase(TestCase):
             id=instance_id,
             boot_volume=fake_volume,
             user=self.user,
-            ip_address=ip_address,
-            expires=expires)
+            ip_address=ip_address)
+        if expires:
+            fake_instance.set_expires(expires)
         return fake_volume, fake_instance
 
     def build_fake_vol_inst_status(self, volume_id=None, instance_id=None,

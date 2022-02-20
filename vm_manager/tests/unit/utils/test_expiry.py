@@ -22,6 +22,9 @@ class DummyResource(object):
         self.created = created
         self.expires = expires
 
+    def get_expires(self):
+        return self.expires
+
 
 class ExpiryTests(TestCase):
 

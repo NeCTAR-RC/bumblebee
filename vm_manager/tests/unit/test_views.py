@@ -57,7 +57,9 @@ class VMManagerViewTests(TestCase):
             zone=self.zone.name)
         self.instance = InstanceFactory.create(
             id=uuid.uuid4(), user=self.user, boot_volume=self.volume,
-            ip_address='10.0.0.1', expires=expires)
+            ip_address='10.0.0.1')
+        if expires:
+            self.instance.set_expires(expires)
         if status:
             self.vm_status = VMStatusFactory.create(
                 instance=self.instance,
@@ -503,7 +505,8 @@ class VMManagerViewTests(TestCase):
 
         date1 = now + timedelta(days=1)
         date2 = now + timedelta(days=2)
-        resize = ResizeFactory.create(instance=self.instance, expires=date1)
+        resize = ResizeFactory.create(instance=self.instance)
+        resize.set_expires(date1)
 
         res = get_vm_state(self.user, self.desktop_type)
 
@@ -593,7 +596,8 @@ class VMManagerViewTests(TestCase):
         now = datetime.now(utc)
         date1 = now + timedelta(days=settings.BOOST_EXPIRY)
         date2 = now + timedelta(days=settings.BOOST_EXPIRY)
-        resize = ResizeFactory.create(instance=self.instance, expires=date1)
+        resize = ResizeFactory.create(instance=self.instance)
+        resize.set_expires(date1)
 
         mock_policy.permitted_extension.return_value = \
             timedelta(days=settings.BOOST_EXPIRY)

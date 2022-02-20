@@ -293,14 +293,20 @@ AUTO_APPROVE_WORKSPACES = True
 # is approved.  (A list of the Feature 'app_name' values.)
 PROJECT_DEFAULT_FEATURES = ['researcher_desktop']
 
-# Expiry policy constants.  Units are days
+# Expiry policy constants.  Units are days.  -1 means none.
 BOOST_EXPIRY = 7
 BOOST_EXTENSION = 7
 BOOST_LIFETIME = 14
+BOOST_WARNING_1 = -1
+BOOST_WARNING_2 = 1
 INSTANCE_EXPIRY = 14
 INSTANCE_EXTENSION = 14
 INSTANCE_LIFETIME = -1
-SHELVED_VOLUME_EXPIRY = 90
+INSTANCE_WARNING_1 = 7
+INSTANCE_WARNING_2 = 1
+VOLUME_EXPIRY = 90
+VOLUME_WARNING_1 = 7
+VOLUME_WARNING_2 = 1
 
 # Values that need to be set in local_settings.py
 PROXY_URL = False

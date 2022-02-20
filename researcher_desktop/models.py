@@ -34,6 +34,14 @@ class Domain(models.Model):
         return f"{self.name}"
 
 
+class DesktopTypeManager(models.Manager):
+    def get_desktop_type(self, id):
+        try:
+            return self.get(id=id)
+        except DesktopType.DoesNotExist:
+            return None
+
+
 class DesktopType(models.Model):
     id = models.CharField(primary_key=True, max_length=32)
     name = models.CharField(max_length=128)
@@ -48,6 +56,8 @@ class DesktopType(models.Model):
     enabled = models.BooleanField(default=True)
     restrict_to_zones = models.ManyToManyField(AvailabilityZone, blank=True)
     details = models.JSONField(blank=True, null=True)
+
+    objects = DesktopTypeManager()
 
     def __str__(self):
         return f"{self.id}"

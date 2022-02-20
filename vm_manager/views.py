@@ -34,8 +34,7 @@ from vm_manager.utils.utils import generate_hostname
 
 # These are all needed, as they're consumed by researcher_workspace/views.py
 from vm_manager.vm_functions.admin_functionality import test_function, \
-    admin_worker, start_downsizing_cron_job, \
-    vm_report_for_page, vm_report_for_csv, db_check
+    admin_worker, vm_report_for_page, vm_report_for_csv, db_check
 from vm_manager.vm_functions.create_vm import launch_vm_worker, extend_instance
 from vm_manager.vm_functions.delete_vm import delete_vm_worker, delete_volume
 from vm_manager.vm_functions.other_vm_functions import reboot_vm_worker
@@ -387,10 +386,11 @@ def get_vm_state(user, desktop_type):
 
     if vm_status.status == VM_OKAY:
         policy = InstanceExpiryPolicy()
+        expires = instance.expiration.expires if instance.expiration else None
         return VM_OKAY, {
             'url': instance.get_url(),
             'extension': policy.permitted_extension(instance),
-            'expires': instance.expires,
+            'expires': expires,
             'extended_expiration': policy.new_expiry(instance)
         }, instance.id
 
@@ -402,10 +402,11 @@ def get_vm_state(user, desktop_type):
     if vm_status.status == VM_SUPERSIZED:
         policy = BoostExpiryPolicy()
         resize = Resize.objects.get_latest_resize(instance)
+        expires = resize.expiration.expires if resize.expiration else None
         return VM_SUPERSIZED, {
             'url': instance.get_url(),
             'extension': policy.permitted_extension(resize),
-            'expires': resize.expires,
+            'expires': expires,
             'extended_expiration': policy.new_expiry(resize),
         }, instance.id
     logger.error(f"get_vm_state for to an unhandled state "
