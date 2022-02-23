@@ -33,6 +33,9 @@ def get_setting(setting, default=None, required=False):
 
 NAME = 'ARDC Nectar Virtual Desktop'
 
+# Image tag of the running container environment
+IMAGE_ID = get_setting('IMAGE_ID', 'unknown')
+
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 

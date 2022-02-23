@@ -1,7 +1,4 @@
-{% load static %}
-{% load compress %}
-{% load group_filters %}
-{% load active_link %}
+{% load static compress group_filters active_link settings %}
 <!doctype html>
 <html lang="en">
   <head>
@@ -188,6 +185,6 @@
     <script src="{% static 'js/main.js' %}"></script>
     {% block script %}
     {% endblock script %}
-
+    <!-- Running on: {% get_setting "IMAGE_ID" %} -->
   </body>
 </html>
