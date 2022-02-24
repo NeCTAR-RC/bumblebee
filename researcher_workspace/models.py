@@ -8,11 +8,11 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.http import Http404
-from django.template.loader import render_to_string
 from django.utils.html import format_html
 from django.utils.timezone import utc
 from django_currentuser.db.models import CurrentUserField
 
+from researcher_workspace.utils import send_notification
 from researcher_workspace.utils.FoR_codes import FOR_CODE_CHOICES
 
 
@@ -105,7 +105,7 @@ class Project(models.Model):
 
     objects = ProjectManager()
 
-    def accept(self, enable_default_features=True):
+    def accept(self, enable_default_features=True, auto_approved=False):
         self.ARO_approval = True
         self.ARO_responded_on = datetime.now(utc)
         self.save()
@@ -115,19 +115,18 @@ class Project(models.Model):
                 permission = Permission(project=self, feature=feature)
                 permission.save()
 
-        sub = f"Your {settings.NAME} Workspace Request has been approved"
-        context = {'project': self}
-        msg = render_to_string('email/project_approved.html', context)
-        self.project_admin.email_user(sub, msg)
+        if not auto_approved:
+            context = {'project': self}
+            send_notification(self.project_admin,
+                              'email/project_approved.html', context)
 
     def deny(self):
         self.ARO_approval = False
         self.ARO_responded_on = datetime.now(utc)
         self.save()
-        sub = f"Your {settings.NAME} Workspace Request has been declined"
         context = {'project': self}
-        msg = render_to_string('email/project_declined.html', context)
-        self.project_admin.email_user(sub, msg)
+        send_notification(self.project_admin,
+                          'email/project_declined.html', context)
 
     def __str__(self):
         return f"{self.title} ({self.project_admin})"
@@ -161,7 +160,7 @@ class PermissionRequest(models.Model):
     accepted = models.BooleanField(null=True, blank=True, )
     responded_on = models.DateTimeField(null=True, blank=True)
 
-    def accept(self):
+    def accept(self, auto_approved=False):
         if self.requested_feature in self.project.permissions.all():
             permission_feature_options = Permission.objects.get(project=self.project, feature=self.requested_feature)\
                 .feature_options
@@ -175,20 +174,19 @@ class PermissionRequest(models.Model):
         self.responded_on = datetime.now(utc)
         self.save()
 
-        sub = f"Your {settings.NAME} feature request has been approved"
-        context = {'feature': self}
-        msg = render_to_string('email/feature_approved.html', context)
-        self.requesting_user.email_user(sub, msg)
+        if not auto_approved:
+            context = {'feature': self}
+            send_notification(self.requesting_user,
+                              'email/feature_approved.html', context)
 
     def deny(self):
         self.accepted = False
         self.responded_on = datetime.now(utc)
         self.save()
 
-        sub = f"Your {settings.NAME} feature request has been declined"
         context = {'feature': self}
-        msg = render_to_string('email/feature_declined.html', context)
-        self.requesting_user.email_user(sub, msg)
+        send_notification(self.requesting_user,
+                          'email/feature_declined.html', context)
 
     def __str__(self):
         return (f"Permission Request for {self.project} requesting "

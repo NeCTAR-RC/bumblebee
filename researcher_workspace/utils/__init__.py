@@ -1,3 +1,4 @@
+from django.template import loader
 from django.urls import reverse
 from django.http import HttpResponseRedirect
 from django.conf import settings
@@ -23,3 +24,15 @@ def agreed_to_terms(user):
 def offset_month_and_year(month_offset, month, year):
     offset_month = month - month_offset
     return offset_month % 12 + 1, year + (offset_month // 12)
+
+
+def send_notification(user, template_name, context):
+    ''' Format and send an email notification to the user.  The template
+    should render as a string that consists of the subject text followed by
+    a blank line and then multiple lines comprising an HTML message body.
+    '''
+
+    context['user'] = user
+    text = loader.render_to_string(template_name, context)
+    subject, _, body = text.partition('\n\n')
+    user.email_user(subject.strip(), body.strip())

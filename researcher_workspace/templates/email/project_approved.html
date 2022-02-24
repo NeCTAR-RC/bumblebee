@@ -1,5 +1,7 @@
 {% load settings %}
-Hi {{ project.project_admin.get_full_name }},
+Your {% get_setting "NAME" %} Workspace Request has been approved
+
+Hi {{ user.get_full_name }},
 <br>
 <br>
 Thanks for your workspace request for the {% get_setting "NAME" %} service.
