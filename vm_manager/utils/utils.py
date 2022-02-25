@@ -38,8 +38,8 @@ class Nectar(object):
     def __init__(self):
         auth = ApplicationCredential(
             auth_url=settings.OS_AUTH_URL,
-            application_credential_secret=
-                settings.OS_APPLICATION_CREDENTIAL_SECRET,
+            application_credential_secret=(
+                settings.OS_APPLICATION_CREDENTIAL_SECRET),
             application_credential_id=settings.OS_APPLICATION_CREDENTIAL_ID)
         sess = session.Session(auth=auth)
 

@@ -242,7 +242,7 @@ def on_login(sender, user, request, **kwargs):
     The handler for the user_logged_in signal
     """
     if (getattr(request, 'user', None)
-        and hasattr(request.user, 'get_full_name')):
+            and hasattr(request.user, 'get_full_name')):
         logger.info('User %s has logged in', request.user.get_full_name())
         messages.info(request, format_html(
             f'Welcome <strong>{request.user.first_name}</strong>'))
@@ -254,7 +254,7 @@ def on_logout(sender, user, request, **kwargs):
     The handler for the user_logged_out signal
     """
     if (getattr(request, 'user', None)
-        and hasattr(request.user, 'get_full_name')):
+            and hasattr(request.user, 'get_full_name')):
         messages.info(request, format_html(
             f'Goodbye <strong>{request.user.first_name}</strong>'))
         logger.info('User %s has logged out', request.user.get_full_name())
@@ -383,9 +383,9 @@ def terms(request):
 
 def agree_terms(request, version):
     if (request.method == 'POST' and request.user
-        and isinstance(request.user, User)):
+            and isinstance(request.user, User)):
         if (version == settings.TERMS_VERSION
-             and version > request.user.terms_version):
+                and version > request.user.terms_version):
             if request.user.terms_version == 0:
                 # If this is the first time they have agreed to the T&C's
                 # send the "Welcome" email to the user

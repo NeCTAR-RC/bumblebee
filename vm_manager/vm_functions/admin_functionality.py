@@ -139,17 +139,17 @@ def vm_report_for_csv(reporting_months, operating_systems):
 
 
 def vm_report_for_page(operating_system):
-    vm_count = Instance.objects.filter(deleted=None,
-                                       boot_volume__operating_system=
-                                       operating_system).count()
+    vm_count = Instance.objects.filter(
+        deleted=None,
+        boot_volume__operating_system=operating_system).count()
     vm_info = _get_vm_info(operating_system)
     return {'vm_count': {operating_system: vm_count},
             'vm_info': {operating_system: vm_info}}
 
 
 def _get_vm_info(operating_system):
-    vms = Instance.objects.filter(boot_volume__operating_system=
-                                  operating_system).order_by('created')
+    vms = Instance.objects.filter(
+        boot_volume__operating_system=operating_system).order_by('created')
 
     error_dates = vms.filter(error_flag__isnull=False) \
                      .order_by('error_flag') \
@@ -170,8 +170,8 @@ def _get_vm_info(operating_system):
         count += date_obj['count']
         date_obj['count'] = count
 
-    resizes = Resize.objects.filter(instance__boot_volume__operating_system=
-                                    operating_system)
+    resizes = Resize.objects.filter(
+        instance__boot_volume__operating_system=operating_system)
     resize_list = [
         resize.expired() for resize in resizes if resize.expired()]
     downsized = [
