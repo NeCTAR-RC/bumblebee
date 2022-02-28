@@ -1,0 +1,83 @@
+heat_template_version: rocky
+
+description: Bumblebee Guacamole server component
+
+parameters:
+  name:
+    type: string
+  image:
+    type: string
+  flavor:
+    type: string
+  availability_zone:
+    type: string
+  network:
+    type: string
+  network_mgmt:
+    type: string
+  secgroup:
+    type: string
+  pool:
+    type: string
+  protocol_port:
+    type: string
+  subnet:
+    type: string
+  cloud_config:
+    type: string
+
+
+resources:
+
+  port:
+    type: OS::Neutron::Port
+    properties:
+      name: { get_param: name }
+      network: { get_param: network }
+      security_groups:
+      - { get_param: secgroup }
+
+  port_mgmt:
+    type: OS::Neutron::Port
+    properties:
+      name:
+        list_join: [ '_', [{ get_param: name }, 'mgmt'] ]
+      network: { get_param: network_mgmt }
+      security_groups:
+      - { get_param: secgroup }
+
+  cloud_script:
+    type: OS::Heat::SoftwareConfig
+    properties:
+      group: ungrouped
+      config: |
+        #!/bin/bash -ex
+        echo empty
+
+  server_config:
+    type: OS::Heat::MultipartMime
+    properties:
+      parts:
+      - config: { get_param: cloud_config }
+      - config: { get_resource: cloud_script }
+
+  server:
+    type: OS::Nova::Server
+    properties:
+      name: { get_param: name }
+      image: { get_param: image }
+      flavor: { get_param: flavor }
+      availability_zone: { get_param: availability_zone }
+      networks:
+      - port: { get_resource: port_mgmt }
+      - port: { get_resource: port }
+      user_data_format: RAW
+      user_data: { get_resource: server_config }
+
+  pool_member:
+    type: OS::Octavia::PoolMember
+    properties:
+      pool: { get_param: pool }
+      address: { get_attr: [ port, fixed_ips, 0, ip_address ]}
+      protocol_port: { get_param: protocol_port }
+      subnet: { get_param: subnet }
