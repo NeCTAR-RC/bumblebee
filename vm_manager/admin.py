@@ -1,5 +1,9 @@
 from django.contrib import admin
 from django.http import HttpResponseRedirect
+from django.urls import reverse
+from django.utils.formats import localize
+from django.utils.safestring import mark_safe
+from django.utils.timezone import localtime
 
 from vm_manager.constants import VM_OKAY
 from vm_manager.models import *
@@ -37,11 +41,30 @@ class ExpirationAdmin(admin.ModelAdmin):
     )
 
 
-class ResourceAdmin(admin.ModelAdmin):
+class Expirable(object):
+    '''Mixin class that provides a more useful rendering of the
+    expiration field.
+    '''
+
+    def expiration_link(self, obj):
+        if obj.expiration:
+            return mark_safe(
+                '<div style="white-space: nowrap">{}</div>'
+                '<br><a href="{}" class="button">Modify</a>'.format(
+                    localize(localtime(obj.expiration.expires)),
+                    reverse("admin:vm_manager_expiration_change",
+                            args=(obj.expiration.pk,))
+            ))
+        else:
+            return 'None'
+    expiration_link.short_description = 'expiration'
+
+
+class ResourceAdmin(admin.ModelAdmin, Expirable):
     list_filter = [
         'created', 'deleted', 'error_flag', 'error_message',
         'user', 'marked_for_deletion']
-    readonly_fields = ['id', 'created', 'expiration']
+    readonly_fields = ['id', 'created', 'expiration_link']
     ordering = ('-created', )
     actions = [set_expiry, unset_expiry]
 
@@ -50,7 +73,7 @@ class ResourceAdmin(admin.ModelAdmin):
         'user',
         'created',
         'deleted',
-        'expiration',
+        'expiration_link',
         'error_flag',
         'error_message',
     )
@@ -99,6 +122,7 @@ class InstanceInline(admin.StackedInline):
     fk_name = "boot_volume"
     readonly_fields = InstanceAdmin.readonly_fields.copy()
     readonly_fields.remove("boot_volume_fields")
+    readonly_fields.remove("expiration_link")
     max_num = 0
     ordering = ("created", )
 
@@ -121,17 +145,17 @@ class VolumeAdmin(ResourceAdmin):
     )
 
 
-class ResizeAdmin(admin.ModelAdmin):
+class ResizeAdmin(admin.ModelAdmin, Expirable):
     list_filter = [
         'instance__boot_volume__operating_system', 'reverted',
         'instance__deleted', 'requested', 'instance__user']
-    readonly_fields = ('requested', 'expiration')
+    readonly_fields = ('requested', 'expiration_link')
     ordering = ('-requested',)
     actions = [set_expiry, unset_expiry]
     list_display = (
         '__str__',
         'requested',
-        'expiration',
+        'expiration_link',
         'reverted',
         'instance',
     )
