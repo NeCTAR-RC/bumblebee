@@ -216,36 +216,30 @@ LOGGING = {
     },
     'handlers': {
         'console': {
+            'level': 'DEBUG',
             'class': 'logging.StreamHandler',
             'formatter': 'console'
         },
+        'mail_admins': {
+            'level': 'ERROR',
+            'class': 'django.utils.log.AdminEmailHandler',
+            'include_html': True,
+        },
     },
     'loggers': {
-        'root': {
+        '': {
             'handlers': ['console'],
             'level': 'INFO',
         },
         'researcher_workspace': {
             'handlers': ['console'],
             'level': 'DEBUG',
-            'propagate': True,
+            'propagate': False,
         },
         'vm_manager': {
             'handlers': ['console'],
             'level': 'DEBUG',
-            'propagate': True,
-        },
-        'mozilla_django_oidc': {
-            'handlers': ['console'],
-            'level': 'DEBUG',
-        },
-        'rq.worker': {
-            'handlers': ['console'],
-            'level': 'DEBUG',
-        },
-        'rq.scheduler': {
-            'handlers': ['console'],
-            'level': 'DEBUG',
+            'propagate': False,
         },
     }
 }
