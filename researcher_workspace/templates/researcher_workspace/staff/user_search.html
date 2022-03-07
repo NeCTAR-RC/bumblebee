@@ -10,6 +10,7 @@
 </li>
 {% endblock breadcrumb %}
 {% block content %}
+<div class="container">
     {{ block.super }}
     {% if users %}
     {% with num_results=users|length %}
@@ -49,4 +50,5 @@
     {% else %}
     <p>No results matched your search criteria</p>
     {% endif %}
+</div>
 {% endblock %}

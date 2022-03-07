@@ -165,8 +165,9 @@ def rd_report(reporting_months):
 
 
 def rd_report_page():
-    rd_report_page_info = {'vm_count': {}, 'vm_info': {}}
-    for desktop in desktop_type_ids():
+    rd_report_page_info = {'vm_count': {}, 'vm_info': {},
+                           'desktop_types': desktop_types()}
+    for desktop in desktop_types():
         desktop_info = vm_man_views.vm_report_for_page(desktop)
         rd_report_page_info['vm_count'].update(desktop_info['vm_count'])
         rd_report_page_info['vm_info'].update(desktop_info['vm_info'])

@@ -22,6 +22,7 @@ from vm_manager.utils.Check_ResearchDesktop_Availability import \
 logger = logging.getLogger(__name__)
 
 
+# Not currently wired ...
 def test_function(request):
     if not request.user.is_superuser:
         raise Http404()
@@ -29,15 +30,7 @@ def test_function(request):
                         content_type='text/plain')
 
 
-def admin_worker(request):
-    if not request.user.is_superuser:
-        raise Http404()
-    return HttpResponse("do something", content_type='text/plain')
-
-
 def db_check(request):
-    if not request.user.is_superuser:
-        raise Http404()
     n = get_nectar()
     nova_servers = n.nova.servers.list()
     cinder_volumes = n.cinder.volumes.list()
@@ -161,10 +154,9 @@ def vm_report_for_page(operating_system):
 def _get_vm_info(operating_system):
     vms = Instance.objects.filter(
         boot_volume__operating_system=operating_system).order_by('created')
-
     error_dates = vms.filter(error_flag__isnull=False) \
                      .order_by('error_flag') \
-                     .annotate(date=TruncDay('error_flag')) \
+                     .annotate(date=TruncDay('error_flag', tzinfo=utc)) \
                      .values('date') \
                      .annotate(errored_count=Count('id')) \
                      .order_by('date')

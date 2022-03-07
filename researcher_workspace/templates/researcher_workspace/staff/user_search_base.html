@@ -9,6 +9,7 @@
 </li>
 {% endblock breadcrumb %}
 {% block content %}
+<div class="container">
 <h2>Search for a user:</h2>
 <span class="smallform">
     <form action="{% url 'user_search' %}" method="get">
@@ -23,4 +24,5 @@
         which sometimes has values inconsistent with the user's "Given Name" and "Surname" fields.
     </span>
 </span>
+</div>
 {% endblock content %}

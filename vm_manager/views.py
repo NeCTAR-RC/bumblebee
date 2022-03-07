@@ -32,9 +32,11 @@ from vm_manager.utils.expiry import BoostExpiryPolicy, InstanceExpiryPolicy
 from vm_manager.utils.utils import after_time
 from vm_manager.utils.utils import generate_hostname
 
-# These are all needed, as they're consumed by researcher_workspace/views.py
-from vm_manager.vm_functions.admin_functionality import test_function, \
-    admin_worker, vm_report_for_page, vm_report_for_csv, db_check
+# These are needed, as they're consumed by researcher_workspace/views.py
+from vm_manager.vm_functions.admin_functionality import \
+    vm_report_for_page, vm_report_for_csv
+
+from vm_manager.vm_functions.admin_functionality import db_check
 from vm_manager.vm_functions.create_vm import launch_vm_worker, extend_instance
 from vm_manager.vm_functions.delete_vm import delete_vm_worker, delete_volume
 from vm_manager.vm_functions.other_vm_functions import reboot_vm_worker
@@ -557,3 +559,11 @@ def rd_report_for_user(user, desktop_type_ids, requesting_feature):
         vm_graph.append({'date': datetime.now(utc), 'count': count})
         rd_report_info[id] = vm_graph
     return {'user_vm_info': rd_report_info}
+
+
+@login_required(login_url='login')
+def database_check(request):
+    if not request.user.is_superuser:
+        logger.error(f"Attempted db_check by non-admin user {request.user}")
+        raise Http404()
+    return db_check(request)

@@ -11,6 +11,7 @@
 {% endblock breadcrumb %}
 
 {% block content %}
+<div class="container">
     <section>
         <h2>Orion Reporting</h2>
         <form method="POST">
@@ -25,7 +26,7 @@
     </section>
     <section>
         <h2>Number of Researcher Desktops</h2>
-        <table>
+        <table class="table">
             <thead>
             <tr>
                 <th>Operating System</th>
@@ -42,32 +43,21 @@
             </tbody>
         </table>
     </section>
+    {% for desktop_type in desktop_types %}
     <section>
-        <h2>Graph of number of Linux Researcher Desktops over time</h2>
-        <div id="linux-data" style="height: 400px;"></div>
+        <h2>Graph of number of {{ desktop_type.name }} Researcher Desktops over time</h2>
+        <div id="{{ desktop_type.id }}-data" style="height: 400px;"></div>
     </section>
     <section>
-        <h2>Graph of number of Linux Researcher Desktop resizes over time</h2>
-        <div id="linux-resizes" style="height: 400px;"></div>
+        <h2>Graph of number of {{ desktop_type.name }} Researcher Desktop resizes over time</h2>
+        <div id="{{ desktop_type.id }}-resizes" style="height: 400px;"></div>
     </section>
     <section>
-        <h2>Graph of number of Linux Researcher Desktop errors per day</h2>
-        <div id="linux-errors" style="height: 400px;"></div>
+        <h2>Graph of number of {{ desktop_type.name }} Researcher Desktop errors per day</h2>
+        <div id="{{ desktop_type.id }}-errors" style="height: 400px;"></div>
     </section>
-
-    <section>
-        <h2>Graph of number of Windows Researcher Desktops over time</h2>
-        <div id="windows-data" style="height: 400px;"></div>
-    </section>
-    <section>
-        <h2>Graph of number of Windows Researcher Desktop resizes over time</h2>
-        <div id="windows-resizes" style="height: 400px;"></div>
-    </section>
-    <section>
-        <h2>Graph of number of Windows Researcher Desktop errors per day</h2>
-        <div id="windows-errors" style="height: 400px;"></div>
-    </section>
-
+    {% endfor %}
+</div>
 {% endblock content %}
 
 {% block script %}
@@ -85,10 +75,10 @@
             os_data.addColumn('number', 'Number of {{ operating_system|title }} Researcher Desktops');
 
             os_data.addRows([
-        {% for date_obj in os_info.vm_count %}
-            [new Date({{date_obj.date.year}}, {{date_obj.date.month|sub:1}}, {{date_obj.date.day}}, {{date_obj.date.hour}}, {{date_obj.date.minute}}, {{date_obj.date.second}}), {{date_obj.count}}],
-        {% endfor %}
-        ]);
+                {% for date_obj in os_info.vm_count %}
+                [new Date({{date_obj.date.year}}, {{date_obj.date.month|sub:1}}, {{date_obj.date.day}}, {{date_obj.date.hour}}, {{date_obj.date.minute}}, {{date_obj.date.second}}), {{date_obj.count}}],
+                {% endfor %}
+            ]);
             var options = {
                 title:'Number of {{ operating_system|title }} Desktops over time',
                 height:400,
@@ -114,10 +104,10 @@
             os_resizes.addColumn('number', 'Number of {{ operating_system|title }} resizes');
 
             os_resizes.addRows([
-        {% for date_obj in os_info.resizes %}
-            [new Date({{date_obj.date.year}}, {{date_obj.date.month|sub:1}}, {{date_obj.date.day}}, {{date_obj.date.hour}}, {{date_obj.date.minute}}, {{date_obj.date.second}}), {{date_obj.count}}],
-        {% endfor %}
-        ]);
+                {% for date_obj in os_info.resizes %}
+                [new Date({{date_obj.date.year}}, {{date_obj.date.month|sub:1}}, {{date_obj.date.day}}, {{date_obj.date.hour}}, {{date_obj.date.minute}}, {{date_obj.date.second}}), {{date_obj.count}}],
+                {% endfor %}
+            ]);
             var options = {
                 title:'Number of {{ operating_system|title }} Desktop resizes over time',
                 height:400,
@@ -143,10 +133,10 @@
             os_errors.addColumn('number', 'Number of Errors');
 
             os_errors.addRows([
-        {% for date_obj in os_info.error_dates %}
-            [new Date({{date_obj.date.year}}, {{date_obj.date.month|sub:1}}, {{date_obj.date.day}}), {{date_obj.errored_count}}],
-        {% endfor %}
-        ]);
+                {% for date_obj in os_info.error_dates %}
+                [new Date({{date_obj.date.year}}, {{date_obj.date.month|sub:1}}, {{date_obj.date.day}}), {{date_obj.errored_count}}],
+                {% endfor %}
+            ]);
             var options = {
                 title:'Number of {{ operating_system|title }} Desktop errors per day',
                 height:400,

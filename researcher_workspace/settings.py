@@ -157,6 +157,8 @@ OS_NETWORK = get_setting('OS_NETWORK', 'bumblebee')
 OS_SECGROUPS = get_setting('OS_SECGROUPS', 'bumblebee').split(',')
 OS_KEYNAME = get_setting('OS_KEYNAME')
 
+OS_PROJECT_ID = get_setting('OS_PROJECT_ID', '')
+
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
     'researcher_workspace.auth.NectarAuthBackend',

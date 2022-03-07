@@ -15,7 +15,7 @@
 {% if not user_does_not_exist or is_user %}
 <div>
     {% if is_user and user.is_superuser %}
-        <a href="{% url 'admin:auth_user_change' object_id=is_user %}">See user on admin console</a>
+        <a href="{% url 'admin:researcher_workspace_user_change' object_id=is_user %}">See user on admin console</a>
     {% endif %}
     <h3>User ARO status</h3>
     {% if api_user.courses and api_user.courses.course %}

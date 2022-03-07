@@ -166,7 +166,9 @@ def orion_report(request):
     if not (request.user.is_staff or has_group(request.user, 'Support Staff')):
         return custom_page_not_found(request)
     if request.method != 'POST':
-        return render(request, 'researcher_workspace/staff/orion_reporting.html', rdesk_views.rd_report_page())
+        return render(request,
+                      'researcher_workspace/staff/orion_reporting.html',
+                      rdesk_views.rd_report_page())
     reporting_months = int(request.POST.get("reporting_months", "6"))
     if reporting_months < 1:
         raise ValueError(f"{request.user} requested Orion reporting for reporting_months < 1")
@@ -203,28 +205,38 @@ def orion_report(request):
         report_data_frame.to_excel(writer, sheet_name=report["name"])
 
     # Project Usage Count
-    usage_count = dict([(offset_month_and_year(month_offset, now.month, now.year), USAGE.copy())
-                        for month_offset in range(reporting_months, 0, -1)])
     n = get_nectar()
-    for date in usage_count:
-        start_date = datetime(day=1, month=date[0], year=date[1])
-        end_date = start_date + relativedelta(months=+1)
-        usage = n.nova.usage.get(settings.ALLOCATION_ID, start_date, end_date)
-        usage_count[date]['CPU Hours'] = round(usage.total_vcpus_usage, 2)
-        usage_count[date]['Disk GB-Hours'] = round(usage.total_local_gb_usage, 2)
-        usage_count[date]['RAM MB-Hours'] = round(usage.total_memory_mb_usage, 2)
-        usage_count[date]['Servers Activity'] = len(usage.server_usages)
+    if not settings.OS_PROJECT_ID:
+        logger.info("No usage info available: project id not configured")
+    else:
+        usage_count = dict(
+            [(offset_month_and_year(month_offset, now.month, now.year),
+              USAGE.copy())
+             for month_offset in range(reporting_months, 0, -1)])
+        for date in usage_count:
+            start_date = datetime(day=1, month=date[0], year=date[1])
+            end_date = start_date + relativedelta(months=+1)
+            usage = n.nova.usage.get(settings.OS_PROJECT_ID,
+                                     start_date, end_date)
+            usage_count[date]['CPU Hours'] = round(usage.total_vcpus_usage, 2)
+            usage_count[date]['Disk GB-Hours'] = round(usage.total_local_gb_usage, 2)
+            usage_count[date]['RAM MB-Hours'] = round(usage.total_memory_mb_usage, 2)
+            usage_count[date]['Servers Activity'] = len(usage.server_usages)
 
-    usage_report = [
-        [f"01/{month[0]}/{month[1]}"] + [usage_count[month][usage] for usage in USAGE.keys()]
-        for month in usage_count.keys()]
-    usage_report_data_frame = pandas.DataFrame(usage_report, columns=['Month'] + list(USAGE.keys()))
-    usage_report_data_frame.to_excel(writer, sheet_name="Project Usage")
+            usage_report = [
+                [f"01/{month[0]}/{month[1]}"] + [usage_count[month][usage]
+                                                 for usage in USAGE.keys()]
+                for month in usage_count.keys()]
+            usage_report_data_frame = pandas.DataFrame(
+                usage_report, columns=['Month'] + list(USAGE.keys()))
+            usage_report_data_frame.to_excel(writer,
+                                             sheet_name="Project Usage")
 
     writer.save()
     output.seek(0)
-    response = StreamingHttpResponse(output,
-                 content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response = StreamingHttpResponse(
+        output,
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
     response['Content-Disposition'] = f'attachment; filename=Orion_Report.xlsx'
     return response
 
