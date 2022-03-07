@@ -13,6 +13,7 @@ from django.utils.timezone import utc
 from operator import itemgetter
 
 from researcher_workspace.utils import offset_month_and_year
+from guacamole.models import GuacamoleConnection
 from vm_manager.models import Instance, Resize, Volume
 from vm_manager.utils.utils import get_nectar
 from vm_manager.utils.Check_ResearchDesktop_Availability import \
@@ -69,11 +70,21 @@ def db_check(request):
                                                      volume.name[-1]))
         for volume in cinder_volumes if UUID(volume.id) not in db_volumes]
 
+    live_connections = set(
+        Instance.objects.filter(deleted=None, marked_for_deletion=None)
+        .values_list('guac_connection', flat=True))
+
+    orphaned_connections = [
+        (connection.connection_id, connection.connection_name)
+        for connection in GuacamoleConnection.objects.all()
+        if connection.connection_id not in live_connections]
+
     return render(request, 'vm_manager/db_check.html',
                   {'missing_instances': missing_instances,
                    'missing_volumes': missing_volumes,
                    'deleted_instances': deleted_instances,
-                   'deleted_volumes': deleted_volumes, })
+                   'deleted_volumes': deleted_volumes,
+                   'orphaned_connections': orphaned_connections})
 
 
 def _generate_weekly_availability_report():

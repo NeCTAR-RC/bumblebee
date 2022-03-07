@@ -2,62 +2,85 @@
 {% load data_as_table %}
 {% block content %}
 <div class="container">
+
+{% if deleted_instances|length > 0 %}
 <h2>Deleted Instances</h2>
 <p>Bumblebee Instances that are not marked as deleted that have gone
    missing on the Openstack side.</p>
 <table class="table">
     <thead>
     <tr>
-        <th>id</th>
-        <th>name</th>
-        <th>environment</th>
+        <th>Openstack Id</th>
+        <th>Instance Name</th>
+        <th>Environment</th>
     </tr>
     </thead>
     {{ deleted_instances|print_2d_list_in_table_body }}
 </table>
+{% endif %}
 
+{% if deleted_volumes|length > 0 %}
 <h2>Deleted Volumes</h2>
 <p>Bumblebee Volumes that are not marked as deleted that have gone
    missing on the Openstack side.</p>
 <table class="table">
     <thead>
     <tr>
-        <th>id</th>
-        <th>name</th>
-        <th>environment</th>
+        <th>Openstack Id</th>
+        <th>Volume Name</th>
+        <th>Environment</th>
     </tr>
     </thead>
     {{ deleted_volumes|print_2d_list_in_table_body }}
 </table>
+{% endif %}
 
+{% if missing_instances|length > 0 %}
 <h2>Missing Instances</h2>
-<p>Openstack instances that don't have a corresponding Bumblebee Instance
+<p>Openstack instances that do not have a corresponding Bumblebee Instance
   record.  These may be instances managed by another Bumblebee environment
   or Bumblebee control VMs (in dev).</p>
 <table class="table">
     <thead>
     <tr>
-        <th>id</th>
-        <th>name</th>
-        <th>environment</th>
+        <th>Openstack Id</th>
+        <th>Instance Name</th>
+        <th>Environment</th>
     </tr>
     </thead>
     {{ missing_instances|print_2d_list_in_table_body }}
 </table>
+{% endif %}
 
+{% if missing_volumes|length > 0 %}
 <h2>Missing Volumes</h2>
-<p>Openstack volumes that don't have a corresponding Bumblebee Volume
+<p>Openstack volumes that do not have a corresponding Bumblebee Volume
   record in this Bumblebee environment.  These may be master boot volumes
   or volumes managed by a different Bumblebee environment (in dev).</p>
 <table class="table">
     <thead>
     <tr>
-        <th>id</th>
-        <th>name</th>
-        <th>environment</th>
+        <th>Openstack Id</th>
+        <th>Volume Name</th>
+        <th>Environment</th>
     </tr>
     </thead>
     {{ missing_volumes|print_2d_list_in_table_body }}
 </table>
+{% endif %}
+
+{% if orphaned_connections|length > 0 %}
+<h2>Orphaned connections</h2>
+<p>Guacamole connections that are not associated with a live Instance.</p>
+<table class="table">
+    <thead>
+    <tr>
+        <th>Guacamole Connection Id</th>
+        <th>Connection Name</th>
+    </tr>
+    </thead>
+    {{ orphaned_connections|print_2d_list_in_table_body }}
+</table>
+{% endif %}
 </div>
 {% endblock %}
