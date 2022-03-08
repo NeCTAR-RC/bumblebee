@@ -133,15 +133,6 @@ def extend_boost(request, vm_id):
     return redirect_home(request)
 
 
-@login_required(login_url='login')
-def start_downsizing_cron_job(request):
-    if not request.user.is_superuser:
-        raise Http404()
-    return HttpResponse(
-        vm_man_views.start_downsizing_cron_job(desktops_feature()),
-        content_type='text/plain')
-
-
 def notify_vm(request):
     return HttpResponse(vm_man_views.notify_vm(request, desktops_feature()))
 

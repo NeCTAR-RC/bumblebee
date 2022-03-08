@@ -24,6 +24,4 @@ urlpatterns = [
     path('notify_vm/', views.notify_vm, name='notify_vm'),
     path('phone_home/', views.phone_home, name='phone_home'),
     path('status_vm/<str:desktop>', views.status_vm, name='status_vm'),
-    path('start_downsizing_cron_job/',
-         views.start_downsizing_cron_job, name='start_downsizing_cron_job'),
 ]
