@@ -30,6 +30,12 @@ def unset_expiry(modelAdmin, request, queryset):
         r.set_expires(None)
 
 
+def admin_delete_selected_instances(modelAdmin, request, queryset):
+    for instance in queryset:
+        if not instance.deleted:
+            admin_delete_vm(request, instance.id)
+
+
 class ExpirationAdmin(admin.ModelAdmin):
     list_filter = ['id', 'stage', 'stage_date']
     fields = ['expires', 'stage', 'stage_date']
@@ -83,7 +89,7 @@ class InstanceAdmin(ResourceAdmin):
     list_filter = ResourceAdmin.list_filter + [
         'boot_volume__image', 'boot_volume__operating_system',
         'boot_volume__requesting_feature']
-    actions = ResourceAdmin.actions + ["admin_delete_selected_instances"]
+    actions = ResourceAdmin.actions + [admin_delete_selected_instances]
     readonly_fields = ResourceAdmin.readonly_fields + [
         "boot_volume_fields"]
 
@@ -98,21 +104,17 @@ class InstanceAdmin(ResourceAdmin):
 
     get_requesting_feature.short_description = 'requesting feature'
 
-#    def has_delete_permission(self, request, obj=None):
-#        if obj and isinstance(obj, Instance):
-#            return not obj.marked_for_deletion
-#        return False
-#
-#    delete_confirmation_template = \
-#        "admin/vm_manager/instance/task/delete_confirmation.html"
+    #    def has_delete_permission(self, request, obj=None):
+    #        if obj and isinstance(obj, Instance):
+    #            return not obj.marked_for_deletion
+    #        return False
+    #
 
-#    def admin_delete_selected_instances(self, request, queryset):
-#        for instance in queryset:
-#            if not instance.deleted:
-#                admin_delete_vm(instance.id)
-#    admin_delete_selected_instances.short_description = \
-#        "Delete instances and volumes from openstack and mark " \
-#        "them as deleted in the db"
+    delete_confirmation_template = \
+        "admin/vm_manager/instance/task/delete_confirmation.html"
+
+    admin_delete_selected_instances.short_description = \
+        "Delete instances and associated volumes"
 
 
 class InstanceInline(admin.StackedInline):
