@@ -1,7 +1,4 @@
-from unittest.mock import Mock, patch
-
 from django.test import TestCase
-from django.conf import settings
 
 from vm_manager.utils.utils import generate_server_name, generate_hostname, \
     get_domain

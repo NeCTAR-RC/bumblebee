@@ -6,7 +6,7 @@ from django.utils.safestring import mark_safe
 from django.utils.timezone import localtime
 
 from vm_manager.constants import VM_OKAY
-from vm_manager.models import *
+from vm_manager.models import Instance, Volume, Resize, Expiration, VMStatus
 from vm_manager.utils.expiry import InstanceExpiryPolicy, \
     VolumeExpiryPolicy, BoostExpiryPolicy
 from vm_manager.views import admin_delete_vm
@@ -19,7 +19,7 @@ def set_expiry(modelAdmin, request, queryset):
         elif isinstance(r, Volume):
             expiry = VolumeExpiryPolicy().initial_expiry()
         elif isinstance(r, Resize):
-            expiry = ResizeExpiryPolicy().initial_expiry()
+            expiry = BoostExpiryPolicy().initial_expiry()
         else:
             raise Exception(f"{r.__class_name__} not supported")
         r.set_expires(expiry)

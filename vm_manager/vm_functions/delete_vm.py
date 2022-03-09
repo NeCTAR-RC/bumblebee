@@ -1,8 +1,5 @@
-import logging
-import os
-import subprocess
 from datetime import datetime, timedelta
-from pathlib import Path
+import logging
 
 import django_rq
 import novaclient
@@ -12,7 +9,7 @@ from django.utils.timezone import utc
 from vm_manager.constants import INSTANCE_DELETION_RETRY_WAIT_TIME, \
     INSTANCE_DELETION_RETRY_COUNT, \
     INSTANCE_CHECK_SHUTOFF_RETRY_WAIT_TIME, \
-    INSTANCE_CHECK_SHUTOFF_RETRY_COUNT, LINUX
+    INSTANCE_CHECK_SHUTOFF_RETRY_COUNT
 from vm_manager.models import VMStatus
 from vm_manager.utils.utils import get_nectar
 

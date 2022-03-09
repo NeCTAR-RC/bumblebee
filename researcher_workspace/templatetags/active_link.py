@@ -1,5 +1,5 @@
-from django import template
 from django.conf import settings
+from django import template
 from django.urls import reverse, NoReverseMatch
 from django.utils.encoding import escape_uri_path
 
@@ -7,7 +7,8 @@ register = template.Library()
 
 
 @register.simple_tag(takes_context=True)
-def active_link(context, viewnames, css_class=None, inactive_class='', strict=None, *args, **kwargs):
+def active_link(context, viewnames, css_class=None, inactive_class='',
+                strict=None, *args, **kwargs):
     """
     Renders the given CSS class if the request path matches the path of the view.
     :param context: The context where the tag was called. Used to access the request object.

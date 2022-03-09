@@ -1,19 +1,17 @@
 import uuid
 from datetime import datetime, timedelta
 
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 
-from django.test import TestCase
 from django.conf import settings
+from django.test import TestCase
 from django.utils.timezone import utc
 
 from researcher_desktop.utils.utils import get_desktop_type, desktops_feature
-from researcher_desktop.tests.factories import AvailabilityZoneFactory
 
 from vm_manager.utils.expiry import ExpiryPolicy, \
     BoostExpiryPolicy, InstanceExpiryPolicy
-from vm_manager.tests.factories import VolumeFactory, InstanceFactory, \
-    ResizeFactory
+from vm_manager.tests.factories import VolumeFactory, InstanceFactory
 from researcher_workspace.tests.factories import UserFactory
 
 

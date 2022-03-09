@@ -1,13 +1,12 @@
+from datetime import datetime, timedelta
 import logging
 
-from datetime import datetime, timedelta
-
 import django_rq
-from django.utils.timezone import utc
-from novaclient.v2.servers import REBOOT_HARD, REBOOT_SOFT
 
-from vm_manager.constants import VM_OKAY, REBOOT_CONFIRM_WAIT_SECONDS, \
-    REBOOT_COMPLETE_SECONDS, REBOOT_CONFIRM_RETRIES
+from django.utils.timezone import utc
+
+from vm_manager.constants import REBOOT_CONFIRM_WAIT_SECONDS, \
+    REBOOT_CONFIRM_RETRIES
 from vm_manager.models import Instance, VMStatus
 from vm_manager.utils.utils import get_nectar
 

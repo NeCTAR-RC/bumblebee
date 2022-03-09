@@ -1,31 +1,20 @@
-import copy
 from datetime import datetime, timedelta
-import uuid
+from unittest.mock import patch
 
-import novaclient
-
-from unittest.mock import Mock, patch, call
-
-from django.conf import settings
-from django.test import TestCase
-from django.http import Http404
 from django.utils.timezone import utc
-
-from researcher_desktop.utils.utils import get_desktop_type, desktops_feature
-from vm_manager.tests.factories import ResizeFactory
-from vm_manager.tests.common import UUID_1, UUID_2, UUID_3, UUID_4
-from vm_manager.tests.fakes import Fake, FakeServer, FakeFlavor, FakeNectar
-from vm_manager.tests.unit.vm_functions.base import VMFunctionTestBase
 
 from vm_manager.constants import VM_OKAY, VM_WAITING, VM_ERROR, \
     FORCED_SHELVE_WAIT_SECONDS
 from vm_manager.models import VMStatus
-from vm_manager.vm_functions.shelve_vm import shelve_vm_worker, \
-    shelve_expired_vm
-from vm_manager.utils.utils import get_nectar, after_time
+from vm_manager.tests.fakes import FakeNectar
+from vm_manager.tests.unit.vm_functions.base import VMFunctionTestBase
+from vm_manager.utils.utils import get_nectar
+from vm_manager.vm_functions.shelve_vm import shelve_expired_vm
 
 
 class ShelveVMTests(VMFunctionTestBase):
+
+    # TODO - tests for shelve_vm_worker
 
     @patch('vm_manager.utils.utils.Nectar', new=FakeNectar)
     @patch('vm_manager.vm_functions.shelve_vm.shelve_vm_worker')

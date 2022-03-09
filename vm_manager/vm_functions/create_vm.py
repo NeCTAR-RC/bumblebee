@@ -1,17 +1,17 @@
 import copy
 import crypt
-import django_rq
-import logging
-import re
-
 from datetime import datetime, timedelta
+import logging
+
+import django_rq
+
 from django.conf import settings
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.timezone import utc
 
 from vm_manager.constants import VOLUME_CREATION_TIMEOUT, \
-    INSTANCE_LAUNCH_TIMEOUT, NO_VM, VM_OKAY, VOLUME_AVAILABLE
+    INSTANCE_LAUNCH_TIMEOUT, NO_VM, VOLUME_AVAILABLE
 from vm_manager.utils.expiry import InstanceExpiryPolicy
 from vm_manager.utils.utils import get_nectar, generate_server_name, \
     generate_hostname, generate_password

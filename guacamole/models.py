@@ -1,11 +1,8 @@
 from django.db import models
 
-from django.contrib.auth.models import User
-
 from .fields import GuacamoleConnectionGroupTypeField
 from .fields import GuacamoleObjectPermissionTypeField
 from .fields import GuacamoleSystemPermissionTypeField
-from .fields import GuacamoleEntityTypeField
 
 connection_group_type = (
     ('ORGANIZATIONAL', 'ORGANIZATIONAL'),

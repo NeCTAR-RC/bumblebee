@@ -1,12 +1,11 @@
+from datetime import datetime
 import logging
 import nanoid
-import socket
 import string
 
-from datetime import datetime
+
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.db.utils import IntegrityError
 from django.http import Http404
 from django.template.defaultfilters import safe
 from django.utils.timezone import utc
@@ -16,10 +15,9 @@ from novaclient import exceptions as nova_exceptions
 from researcher_workspace.models import Feature, User
 from researcher_desktop.models import DesktopType
 from vm_manager.constants import ERROR, ACTIVE, SHUTDOWN, VERIFY_RESIZE, \
-    RESIZE, MISSING, VM_WAITING, VM_ERROR, VM_DELETED
+    RESIZE, MISSING, VM_ERROR, VM_DELETED
 
 from vm_manager.utils.utils import get_nectar
-from vm_manager.utils.utils import generate_password
 
 from guacamole.models import GuacamoleConnection, \
     GuacamoleConnectionParameter, GuacamoleConnectionPermission, \

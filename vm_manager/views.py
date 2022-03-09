@@ -1,11 +1,12 @@
-import django_rq
+from datetime import datetime
 import logging
-
-from datetime import datetime, timedelta
 from math import ceil
 
-from django.contrib import messages
+import django_rq
+from operator import itemgetter
+
 from django.contrib.auth.decorators import login_required
+from django.contrib import messages
 from django.forms.models import model_to_dict
 from django.http import HttpResponseRedirect, Http404
 from django.template import loader
@@ -14,27 +15,23 @@ from django.utils.html import format_html
 from django.utils.timezone import utc
 from django.views.decorators.csrf import csrf_exempt
 
-from operator import itemgetter
-
-from researcher_desktop.models import DesktopType, AvailabilityZone
+from researcher_desktop.models import AvailabilityZone
 from researcher_desktop.utils.utils import get_desktop_type
-
-from vm_manager.models import VMStatus, Instance, Resize, Volume
 
 from vm_manager.constants import VM_ERROR, VM_OKAY, VM_WAITING, \
     VM_SHELVED, NO_VM, VM_SHUTDOWN, VM_SUPERSIZED, VM_DELETED, \
     VM_CREATING, VM_MISSING, VM_RESIZING, LAUNCH_WAIT_SECONDS, \
     CLOUD_INIT_FINISHED, CLOUD_INIT_STARTED, REBOOT_WAIT_SECONDS, \
     RESIZE_WAIT_SECONDS, SHELVE_WAIT_SECONDS, \
-    REBOOT_SOFT, REBOOT_HARD, SCRIPT_ERROR, SCRIPT_OKAY, \
+    REBOOT_SOFT, REBOOT_HARD, SCRIPT_OKAY, \
     BOOST_BUTTON, EXTEND_BUTTON, EXTEND_BOOST_BUTTON
+from vm_manager.models import VMStatus, Instance, Resize, Volume
 from vm_manager.utils.expiry import BoostExpiryPolicy, InstanceExpiryPolicy
-from vm_manager.utils.utils import after_time
-from vm_manager.utils.utils import generate_hostname
+from vm_manager.utils.utils import after_time, generate_hostname
 
 # These are needed, as they're consumed by researcher_workspace/views.py
 from vm_manager.vm_functions.admin_functionality import \
-    vm_report_for_page, vm_report_for_csv
+    vm_report_for_page, vm_report_for_csv  # noqa
 
 from vm_manager.vm_functions.admin_functionality import db_check
 from vm_manager.vm_functions.create_vm import launch_vm_worker, extend_instance

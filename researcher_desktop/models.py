@@ -1,15 +1,12 @@
-import json
 import logging
 
 from functools import cached_property
 
-from django.db import models
 from django.conf import settings
-from django.urls import reverse
+from django.db import models
 
 from researcher_workspace import models as workspace_models
-from vm_manager.utils.utils import get_nectar
-from vm_manager.utils.utils import FlavorDetails
+from vm_manager.utils.utils import get_nectar, FlavorDetails
 
 
 logger = logging.getLogger(__name__)

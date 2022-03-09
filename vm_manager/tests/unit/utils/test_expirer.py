@@ -1,19 +1,16 @@
 from datetime import datetime, timedelta
 import re
+from unittest.mock import Mock, patch
 import uuid
 
-from unittest.mock import Mock, patch, call
-
 from django.test import TestCase
-from django.conf import settings
 from django.utils.timezone import utc
 
 from researcher_desktop.utils.utils import get_desktop_type, desktops_feature
-from researcher_desktop.tests.factories import AvailabilityZoneFactory
 
 from vm_manager.models import Expiration
 from vm_manager.utils.expirer import Expirer, \
-    EXP_INITIAL, EXP_FIRST_WARNING, EXP_FINAL_WARNING, EXP_EXPIRED
+    EXP_INITIAL, EXP_FINAL_WARNING, EXP_EXPIRED
 
 from researcher_workspace.tests.factories import UserFactory
 

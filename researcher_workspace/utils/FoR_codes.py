@@ -1,5 +1,4 @@
-from typing import List
-
+# ANZSRC 2020 FoR codes.
 
 FOR_CODE_CHOICES = [
     ("", "-----------"),

@@ -2,17 +2,15 @@ import django_rq
 import logging
 
 from datetime import datetime, timedelta
-from django.conf import settings
 from django.utils.timezone import utc
 
-from vm_manager.constants import VM_SHELVED, VM_WAITING, NO_VM, \
+from vm_manager.constants import VM_SHELVED, NO_VM, \
     VOLUME_AVAILABLE, BACKUP_CREATING, BACKUP_AVAILABLE, \
     ARCHIVE_WAIT_SECONDS, ARCHIVE_POLL_SECONDS
-from vm_manager.models import Volume, VMStatus
+from vm_manager.models import VMStatus
 from vm_manager.vm_functions.delete_vm import delete_volume
 from vm_manager.utils.utils import get_nectar, after_time
 
-from guacamole.models import GuacamoleConnection
 
 logger = logging.getLogger(__name__)
 

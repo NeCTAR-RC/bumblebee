@@ -1,7 +1,4 @@
-from django.contrib import admin, messages
-from django.http import HttpResponse, HttpResponseRedirect
-from django.urls import reverse
-from django.utils.html import format_html
+from django.contrib import admin
 
 from researcher_desktop.models import DesktopType, AvailabilityZone, Domain
 

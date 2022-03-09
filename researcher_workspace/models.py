@@ -1,19 +1,14 @@
-import hashlib
+from datetime import datetime
 import logging
-from datetime import datetime, timedelta
-import uuid
 
 from django.conf import settings
-from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.http import Http404
-from django.utils.html import format_html
 from django.utils.timezone import utc
-from django_currentuser.db.models import CurrentUserField
 
-from researcher_workspace.utils import send_notification
 from researcher_workspace.utils.FoR_codes import FOR_CODE_CHOICES
+from researcher_workspace.utils import send_notification
 
 
 logger = logging.getLogger(__name__)

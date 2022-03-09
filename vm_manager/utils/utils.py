@@ -2,8 +2,8 @@ from datetime import datetime, timedelta
 
 from cinderclient import client as cinder_client
 from glanceclient import client as glance_client
-from keystoneauth1 import session
 from keystoneauth1.identity.v3 import ApplicationCredential
+from keystoneauth1 import session
 from keystoneclient import client as keystone_client
 from nectarallocationclient import client as allocation_client
 from novaclient import client as nova_client
@@ -11,8 +11,6 @@ from novaclient import client as nova_client
 from django.conf import settings
 from django.utils.crypto import get_random_string
 from django.utils.timezone import utc
-
-from vm_manager.constants import LINUX
 
 
 class Nectar(object):

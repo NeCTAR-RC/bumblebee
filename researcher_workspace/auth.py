@@ -1,8 +1,6 @@
 import logging
 import unicodedata
 
-from django.contrib.auth import get_user_model
-
 from mozilla_django_oidc.auth import OIDCAuthenticationBackend
 
 from guacamole import models as guac_models

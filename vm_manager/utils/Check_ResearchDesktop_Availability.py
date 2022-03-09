@@ -1,7 +1,7 @@
-import requests
+from io import StringIO
 import pandas as pd
 import re
-from io import StringIO
+import requests
 
 CORES_LIST = [4.0, 8.0]
 RAM_GB_LIST = [16.0, 32.0]

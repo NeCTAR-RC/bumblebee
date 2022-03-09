@@ -1,9 +1,9 @@
+from datetime import datetime, timedelta
+import logging
+
 import django_rq
 import novaclient
-import logging
-from datetime import datetime, timedelta
 
-from django.conf import settings
 from django.utils.timezone import utc
 
 from vm_manager.constants import INSTANCE_DELETION_RETRY_WAIT_TIME, \
@@ -11,12 +11,12 @@ from vm_manager.constants import INSTANCE_DELETION_RETRY_WAIT_TIME, \
     INSTANCE_CHECK_SHUTOFF_RETRY_WAIT_TIME, \
     INSTANCE_CHECK_SHUTOFF_RETRY_COUNT, \
     FORCED_SHELVE_WAIT_SECONDS
-from vm_manager.vm_functions.delete_vm import \
-    _check_instance_is_shutoff_and_delete
-from vm_manager.vm_functions.create_vm import launch_vm_worker
-from vm_manager.models import VMStatus, Instance
+from vm_manager.models import VMStatus
 from vm_manager.utils.expiry import VolumeExpiryPolicy
 from vm_manager.utils.utils import get_nectar, after_time
+from vm_manager.vm_functions.create_vm import launch_vm_worker
+from vm_manager.vm_functions.delete_vm import \
+    _check_instance_is_shutoff_and_delete
 
 from guacamole.models import GuacamoleConnection
 

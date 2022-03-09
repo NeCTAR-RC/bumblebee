@@ -1,20 +1,12 @@
-import uuid
-import copy
-from datetime import datetime, timedelta, timezone
-
-from unittest.mock import Mock, patch, call
+from unittest.mock import patch
 
 from django.conf import settings
-from django.contrib.auth.models import AnonymousUser
-from django.http import Http404, HttpResponseRedirect
 from django.test import TestCase
 from django.urls import reverse
 
-from researcher_workspace.tests.factories import FeatureFactory, UserFactory, \
-    ProfileFactory
+from researcher_workspace.tests.factories import UserFactory
 
 from researcher_workspace.models import User, Profile
-from researcher_workspace.views import terms, agree_terms
 
 
 class ResearcherWorkspaceRequestTests(TestCase):

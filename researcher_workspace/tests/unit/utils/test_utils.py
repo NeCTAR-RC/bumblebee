@@ -1,7 +1,7 @@
-from unittest.mock import Mock, patch
+from unittest.mock import Mock
 
 from django.test import TestCase
-from django.conf import settings
+
 
 from researcher_workspace.utils import send_notification
 

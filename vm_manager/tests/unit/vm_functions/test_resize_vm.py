@@ -1,27 +1,20 @@
-import copy
 from datetime import datetime, timedelta
 import uuid
-
-import novaclient
 
 from unittest.mock import Mock, patch, call
 
 from django.conf import settings
-from django.test import TestCase
 from django.http import Http404
 from django.utils.timezone import utc
 
-from researcher_desktop.utils.utils import get_desktop_type, desktops_feature
 from vm_manager.tests.factories import ResizeFactory
-from vm_manager.tests.common import UUID_1, UUID_2, UUID_3, UUID_4
-from vm_manager.tests.fakes import Fake, FakeServer, FakeFlavor, FakeNectar
+from vm_manager.tests.fakes import FakeServer, FakeNectar
 from vm_manager.tests.unit.vm_functions.base import VMFunctionTestBase
 
 from vm_manager.constants import ACTIVE, SHUTDOWN, RESIZE, VERIFY_RESIZE, \
-    VM_ERROR, VM_RESIZING, VM_MISSING, VM_OKAY, VM_SHELVED, NO_VM, \
-    VM_WAITING, VM_SUPERSIZED, RESIZE_CONFIRM_WAIT_SECONDS, \
-    REBOOT_COMPLETE_SECONDS, FORCED_DOWNSIZE_WAIT_SECONDS
-from vm_manager.models import VMStatus, Volume, Instance, Resize
+    VM_ERROR, VM_RESIZING, VM_OKAY, VM_WAITING, VM_SUPERSIZED, \
+    RESIZE_CONFIRM_WAIT_SECONDS, FORCED_DOWNSIZE_WAIT_SECONDS
+from vm_manager.models import VMStatus, Resize
 from vm_manager.vm_functions.resize_vm import supersize_vm_worker, \
     downsize_vm_worker, extend_boost, _resize_vm, _wait_to_confirm_resize, \
     downsize_expired_vm

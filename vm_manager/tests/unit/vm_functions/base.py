@@ -6,13 +6,11 @@ from researcher_workspace.tests.factories import UserFactory
 from researcher_desktop.utils.utils import get_desktop_type, desktops_feature
 from researcher_desktop.tests.factories import AvailabilityZoneFactory
 
-from vm_manager.tests.common import UUID_1, UUID_2, UUID_3, UUID_4
-from vm_manager.tests.fakes import Fake, FakeServer, FakeVolume, FakeNectar
+from vm_manager.tests.common import UUID_3, UUID_4
 from vm_manager.tests.factories import InstanceFactory, VMStatusFactory, \
     VolumeFactory
 
-from vm_manager.constants import VM_MISSING, VM_OKAY, VM_SHELVED, NO_VM, \
-    VOLUME_CREATION_TIMEOUT
+from vm_manager.constants import VM_OKAY
 
 
 class VMFunctionTestBase(TestCase):

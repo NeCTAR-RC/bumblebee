@@ -1,8 +1,6 @@
-import uuid
-import copy
 from datetime import datetime, timedelta
-
 from unittest.mock import Mock, patch, call
+import uuid
 
 from django.http import Http404, HttpResponseRedirect
 from django.conf import settings
@@ -17,9 +15,8 @@ from vm_manager.tests.factories import InstanceFactory, VolumeFactory, \
     ResizeFactory, VMStatusFactory
 from vm_manager.tests.fakes import Fake, FakeNectar
 
-from vm_manager.constants import ERROR, ACTIVE, SHUTDOWN, VERIFY_RESIZE, \
-    BUILD, REBUILD, RESIZE, REBOOT, RESCUE, REBOOT_HARD, REBOOT_SOFT, \
-    VM_OKAY, VM_DELETED, VM_WAITING, \
+from vm_manager.constants import ACTIVE, SHUTDOWN, BUILD, REBUILD, \
+    REBOOT, RESCUE, REBOOT_SOFT, VM_OKAY, VM_DELETED, VM_WAITING, \
     VM_CREATING, VM_RESIZING, NO_VM, VM_SHELVED, VM_MISSING, VM_ERROR, \
     VM_SHUTDOWN, VM_SUPERSIZED, ALL_VM_STATES, LAUNCH_WAIT_SECONDS, \
     CLOUD_INIT_STARTED, CLOUD_INIT_FINISHED, SCRIPT_OKAY, \

@@ -1,15 +1,9 @@
-from datetime import datetime, timedelta, timezone
-
-from unittest.mock import Mock, patch
-
 from django.conf import settings
 from django.core import mail
 from django.test import TestCase
 
-from researcher_workspace.tests.factories import FeatureFactory, UserFactory, \
+from researcher_workspace.tests.factories import UserFactory, \
     ProjectFactory
-
-from researcher_workspace.models import User, Project
 
 
 class WorkspaceModelTests(TestCase):

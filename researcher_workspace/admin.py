@@ -1,22 +1,25 @@
 from django.contrib import admin, messages
 from django.contrib.auth.admin import UserAdmin
-from django.http import HttpResponse, HttpResponseRedirect
 from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.translation import gettext as _
 
-from researcher_workspace.models import PermissionRequest, Project, Profile, AROWhitelist, add_username_to_whitelist, \
+from researcher_workspace.models import PermissionRequest, Project, \
+    Profile, AROWhitelist, add_username_to_whitelist, \
     remove_username_from_whitelist, Permission, Feature, User
 
 
 @admin.register(PermissionRequest)
 class PermissionRequestAdmin(admin.ModelAdmin):
-    list_filter = ('created', 'accepted', 'responded_on', 'requested_feature', 'requesting_user')
+    list_filter = ('created', 'accepted', 'responded_on',
+                   'requested_feature', 'requesting_user')
     readonly_fields = ('created',)
     ordering = ('-created',)
-    list_display = ('__str__', 'accepted', 'requesting_user', 'project', 'requested_feature', 'created')
+    list_display = ('__str__', 'accepted', 'requesting_user', 'project',
+                    'requested_feature', 'created')
     actions = ["accept_requests", "deny_requests"]
-    change_form_template = 'admin/researcher_workspace/permissionrequest/change_form.html'
+    change_form_template = \
+        'admin/researcher_workspace/permissionrequest/change_form.html'
 
     # def has_delete_permission(self, request, obj=None):
     #    return False
@@ -24,7 +27,8 @@ class PermissionRequestAdmin(admin.ModelAdmin):
     def response_change(self, request, obj):
         if "_accept" in request.POST:
             obj.accept()
-            self.message_user(request, "Permission request accepted and applied")
+            self.message_user(request,
+                              "Permission request accepted and applied")
             return HttpResponseRedirect(".")
         if "_deny" in request.POST:
             obj.deny()
@@ -36,13 +40,16 @@ class PermissionRequestAdmin(admin.ModelAdmin):
         for request in queryset:
             if request.accepted is None:
                 request.accept()
-    accept_requests.short_description = "Add the requested permissions to the project"
+    accept_requests.short_description = \
+        "Add the requested permissions to the project"
 
     def deny_requests(self, request, queryset):
         for request in queryset:
             if request.accepted is None:
                 request.deny()
-    deny_requests.short_description = "Reject the request and don't give the requested permissions to the project"
+    deny_requests.short_description = \
+        ("Reject the request and don't give the requested permissions "
+         "to the project")
 
 
 class PermissionInline(admin.StackedInline):
@@ -54,12 +61,15 @@ class PermissionInline(admin.StackedInline):
 
 @admin.register(Project)
 class ProjectAdmin(admin.ModelAdmin):
-    list_filter = ('created', 'ARO_approval', 'ARO_responded_on', 'permissions', 'sensitive_data', 'project_admin', 'ARO')
+    list_filter = ('created', 'ARO_approval', 'ARO_responded_on',
+                   'permissions', 'sensitive_data', 'project_admin', 'ARO')
     readonly_fields = ('created',)
     ordering = ('-created',)
-    list_display = ('__str__', 'title', 'project_admin', 'created', 'ARO', 'ARO_approval')
+    list_display = ('__str__', 'title', 'project_admin', 'created', 'ARO',
+                    'ARO_approval')
     actions = ["approve_projects", "reject_projects"]
-    change_form_template = 'admin/researcher_workspace/project/change_form.html'
+    change_form_template = \
+        'admin/researcher_workspace/project/change_form.html'
     inlines = (PermissionInline, )
 
     # def has_delete_permission(self, request, obj=None):
@@ -97,11 +107,19 @@ class ProfileInline(admin.StackedInline):
     readonly_fields = ('aro_whitelisted',)
 
     def aro_whitelisted(self, instance):
-        whitelist = AROWhitelist.objects.is_username_whitelisted(instance.user.username)
+        whitelist = AROWhitelist.objects.is_username_whitelisted(
+            instance.user.username)
         if whitelist:
-            return format_html(f"{ whitelist } <a class='button' href='{reverse('admin:researcher_workspace_arowhitelist_change', args=(whitelist.id,))}'>Edit</a>")
+            url = reverse('admin:researcher_workspace_arowhitelist_change',
+                          args=(whitelist.id,))
+            return format_html(
+                f"{ whitelist } <a class='button' href='{url}'>Edit</a>")
         else:
-            return format_html(f"{ instance.user.username } is not ARO whitelisted <a class='button' href='{reverse('admin:researcher_workspace_arowhitelist_add')}?username={ instance.user.username }'>Add user to AROWhitelist</a>")
+            url = reverse('admin:researcher_workspace_arowhitelist_add')
+            return format_html(
+                f"{instance.user.username} is not ARO whitelisted "
+                f"<a class='button' href='{url}?username="
+                f"{instance.user.username }'>Add user to AROWhitelist</a>")
 
 
 class CustomUserAdmin(UserAdmin):
@@ -128,7 +146,8 @@ class CustomUserAdmin(UserAdmin):
     def response_change(self, request, obj):
         if "_add_to_whitelist" in request.POST:
             comment = request.POST.get('aro_whitelist_comment')
-            add_username_to_whitelist(username=obj.username, comment=comment, permission_granted_by=request.user)
+            add_username_to_whitelist(username=obj.username, comment=comment,
+                                      permission_granted_by=request.user)
             self.message_user(request, "User added to ARO whitelist")
             return HttpResponseRedirect(".")
         if "_remove_from_whitelist" in request.POST:
@@ -145,12 +164,14 @@ admin.site.register(User, CustomUserAdmin)
 @admin.register(AROWhitelist)
 class AROWhitelistAdmin(admin.ModelAdmin):
     list_display = ('username', 'permission_granted_by', 'created', 'comment')
-    list_filter = ('created', ('comment', admin.EmptyFieldListFilter), 'permission_granted_by', )
+    list_filter = ('created', ('comment', admin.EmptyFieldListFilter),
+                   'permission_granted_by', )
     actions = ['delete_selected']
     readonly_fields = ('created', 'permission_granted_by', )
 
     def get_readonly_fields(self, request, obj=None):
-        readonly_fields = super(AROWhitelistAdmin, self).get_readonly_fields(request, obj)
+        readonly_fields = super(AROWhitelistAdmin, self).get_readonly_fields(
+            request, obj)
         if obj is not None:
             readonly_fields = ("username", ) + readonly_fields
         return readonly_fields
@@ -159,7 +180,8 @@ class AROWhitelistAdmin(admin.ModelAdmin):
         if obj is None:
             return ('username', 'comment', )
         else:
-            return ('username', 'permission_granted_by', 'comment', 'created', )
+            return ('username', 'permission_granted_by', 'comment',
+                    'created', )
 
     def save_model(self, request, obj, form, change):
         if not change:  # i.e. if this is a new model
@@ -169,7 +191,8 @@ class AROWhitelistAdmin(admin.ModelAdmin):
 
 @admin.register(Feature)
 class FeatureAdmin(admin.ModelAdmin):
-    list_filter = ['name', 'currently_available', 'feature_or_service', 'auto_approved', 'beta']
+    list_filter = ['name', 'currently_available', 'feature_or_service',
+                   'auto_approved', 'beta']
     readonly_fields = ('id', 'app_name')
     ordering = ('id',)
 
@@ -195,5 +218,8 @@ class FeatureAdmin(admin.ModelAdmin):
 
     def save_model(self, request, obj, form, change):
         if 'name' in form.changed_data:
-            messages.add_message(request, messages.WARNING, 'WARNING: Must restart apache for changes to the feature name to fully take effect')
+            messages.add_message(
+                request, messages.WARNING,
+                "WARNING: Must restart apache for changes to the feature "
+                "name to fully take effect")
         super(FeatureAdmin, self).save_model(request, obj, form, change)

@@ -1,8 +1,6 @@
+from datetime import datetime
+from unittest.mock import patch
 import uuid
-import copy
-from datetime import datetime, timedelta
-
-from unittest.mock import Mock, patch
 
 from django.conf import settings
 from django.http import Http404

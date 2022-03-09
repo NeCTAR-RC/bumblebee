@@ -1,23 +1,22 @@
 import csv
-import logging
-import pytz
 from datetime import datetime
-from io import BytesIO
 from dateutil.relativedelta import relativedelta
+from io import BytesIO
+import logging
 
 import pandas
-import requests
+import pytz
+
 from django.apps import apps
 from django.conf import settings
-from django.core.files.uploadhandler import TemporaryFileUploadHandler
-from django.core.mail import mail_managers
 from django.contrib import messages
 from django.contrib.auth import user_logged_in, user_logged_out
 from django.contrib.auth.decorators import login_required, user_passes_test
+from django.core.files.uploadhandler import TemporaryFileUploadHandler
+from django.core.mail import mail_managers
 from django.dispatch import receiver
 from django.http import HttpResponse, HttpResponseRedirect, Http404, StreamingHttpResponse
 from django.shortcuts import render
-from django.template import loader
 from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.timezone import utc
@@ -28,9 +27,8 @@ from researcher_desktop.utils.utils import get_desktop_type, get_applicable_zone
 from .constants import USAGE
 from .forms import UserSearchForm, ProjectForm, \
     ProfileForm, PermissionRequestForm, SupportRequestForm
-from .models import PermissionRequest, Feature, Project, \
-    AROWhitelist, Profile, add_username_to_whitelist, \
-    remove_username_from_whitelist, Permission, FeatureOptions, User
+from .models import PermissionRequest, Feature, Project, AROWhitelist, \
+    add_username_to_whitelist, remove_username_from_whitelist, User
 from .templatetags.group_filters import has_group
 from .utils import redirect_home, agreed_to_terms, not_support_staff, \
     offset_month_and_year
@@ -39,9 +37,10 @@ from .utils.faculty_mapping import FACULTIES, FACULTY_MAPPING
 from .utils.freshdesk import create_ticket
 
 import researcher_desktop.views as rdesk_views
+
+from vm_manager.constants import NO_VM
 from vm_manager.models import VMStatus
 from vm_manager.utils.utils import get_nectar
-from vm_manager.constants import NO_VM
 
 logger = logging.getLogger(__name__)
 

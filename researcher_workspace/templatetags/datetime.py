@@ -1,7 +1,8 @@
 from datetime import datetime, timedelta
 import pytz
-from django import template
+
 from django.conf import settings
+from django import template
 
 register = template.Library()
 
@@ -20,7 +21,7 @@ def time_of_day():
 
 
 @register.simple_tag
-def period(delta):
+def period(delta: timedelta):
     """
     Renders a timedelta as days, hours and minutes.
     :param delta: The timedelta to render.

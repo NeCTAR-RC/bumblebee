@@ -1,26 +1,17 @@
-import copy
 from datetime import datetime, timedelta
 from uuid import uuid4
 
-import novaclient
-
 from unittest.mock import Mock, patch, call
 
-from django.conf import settings
-from django.test import TestCase
 from django.utils.timezone import utc
 
-from researcher_desktop.utils.utils import get_desktop_type, desktops_feature
-from guacamole.tests.factories import GuacamoleConnectionFactory
-from vm_manager.tests.common import UUID_1, UUID_2, UUID_3, UUID_4
-from vm_manager.tests.fakes import Fake, FakeServer, FakeVolume, FakeNectar
+from vm_manager.tests.fakes import Fake, FakeNectar
 from vm_manager.tests.unit.vm_functions.base import VMFunctionTestBase
 
-from vm_manager.constants import ACTIVE, SHUTDOWN, \
-    VM_MISSING, VM_OKAY, VM_SHELVED, VM_WAITING, NO_VM, \
+from vm_manager.constants import VM_SHELVED, NO_VM, \
     ARCHIVE_POLL_SECONDS, ARCHIVE_WAIT_SECONDS, \
     BACKUP_CREATING, BACKUP_AVAILABLE
-from vm_manager.models import VMStatus, Volume, Instance
+from vm_manager.models import VMStatus, Volume
 from vm_manager.vm_functions.archive_vm import archive_vm_worker, \
     wait_for_backup
 from vm_manager.utils.utils import get_nectar

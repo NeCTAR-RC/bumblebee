@@ -1,20 +1,13 @@
+from unittest.mock import patch
 import uuid
-import copy
-from datetime import datetime, timedelta, timezone
-
-from unittest.mock import Mock, patch, call
 
 from django.conf import settings
-from django.contrib.auth.models import AnonymousUser
-from django.http import Http404, HttpResponseRedirect
 from django.test import TestCase
 from django.urls import reverse
 
-from researcher_workspace.tests.factories import FeatureFactory, UserFactory
+from researcher_workspace.tests.factories import UserFactory
 
-from researcher_workspace.models import User
 from researcher_desktop.models import DesktopType, AvailabilityZone
-from researcher_desktop.views import launch_vm
 from researcher_desktop.utils.utils import desktops_feature
 
 

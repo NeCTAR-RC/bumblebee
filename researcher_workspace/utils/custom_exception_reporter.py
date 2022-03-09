@@ -1,6 +1,7 @@
 from pathlib import Path
-from django.views import debug
+
 from django import template
+from django.views import debug
 
 TECHNICAL_500_TEXT_TEMPLATE = "technical_500.txt"
 TECHNICAL_500_HTML_TEMPLATE = "technical_500.html"

@@ -1,23 +1,22 @@
+from datetime import datetime
+import logging
+from operator import itemgetter
 from uuid import UUID
 
-import django_rq
-import logging
-
-from datetime import datetime, timedelta
 from django.core.mail import mail_managers
 from django.db.models import Count
 from django.db.models.functions import TruncDay
-from django.http import HttpResponse, HttpResponseRedirect, Http404
+from django.http import HttpResponse, Http404
 from django.shortcuts import render
 from django.utils.timezone import utc
-from operator import itemgetter
 
-from researcher_workspace.utils import offset_month_and_year
+
 from guacamole.models import GuacamoleConnection
+from researcher_workspace.utils import offset_month_and_year
 from vm_manager.models import Instance, Resize, Volume
-from vm_manager.utils.utils import get_nectar
 from vm_manager.utils.Check_ResearchDesktop_Availability import \
     check_availability
+from vm_manager.utils.utils import get_nectar
 
 logger = logging.getLogger(__name__)
 

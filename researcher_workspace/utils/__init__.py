@@ -1,7 +1,7 @@
+from django.conf import settings
+from django.http import HttpResponseRedirect
 from django.template import loader
 from django.urls import reverse
-from django.http import HttpResponseRedirect
-from django.conf import settings
 
 from researcher_workspace.templatetags.group_filters import has_group
 

@@ -4,7 +4,7 @@ import django_rq
 
 from django.utils.timezone import utc
 
-from vm_manager.constants import REBOOT_COMPLETE_SECONDS, \
+from vm_manager.constants import \
     RESIZE_CONFIRM_WAIT_SECONDS, FORCED_DOWNSIZE_WAIT_SECONDS, \
     VM_SUPERSIZED, VM_RESIZING, VM_OKAY
 from vm_manager.utils.utils import after_time, get_nectar

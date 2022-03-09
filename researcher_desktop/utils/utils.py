@@ -3,9 +3,8 @@ import logging
 from django.http import Http404
 
 from researcher_desktop.constants import APP_NAME
-from researcher_desktop.models import DesktopType, Domain, AvailabilityZone
+from researcher_desktop.models import DesktopType, AvailabilityZone
 from researcher_workspace.models import Feature
-from vm_manager.utils.utils import get_nectar
 
 
 logger = logging.getLogger(__name__)

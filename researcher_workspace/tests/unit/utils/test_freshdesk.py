@@ -1,5 +1,3 @@
-from datetime import datetime, timedelta, timezone
-
 from unittest.mock import Mock, patch
 
 from django.conf import settings

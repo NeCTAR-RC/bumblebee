@@ -1,22 +1,16 @@
 import logging
 
-from django.conf import settings
 from django.contrib.auth.decorators import login_required, user_passes_test
-from django.http import JsonResponse, HttpResponse, HttpResponseRedirect, \
-    Http404
-from django.urls import reverse
+from django.http import JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 
-from researcher_workspace.models import Feature
-from researcher_desktop.utils.utils import get_desktop_type
-from researcher_desktop.utils.utils import get_best_zone
-from researcher_desktop.utils.utils import desktop_types
-from researcher_desktop.utils.utils import desktops_feature
+from researcher_desktop.utils.utils import get_desktop_type, \
+    get_best_zone, desktop_types, desktops_feature
 
 from vm_manager import views as vm_man_views
 from researcher_workspace.utils import not_support_staff, redirect_home, \
     agreed_to_terms
-from vm_manager.constants import LINUX, REBOOT_BUTTON, SHELVE_BUTTON, \
+from vm_manager.constants import REBOOT_BUTTON, SHELVE_BUTTON, \
     DELETE_BUTTON, BOOST_BUTTON, DOWNSIZE_BUTTON, EXTEND_BUTTON, \
     EXTEND_BOOST_BUTTON
 

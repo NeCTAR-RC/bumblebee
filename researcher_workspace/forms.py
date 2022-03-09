@@ -2,9 +2,8 @@ import re
 
 from pytz import common_timezones
 
-from django import forms
 from django.core.validators import RegexValidator
-from django.utils.safestring import mark_safe
+from django import forms
 
 from .models import Project, Profile
 from .utils.FoR_codes import FOR_CODE_CHOICES

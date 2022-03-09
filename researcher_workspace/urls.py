@@ -1,9 +1,5 @@
 from django.contrib import admin
-from django.contrib.auth import views as auth_views
-from django.contrib.auth.decorators import login_required
-from django.contrib.auth.views import LoginView
-from django.views.generic.base import RedirectView
-from django.urls import path, re_path, include, reverse
+from django.urls import path, include
 
 from mozilla_django_oidc import views as oidc_views
 
