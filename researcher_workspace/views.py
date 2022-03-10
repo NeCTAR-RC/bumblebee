@@ -470,9 +470,12 @@ def custom_page_not_found(request, exception=None):
 
 
 def custom_page_error(request, exception=None):
-    logger.exception("Something went wrong",
-                     exception) if exception else logger.error(
-        f"Returning 500.html! { request.user } {request.path}")
+    message = 'Something went wrong'
+    if exception:
+        logger.exception(message, exception)
+    else:
+        user = getattr(request, 'user', None)
+        logger.error(f"{message} user={user} path={request.path}")
     return render(request, 'researcher_workspace/500.html')
 
 

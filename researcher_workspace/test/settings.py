@@ -319,7 +319,7 @@ ENVIRONMENT_NAME = 'tiger'
 ENVIRONMENT_COLOR = 'pink'
 NOTIFY_URL = 'http://notify'
 SITE_URL = 'http://site'
-GUACAMOLE_URL = 'http://guacamole'
+GUACAMOLE_URL_TEMPLATE = "https://{env}-guacamole-{zone}.example.com/{path}"
 ALLOCATION_ID = '12345'
 
 logger = logging.getLogger(__name__)
@@ -365,16 +365,19 @@ ZONES = [
     {
         'name': "QRIScloud",
         'zone_weight': 10,
-        'domains': ['uq.edu.au', 'qut.edu.au']
+        'domains': ['uq.edu.au', 'qut.edu.au'],
+        'network_id': '22222222-2222-2222-2222-222222222222',
     },
     {
         'name': "melbourne-qh2",
         'zone_weight': 15,
-        'domains': ['unimelb.edu.au']
+        'domains': ['unimelb.edu.au'],
+        'network_id': '33333333-3333-3333-3333-333333333333',
     },
     {
-        'name': "monash-01",
+        'name': "monash-02",
         'zone_weight': 20,
-        'domains': ['monash.edu']
+        'domains': ['monash.edu'],
+        'network_id': '44444444-4444-4444-4444-444444444444',
     },
 ]

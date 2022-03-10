@@ -52,20 +52,6 @@ class Nectar(object):
         self.glance = glance_client.Client('2', session=sess)
         self.cinder = cinder_client.Client('3', session=sess)
 
-        net_id = self.nova.neutron.find_network(settings.OS_NETWORK).id
-        self.VM_PARAMS = {
-            "metadata_volume": {'readonly': 'False'},
-            "block_device_mapping": [{
-                'source_type': "volume",
-                'destination_type': 'volume',
-                'delete_on_termination': False,
-                'uuid': None,
-                'boot_index': '0',
-            }],
-            "id_net": net_id,
-            "list_net": [{'net-id': net_id}],
-        }
-
 
 def get_nectar():
     if not hasattr(get_nectar, 'nectar'):

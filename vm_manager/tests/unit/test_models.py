@@ -48,7 +48,8 @@ class VMManagerModelTestBase(TestCase):
             'id': uuid.uuid4(),
             'user': self.user,
             'operating_system': self.desktop_type.id,
-            'requesting_feature': self.desktop_type.feature
+            'requesting_feature': self.desktop_type.feature,
+            'zone': 'QRIScloud',
         }
         my_kwargs.update(kwargs)
         return VolumeFactory.create(**my_kwargs)
@@ -209,7 +210,8 @@ class InstanceModelTests(VMManagerModelTestBase):
 
         # This is what create_guac_connection is used for ...
         url = fake_instance.get_url()
-        self.assertTrue(url.startswith(f"{settings.GUACAMOLE_URL}/#/client/"))
+        self.assertTrue(
+            url.startswith(f"https://tiger-guacamole-qriscloud.example.com/#/client/"))
 
     def test_get_instance(self):
         self.assertIsNone(

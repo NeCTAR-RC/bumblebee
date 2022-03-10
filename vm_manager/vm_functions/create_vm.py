@@ -17,6 +17,8 @@ from vm_manager.utils.utils import get_nectar, generate_server_name, \
     generate_hostname, generate_password
 from vm_manager.models import Instance, Volume, VMStatus
 
+from researcher_desktop.models import AvailabilityZone
+
 from guacamole.models import GuacamoleConnection
 
 logger = logging.getLogger(__name__)
@@ -83,7 +85,8 @@ def _create_volume(user, desktop_type, zone):
     volume_result = n.cinder.volumes.create(
         source_volid=source_volume_id,
         size=desktop_type.volume_size,
-        name=name, metadata=n.VM_PARAMS["metadata_volume"],
+        name=name,
+        metadata={'readonly': 'False'},
         availability_zone=zone.name)
     n.cinder.volumes.set_bootable(volume=volume_result, flag=True)
 
@@ -209,8 +212,17 @@ def _create_instance(user, desktop_type, volume):
         'requesting_feature': desktop_type.feature.name,
     }
 
-    block_device_mapping = copy.deepcopy(n.VM_PARAMS["block_device_mapping"])
-    block_device_mapping[0]["uuid"] = volume.id
+    block_device_mapping = [{
+        'source_type': "volume",
+        'destination_type': 'volume',
+        'delete_on_termination': False,
+        'uuid': volume.id,
+        'boot_index': '0',
+    }]
+
+    zone = volume.zone
+    network_id = AvailabilityZone.objects.get(name=zone).network_id
+    nics = [{'net-id': network_id}]
 
     desktop_timezone = user.profile.timezone or settings.TIME_ZONE
     user_data_context = {
@@ -233,10 +245,9 @@ def _create_instance(user, desktop_type, volume):
         flavor=desktop_type.default_flavor.id,
         userdata=user_data,
         security_groups=desktop_type.security_groups,
-        block_device_mapping_v1=None,
         block_device_mapping_v2=block_device_mapping,
-        nics=n.VM_PARAMS["list_net"],
-        availability_zone=volume.zone,
+        nics=nics,
+        availability_zone=zone,
         meta=metadata_server,
         key_name=settings.OS_KEYNAME,
     )
