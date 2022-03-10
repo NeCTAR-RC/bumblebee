@@ -288,11 +288,6 @@ class ResizeVMTests(VMFunctionTestBase):
     def test_wait_to_confirm_resize_4(self, mock_rq, mock_logger):
         fake_nectar = get_nectar()
         fake_nectar.nova.servers.get.side_effect = [
-            # This is messy.  We want a specific 'nova.get' call to fail.
-            # It also illustrates a problem with the code under test.
-            # It is actually making multiple calls to 'nova.get' under
-            # the hood to get the status (3 times) then the flavor.
-            FakeServer(status=ACTIVE), FakeServer(status=ACTIVE),
             FakeServer(status=ACTIVE), Exception("bad")
         ]
         fake_nectar.nova.servers.confirm_resize.reset_mock()

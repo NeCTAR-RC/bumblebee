@@ -5,6 +5,7 @@ import django_rq
 from django.utils.timezone import utc
 
 from vm_manager.constants import \
+    RESIZE, VERIFY_RESIZE, ACTIVE, \
     RESIZE_CONFIRM_WAIT_SECONDS, FORCED_DOWNSIZE_WAIT_SECONDS, \
     VM_SUPERSIZED, VM_RESIZING, VM_OKAY
 from vm_manager.utils.utils import after_time, get_nectar
@@ -96,17 +97,21 @@ def _wait_to_confirm_resize(instance, flavor, target_status,
     n = get_nectar()
     vm_status = VMStatus.objects.get_vm_status_by_instance(
         instance, requesting_feature)
+    logger.debug(f"vm_status: {vm_status}")
 
-    if instance.check_verify_resize_status():
+    status = instance.get_status()
+    if status == VERIFY_RESIZE:
         logger.info(f"Confirming resize of {instance}")
         n.nova.servers.confirm_resize(instance.id)
         vm_status.status_progress = 66
         vm_status.status_message = "Resize completed; waiting for reboot"
         vm_status.save()
+        logger.debug(f"new vm_status: {vm_status}")
+
         # The final step is done in response to a phone_home request
         return str(vm_status)
 
-    elif instance.check_resizing_status():
+    elif status == RESIZE:
         logger.info(f"Waiting for resize of {instance}")
         if datetime.now(utc) < deadline:
             scheduler = django_rq.get_scheduler('default')
@@ -118,7 +123,7 @@ def _wait_to_confirm_resize(instance, flavor, target_status,
         else:
             logger.error("Resize has taken too long")
 
-    elif instance.check_active_status():
+    elif status == ACTIVE:
         try:
             resized_instance = n.nova.servers.get(instance.id)
             instance_flavor = resized_instance.flavor['id']
@@ -136,6 +141,7 @@ def _wait_to_confirm_resize(instance, flavor, target_status,
             logger.error(message)
             vm_status.error(message)
             vm_status.save()
+            logger.debug(f"new vm_status: {vm_status}")
             return message
 
         message = f"Resize of {instance} was confirmed automatically"
@@ -143,15 +149,16 @@ def _wait_to_confirm_resize(instance, flavor, target_status,
         vm_status.status_progress = 66
         vm_status.status_message = "Resize completed; waiting for reboot"
         vm_status.save()
+        logger.debug(f"new vm_status: {vm_status}")
         # The final step is done in response to a phone_home request
         return message
 
     message = (
-        f"Instance ({instance}) resize failed instance in "
-        f"state: {instance.get_status()}")
+        f"Instance ({instance}) resize failed instance in state: {status}")
     logger.error(message)
     vm_status.error(message)
     vm_status.save()
+    logger.debug(f"new vm_status: {vm_status}")
     return message
 
 

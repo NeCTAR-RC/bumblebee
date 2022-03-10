@@ -348,7 +348,7 @@ def extend_boost_vm(user, vm_id, requesting_feature) -> str:
 
 def get_vm_state(user, desktop_type):
     vm_status = VMStatus.objects.get_latest_vm_status(user, desktop_type)
-    logger.debug(vm_status)
+    logger.debug(f"get_vm_state: {vm_status}")
 
     if (not vm_status) or (vm_status.status == VM_DELETED):
         return NO_VM, "No VM", None
@@ -415,6 +415,19 @@ def get_vm_state(user, desktop_type):
 
 def get_vm_status(user, desktop_type):
     vm_status = VMStatus.objects.get_latest_vm_status(user, desktop_type)
+    logger.debug(f"get_vm_status: {vm_status}")
+    if vm_status.status == VM_WAITING:
+        curr_time = datetime.now(utc)
+        if vm_status.wait_time <= curr_time:
+            # Time up waiting
+            logger.error(f"get_vm_status: timed out after {vm_status.wait_time}")
+            if vm_status.instance:
+                vm_status.error(f"Instance {instance.id} not ready "
+                                f"at {vm_status.wait_time} timeout")
+            else:
+                vm_status.error(f"Instance is missing at timeout {vm_status.id}, "
+                                f"{user}, {desktop_type}")
+            logger.debug(f"get_vm_status: updated {vm_status}")
     return model_to_dict(vm_status)
 
 
