@@ -556,3 +556,25 @@ class VMStatusModelTests(VMManagerModelTestBase):
         self.assertEqual(f"Multiple vm_statuses found in the database "
                          f"with instance={self.instance}",
                          str(cm.exception))
+
+    def test_get_vm_status_by_instance(self):
+        other_instance = InstanceFactory.create(
+            id=uuid.uuid4(), user=self.user, boot_volume=self.volume)
+        with self.assertRaises(VMStatus.DoesNotExist):
+            VMStatus.objects.get_vm_status_by_instance(
+                other_instance, self.feature)
+        self.assertIsNone(VMStatus.objects.get_vm_status_by_instance(
+            other_instance, self.feature, allow_missing=True))
+
+        vmstatus = self.make_vmstatus()
+        self.assertEqual(vmstatus,
+                         VMStatus.objects.get_vm_status_by_instance(
+                             self.instance, self.feature))
+
+        vmstatus2 = self.make_vmstatus()
+        with self.assertRaises(VMStatus.MultipleObjectsReturned) as cm:
+            VMStatus.objects.get_vm_status_by_instance(
+                self.instance, self.feature)
+        self.assertEqual(f"Multiple vm_statuses found in the database "
+                         f"with instance={self.instance}",
+                         str(cm.exception))

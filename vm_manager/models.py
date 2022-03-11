@@ -443,18 +443,21 @@ class VMStatusManager(models.Manager):
 
     # TODO - The 'requesting_feature' argument is redundant (AFAIK)
     # In fact it is probably redundant on the model class too.
-    def get_vm_status_by_instance(self, instance, requesting_feature):
+    def get_vm_status_by_instance(self, instance, requesting_feature,
+                                  allow_missing=False):
         try:
-            vm_status = self.get(instance=instance,
-                                 requesting_feature=requesting_feature)
+            vm_status = self.get(instance=instance)
             return vm_status
         except VMStatus.DoesNotExist as e:
-            logger.error(e)
-            error = VMStatus.DoesNotExist(
-                f"No vm_statuses found in the database "
-                f"with instance={instance}")
-            logger.error(error)
-            raise error
+            if allow_missing:
+                return None
+            else:
+                logger.error(e)
+                error = VMStatus.DoesNotExist(
+                    f"No vm_statuses found in the database "
+                    f"with instance={instance}")
+                logger.error(error)
+                raise error
         except VMStatus.MultipleObjectsReturned as e:
             logger.error(e)
             error = VMStatus.MultipleObjectsReturned(
