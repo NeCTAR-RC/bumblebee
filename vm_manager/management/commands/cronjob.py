@@ -1,6 +1,6 @@
 import logging
 
-from django.core.management.base import BaseCommand,
+from django.core.management.base import BaseCommand
 
 from researcher_desktop.utils.utils import desktops_feature
 from vm_manager.utils.expirer import VolumeExpirer, InstanceExpirer, \
