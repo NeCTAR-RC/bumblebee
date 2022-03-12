@@ -10,13 +10,21 @@ from django.http import HttpResponse, Http404
 from django.shortcuts import render
 from django.utils.timezone import utc
 
+import django_rq
 
 from guacamole.models import GuacamoleConnection
+from researcher_desktop.models import DesktopType
 from researcher_workspace.utils import offset_month_and_year
-from vm_manager.models import Instance, Resize, Volume
+from vm_manager.constants import VM_DELETED, VM_WAITING, \
+    SHELVE_WAIT_SECONDS, RESIZE_WAIT_SECONDS
+from vm_manager.models import Instance, Resize, Volume, VMStatus
 from vm_manager.utils.Check_ResearchDesktop_Availability import \
     check_availability
-from vm_manager.utils.utils import get_nectar
+from vm_manager.utils.utils import after_time, get_nectar
+from vm_manager.vm_functions.delete_vm import \
+    delete_vm_worker, delete_volume, archive_vm_worker
+from vm_manager.vm_functions.resize_vm import downsize_vm_worker
+from vm_manager.vm_functions.shelve_vm import shelve_vm_worker
 
 logger = logging.getLogger(__name__)
 
@@ -27,6 +35,113 @@ def test_function(request):
         raise Http404()
     return HttpResponse(_generate_weekly_availability_report(),
                         content_type='text/plain')
+
+
+def admin_delete_instance_and_volume(request, instance):
+    vm_status = VMStatus.objects.get_vm_status_by_instance(
+        instance, None, allow_missing=True)
+
+    if vm_status:
+        vm_status.status = VM_DELETED
+        vm_status.save()
+
+    volume = instance.boot_volume
+    if instance.deleted:
+        volume.set_marked_for_deletion()
+        delete_volume(volume)
+        logger.info(f"{request.user} admin deleted volume {volume.id}")
+    else:
+        instance.set_marked_for_deletion()
+        volume.set_marked_for_deletion()
+        queue = django_rq.get_queue('default')
+        queue.enqueue(delete_vm_worker, instance)
+        logger.info(f"{request.user} admin deleting instance {instance.id} "
+                    f"and volume {volume.id}")
+
+
+def admin_archive_instance_and_volume(request, instance):
+    vm_status = VMStatus.objects.get_vm_status_by_instance(
+        instance, None, allow_missing=True)
+
+    if vm_status:
+        vm_status.status = VM_DELETED
+        vm_status.save()
+
+    volume = instance.boot_volume
+    if instance.deleted:
+        volume.set_marked_for_deletion()
+        archive_vm_worker(volume, volume.requesting_feature)
+        logger.info(f"{request.user} admin archived volume {volume.id}")
+    else:
+        instance.set_marked_for_deletion()
+        volume.set_marked_for_deletion()
+        queue = django_rq.get_queue('default')
+        queue.enqueue(delete_vm_worker, instance, archive=True)
+        logger.info(f"{request.user} admin archiving instance {instance.id} "
+                    f"and volume {volume.id}")
+
+
+def admin_delete_volume(request, volume):
+    vm_status = VMStatus.objects.get_vm_status_by_volume(
+        volume, volume.requesting_feature, allow_missing=True)
+
+    if vm_status:
+        vm_status.status = VM_DELETED
+        vm_status.save()
+
+    volume.set_marked_for_deletion()
+    delete_volume(volume)
+    logger.info(f"{request.user} admin deleted volume {volume.id}")
+
+
+def admin_archive_volume(request, volume):
+    vm_status = VMStatus.objects.get_vm_status_by_volume(
+        volume, volume.requesting_feature, allow_missing=True)
+
+    if vm_status:
+        vm_status.status = VM_DELETED
+        vm_status.save()
+
+    archive_vm_worker(volume, volume.requesting_feature)
+    logger.info(f"{request.user} admin archiving volume {volume.id}")
+
+
+def admin_shelve_instance(request, instance):
+    vm_status = VMStatus.objects.get_vm_status_by_instance(
+        instance, None, allow_missing=True)
+
+    if vm_status:
+        vm_status.wait_time = after_time(SHELVE_WAIT_SECONDS)
+        vm_status.status = VM_WAITING
+        vm_status.status_progress = 0
+        vm_status.status_message = "Starting desktop shelve"
+        vm_status.save()
+    instance.set_marked_for_deletion()
+
+    queue = django_rq.get_queue('default')
+    queue.enqueue(shelve_vm_worker, instance)
+
+    logger.info(f"{request.user} admin shelved vm {instance.id}")
+
+
+def admin_downsize_resize(request, resize):
+    instance = resize.instance
+    vm_status = VMStatus.objects.get_vm_status_by_instance(
+        instance, None, allow_missing=True)
+
+    if vm_status:
+        vm_status.wait_time = after_time(RESIZE_WAIT_SECONDS)
+        vm_status.status = VM_WAITING
+        vm_status.status_progress = 0
+        vm_status.status_message = "Starting desktop downsize"
+        vm_status.save()
+
+    desktop_type = DesktopType.objects.get_desktop_type(
+        instance.boot_volume.operating_system)
+    queue = django_rq.get_queue('default')
+    queue.enqueue(downsize_vm_worker, instance, desktop_type)
+
+    logger.info(f"{request.user} admin downsizing vm {instance.id}")
 
 
 def db_check(request):

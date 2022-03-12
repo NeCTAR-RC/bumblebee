@@ -1,24 +1,32 @@
 from datetime import datetime, timedelta
 import logging
 
+import cinderclient
 import django_rq
 import novaclient
 
 from django.utils.timezone import utc
 
-from vm_manager.constants import VM_WAITING, \
+from vm_manager.constants import NO_VM, \
+    VOLUME_AVAILABLE, BACKUP_CREATING, BACKUP_AVAILABLE, VM_WAITING, \
     INSTANCE_DELETION_RETRY_WAIT_TIME, INSTANCE_DELETION_RETRY_COUNT, \
-    INSTANCE_CHECK_SHUTOFF_RETRY_WAIT_TIME, INSTANCE_CHECK_SHUTOFF_RETRY_COUNT
+    INSTANCE_CHECK_SHUTOFF_RETRY_WAIT_TIME, \
+    INSTANCE_CHECK_SHUTOFF_RETRY_COUNT, \
+    ARCHIVE_POLL_SECONDS, ARCHIVE_WAIT_SECONDS
 from vm_manager.models import VMStatus
-from vm_manager.utils.utils import get_nectar
+from vm_manager.utils.utils import get_nectar, after_time
 
 from guacamole.models import GuacamoleConnection
 
 
 logger = logging.getLogger(__name__)
 
+# Combine the delete and archive workflows into one module because they
+# are too difficult to separate.  (I tried a dynamic import, but it made
+# it too hard to implement proper unit tests.)
 
-def delete_vm_worker(instance):
+
+def delete_vm_worker(instance, archive=False):
     logger.info(f"About to delete vm at addr: {instance.get_ip_addr()} "
                 f"for user {instance.user.username}")
 
@@ -43,8 +51,8 @@ def delete_vm_worker(instance):
         timedelta(seconds=INSTANCE_CHECK_SHUTOFF_RETRY_WAIT_TIME),
         _check_instance_is_shutoff_and_delete, instance,
         INSTANCE_CHECK_SHUTOFF_RETRY_COUNT,
-        _delete_volume_once_instance_is_deleted,
-        (instance, INSTANCE_DELETION_RETRY_COUNT))
+        _dispose_volume_once_instance_is_deleted,
+        (instance, archive, INSTANCE_DELETION_RETRY_COUNT))
 
 
 def _check_instance_is_shutoff_and_delete(
@@ -64,7 +72,7 @@ def _check_instance_is_shutoff_and_delete(
         logger.info(f"Ran out of retries. {instance} shutoff took too long."
                     f"Proceeding to delete Openstack instance anyway!")
 
-    # Delete the instance
+    # Update status if something is waiting
     vm_status = VMStatus.objects.get_vm_status_by_instance(
         instance, instance.boot_volume.requesting_feature, allow_missing=True)
     if vm_status and vm_status.status == VM_WAITING:
@@ -72,7 +80,7 @@ def _check_instance_is_shutoff_and_delete(
         vm_status.status_message = 'Instance shelving'
         vm_status.save()
 
-    _delete_instance_worker(instance)
+    delete_instance(instance)
 
     # The 'func' will do the next step; e.g. delete the volume
     # or mark the volume as shelved.
@@ -81,7 +89,7 @@ def _check_instance_is_shutoff_and_delete(
         func, *func_args)
 
 
-def _delete_instance_worker(instance):
+def delete_instance(instance):
     n = get_nectar()
     instance.marked_for_deletion = datetime.now(utc)
     instance.save()
@@ -95,33 +103,41 @@ def _delete_instance_worker(instance):
                      f"call for {instance}, it raised {e}")
 
 
-def _delete_volume_once_instance_is_deleted(instance, retries):
+def _dispose_volume_once_instance_is_deleted(instance, archive, retries):
     n = get_nectar()
     try:
         my_instance = n.nova.servers.get(instance.id)
         logger.debug(f"Instance delete status is retries: {retries} "
                      f"openstack instance: {my_instance}")
     except novaclient.exceptions.NotFound:
-        logger.info(f"Instance {instance.id} successfully deleted, "
-                    f"we can delete the volume now!")
         instance.deleted = datetime.now(utc)
         instance.save()
-        delete_volume(instance.boot_volume)
+        if archive:
+            logger.info(f"Instance {instance.id} successfully deleted, "
+                        "we can archive the volume now!")
+            archive_vm_worker(instance.boot_volume,
+                              instance.boot_volume.requesting_feature)
+        else:
+            logger.info(f"Instance {instance.id} successfully deleted, "
+                        "we can delete the volume now!")
+            delete_volume(instance.boot_volume)
         return
     except Exception as e:
-        logger.error(f"something went wrong with the instance get "
+        logger.error("something went wrong with the instance get "
                      f"call for {instance}, it raised {e}")
         return
 
     # Openstack still has the instance, and was able to return it to us
     if retries == 0:
-        _delete_instance_worker(instance)
+        # FIXME ... not sure about this.  Should already have sent the
+        # Openstack server delete request
+        delete_instance(instance)
         scheduler = django_rq.get_scheduler('default')
         # Note in this case I'm using `minutes=` not `seconds=` to give
         # a long wait time that should be sufficient
         scheduler.enqueue_in(
             timedelta(minutes=INSTANCE_DELETION_RETRY_WAIT_TIME),
-            _delete_volume_once_instance_is_deleted, instance,
+            _dispose_volume_once_instance_is_deleted, instance, archive,
             retries - 1)
         return
 
@@ -132,19 +148,99 @@ def _delete_volume_once_instance_is_deleted(instance, retries):
         logger.error(f"{error_message} {instance}")
         return
 
-    _delete_instance_worker(instance)
+    # FIXME ... not sure about this.  Should already have sent the
+    # Openstack server delete request
+    delete_instance(instance)
     scheduler = django_rq.get_scheduler('default')
     scheduler.enqueue_in(
         timedelta(seconds=INSTANCE_DELETION_RETRY_WAIT_TIME),
-        _delete_volume_once_instance_is_deleted, instance, retries - 1)
+        _dispose_volume_once_instance_is_deleted, instance,
+        archive, retries - 1)
 
 
 def delete_volume(volume):
     n = get_nectar()
-    delete_result = str(n.cinder.volumes.delete(volume.id))
+    try:
+        delete_result = str(n.cinder.volumes.delete(volume.id))
+        logger.debug(f"Delete result is {delete_result}")
+    except cinderclient.exceptions.NotFound:
+        pass
     # TODO ... should set to mark for deletion, then wait for delete
     # to complete
     volume.deleted = datetime.now(utc)
     volume.save()
-    logger.debug(f"Delete result is {delete_result}")
-    return
+
+
+def archive_vm_worker(volume, requesting_feature):
+    # This "hides" the volume from the get_volume method allowing
+    # another one to be created / launched without errors.
+    volume.marked_for_deletion = datetime.now(utc)
+    volume.save()
+
+    n = get_nectar()
+    openstack_volume = n.cinder.volumes.get(volume_id=volume.id)
+    if openstack_volume.status != VOLUME_AVAILABLE:
+        msg = (f"Cannot archive a volume with status "
+               f"{openstack_volume.status}: {volume}")
+        logger.error(msg)
+        raise RuntimeWarning(msg)
+
+    backup = n.cinder.backups.create(
+        volume.id, name=f"{volume.id}-archive")
+    logger.info(f'Cinder backup {backup.id} started for volume {volume.id}')
+
+    vm_status = VMStatus.objects.get_vm_status_by_volume(
+        volume, requesting_feature, allow_missing=True)
+    if vm_status:
+        # This allows the user to launch a new desktop immediately.
+        vm_status.status = NO_VM
+        vm_status.save()
+
+    scheduler = django_rq.get_scheduler('default')
+    scheduler.enqueue_in(timedelta(seconds=5), wait_for_backup,
+                         volume, backup.id, after_time(ARCHIVE_WAIT_SECONDS))
+
+
+def wait_for_backup(volume, backup_id, deadline):
+    n = get_nectar()
+    try:
+        details = n.cinder.backups.get(backup_id)
+    except cinderclient.exceptions.NotFound:
+        # The backup has disappeared ...
+        logger.error(f"Backup {backup_id} for volume {volume} not "
+                     "found.  Presumed failed.")
+        return
+
+    if details.status == BACKUP_CREATING:
+        if datetime.now(utc) > deadline:
+            logger.error(f"Backup took too long: backup {backup_id}, "
+                         f"volume {volume}")
+            return
+        scheduler = django_rq.get_scheduler('default')
+        scheduler.enqueue_in(timedelta(seconds=ARCHIVE_POLL_SECONDS),
+                             wait_for_backup, volume, backup_id, deadline)
+    elif details.status == BACKUP_AVAILABLE:
+        logger.info(f"Backup {backup_id} completed for volume {volume}")
+        volume.backup_id = backup_id
+        volume.archived_at = datetime.now(utc)
+        volume.save()
+        logger.info(f"About to delete the archived volume {volume}")
+        delete_volume(volume)
+    else:
+        logger.error(f"Backup {backup_id} for volume {volume} is in "
+                     f"unexpected state {details.status}")
+
+
+def archive_expired_vm(volume, requesting_feature, dry_run=False):
+    try:
+        vm_status = VMStatus.objects.get_vm_status_by_volume(
+            volume, requesting_feature)
+        if vm_status.status != VM_SHELVED:
+            logger.info(f"Skipping archiving of {volume} "
+                        f"in unexpected state: {vm_status}")
+        elif not dry_run:
+            archive_vm_worker(volume, requesting_feature)
+            return True
+    except Exception:
+        logger.exception(f"Cannot retrieve vm_status for {volume}")
+    return False

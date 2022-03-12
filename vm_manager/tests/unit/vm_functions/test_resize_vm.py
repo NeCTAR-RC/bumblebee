@@ -87,7 +87,7 @@ class ResizeVMTests(VMFunctionTestBase):
 
         _, fake_instance = self.build_fake_vol_instance(ip_address='10.0.0.99')
         mock_resize.return_value = "x"
-        resize = ResizeFactory.create(instance=fake_instance)
+        fake_resize = ResizeFactory.create(instance=fake_instance)
 
         self.assertEqual("x", downsize_vm_worker(fake_instance, self.UBUNTU))
         mock_resize.assert_called_once_with(
@@ -100,7 +100,7 @@ class ResizeVMTests(VMFunctionTestBase):
         )
         mock_logger.error_assert_not_called()
 
-        resize = Resize.objects.get(pk=resize.pk)
+        resize = Resize.objects.get(pk=fake_resize.pk)
         self.assertIsNotNone(resize.reverted)
 
     @patch('vm_manager.models.logger')

@@ -7,7 +7,7 @@ from django.utils.timezone import utc
 from researcher_workspace.utils import send_notification, format_notification
 from researcher_desktop.models import DesktopType
 from vm_manager.models import Instance, Volume, Resize
-from vm_manager.vm_functions.archive_vm import archive_expired_vm
+from vm_manager.vm_functions.delete_vm import archive_expired_vm
 from vm_manager.vm_functions.resize_vm import downsize_expired_vm
 from vm_manager.vm_functions.shelve_vm import shelve_expired_vm
 

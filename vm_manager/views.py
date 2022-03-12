@@ -8,9 +8,8 @@ from operator import itemgetter
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.forms.models import model_to_dict
-from django.http import HttpResponseRedirect, Http404
+from django.http import Http404
 from django.template import loader
-from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.timezone import utc
 from django.views.decorators.csrf import csrf_exempt
@@ -127,41 +126,6 @@ def delete_vm(user, vm_id, requesting_feature) -> str:
     return str(vm_status)
 
 
-@login_required(login_url='login')
-def admin_delete_vm(request, vm_id):
-    if not request.user.is_superuser:
-        logger.error(f"Attempted admin delete of {vm_id} by "
-                     f"non-admin user {request.user}")
-        raise Http404()
-
-    try:
-        instance = Instance.objects.get(id=vm_id)
-    except Instance.DoesNotExist:
-        instance = None
-    if not instance or instance.deleted:
-        logger.debug(f"Admin delete on missing or deleted Instance {vm_id}")
-        return
-
-    vm_status = VMStatus.objects.get_vm_status_by_instance(
-        instance, None, allow_missing=True)
-
-    logger.info(f"Setting mark for deletion on Instance {vm_id} "
-                f"and Volume {instance.boot_volume.id}")
-    if vm_status:
-        vm_status.status = VM_DELETED
-        vm_status.save()
-
-    instance.set_marked_for_deletion()
-    instance.boot_volume.set_marked_for_deletion()
-
-    queue = django_rq.get_queue('default')
-    queue.enqueue(delete_vm_worker, instance)
-
-    logger.info(f"{request.user} admin deleted vm {vm_id}")
-    return HttpResponseRedirect(reverse('admin:vm_manager_instance_change',
-                                        args=(vm_id,)))
-
-
 def shelve_vm(user, vm_id, requesting_feature) -> str:
     try:
         vm_status = VMStatus.objects.get_vm_status_by_untrusted_vm_id(
@@ -185,7 +149,7 @@ def shelve_vm(user, vm_id, requesting_feature) -> str:
     vm_status.instance.set_marked_for_deletion()
 
     queue = django_rq.get_queue('default')
-    queue.enqueue(shelve_vm_worker, vm_status.instance, requesting_feature)
+    queue.enqueue(shelve_vm_worker, vm_status.instance)
 
     return str(vm_status)
 

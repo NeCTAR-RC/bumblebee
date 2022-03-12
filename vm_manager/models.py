@@ -466,7 +466,8 @@ class VMStatusManager(models.Manager):
             logger.error(error)
             raise error
 
-    def get_vm_status_by_volume(self, volume, requesting_feature):
+    def get_vm_status_by_volume(self, volume, requesting_feature,
+                                allow_missing=False):
         if volume.requesting_feature != requesting_feature:
             logger.error(
                 f"Trying to get a vm that doesn't belong to "
@@ -477,14 +478,15 @@ class VMStatusManager(models.Manager):
         try:
             instance = Instance.objects.filter(boot_volume=volume) \
                                        .latest("created")
-        except Exception as e:
+        except Instance.DoesNotExist as e:
             logger.error(
                 f"Trying to get_vm_status_by_volume {volume}, "
                 f"could not find an instance with that volume,"
                 f"raised error {e}")
             raise e
 
-        return self.get_vm_status_by_instance(instance, requesting_feature)
+        return self.get_vm_status_by_instance(
+            instance, requesting_feature, allow_missing=allow_missing)
 
     # vm_id is untrusted because it comes from the user, so should
     # be handled with care
