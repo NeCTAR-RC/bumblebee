@@ -8,6 +8,10 @@ from guacamole import models as guac_models
 
 logger = logging.getLogger(__name__)
 
+# Roles to determine user level
+ADMIN_ROLES = ['admin', 'coreservices']
+STAFF_ROLES = ADMIN_ROLES + ['staff']
+
 
 class NectarAuthBackend(OIDCAuthenticationBackend):
 
@@ -32,8 +36,8 @@ class NectarAuthBackend(OIDCAuthenticationBackend):
 
         # Automatically assign staff/admin from Keycloak
         roles = claims.get('roles', [])
-        user.is_staff = any(i in ['admin', 'staff'] for i in roles)
-        user.is_superuser = 'admin' in roles
+        user.is_staff = any(i in STAFF_ROLES for i in roles)
+        user.is_superuser = any(i in ADMIN_ROLES for i in roles)
 
         # Create Guacamole user objects
         guac_entity = guac_models.GuacamoleEntity()
@@ -62,8 +66,8 @@ class NectarAuthBackend(OIDCAuthenticationBackend):
 
         # Automatically assign staff/admin from Keycloak
         roles = claims.get('roles', [])
-        user.is_staff = any(i in ['admin', 'staff'] for i in roles)
-        user.is_superuser = 'admin' in roles
+        user.is_staff = any(i in STAFF_ROLES for i in roles)
+        user.is_superuser = any(i in ADMIN_ROLES for i in roles)
 
         # TODO(andy): Update Guac objects too?
 
