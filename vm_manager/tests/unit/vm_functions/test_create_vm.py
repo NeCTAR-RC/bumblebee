@@ -231,9 +231,9 @@ class CreateVMTests(VMFunctionTestBase):
         fake.cinder.volumes.create.assert_called_once_with(
             name="abcdef",
             source_volid=self.UBUNTU_source_volume_id,
-            size=fake.VM_PARAMS['size'],
+            size=20,
             availability_zone=self.zone.name,
-            metadata=fake.VM_PARAMS['metadata_volume'])
+            metadata={'readonly': 'False'})
         fake.cinder.volumes.set_bootable.assert_called_once_with(
             volume=FakeVolume(id=result.id), flag=True)
         vm_status = VMStatus.objects.get_latest_vm_status(
@@ -337,25 +337,27 @@ class CreateVMTests(VMFunctionTestBase):
         mock_gen_password.assert_called_once()
         mock_gen_hostname.assert_called_once()
 
-        fake = get_nectar()
-        expected_mapping = copy.deepcopy(
-            fake.VM_PARAMS['block_device_mapping'])
-        expected_mapping[0]["uuid"] = fake_volume.id
+        expected_mapping = [{
+            'source_type': "volume",
+            'destination_type': 'volume',
+            'delete_on_termination': False,
+            'uuid': fake_volume.id,
+            'boot_index': '0',
+        }]
 
         fake.nova.servers.create.assert_called_once_with(
+            name="foobar",
+            image='',
+            flavor=self.UBUNTU.default_flavor.id,
             userdata="RENDERED_USER_DATA",
             security_groups=self.UBUNTU.security_groups,
-            key_name=settings.OS_KEYNAME,
-            name="foobar",
-            flavor=self.UBUNTU.default_flavor.id,
-            image='',
-            block_device_mapping_v1=None,
             block_device_mapping_v2=expected_mapping,
-            nics=fake.VM_PARAMS['list_net'],
+            nics=[{'net-id': self.zone.network_id}],
             availability_zone=self.zone.name,
             meta={'allow_user': self.user.username,
                   'environment': settings.ENVIRONMENT_NAME,
-                  'requesting_feature': self.UBUNTU.feature.name}
+                  'requesting_feature': self.UBUNTU.feature.name},
+            key_name=settings.OS_KEYNAME,
         )
 
     @patch('vm_manager.utils.utils.Nectar', new=FakeNectar)

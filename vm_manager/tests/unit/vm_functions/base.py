@@ -22,8 +22,9 @@ class VMFunctionTestBase(TestCase):
         self.UBUNTU_source_volume_id = uuid.uuid4()
         self.CENTOS = get_desktop_type('centos')
         self.user = UserFactory.create()
-        self.zone = AvailabilityZoneFactory.create(name="a_zone",
-                                                   zone_weight=1)
+        self.zone = AvailabilityZoneFactory.create(
+            name="a_zone", zone_weight=1,
+            network_id=uuid.uuid4())
 
     def build_fake_volume(self, id=None):
         if id is None:

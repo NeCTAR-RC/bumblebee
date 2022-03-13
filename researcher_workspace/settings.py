@@ -153,7 +153,6 @@ OS_APPLICATION_CREDENTIAL_ID = get_setting('OS_APPLICATION_CREDENTIAL_ID')
 OS_APPLICATION_CREDENTIAL_SECRET = get_setting('OS_APPLICATION_CREDENTIAL_SECRET')
 
 OS_AUTH_URL = get_setting('OS_AUTH_URL', 'https://keystone.rc.nectar.org.au:5000/v3/')
-OS_NETWORK = get_setting('OS_NETWORK', 'bumblebee')
 OS_SECGROUPS = get_setting('OS_SECGROUPS', 'bumblebee').split(',')
 OS_KEYNAME = get_setting('OS_KEYNAME')
 
@@ -296,7 +295,8 @@ SECRET_KEY = get_setting('SECRET_KEY', 'secret')
 
 SITE_URL = get_setting('SITE_URL', 'http://localhost:8000')
 NOTIFY_URL = get_setting('NOTIFY_URL', SITE_URL)
-GUACAMOLE_URL = get_setting('GUACAMOLE_URL', SITE_URL + '/guacamole')
+
+GUACAMOLE_URL_TEMPLATE = get_setting('GUACAMOLE_URL_TEMPLATE')
 
 OIDC_RP_CLIENT_SECRET = get_setting('OIDC_RP_CLIENT_SECRET')
 

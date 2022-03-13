@@ -55,19 +55,3 @@ class FakeNectar(object):
         self.cinder.volumes.list = Mock(return_value=VOLUMES)
         self.cinder.volumes.create = Mock(
             return_value=FakeVolume(id=UUID_1))
-
-        net_id = UUID_2
-        self.VM_PARAMS = {
-            "size": 20,
-            "metadata_volume": {'readonly': 'False'},
-            "block_device_mapping": [{
-                'source_type': "volume",
-                'destination_type': 'volume',
-                'delete_on_termination': False,
-                'uuid': None,
-                'boot_index': '0',
-                'volume_size': 20,
-            }],
-            "id_net": net_id,
-            "list_net": [{'net-id': net_id}],
-        }

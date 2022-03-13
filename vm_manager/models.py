@@ -3,7 +3,7 @@ import logging
 import nanoid
 import string
 
-
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.http import Http404
@@ -319,7 +319,13 @@ class Instance(CloudResource):
     def get_url(self):
         # TODO: Set some sort of error if no guac connection set
         self.create_guac_connection()
-        return guac_utils.get_direct_url(self.guac_connection)
+        # e.g. https://bumblebee-guacamole-melbourne-qh2.bumblebee.cloud.edu.au/#/client/MQBjAG15c3Fs
+        url = settings.GUACAMOLE_URL_TEMPLATE.format(
+            env=settings.ENVIRONMENT_NAME,
+            zone=self.boot_volume.zone.lower(),  # lowercase for FQDN
+            path=guac_utils.get_connection_path(self.guac_connection)
+        )
+        return url
 
     def get_status(self):
         n = get_nectar()

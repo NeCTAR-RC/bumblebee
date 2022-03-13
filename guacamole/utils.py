@@ -9,7 +9,7 @@ from .models import GuacamoleConnectionParameter, GuacamoleConnectionPermission
 from django.conf import settings
 
 
-def get_direct_url(conn):
+def get_connection_path(conn):
     # Guacamole uses a special format for generating direct URLs to connections
     # https://sourceforge.net/p/guacamole/discussion/1110834/thread/fb609070
     #
@@ -23,7 +23,7 @@ def get_direct_url(conn):
     joined_components = '\x00'.join(components).encode('utf-8')
     hash_str = base64.b64encode(joined_components).decode('utf-8')
     quote_hash_str = urllib.parse.quote(hash_str)
-    return f'{settings.GUACAMOLE_URL}/#/client/{quote_hash_str}'
+    return f'#/client/{quote_hash_str}'
 
 
 def quick_rdp_conn(username, password, hostname):
