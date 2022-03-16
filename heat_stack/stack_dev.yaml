@@ -51,8 +51,6 @@ parameters:
 
 resources:
 
-resources:
-
   secgroup:
     type: OS::Neutron::SecurityGroup
     properties:
@@ -129,6 +127,11 @@ resources:
       cloud_config:
         timezone: Australia/Melbourne
         write_files:
+        - path: /var/lib/nectar/.ssh/config
+          owner: nectar
+          content: |
+            Host *
+                ForwardAgent yes
         - path: /etc/ansible/facts.d/bumblebee.fact
           content:
             str_replace:

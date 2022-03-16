@@ -80,6 +80,12 @@ resources:
     properties:
       cloud_config:
         timezone: Australia/Melbourne
+        write_files:
+        - path: /var/lib/nectar/.ssh/config
+          owner: nectar
+          content: |
+            Host *
+                ForwardAgent yes
         runcmd:
         - systemctl disable --now guacd
         - systemctl disable --now tomcat9
