@@ -43,6 +43,9 @@ parameters:
     default: bumblebee
   db_password:
     type: string
+  redirect_uri:
+    type: string
+
 
 resources:
 
@@ -72,7 +75,7 @@ resources:
                 openid-jwks-endpoint: https://__oidc_server__/auth/realms/nectar/protocol/openid-connect/certs
                 openid-issuer: https://__oidc_server__/auth/realms/nectar
                 openid-client-id: __client_id__
-                openid-redirect-uri: https://__hostname__.__zone__/
+                openid-redirect-uri: __redirect_uri__
                 openid-username-claim-type: email
                 openid-scope: openid email profile
                 openid-allowed-clock-skew: 500
@@ -82,21 +85,12 @@ resources:
                 mysql-database: __db_name__
                 mysql-username: __db_username__
                 mysql-password: __db_password__
+                mysql-driver: mariadb
               params:
                 __oidc_server__: { get_param: oidc_server }
                 __client_id__:
                   list_join: [ '-', [{ get_param: environment_name }, 'guacamole', { get_param: availability_zone }] ]
-                __hostname__:
-                  yaql:
-                    expression: '$.data.value.replace("_", "-").toLower()'
-                    data:
-                      value:
-                        list_join: [ '-', [{ get_param: environment_name }, 'guacamole', { get_param: availability_zone }] ]
-                __zone__:
-                  yaql:
-                    expression: 'regex("\.$").replace($.data.value, "")'
-                    data:
-                      value: { get_param: zone }
+                __redirect_uri__: { get_param: redirect_uri }
                 __db_hostname__: { get_param: db_hostname }
                 __db_name__: { get_param: db_name }
                 __db_username__: { get_param: db_username }
@@ -171,7 +165,7 @@ resources:
       delay: 3
       timeout: 3
       max_retries: 3
-      url_path: /relocateParameters.js
+      url_path: /
       pool: { get_resource: pool }
 
   loadbalancer_floating_ip:
