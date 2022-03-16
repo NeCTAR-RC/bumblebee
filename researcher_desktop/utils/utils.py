@@ -64,14 +64,14 @@ def do_get_best_zone(email, desktop_type, chosen_zone) -> AvailabilityZone:
     # with respect to restricting access.
     zones = desktop_type.restrict_to_zones.all()
     if zones.count():
+        zones = zones.filter(enabled=True).exclude(network_id=None)
         if chosen_zone:
-            return zones.filter(enabled=True) \
-                        .filter(name=chosen_zone).first()
+            return zones.filter(name=chosen_zone).first()
         else:
-            return zones.filter(enabled=True) \
-                        .order_by('zone_weight', 'name').first()
+            return zones.order_by('zone_weight', 'name').first()
 
-    zones = AvailabilityZone.objects.filter(enabled=True)
+    zones = AvailabilityZone.objects.filter(enabled=True) \
+                                    .exclude(network_id=None)
     if chosen_zone:
         zones = zones.filter(name=chosen_zone)
     elif zones.count() > 1:
@@ -92,4 +92,6 @@ def get_applicable_zones(desktop_type):
     zones = desktop_type.restrict_to_zones.all()
     if not zones:
         zones = AvailabilityZone.objects.all()
-    return list(zones.filter(enabled=True).order_by('zone_weight', 'name'))
+    return list(zones.filter(enabled=True)
+                .exclude(network_id=None)
+                .order_by('zone_weight', 'name'))

@@ -17,7 +17,11 @@ class DesktopRequestTests(TestCase):
         super().setUp(*args, **kwargs)
         self.desktop_type = DesktopType.objects.get(id='ubuntu')
         self.qriscloud = AvailabilityZone.objects.get(name='QRIScloud')
+        self.qriscloud.network_id = uuid.uuid4()
+        self.qriscloud.save()
         self.melbourne = AvailabilityZone.objects.get(name='melbourne-qh2')
+        self.melbourne.network_id = uuid.uuid4()
+        self.melbourne.save()
         self.user = UserFactory.create(terms_version=settings.TERMS_VERSION)
         self.feature = desktops_feature()
 
