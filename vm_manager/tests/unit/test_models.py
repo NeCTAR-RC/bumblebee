@@ -373,18 +373,9 @@ class InstanceModelTests(VMManagerModelTestBase):
             Instance.objects.get_instance_by_untrusted_vm_id(
                 id, self.user, fake_feature)
         mock_logger.error.assert_called_with(
-            f"Trying to get a vm that doesn't belong "
+            "Trying to get a vm that doesn't belong "
             f"to {fake_feature} with vm_id: {id}. "
             f"This vm belongs to {self.feature}")
-
-        with self.assertRaises(Http404):
-            instance = Instance.objects.get(id=id)
-            instance.set_marked_for_deletion()
-            Instance.objects.get_instance_by_untrusted_vm_id(
-                id, self.user, self.feature)
-        mock_logger.error.assert_called_with(
-            f"Trying to get a vm that is marked for deletion "
-            f"- vm_id: {id}, called by {self.user}")
 
         with self.assertRaises(Http404):
             instance = Instance.objects.get(id=id)
@@ -393,8 +384,18 @@ class InstanceModelTests(VMManagerModelTestBase):
             Instance.objects.get_instance_by_untrusted_vm_id(
                 id, self.user, self.feature)
         mock_logger.error.assert_called_with(
-            f"Trying to get a vm that has been deleted with "
+            "Trying to get a vm that has been deleted with "
             f"vm_id: {id}, called by {self.user}")
+
+        instance = Instance.objects.get(id=id)
+        instance.deleted = None
+        instance.save()
+        instance.set_marked_for_deletion()
+        Instance.objects.get_instance_by_untrusted_vm_id(
+            id, self.user, self.feature)
+        mock_logger.error.assert_called_with(
+            "Got a vm that is marked for deletion "
+            f"- vm_id: {id}, called by {self.user}")
 
 
 class ResizeModelTests(VMManagerModelTestBase):

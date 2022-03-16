@@ -234,7 +234,7 @@ class InstanceManager(models.Manager):
             instance = self.get(id=vm_id)
         except ValueError:
             logger.error(
-                f"Value error trying to get a VM with "
+                "Value error trying to get a VM with "
                 f"vm_id: {vm_id}, called by {user}")
             raise Http404
         except ValidationError as e:
@@ -244,25 +244,25 @@ class InstanceManager(models.Manager):
             raise Http404
         except Instance.DoesNotExist:
             logger.error(
-                f"Trying to get a vm that doesn't exist "
+                "Trying to get a vm that doesn't exist "
                 f"with vm_id: {vm_id}, called by {user}")
             raise Http404
         if instance.boot_volume.requesting_feature != requesting_feature:
             logger.error(
-                f"Trying to get a vm that doesn't belong "
+                "Trying to get a vm that doesn't belong "
                 f"to {requesting_feature} with vm_id: {vm_id}. This vm "
                 f"belongs to {instance.boot_volume.requesting_feature}")
             raise Http404
-        if instance.marked_for_deletion:
-            if instance.deleted:
-                logger.error(
-                    f"Trying to get a vm that has been deleted "
-                    f"with vm_id: {vm_id}, called by {user}")
-            else:
-                logger.error(
-                    f"Trying to get a vm that is marked for "
-                    f"deletion - vm_id: {vm_id}, called by {user}")
+        if instance.deleted:
+            logger.error(
+                "Trying to get a vm that has been deleted "
+                f"with vm_id: {vm_id}, called by {user}")
             raise Http404
+        if instance.marked_for_deletion:
+            # Allow this ... but complain
+            logger.error(
+                f"Got a vm that is marked for deletion - vm_id: {vm_id}, "
+                f"called by {user}")
         return instance
 
 
