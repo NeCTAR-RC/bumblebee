@@ -1,6 +1,7 @@
-from django.test import TestCase
+from uuid import uuid4
 
 from django.http import Http404
+from django.test import TestCase
 
 from researcher_desktop.tests.factories import DomainFactory, \
     AvailabilityZoneFactory, DesktopTypeFactory
@@ -30,10 +31,12 @@ class UtilsTests(TestCase):
         self.assertIsNotNone(desktops_feature())
 
     def _populate_zones(self):
-        zone_1 = AvailabilityZoneFactory.create(name="az1", zone_weight=1)
-        zone_2 = AvailabilityZoneFactory.create(name="az2", zone_weight=3)
-        zone_3 = AvailabilityZoneFactory.create(name="azd", zone_weight=2,
-                                                enabled=False)
+        zone_1 = AvailabilityZoneFactory.create(
+            name="az1", zone_weight=1, network_id=uuid4())
+        zone_2 = AvailabilityZoneFactory.create(
+            name="az2", zone_weight=3, network_id=uuid4())
+        zone_3 = AvailabilityZoneFactory.create(
+            name="azd", zone_weight=2, network_id=uuid4(), enabled=False)
         domain_1 = DomainFactory.create(name="dom1.com", zone=zone_1)
         domain_2 = DomainFactory.create(name="dom2.com", zone=zone_1)
         domain_3 = DomainFactory.create(name="dom3.com", zone=zone_2)
@@ -81,7 +84,8 @@ class UtilsTests(TestCase):
 
         # Tests for a DesktopType without any zone restriction
         dt = DesktopTypeFactory.create(feature=desktops_feature())
-        all_zones = set(AvailabilityZone.objects.filter(enabled=True))
+        all_zones = set(AvailabilityZone.objects.filter(enabled=True).
+                        exclude(network_id=None))
 
         zones = get_applicable_zones(dt)
         self.assertEqual(all_zones, set(zones))
