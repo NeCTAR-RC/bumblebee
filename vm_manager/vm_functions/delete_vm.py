@@ -6,10 +6,9 @@ import novaclient
 
 from django.utils.timezone import utc
 
-from vm_manager.constants import INSTANCE_DELETION_RETRY_WAIT_TIME, \
-    INSTANCE_DELETION_RETRY_COUNT, \
-    INSTANCE_CHECK_SHUTOFF_RETRY_WAIT_TIME, \
-    INSTANCE_CHECK_SHUTOFF_RETRY_COUNT
+from vm_manager.constants import VM_WAITING, \
+    INSTANCE_DELETION_RETRY_WAIT_TIME, INSTANCE_DELETION_RETRY_COUNT, \
+    INSTANCE_CHECK_SHUTOFF_RETRY_WAIT_TIME, INSTANCE_CHECK_SHUTOFF_RETRY_COUNT
 from vm_manager.models import VMStatus
 from vm_manager.utils.utils import get_nectar
 
@@ -67,12 +66,12 @@ def _check_instance_is_shutoff_and_delete(
 
     # Delete the instance
     vm_status = VMStatus.objects.get_vm_status_by_instance(
-        instance, instance.boot_volume.requesting_feature)
-    vm_status.status_progress = 66
-    # Hack: since this won't be displayed when we are deleting a
-    # desktop, use the progress message for the shelving case.
-    vm_status.status_message = 'Instance shelving'
-    vm_status.save()
+        instance, instance.boot_volume.requesting_feature, allow_missing=True)
+    if vm_status and vm_status.status == VM_WAITING:
+        vm_status.status_progress = 66
+        vm_status.status_message = 'Instance shelving'
+        vm_status.save()
+
     _delete_instance_worker(instance)
 
     # The 'func' will do the next step; e.g. delete the volume

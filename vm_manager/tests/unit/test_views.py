@@ -915,10 +915,7 @@ class VMManagerViewTests(TestCase):
             f"non-admin user admin-joe")
 
         admin_user.is_superuser = True
-        self.assertEqual(
-            f"VMStatus for user admin-joe, feature admin, "
-            f"instance {vm_id} is missing. Cannot admin delete VM.",
-            admin_delete_vm(request, vm_id))
+        admin_delete_vm(request, vm_id)
 
         mock_rq.get_queue.assert_not_called()
         mock_queue = Mock()

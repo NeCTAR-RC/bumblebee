@@ -126,6 +126,35 @@ class DeleteVMTests(VMFunctionTestBase):
         self.assertEqual(66, updated_status.status_progress)
         self.assertIsNotNone(updated_status.status_message)
 
+    @patch('vm_manager.models.get_nectar')
+    @patch('vm_manager.vm_functions.delete_vm.django_rq')
+    @patch('vm_manager.vm_functions.delete_vm.logger')
+    @patch('vm_manager.vm_functions.delete_vm._delete_instance_worker')
+    def test_check_instance_shutoff_3(self, mock_worker, mock_logger,
+                                      mock_rq, mock_get_nectar):
+        # This is the case where there is no VMStatus ...
+        mock_scheduler = Mock()
+        mock_rq.get_scheduler.return_value = mock_scheduler
+        _, fake_instance = self.build_fake_vol_instance(ip_address='10.0.0.99')
+        funky = Fake()
+        funky_args = (1, 2)
+
+        fake_nectar = FakeNectar()
+        mock_get_nectar.return_value = fake_nectar
+        fake_nectar.nova.servers.get.return_value = FakeServer(status=ACTIVE)
+
+        _check_instance_is_shutoff_and_delete(
+            fake_instance, 0, funky, funky_args)
+
+        mock_rq.get_scheduler.assert_called_once_with("default")
+        mock_logger.info.assert_called_with(
+            f"Ran out of retries. {fake_instance} shutoff took too long."
+            f"Proceeding to delete Openstack instance anyway!")
+        mock_worker.assert_called_once_with(fake_instance)
+        mock_scheduler.enqueue_in.assert_called_once_with(
+            timedelta(seconds=INSTANCE_DELETION_RETRY_WAIT_TIME),
+            funky, *funky_args)
+
     @patch('vm_manager.vm_functions.delete_vm.get_nectar')
     @patch('vm_manager.vm_functions.delete_vm.logger')
     def test_delete_instance_worker(self, mock_logger, mock_get_nectar):

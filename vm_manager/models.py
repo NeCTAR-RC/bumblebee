@@ -234,7 +234,7 @@ class InstanceManager(models.Manager):
             instance = self.get(id=vm_id)
         except ValueError:
             logger.error(
-                f"Value error trying to get a VM with "
+                "Value error trying to get a VM with "
                 f"vm_id: {vm_id}, called by {user}")
             raise Http404
         except ValidationError as e:
@@ -244,25 +244,25 @@ class InstanceManager(models.Manager):
             raise Http404
         except Instance.DoesNotExist:
             logger.error(
-                f"Trying to get a vm that doesn't exist "
+                "Trying to get a vm that doesn't exist "
                 f"with vm_id: {vm_id}, called by {user}")
             raise Http404
         if instance.boot_volume.requesting_feature != requesting_feature:
             logger.error(
-                f"Trying to get a vm that doesn't belong "
+                "Trying to get a vm that doesn't belong "
                 f"to {requesting_feature} with vm_id: {vm_id}. This vm "
                 f"belongs to {instance.boot_volume.requesting_feature}")
             raise Http404
-        if instance.marked_for_deletion:
-            if instance.deleted:
-                logger.error(
-                    f"Trying to get a vm that has been deleted "
-                    f"with vm_id: {vm_id}, called by {user}")
-            else:
-                logger.error(
-                    f"Trying to get a vm that is marked for "
-                    f"deletion - vm_id: {vm_id}, called by {user}")
+        if instance.deleted:
+            logger.error(
+                "Trying to get a vm that has been deleted "
+                f"with vm_id: {vm_id}, called by {user}")
             raise Http404
+        if instance.marked_for_deletion:
+            # Allow this ... but complain
+            logger.error(
+                f"Got a vm that is marked for deletion - vm_id: {vm_id}, "
+                f"called by {user}")
         return instance
 
 
@@ -443,18 +443,21 @@ class VMStatusManager(models.Manager):
 
     # TODO - The 'requesting_feature' argument is redundant (AFAIK)
     # In fact it is probably redundant on the model class too.
-    def get_vm_status_by_instance(self, instance, requesting_feature):
+    def get_vm_status_by_instance(self, instance, requesting_feature,
+                                  allow_missing=False):
         try:
-            vm_status = self.get(instance=instance,
-                                 requesting_feature=requesting_feature)
+            vm_status = self.get(instance=instance)
             return vm_status
         except VMStatus.DoesNotExist as e:
-            logger.error(e)
-            error = VMStatus.DoesNotExist(
-                f"No vm_statuses found in the database "
-                f"with instance={instance}")
-            logger.error(error)
-            raise error
+            if allow_missing:
+                return None
+            else:
+                logger.error(e)
+                error = VMStatus.DoesNotExist(
+                    f"No vm_statuses found in the database "
+                    f"with instance={instance}")
+                logger.error(error)
+                raise error
         except VMStatus.MultipleObjectsReturned as e:
             logger.error(e)
             error = VMStatus.MultipleObjectsReturned(

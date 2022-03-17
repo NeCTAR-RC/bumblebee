@@ -134,24 +134,28 @@ def admin_delete_vm(request, vm_id):
                      f"non-admin user {request.user}")
         raise Http404()
 
-    # TODO - Should be able to tidy up multiple VMstatus if found
     try:
-        vm_status = VMStatus.objects.get(instance=vm_id)
-    except VMStatus.DoesNotExist:
-        return _wrong_state_message(
-             "admin delete", request.user,
-            feature="admin", vm_id=vm_id)
+        instance = Instance.objects.get(id=vm_id)
+    except Instance.DoesNotExist:
+        instance = None
+    if not instance or instance.deleted:
+        logger.debug(f"Admin delete on missing or deleted Instance {vm_id}")
+        return
 
-    logger.info(f"Performing Admin delete on {vm_id} "
-                f"Mark for Deletion is set on the Instance "
-                f"and Volume {vm_status.instance.boot_volume.id}")
-    vm_status.status = VM_DELETED
-    vm_status.save()
-    vm_status.instance.set_marked_for_deletion()
-    vm_status.instance.boot_volume.set_marked_for_deletion()
+    vm_status = VMStatus.objects.get_vm_status_by_instance(
+        instance, None, allow_missing=True)
+
+    logger.info(f"Setting mark for deletion on Instance {vm_id} "
+                f"and Volume {instance.boot_volume.id}")
+    if vm_status:
+        vm_status.status = VM_DELETED
+        vm_status.save()
+
+    instance.set_marked_for_deletion()
+    instance.boot_volume.set_marked_for_deletion()
 
     queue = django_rq.get_queue('default')
-    queue.enqueue(delete_vm_worker, vm_status.instance)
+    queue.enqueue(delete_vm_worker, instance)
 
     logger.info(f"{request.user} admin deleted vm {vm_id}")
     return HttpResponseRedirect(reverse('admin:vm_manager_instance_change',
