@@ -1,4 +1,3 @@
-import copy
 from datetime import datetime, timedelta
 import uuid
 
@@ -291,7 +290,8 @@ class CreateVMTests(VMFunctionTestBase):
 
         fake.cinder.volumes.list.assert_called_once_with(
             search_opts={'name~': self.UBUNTU.image_name,
-                         'availability_zone': self.zone.name})
+                         'availability_zone': self.zone.name,
+                         'status': VOLUME_AVAILABLE})
 
         fake.cinder.volumes.list.reset_mock()
         id2 = str(uuid.uuid4())

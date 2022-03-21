@@ -117,7 +117,8 @@ def _get_source_volume_id(desktop_type, zone):
     n = get_nectar()
     res = n.cinder.volumes.list(
         search_opts={'name~': desktop_type.image_name,
-                     'availability_zone': zone.name})
+                     'availability_zone': zone.name,
+                     'status': VOLUME_AVAILABLE})
     # The 'name~' is supposed to be a "fuzzy match", but it doesn't work
     # as expected.  (Maybe it is a Cinder config thing?)  At any rate,
     # even if it did work, we still need to do our own filtering to
