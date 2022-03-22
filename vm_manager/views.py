@@ -390,7 +390,7 @@ def get_vm_status(user, desktop_type):
             # Time up waiting
             logger.error(f"get_vm_status: timed out after {vm_status.wait_time}")
             if vm_status.instance:
-                vm_status.error(f"Instance {instance.id} not ready "
+                vm_status.error(f"Instance {vm_status.instance.id} not ready "
                                 f"at {vm_status.wait_time} timeout")
             else:
                 vm_status.error(f"Instance is missing at timeout {vm_status.id}, "
