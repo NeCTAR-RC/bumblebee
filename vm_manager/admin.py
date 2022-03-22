@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib import admin
 from django.http import HttpResponseRedirect
 from django.urls import reverse
@@ -82,6 +83,9 @@ class ExpirationAdmin(admin.ModelAdmin):
     ordering = ('-id', )
     list_display = ('__str__',)
 
+    def has_delete_permission(self, request, obj=None):
+        return settings.DEBUG
+
 
 class Expirable(object):
     '''Mixin class that provides a more useful rendering of the
@@ -92,7 +96,7 @@ class Expirable(object):
         if obj.expiration:
             return mark_safe(
                 '<div style="white-space: nowrap">{}</div>'
-                '<br><a href="{}" class="button">Modify</a>'.format(
+                '<br><a href="{}" class="button">Open</a>'.format(
                     localize(localtime(obj.expiration.expires)),
                     reverse("admin:vm_manager_expiration_change",
                             args=(obj.expiration.pk,))
@@ -138,17 +142,6 @@ class InstanceAdmin(ResourceAdmin):
         'boot_volume',
     )
 
-    def get_requesting_feature(self, obj):
-        return obj.boot_volume.requesting_feature
-
-    get_requesting_feature.short_description = 'requesting feature'
-
-    #    def has_delete_permission(self, request, obj=None):
-    #        if obj and isinstance(obj, Instance):
-    #            return not obj.marked_for_deletion
-    #        return False
-    #
-
     delete_confirmation_template = \
         "admin/vm_manager/instance/task/delete_confirmation.html"
 
@@ -159,6 +152,16 @@ class InstanceAdmin(ResourceAdmin):
         "Archive instances and associated volumes"
     admin_delete_shelved_instances.short_description = \
         "Delete volumes for shelved instances"
+
+    def get_requesting_feature(self, obj):
+        return obj.boot_volume.requesting_feature
+
+    get_requesting_feature.short_description = 'requesting feature'
+
+    def has_delete_permission(self, request, obj=None):
+        if obj and isinstance(obj, Instance):
+            return not obj.marked_for_deletion
+        return settings.DEBUG
 
 
 class InstanceInline(admin.StackedInline):
@@ -181,9 +184,6 @@ class VolumeAdmin(ResourceAdmin):
         admin_archive_shelved_volumes, admin_delete_shelved_volumes]
     inlines = (InstanceInline, )
 
-#    def has_delete_permission(self, request, obj=None):
-#        return False
-
     list_display = ResourceAdmin.list_display + (
         'operating_system',
         'image',
@@ -195,6 +195,9 @@ class VolumeAdmin(ResourceAdmin):
         "Delete volumes for shelved instances"
     admin_archive_shelved_volumes.short_description = \
         "Archive volumes for shelved instances"
+
+    def has_delete_permission(self, request, obj=None):
+        return settings.DEBUG
 
 
 class ResizeAdmin(admin.ModelAdmin, Expirable):
@@ -214,8 +217,8 @@ class ResizeAdmin(admin.ModelAdmin, Expirable):
     admin_downsize_resizes.short_description = \
         "Downsize supersized instances"
 
-#    def has_delete_permission(self, request, obj=None):
-#        return False
+    def has_delete_permission(self, request, obj=None):
+        return settings.DEBUG
 
 
 class VMStatusAdmin(admin.ModelAdmin):
@@ -253,8 +256,8 @@ class VMStatusAdmin(admin.ModelAdmin):
             return HttpResponseRedirect(".")
         return super().response_change(request, obj)
 
-#    def has_delete_permission(self, request, obj=None):
-#        return False
+    def has_delete_permission(self, request, obj=None):
+        return settings.DEBUG
 
 
 admin.site.register(Instance, InstanceAdmin)
