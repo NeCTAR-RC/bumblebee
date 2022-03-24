@@ -357,8 +357,8 @@ class Instance(CloudResource):
              for field in self.boot_volume._meta.fields]))
 
     def __str__(self):
-        return (f" Instance {self.id} of {self.boot_volume.operating_system}"
-                f" for {self.user}")
+        return (f"Instance {self.id} of {self.boot_volume.operating_system} "
+                f"for {self.user}")
 
 
 class ResizeManager(models.Manager):
