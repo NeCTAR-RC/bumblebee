@@ -40,20 +40,23 @@ class NectarAuthBackend(OIDCAuthenticationBackend):
         user.is_superuser = any(i in ADMIN_ROLES for i in roles)
 
         # Create Guacamole user objects
-        guac_entity = guac_models.GuacamoleEntity()
-        guac_entity.name = user.email
-        guac_entity.type = 'USER'
+        gentity = guac_models.GuacamoleEntity.objects.create(
+                name=user.email,
+                type='USER',)
 
-        guac_user = guac_models.GuacamoleUser()
-        guac_user.entity = guac_entity
-        guac_user.email_address = user.email
-        guac_user.full_name = user.get_full_name()
-        guac_user.password_hash = 'x'
-        guac_user.disabled = False
-        guac_user.expired = False
+        guser = guac_models.GuacamoleUser.objects.create(
+            entity=gentity,
+            email_address=user.email,
+            full_name=user.get_full_name(),
+            password_hash='x',
+            disabled=False,
+            expired=False,)
 
-        guac_entity.save()
-        guac_user.save()
+        if user.is_superuser:
+            guac_models.GuacamoleSystemPermission.objects.create(
+                    entity=gentity,
+                    permission='ADMINISTER')
+
         user.save()
         return user
 

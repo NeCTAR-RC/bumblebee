@@ -279,7 +279,6 @@ class GuacamoleSystemPermission(models.Model):
         GuacamoleEntity,
         on_delete=models.CASCADE,
         primary_key=True)
-    permission = models.CharField(max_length=23)
     permission = GuacamoleSystemPermissionTypeField(
         choices=system_permission_type)
 
