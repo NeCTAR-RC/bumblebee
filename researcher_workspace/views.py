@@ -378,8 +378,8 @@ def home(request):
 #     return render(request, 'registration/login.html')
 
 
-def desktop_description(request):
-    return render(request, 'researcher_workspace/desktop_description.html')
+def about(request):
+    return render(request, 'researcher_workspace/about.html')
 
 
 @ensure_csrf_cookie
