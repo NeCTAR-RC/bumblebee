@@ -27,7 +27,7 @@ async function poll_status(url, interval) {
                 bar.setAttribute("aria-valuenow", progress);
                 bar.setAttribute("style", "width: " + progress + "%");
                 barMessage.innerHTML = vm_status.status_message;
-                if (vm_status.status != "{{ VM_WAITING }}") {
+                if (vm_status.status != "VM_Waiting") {
                     reloaded = true;
                     window.setTimeout(function() {
                         console.log("complete");

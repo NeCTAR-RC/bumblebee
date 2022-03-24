@@ -420,6 +420,7 @@ def render_vm(request, user, desktop_type, buttons):
         if what_to_show.get('extension').total_seconds() == 0:
             forbidden.append(EXTEND_BUTTON)
 
+    vm_status = VMStatus.objects.get_latest_vm_status(user, desktop_type)
     context = {
         'state': state,
         'what_to_show': what_to_show,
@@ -428,15 +429,17 @@ def render_vm(request, user, desktop_type, buttons):
         "buttons_to_display": [b for b in buttons if b not in forbidden],
         "app_name": app_name,
         "requesting_feature": desktop_type.feature,
-        "VM_WAITING": VM_WAITING,
-        "vm_status": VMStatus.objects.get_latest_vm_status(user, desktop_type),
+        "vm_status": vm_status
     }
 
-    vm_module = loader.render_to_string(f'vm_manager/html/{state}.html',
-                                        context, request)
-    script = loader.render_to_string(f'vm_manager/javascript/{state}.js',
-                                     context, request)
-    return vm_module, script, state
+    vm_module = loader.render_to_string(
+        f'vm_manager/html/{state}.html', context, request)
+    script = loader.render_to_string(
+        f'vm_manager/javascript/{state}.js', context, request)
+    vm_alt_module = (vm_module if state == NO_VM else
+                     loader.render_to_string(
+                         'vm_manager/html/No_VM.html', context, request))
+    return vm_module, vm_alt_module, script, state
 
 
 def notify_vm(request, requesting_feature):

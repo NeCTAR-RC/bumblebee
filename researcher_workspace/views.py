@@ -314,10 +314,11 @@ def home(request):
         feature_application = feature_conf.module
         feature_modules = feature_application.views.render_modules(request)
 
-        for module, script, state in feature_modules:
+        for module, alt_module, script, state in feature_modules:
             if state == NO_VM:
                 modules.append(module)
             else:
+                modules.append(alt_module)
                 active_module = module
             scripts.append(script)
 

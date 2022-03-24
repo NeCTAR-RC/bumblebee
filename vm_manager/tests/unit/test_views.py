@@ -545,7 +545,7 @@ class VMManagerViewTests(TestCase):
                    EXTEND_BOOST_BUTTON, BOOST_BUTTON]
 
         self.build_existing_vm(VM_OKAY, expires=date1)
-        self.assertEqual(("rendered", "rendered", VM_OKAY),
+        self.assertEqual(("rendered", "rendered", "rendered", VM_OKAY),
                          render_vm(request, self.user, self.desktop_type,
                                    buttons))
         context = {
@@ -560,15 +560,54 @@ class VMManagerViewTests(TestCase):
             'buttons_to_display': ['ONE', 'TWO', EXTEND_BUTTON, BOOST_BUTTON],
             'app_name': self.feature.app_name,
             'requesting_feature': self.feature,
-            'VM_WAITING': VM_WAITING,
             'vm_status': self.vm_status,
         }
         calls = [call(f"vm_manager/html/{VM_OKAY}.html",
                       context, request),
                  call(f"vm_manager/javascript/{VM_OKAY}.js",
-                      context, request)]
+                      context, request),
+                 call(f"vm_manager/html/{NO_VM}.html",
+                      context, request), ]
         mock_policy.permitted_extension.assert_called_once_with(self.instance)
         mock_policy.new_expiry.assert_called_once_with(self.instance)
+        mock_loader.render_to_string.assert_has_calls(calls)
+        mock_messages.info.assert_not_called()
+
+    @patch('vm_manager.views.loader')
+    @patch('vm_manager.models.Instance.get_url')
+    @patch('vm_manager.views.messages')
+    @patch('vm_manager.views.InstanceExpiryPolicy')
+    def test_render_no_vm(self, mock_policy_class, mock_messages,
+                          mock_get_url, mock_loader):
+        url = "https://foo/bar"
+        mock_get_url.return_value = url
+
+        # Not testing what is actually rendered.
+        mock_loader.render_to_string.return_value = "rendered"
+
+        request = "The Request"
+        buttons = ["ONE", "TWO", EXTEND_BUTTON,
+                   EXTEND_BOOST_BUTTON, BOOST_BUTTON]
+
+        self.assertEqual(("rendered", "rendered", "rendered", NO_VM),
+                         render_vm(request, self.user, self.desktop_type,
+                                   buttons))
+        context = {
+            'state': NO_VM,
+            'what_to_show': 'No VM',
+            'desktop_type': self.desktop_type,
+            'vm_id': None,
+            'buttons_to_display': [
+                'ONE', 'TWO', EXTEND_BUTTON, EXTEND_BOOST_BUTTON,
+                BOOST_BUTTON],
+            'app_name': self.feature.app_name,
+            'requesting_feature': self.feature,
+            'vm_status': None,
+        }
+        calls = [call(f"vm_manager/html/{NO_VM}.html",
+                      context, request),
+                 call(f"vm_manager/javascript/{NO_VM}.js",
+                      context, request), ]
         mock_loader.render_to_string.assert_has_calls(calls)
         mock_messages.info.assert_not_called()
 
@@ -603,7 +642,7 @@ class VMManagerViewTests(TestCase):
         request = "The Request"
         buttons = ["ONE", "TWO", EXTEND_BUTTON,
                    EXTEND_BOOST_BUTTON, BOOST_BUTTON]
-        self.assertEqual(("rendered", "rendered", VM_SUPERSIZED),
+        self.assertEqual(("rendered", "rendered", "rendered", VM_SUPERSIZED),
                          render_vm(request, self.user, self.desktop_type,
                                    buttons))
         context = {
@@ -618,7 +657,6 @@ class VMManagerViewTests(TestCase):
             'buttons_to_display': ['ONE', 'TWO', EXTEND_BOOST_BUTTON],
             'app_name': self.feature.app_name,
             'requesting_feature': self.feature,
-            'VM_WAITING': VM_WAITING,
             'vm_status': self.vm_status,
         }
         calls = [call(f"vm_manager/html/{VM_SUPERSIZED}.html",
@@ -642,7 +680,7 @@ class VMManagerViewTests(TestCase):
         mock_policy.permitted_extension.return_value = timedelta(seconds=0)
         mock_policy.new_expiry.return_value = date1
 
-        self.assertEqual(("rendered", "rendered", VM_SUPERSIZED),
+        self.assertEqual(("rendered", "rendered", "rendered", VM_SUPERSIZED),
                          render_vm(request, self.user, self.desktop_type,
                                    buttons))
         context['what_to_show'] = {

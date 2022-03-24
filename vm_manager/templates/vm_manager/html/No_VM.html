@@ -5,7 +5,8 @@
         <img src="{{ desktop_type.logo }}" class="img-fluid mb-3" />
       </div>
       <h6>OPERATING SYSTEM</h6>
-      <p>{{ desktop_type.name }}</p>
+      <p>{{ desktop_type.name }}
+      {% if vm_status and vm_status.status != 'No_VM' %} - Selected {% endif %}</p>
       {% if desktop_type.details.features.apps %}
         <h6>FEATURES</h6>
         <p>
