@@ -16,7 +16,7 @@
         </p>
       {% endif %}
     </div>
-    <a href="/desktop/{{ desktop_type.id }}" class="btn btn-link mt-auto">View Details <i class="fas fa-arrow-right"></i></a>
+    <a href="{% url 'desktop_details' desktop_name=desktop_type.id %}" class="btn btn-link mt-auto">View Details <i class="fas fa-arrow-right"></i></a>
   </div>
 </div>
 
