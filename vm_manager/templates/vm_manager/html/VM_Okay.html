@@ -12,6 +12,7 @@
         <tr>
           <th scope="col">OPERATING SYSTEM</th>
           <th scope="col">CURRENT SIZE</th>
+          <th scope="col">ZONE</th>
         </tr>
       </thead>
       <tbody>
@@ -24,6 +25,7 @@
               {{ desktop_type.default_flavor.vcpus }} vCPU Cores | {{ desktop_type.default_flavor.ram }} GB
             {% endif %}
           </td>
+	  <td>{{ vm_status.instance.boot_volume.zone }}</td>
         </tr>
       </tbody>
     </table>
