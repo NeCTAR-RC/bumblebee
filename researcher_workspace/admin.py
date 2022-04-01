@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib import admin, messages
 from django.contrib.auth.admin import UserAdmin
 from django.urls import reverse
@@ -21,8 +22,8 @@ class PermissionRequestAdmin(admin.ModelAdmin):
     change_form_template = \
         'admin/researcher_workspace/permissionrequest/change_form.html'
 
-    # def has_delete_permission(self, request, obj=None):
-    #    return False
+    def has_delete_permission(self, request, obj=None):
+        return settings.DEBUG
 
     def response_change(self, request, obj):
         if "_accept" in request.POST:
@@ -72,8 +73,8 @@ class ProjectAdmin(admin.ModelAdmin):
         'admin/researcher_workspace/project/change_form.html'
     inlines = (PermissionInline, )
 
-    # def has_delete_permission(self, request, obj=None):
-    #    return False
+    def has_delete_permission(self, request, obj=None):
+        return settings.DEBUG
 
     def response_change(self, request, obj):
         if "_accept" in request.POST:
@@ -213,8 +214,8 @@ class FeatureAdmin(admin.ModelAdmin):
 
     view_feature_or_service.short_description = 'Feature/Service'
 
-    # def has_delete_permission(self, request, obj=None):
-    #    return False
+    def has_delete_permission(self, request, obj=None):
+        return settings.DEBUG
 
     def save_model(self, request, obj, form, change):
         if 'name' in form.changed_data:
