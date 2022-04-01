@@ -7,6 +7,9 @@
     <h3 class="d-none d-xl-block">Your Virtual Desktop is</h3>
     <img src="{{ desktop_type.logo }}" class="d-xl-none w-50" />
     <img src="{{ desktop_type.logo }}" class="d-none d-xl-inline-block w-75 mb-1" />
+    <div>
+      <a href="{% url 'desktop_details' desktop_name=desktop_type.id %}" class="btn btn-link mt-auto">View Details <i class="fas fa-arrow-right"></i></a>
+    </div>
     <table class="table my-1 my-md-2 my-lg-4"> 
       <thead>
         <tr>
@@ -20,18 +23,15 @@
           <td>{{ desktop_type.name }}</td>
           <td>
             {% if state == "VM_Supersized" %}
-              {{ desktop_type.big_flavor.vcpus }} vCPU Cores | {{ desktop_type.big_flavor.ram }} GB
+              {{ desktop_type.big_flavor.vcpus }} VCPUs | {{ desktop_type.big_flavor.ram }} GB RAM
             {% else %}
-              {{ desktop_type.default_flavor.vcpus }} vCPU Cores | {{ desktop_type.default_flavor.ram }} GB
+              {{ desktop_type.default_flavor.vcpus }} VCPUs | {{ desktop_type.default_flavor.ram }} GB RAM
             {% endif %}
           </td>
 	  <td>{{ vm_status.instance.boot_volume.zone }}</td>
         </tr>
       </tbody>
     </table>
-    <div>
-      <a href="{% url 'desktop_details' desktop_name=desktop_type.id %}" class="btn btn-link mt-auto">View Details <i class="fas fa-arrow-right"></i></a>
-    </div>
   </div>
 
   {% block supersize_message %}
@@ -215,7 +215,7 @@
           <source src="{% static 'videos/action-boost.webm' %}" type="video/webm">
           <img src="{% static 'img/action-boost.gif' %}" class="img-fluid" />
         </video>
-        <p>Your can boost your Desktop size from {{ desktop_type.default_flavor.vcpus }} vCPU Cores {{ desktop_type.default_flavor.ram }} GB of RAM to {{ desktop_type.big_flavor.vcpus }} vCPU Cores {{ desktop_type.big_flavor.ram }} GB of RAM <strong>for 7 days</strong>.</p>
+        <p>Your can boost your Desktop size from {{ desktop_type.default_flavor.vcpus }} VCPUs {{ desktop_type.default_flavor.ram }} GB RAM to {{ desktop_type.big_flavor.vcpus }} VCPUs {{ desktop_type.big_flavor.ram }} GB RAM <strong>for 7 days</strong>.</p>
         <p>Please save any work and close the connection to your {{ requesting_feature }} before boosting it. Your {{ requesting_feature }} will be unreachable for five minutes while boosting.</p>
         <p class="h5 py-4">Are you sure you want to boost for 7 days?</p>
       </div>

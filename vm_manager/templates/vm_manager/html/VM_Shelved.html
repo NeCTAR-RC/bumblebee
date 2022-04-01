@@ -18,9 +18,9 @@
             <td>{{ desktop_type.name }}</td>
             <td>
               {% if state == "VM_Supersized" %}
-                {{ desktop_type.big_flavor.vcpus }} vCPU Cores | {{ desktop_type.big_flavor.ram }} GB of RAM
+                {{ desktop_type.big_flavor.vcpus }} VCPUs | {{ desktop_type.big_flavor.ram }} GB RAM
               {% else %}
-                {{ desktop_type.default_flavor.vcpus }} vCPU Cores | {{ desktop_type.default_flavor.ram }} GB of RAM
+                {{ desktop_type.default_flavor.vcpus }} VCPUs | {{ desktop_type.default_flavor.ram }} GB RAM
               {% endif %}
             </td>
 	    <td>{{ vm_status.instance.boot_volume.zone }}</td>
