@@ -10,11 +10,10 @@ app_name = 'researcher_workspace'
 urlpatterns = [
     path('', views.index, name='index'),
     path('home/', views.home, name='home'),
-    path('rcsadmin/', admin.site.urls),
     path('vm_manager/', include('vm_manager.urls')),
     path('researcher_desktop/', include('researcher_desktop.urls')),
-#    path('specialty_resources/', include('specialty_resources.urls')),
-    path('desktop/<str:desktop_name>', views.desktop_details, name='desktop_details'),
+    path('desktop/<str:desktop_name>',
+         views.desktop_details, name='desktop_details'),
     path('orion_report/', views.orion_report, name='orion_report'),
     path('about/', views.about, name='about'),
     path('terms/', views.terms, name='terms'),
@@ -23,10 +22,12 @@ urlpatterns = [
     path('contact_us/', views.help, name='contact_us'),
     path('contact/', views.help, name='contact'),
     path('django-rq/', include('django_rq.urls')),
-    path('request_feature_access/<str:feature_app_name>', views.request_feature_access, name='request_feature_access'),
+    path('request_feature_access/<str:feature_app_name>',
+         views.request_feature_access, name='request_feature_access'),
     path('staff_home/', views.staff_home, name='staff_home'),
     path('user_search/', views.user_search, name='user_search'),
-    path('user_search_details/<str:username>', views.user_search_details, name='user_search_details'),
+    path('user_search_details/<str:username>',
+         views.user_search_details, name='user_search_details'),
     path('new_project', views.new_project, name='new_project'),
     path('projects', views.projects, name='projects'),
     path('project/<int:project_id>', views.project_edit, name='project_edit'),
@@ -38,7 +39,12 @@ urlpatterns = [
     path('healthcheck/', views.healthcheck, name='healthcheck'),
     # OIDC auth
     path('oidc/', include('mozilla_django_oidc.urls')),
-    path('login/', oidc_views.OIDCAuthenticationRequestView.as_view(), name='login'),
+    path('login/',
+         oidc_views.OIDCAuthenticationRequestView.as_view(), name='login'),
+    # Bumblebee admin site uses regular login view
+    path('rcsadmin/login/',
+         oidc_views.OIDCAuthenticationRequestView.as_view()),
+    path('rcsadmin/', admin.site.urls),
 ]
 
 handler404 = views.custom_page_not_found
