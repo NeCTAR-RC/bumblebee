@@ -9,6 +9,7 @@ app_name = 'researcher_workspace'
 
 urlpatterns = [
     path('', views.index, name='index'),
+    path('', include('django_prometheus.urls')),
     path('home/', views.home, name='home'),
     path('vm_manager/', include('vm_manager.urls')),
     path('researcher_desktop/', include('researcher_desktop.urls')),
