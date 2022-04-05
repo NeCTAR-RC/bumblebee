@@ -41,8 +41,7 @@ class NectarAuthBackend(OIDCAuthenticationBackend):
 
         # Create Guacamole user objects
         gentity = guac_models.GuacamoleEntity.objects.create(
-                name=user.email,
-                type='USER',)
+            name=user.email, type='USER',)
 
         guser = guac_models.GuacamoleUser.objects.create(
             entity=gentity,
@@ -54,13 +53,27 @@ class NectarAuthBackend(OIDCAuthenticationBackend):
 
         if user.is_superuser:
             guac_models.GuacamoleSystemPermission.objects.create(
-                    entity=gentity,
-                    permission='ADMINISTER')
+                entity=gentity, permission='ADMINISTER')
 
         user.save()
         return user
 
     def update_user(self, user, claims):
+        # Before attempting to update user fields, get guac user object
+        # based on the pre-updated values from our db
+        try:
+            gentity = guac_models.GuacamoleEntity.objects.get(
+                name=user.email)
+        except guac_models.GuacamoleEntity.DoesNotExist:
+            gentity = None
+
+        try:
+            guser = guac_models.GuacamoleUser.objects.get(
+                email_address=user.email)
+        except guac_models.GuacamoleUser.DoesNotExist:
+            guser = None
+
+        # Update user values
         user.first_name = claims.get('given_name')
         user.last_name = claims.get('family_name')
         user.email = claims.get('email')
@@ -72,7 +85,42 @@ class NectarAuthBackend(OIDCAuthenticationBackend):
         user.is_staff = any(i in STAFF_ROLES for i in roles)
         user.is_superuser = any(i in ADMIN_ROLES for i in roles)
 
-        # TODO(andy): Update Guac objects too?
+        if gentity:
+            gentity.name = user.email
+            gentity.save()
+        else:
+            gentity = guac_models.GuacamoleEntity.objects.create(
+                name=user.email,
+                type='USER',)
+
+        if guser:
+            guser.email_address = user.email
+            guser.full_name = user.get_full_name()
+            guser.password_hash = 'x'
+            guser.disabled = False
+            guser.expired = False
+            guser.save()
+        else:
+            guser = guac_models.GuacamoleUser.objects.create(
+                entity=gentity,
+                email_address=user.email,
+                full_name=user.get_full_name(),
+                password_hash='x',
+                disabled=False,
+                expired=False,)
+
+        if user.is_superuser:
+            guac_models.GuacamoleSystemPermission.objects.update_or_create(
+                entity=gentity, permission='ADMINISTER')
+        else:
+            # No longer an admin, so clean up permission record
+            try:
+                gperm = guac_models.GuacamoleSystemPermission.objects.get(
+                    entity=guser.entity, permission='ADMINISTER')
+                gperm.delete()
+            except guac_models.GuacamoleSystemPermission.DoesNotExist:
+                # Already doesn't exist
+                pass
 
         user.save()
         return user
