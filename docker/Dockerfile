@@ -25,9 +25,12 @@ ENV DJANGO_SETTINGS_MODULE researcher_workspace.settings
 COPY docker/docker-*.sh /
 COPY docker/apache.conf /etc/apache2/sites-available/000-default.conf
 
-RUN chmod u+x /docker-*.sh
-RUN echo "ServerName localhost" >> /etc/apache2/apache2.conf
-RUN django-admin collectstatic --noinput && django-admin compress --force
+RUN set -ex \
+    && chmod u+x /docker-*.sh \
+    && echo "ServerName localhost" >> /etc/apache2/apache2.conf \
+    && export DB_ENGINE='' \
+    && django-admin collectstatic --noinput \
+    && django-admin compress --force
 
 EXPOSE 80
 
