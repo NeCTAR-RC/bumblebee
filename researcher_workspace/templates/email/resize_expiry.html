@@ -1,5 +1,6 @@
 {% load settings %}
-Your ARDC Nectar Virtual Desktop will be downsized on {{ adjusted }}
+{% load humanize %}
+Your ARDC Nectar Virtual Desktop will be downsized {{ adjusted | naturalday }}
 
 Hi {{ user.get_full_name }},
 <br>
