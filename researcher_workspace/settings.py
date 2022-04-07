@@ -341,12 +341,12 @@ BOOST_WARNING_2 = int(get_setting('BOOST_WARNING_2', '1'))
 INSTANCE_EXPIRY = int(get_setting('INSTANCE_EXPIRY', '14'))
 INSTANCE_EXTENSION = int(get_setting('INSTANCE_EXTENSION', '14'))
 INSTANCE_LIFETIME = int(get_setting('INSTANCE_LIFETIME', '-1'))
-INSTANCE_WARNING_1 = int(get_setting('INSTANCE_WARNING_1', '7'))
+INSTANCE_WARNING_1 = int(get_setting('INSTANCE_WARNING_1', '3'))
 INSTANCE_WARNING_2 = int(get_setting('INSTANCE_WARNING_2', '1'))
 
 # There is no 'extend' functionality for shelved volumes, so the
 # the 'extension' and 'lifetime' settings would not be meaningful.
-VOLUME_EXPIRY = int(get_setting('SHELVED_VOLUME_EXPIRY', '90'))
+VOLUME_EXPIRY = int(get_setting('SHELVED_VOLUME_EXPIRY', '30'))
 VOLUME_WARNING_1 = int(get_setting('SHELVED_VOLUME_WARNING_1', '7'))
 VOLUME_WARNING_2 = int(get_setting('SHELVED_VOLUME_WARNING_2', '1'))
 
