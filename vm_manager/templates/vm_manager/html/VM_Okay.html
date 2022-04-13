@@ -1,5 +1,4 @@
-{% load static %}
-{% load datetime %}
+{% load static datetime settings %}
 
 <div id="{{ app_name }}-{{ desktop_type.id }}" class="active-desktop">
   <div class="desktop-info d-block text-center position-relative">
@@ -34,11 +33,11 @@
     </table>
   </div>
 
-  {% block supersize_message %}
-    {% if what_to_show.expires %}
-  <p class="text-center"><small>Your {{ desktop_type.name }} {{ requesting_feature }} is set to be shelved on or after {{ what_to_show.expires }}.</small></p>
+  {% block expiry_message %}
+    {% if what_to_show.expiration %}
+  <p class="text-center"><small>Your {{ desktop_type.name }} {{ requesting_feature }} is set to be shelved on or after {{ what_to_show.expiration.expires }}.</small></p>
     {% endif %}
-  {% endblock supersize_message %}
+  {% endblock expiry_message %}
 
   {% if buttons_to_display %}
       <div class="desktop-buttons text-center">
@@ -215,9 +214,9 @@
           <source src="{% static 'videos/action-boost.webm' %}" type="video/webm">
           <img src="{% static 'img/action-boost.gif' %}" class="img-fluid" />
         </video>
-        <p>Your can boost your Desktop size from {{ desktop_type.default_flavor.vcpus }} VCPUs {{ desktop_type.default_flavor.ram }} GB RAM to {{ desktop_type.big_flavor.vcpus }} VCPUs {{ desktop_type.big_flavor.ram }} GB RAM <strong>for 7 days</strong>.</p>
+        <p>Your can boost your Desktop size from {{ desktop_type.default_flavor.vcpus }} VCPUs {{ desktop_type.default_flavor.ram }} GB RAM to {{ desktop_type.big_flavor.vcpus }} VCPUs {{ desktop_type.big_flavor.ram }} GB RAM <strong>for {% get_setting "BOOST_EXPIRY" %} days initially, and up to {% get_setting "BOOST_LIFETIME" %} days in total.</strong>.</p>
         <p>Please save any work and close the connection to your {{ requesting_feature }} before boosting it. Your {{ requesting_feature }} will be unreachable for five minutes while boosting.</p>
-        <p class="h5 py-4">Are you sure you want to boost for 7 days?</p>
+        <p class="h5 py-4">Are you sure you want to boost for {% get_setting "BOOST_EXPIRY" %} days?</p>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>

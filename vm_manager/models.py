@@ -26,6 +26,11 @@ from guacamole import utils as guac_utils
 
 logger = logging.getLogger(__name__)
 
+EXP_INITIAL = 0
+EXP_FIRST_WARNING = 1
+EXP_FINAL_WARNING = 2
+EXP_EXPIRED = 3
+
 
 class Expiration(models.Model):
     expires = models.DateTimeField()
@@ -35,6 +40,9 @@ class Expiration(models.Model):
     def __str__(self):
         return (f"Expires on {self.expires}, stage {self.stage}, "
                 f"stage_date {self.stage_date}")
+
+    def is_expiring(self):
+        return self.stage in [EXP_FIRST_WARNING, EXP_FINAL_WARNING]
 
 
 class ResourceExpiration(Expiration):
@@ -67,18 +75,18 @@ class CloudResource(models.Model):
         self.marked_for_deletion = datetime.now(utc)
         self.save()
 
-    def set_expires(self, expires):
+    def set_expires(self, expires, stage=EXP_INITIAL):
         if expires is None:
             self.expiration = None
             self.save()
         elif self.expiration:
             self.expiration.expires = expires
-            self.expiration.stage = 0
+            self.expiration.stage = stage
             self.expiration.stage_date = datetime.now(utc)
             self.expiration.save()
         else:
             self.expiration = ResourceExpiration(expires=expires)
-            self.expiration.stage = 0
+            self.expiration.stage = stage
             self.expiration.stage_date = datetime.now(utc)
             self.expiration.save()
             self.save()
@@ -384,18 +392,18 @@ class Resize(models.Model):
     def expired(self):
         return self.reverted or self.instance.deleted
 
-    def set_expires(self, expires):
+    def set_expires(self, expires, stage=EXP_INITIAL):
         if expires is None:
             self.expiration = None
             self.save()
         elif self.expiration:
             self.expiration.expires = expires
-            self.expiration.stage = 0
+            self.expiration.stage = stage
             self.expiration.stage_date = datetime.now(utc)
             self.expiration.save()
         else:
             self.expiration = ResizeExpiration(expires=expires)
-            self.expiration.stage = 0
+            self.expiration.stage = stage
             self.expiration.stage_date = datetime.now(utc)
             self.expiration.save()
             self.save()

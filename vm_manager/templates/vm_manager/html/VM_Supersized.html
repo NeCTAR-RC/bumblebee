@@ -1,9 +1,11 @@
 {% extends 'vm_manager/html/VM_Okay.html' %}
 {% load datetime %}
 
-{% block supersize_message %}
-  <p class="text-center"><small>Your {{ desktop_type.name }} {{ requesting_feature }} is set to resize back to the default size on or after {{ what_to_show.expires }}.</small></p>
-{% endblock supersize_message %}
+{% block expiry_message %}
+{% if what_to_show.expiration %}
+<p class="text-center"><small>Your boosted {{ desktop_type.name }} {{ requesting_feature }} is set to resize back to the default size on or after {{ what_to_show.expiration.expires }}.</small></p>
+{% endif %}
+{% endblock expiry_message %}
 
 {% block buttons %}
   {% if "DOWNSIZE_BUTTON" in buttons_to_display %}

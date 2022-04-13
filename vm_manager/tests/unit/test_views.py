@@ -21,7 +21,8 @@ from vm_manager.constants import ACTIVE, SHUTDOWN, BUILD, REBUILD, \
     CLOUD_INIT_STARTED, CLOUD_INIT_FINISHED, SCRIPT_OKAY, \
     EXTEND_BUTTON, EXTEND_BOOST_BUTTON, BOOST_BUTTON
 
-from vm_manager.models import VMStatus, Instance, Volume
+from vm_manager.models import VMStatus, Instance, Volume, \
+    EXP_INITIAL, EXP_FIRST_WARNING
 from vm_manager.utils.utils import get_nectar, after_time
 from vm_manager.views import launch_vm_worker, delete_vm_worker, \
     shelve_vm_worker, unshelve_vm_worker, reboot_vm_worker, \
@@ -45,7 +46,8 @@ class VMManagerViewTests(TestCase):
         self.zone = AvailabilityZoneFactory.create(name="a_zone",
                                                    zone_weight=1)
 
-    def build_existing_vm(self, status, expires=None):
+    def build_existing_vm(self, status, expires=None, volume_expires=None,
+                          stage=EXP_INITIAL):
         self.volume = VolumeFactory.create(
             id=uuid.uuid4(), user=self.user,
             operating_system=self.desktop_type.id,
@@ -55,7 +57,9 @@ class VMManagerViewTests(TestCase):
             id=uuid.uuid4(), user=self.user, boot_volume=self.volume,
             ip_address='10.0.0.1')
         if expires:
-            self.instance.set_expires(expires)
+            self.instance.set_expires(expires, stage=stage)
+        if volume_expires:
+            self.volume.set_expires(volume_expires, stage=stage)
         if status:
             self.vm_status = VMStatusFactory.create(
                 instance=self.instance,
@@ -428,10 +432,6 @@ class VMManagerViewTests(TestCase):
         self.assertEqual(VM_ERROR,
                          VMStatus.objects.get(pk=vm_status.pk).status)
 
-        self.build_existing_vm(VM_SHELVED)
-        self.assertEqual((VM_SHELVED, "VM SHELVED", self.instance.id),
-                         get_vm_state(self.user, self.desktop_type))
-
         fake_nectar = get_nectar()
         fake_nectar.nova.servers.get.return_value = Fake(status=SHUTDOWN)
         self.build_existing_vm(VM_OKAY)
@@ -463,7 +463,7 @@ class VMManagerViewTests(TestCase):
         self.assertEqual((VM_OKAY,
                           {'url': url,
                            'extension': timedelta(days=2),
-                           'expires': date1,
+                           'expiration': self.instance.expiration,
                            'extended_expiration': date2
                           },
                           self.instance.id),
@@ -510,11 +510,36 @@ class VMManagerViewTests(TestCase):
             (VM_SUPERSIZED,
              {'url': url,
               'extension': timedelta(days=2),
-              'expires': date1,
+              'expiration': resize.expiration,
               'extended_expiration': date2
              },
              self.instance.id),
             get_vm_state(self.user, self.desktop_type))
+
+    @patch('vm_manager.utils.utils.Nectar', new=FakeNectar)
+    @patch('vm_manager.views.VolumeExpiryPolicy')
+    def test_get_vm_state_4(self, mock_policy_class):
+
+        # Not testing the expiration policy decisions
+        mock_policy = Mock()
+        mock_policy_class.return_value = mock_policy
+
+        now = datetime.now(utc)
+        mock_policy.permitted_extension.return_value = timedelta(days=2)
+        mock_policy.new_expiry.return_value = now + timedelta(days=2)
+
+        date1 = now + timedelta(days=1)
+        date2 = now + timedelta(days=2)
+
+        self.build_existing_vm(VM_SHELVED, volume_expires=date1)
+        self.assertEqual((VM_SHELVED,
+                          {'url': None,
+                           'extension': timedelta(days=2),
+                           'expiration': self.volume.expiration,
+                           'extended_expiration': date2
+                          },
+                          self.instance.id),
+                         get_vm_state(self.user, self.desktop_type))
 
     @patch('vm_manager.views.loader')
     @patch('vm_manager.models.Instance.get_url')
@@ -532,19 +557,19 @@ class VMManagerViewTests(TestCase):
         mock_policy = Mock()
         mock_policy_class.return_value = mock_policy
         now = datetime.now(utc)
-        date1 = now + timedelta(days=settings.BOOST_EXPIRY)
-        date2 = now + timedelta(days=settings.BOOST_EXPIRY)
+        date1 = now + timedelta(days=7)
+        date2 = now + timedelta(days=7)
 
         mock_policy.permitted_extension.return_value = \
-            timedelta(days=settings.BOOST_EXPIRY)
+            timedelta(days=7)
         mock_policy.new_expiry.return_value = \
-            now + timedelta(days=settings.BOOST_EXPIRY)
+            now + timedelta(days=7)
 
         request = "The Request"
         buttons = ["ONE", "TWO", EXTEND_BUTTON,
                    EXTEND_BOOST_BUTTON, BOOST_BUTTON]
 
-        self.build_existing_vm(VM_OKAY, expires=date1)
+        self.build_existing_vm(VM_OKAY, expires=date1, stage=EXP_FIRST_WARNING)
         self.assertEqual(("rendered", "rendered", "rendered", VM_OKAY),
                          render_vm(request, self.user, self.desktop_type,
                                    buttons))
@@ -553,7 +578,7 @@ class VMManagerViewTests(TestCase):
             'what_to_show': {
                 'url': url,
                 'extension': timedelta(days=settings.BOOST_EXTENSION),
-                'expires': date1,
+                'expiration': self.instance.expiration,
                 'extended_expiration': date2},
             'desktop_type': self.desktop_type,
             'vm_id': self.instance.id,
@@ -571,7 +596,10 @@ class VMManagerViewTests(TestCase):
         mock_policy.permitted_extension.assert_called_once_with(self.instance)
         mock_policy.new_expiry.assert_called_once_with(self.instance)
         mock_loader.render_to_string.assert_has_calls(calls)
-        mock_messages.info.assert_not_called()
+        mock_messages.info.assert_called_once_with(
+            'The Request',
+            'Your some desktop desktop is set to be shelved '
+            '6\xa0days, 23\xa0hours from now')
 
     @patch('vm_manager.views.loader')
     @patch('vm_manager.models.Instance.get_url')
@@ -629,15 +657,13 @@ class VMManagerViewTests(TestCase):
 
         self.build_existing_vm(VM_SUPERSIZED)
         now = datetime.now(utc)
-        date1 = now + timedelta(days=settings.BOOST_EXPIRY)
-        date2 = now + timedelta(days=settings.BOOST_EXPIRY)
+        date1 = now + timedelta(days=7)
+        date2 = now + timedelta(days=7)
         resize = ResizeFactory.create(instance=self.instance)
-        resize.set_expires(date1)
+        resize.set_expires(date1, stage=EXP_FIRST_WARNING)
 
-        mock_policy.permitted_extension.return_value = \
-            timedelta(days=settings.BOOST_EXPIRY)
-        mock_policy.new_expiry.return_value = \
-            now + timedelta(days=settings.BOOST_EXPIRY)
+        mock_policy.permitted_extension.return_value = timedelta(days=7)
+        mock_policy.new_expiry.return_value = now + timedelta(days=7)
 
         request = "The Request"
         buttons = ["ONE", "TWO", EXTEND_BUTTON,
@@ -650,7 +676,7 @@ class VMManagerViewTests(TestCase):
             'what_to_show': {
                 'url': url,
                 'extension': timedelta(days=settings.BOOST_EXTENSION),
-                'expires': date1,
+                'expiration': resize.expiration,
                 'extended_expiration': date2},
             'desktop_type': self.desktop_type,
             'vm_id': self.instance.id,
@@ -668,8 +694,8 @@ class VMManagerViewTests(TestCase):
         mock_loader.render_to_string.assert_has_calls(calls)
         mock_messages.info.assert_called_once_with(
             'The Request',
-            f'Your some desktop desktop is set to resize back to the default '
-            f'size on {date1}')
+            f'Your some desktop desktop is set to be resized to the default '
+            f'size 6\xa0days, 23\xa0hours from now')
 
         # Reset for supersized (not allowed)
         mock_policy.permitted_extension.reset_mock()
@@ -686,7 +712,7 @@ class VMManagerViewTests(TestCase):
         context['what_to_show'] = {
             'url': url,
             'extension': timedelta(seconds=0),
-            'expires': date1,
+            'expiration': resize.expiration,
             'extended_expiration': date1
         }
         context['buttons_to_display'] = ['ONE', 'TWO']
@@ -699,8 +725,8 @@ class VMManagerViewTests(TestCase):
         mock_loader.render_to_string.assert_has_calls(calls)
         mock_messages.info.assert_called_once_with(
             'The Request',
-            f'Your some desktop desktop is set to resize back to the default '
-            f'size on {date1}')
+            f'Your some desktop desktop is set to be resized to the default '
+            f'size 6\xa0days, 23\xa0hours from now')
 
     @patch('vm_manager.views.logger')
     @patch('vm_manager.views.generate_hostname')

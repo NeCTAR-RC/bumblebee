@@ -6,17 +6,13 @@ from django.utils.timezone import utc
 
 from researcher_workspace.utils import send_notification, format_notification
 from researcher_desktop.models import DesktopType
-from vm_manager.models import Instance, Volume, Resize
+from vm_manager.models import Instance, Volume, Resize, \
+    EXP_INITIAL, EXP_FIRST_WARNING, EXP_FINAL_WARNING, EXP_EXPIRED
 from vm_manager.vm_functions.delete_vm import archive_expired_vm
 from vm_manager.vm_functions.resize_vm import downsize_expired_vm
 from vm_manager.vm_functions.shelve_vm import shelve_expired_vm
 
 logger = logging.getLogger(__name__)
-
-EXP_INITIAL = 0
-EXP_FIRST_WARNING = 1
-EXP_FINAL_WARNING = 2
-EXP_EXPIRED = 3
 
 
 def days(days):
