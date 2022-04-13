@@ -8,6 +8,8 @@ from researcher_workspace.auth import NectarAuthBackend
 
 from researcher_workspace.tests.factories import UserFactory
 
+from guacamole import models as guac_models
+
 from faker import Faker
 
 
@@ -194,7 +196,7 @@ class NectarAuthBackendTestCase(TestCase):
 
     @patch('mozilla_django_oidc.auth.requests')
     @patch('mozilla_django_oidc.auth.OIDCAuthenticationBackend.verify_token')
-    def test_user_permissions_granted_from_roles(
+    def test_user_admin_permissions_granted_from_roles(
         self, token_mock, request_mock):
         """Test admin is granted if admin role is given in claim"""
         auth_request = RequestFactory().get('/foo', {'code': 'foo',
@@ -215,9 +217,15 @@ class NectarAuthBackendTestCase(TestCase):
         self.assertTrue(auth_user.is_staff)
         self.assertTrue(auth_user.is_superuser)
 
+        gentity = guac_models.GuacamoleEntity.objects.get(
+            name=user_data['email'], type='USER',)
+        gperm = guac_models.GuacamoleSystemPermission.objects.filter(
+            entity=gentity, permission='ADMINISTER').first()
+        self.assertIsNotNone(gperm)
+
     @patch('mozilla_django_oidc.auth.requests')
     @patch('mozilla_django_oidc.auth.OIDCAuthenticationBackend.verify_token')
-    def test_user_permissions_granted_from_roles(
+    def test_user_staff_permissions_granted_from_roles(
         self, token_mock, request_mock):
         """Test staff is granted if staff role is given in claim"""
         auth_request = RequestFactory().get('/foo', {'code': 'foo',
@@ -237,3 +245,60 @@ class NectarAuthBackendTestCase(TestCase):
         auth_user = self.backend.authenticate(request=auth_request)
         self.assertTrue(auth_user.is_staff)
         self.assertFalse(auth_user.is_superuser)
+        gentity = guac_models.GuacamoleEntity.objects.get(
+            name=user_data['email'], type='USER',)
+        gperm = guac_models.GuacamoleSystemPermission.objects.filter(
+            entity=gentity, permission='ADMINISTER').first()
+        self.assertIsNone(gperm)
+
+    @patch('mozilla_django_oidc.auth.requests')
+    @patch('mozilla_django_oidc.auth.OIDCAuthenticationBackend.verify_token')
+    @patch('researcher_workspace.auth.NectarAuthBackend.verify_claims')
+    def test_update_values_existing_user(
+        self, claims_mock, token_mock, request_mock):
+        """Test user values are updated when claims change, especially
+        for permissions"""
+        auth_request = RequestFactory().get('/foo', {'code': 'foo',
+                                                     'state': 'bar'})
+        auth_request.session = {}
+        test_new_email = fake.email()
+        test_old_email = fake.email()
+        user_data = {
+            'email': test_new_email,
+            'given_name': fake.first_name(),
+            'family_name': fake.last_name(),
+            'sub': fake.uuid4(),
+            'roles': [],  # demote unprivileged
+        }
+        get_json_mock = Mock()
+        get_json_mock.json.return_value = user_data
+        request_mock.get.return_value = get_json_mock
+        test_user = UserFactory(
+            email=test_old_email,
+            first_name=user_data['given_name'],
+            last_name=user_data['family_name'],
+            sub=user_data['sub'],
+            is_staff=True,
+            is_superuser=True,
+        )
+        self.assertTrue(test_user.is_staff)
+        self.assertTrue(test_user.is_superuser)
+
+        gentity1 = guac_models.GuacamoleEntity.objects.create(
+            name=test_old_email, type='USER')
+        gperm1 = guac_models.GuacamoleSystemPermission.objects.create(
+            entity=gentity1, permission='ADMINISTER')
+
+        auth_user = self.backend.authenticate(request=auth_request)
+        self.assertEqual(auth_user, test_user)
+        self.assertFalse(auth_user.is_staff)
+        self.assertFalse(auth_user.is_superuser)
+
+        gentity2 = guac_models.GuacamoleEntity.objects.get(
+            name=test_new_email, type='USER')
+        # Ensure no new entity created, but just updated
+        self.assertEqual(gentity1.entity_id, gentity2.entity_id)
+        # Ensure our guac permissions are revoked
+        gperm2 = guac_models.GuacamoleSystemPermission.objects.filter(
+            entity=gentity2, permission='ADMINISTER').first()
+        self.assertIsNone(gperm2)
