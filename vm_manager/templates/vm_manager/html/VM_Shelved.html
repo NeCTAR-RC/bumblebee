@@ -31,6 +31,9 @@
         <a href="{% url 'desktop_details' desktop_name=desktop_type.id %}" class="btn btn-link mt-auto">View Details <i class="fas fa-arrow-right"></i></a>
       </div>
     </div>
+    {% if what_to_show.expiration %}
+    <p class="text-center"><small>Your shelved {{ desktop_type.name }} {{ requesting_feature }} is set to be deleted on or after {{ what_to_show.expiration.expires }}.</small></p>
+    {% endif %}
     <button type="button" class="btn btn-primary" onclick="unshelve_{{ app_name }}_{{ desktop_type.id }}(this)">
       Unshelve
     </button>

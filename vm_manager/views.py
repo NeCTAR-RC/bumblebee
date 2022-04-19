@@ -6,6 +6,7 @@ import django_rq
 from operator import itemgetter
 
 from django.contrib.auth.decorators import login_required
+from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.contrib import messages
 from django.forms.models import model_to_dict
 from django.http import Http404
@@ -25,7 +26,8 @@ from vm_manager.constants import VM_ERROR, VM_OKAY, VM_WAITING, \
     REBOOT_SOFT, REBOOT_HARD, SCRIPT_OKAY, \
     BOOST_BUTTON, EXTEND_BUTTON, EXTEND_BOOST_BUTTON
 from vm_manager.models import VMStatus, Instance, Resize, Volume
-from vm_manager.utils.expiry import BoostExpiryPolicy, InstanceExpiryPolicy
+from vm_manager.utils.expiry import BoostExpiryPolicy, InstanceExpiryPolicy, \
+    VolumeExpiryPolicy
 from vm_manager.utils.utils import after_time, generate_hostname
 
 # These are needed, as they're consumed by researcher_workspace/views.py
@@ -346,18 +348,25 @@ def get_vm_state(user, desktop_type):
                 return VM_MISSING, "VM has Errored", None
 
     if vm_status.status == VM_SHELVED:
-        return VM_SHELVED, "VM SHELVED", instance.id
+        policy = VolumeExpiryPolicy()
+        volume = instance.boot_volume
+        expiration = volume.expiration
+        return VM_SHELVED, {
+            'url': None,
+            'extension': policy.permitted_extension(volume),
+            'expiration': expiration,
+            'extended_expiration': policy.new_expiry(volume)
+        }, instance.id
 
     if instance.check_shutdown_status():
         return VM_SHUTDOWN, "VM Shutdown", instance.id
 
     if vm_status.status == VM_OKAY:
         policy = InstanceExpiryPolicy()
-        expires = instance.expiration.expires if instance.expiration else None
         return VM_OKAY, {
             'url': instance.get_url(),
             'extension': policy.permitted_extension(instance),
-            'expires': expires,
+            'expiration': instance.expiration,
             'extended_expiration': policy.new_expiry(instance)
         }, instance.id
 
@@ -369,11 +378,11 @@ def get_vm_state(user, desktop_type):
     if vm_status.status == VM_SUPERSIZED:
         policy = BoostExpiryPolicy()
         resize = Resize.objects.get_latest_resize(instance)
-        expires = resize.expiration.expires if resize.expiration else None
+        expiration = resize.expiration
         return VM_SUPERSIZED, {
             'url': instance.get_url(),
             'extension': policy.permitted_extension(resize),
-            'expires': expires,
+            'expiration': expiration,
             'extended_expiration': policy.new_expiry(resize),
         }, instance.id
     logger.error(f"get_vm_state for to an unhandled state "
@@ -403,10 +412,15 @@ def render_vm(request, user, desktop_type, buttons):
     state, what_to_show, vm_id = get_vm_state(user, desktop_type)
     app_name = desktop_type.feature.app_name
 
-    if state == VM_SUPERSIZED:
-        messages.info(request, format_html(
-            f'Your {desktop_type.name} desktop is set to resize '
-            f'back to the default size on {what_to_show["expires"]}'))
+    if state in [VM_SUPERSIZED, VM_OKAY, VM_SHELVED]:
+        expiration = what_to_show["expiration"]
+        if expiration and expiration.is_expiring():
+            action = (
+                "resized to the default size" if state == VM_SUPERSIZED
+                else "shelved" if state == VM_OKAY else "deleted")
+            messages.info(request, format_html(
+                f'Your {desktop_type.name} desktop is set to be '
+                f'{action} {naturaltime(expiration.expires)}'))
 
     # Remove buttons that are not allowed in the current context
     forbidden = []
