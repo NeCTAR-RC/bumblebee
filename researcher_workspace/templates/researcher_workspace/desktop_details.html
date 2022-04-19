@@ -2,12 +2,11 @@
 
 {% block content %}
   <header class="desktop-header bg-white shadow-sm">
-    <div class="container py-5 position-relative">
+    <div class="container pt-5 pb-3 position-relative">
       <a href="{{ request.META.HTTP_REFERER }}" class="btn btn-link position-absolute top-0 mt-2"><i class="fas fa-arrow-left"></i> Back</a>
       <div class="d-flex">
         <div class="desktop-logo flex-grow-1">
-          <img src="{{ desktop_type.logo }}" width="240" />
-          <!-- <h1>{{ desktop_type.name }}</h1> -->
+          <img src="{{ desktop_type.logo }}" width="360" />
         </div>
         <div class="desktop-header-button d-none d-sm-inline-block align-self-center">
           {% if launch_allowed %}
@@ -24,19 +23,49 @@
   <section class="desktop-details">
       <div class="container py-5">
         <div class="row mb-5">
-          <div class="col-12 col-md-8 col-lg-9 col-xxl-10">
-            <p>{{ desktop_type.description }}</p>
+          <div class="col-12 col-md-6 col-lg-7 col-xxl-8">
+            {% if desktop_type.details.screenshots %}
+            <div id="screenshot-carousel" class="carousel slide shadow mb-3" data-bs-ride="carousel">
+              <div class="carousel-indicators">
+                {% for screenshot in desktop_type.details.screenshots %}
+                <button type="button" data-bs-target="#screenshot-carousel" data-bs-slide-to="{{ forloop.counter0 }}" {% if forloop.first %}class="active" aria-current="true"{% endif %} aria-label="{{ screenshot.description }}"></button>
+                {% endfor %}
+              </div>
+              <div class="carousel-inner">
+                {% for screenshot in desktop_type.details.screenshots %}
+                <div class="carousel-item {% if forloop.first %}active{% endif %}">
+                  <img src="{{ screenshot.url }}" class="d-block w-100" alt="{{ screenshot.description }}">
+                </div>
+                {% endfor %}
+              </div>
+              <button class="carousel-control-prev" type="button" data-bs-target="#screenshot-carousel" data-bs-slide="prev">
+                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                <span class="visually-hidden">Previous</span>
+              </button>
+              <button class="carousel-control-next" type="button" data-bs-target="#screenshot-carousel" data-bs-slide="next">
+                <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                <span class="visually-hidden">Next</span>
+              </button>
+            </div>
+            {% endif %}
+            {{ desktop_type.description | safe }}
           </div>
-          <div class="col-12 col-md-4 col-lg-3 col-xxl-2">
+          <div class="col-12 col-md-6 col-lg-5 col-xxl-4">
             <h6>DEFAULT SIZE</h6>
-            <p>{{ desktop_type.default_flavor.vcpus }} VCPUs | {{ desktop_type.default_flavor.ram }} GB RAM</p>
+            <ul>
+              <li>{{ desktop_type.default_flavor.vcpus }} VCPUs</li>
+              <li>{{ desktop_type.default_flavor.ram }} GB RAM</li>
+	    </ul>
             <h6>BOOST SIZE</h6>
-            <p>{{ desktop_type.big_flavor.vcpus }} VCPUs | {{ desktop_type.big_flavor.ram }} GB RAM</p>
-            {% if desktop_type.details.features.apps %}
+            <ul>
+              <li>{{ desktop_type.big_flavor.vcpus }} VCPUs</li>
+              <li>{{ desktop_type.big_flavor.ram }} GB RAM</li>
+	    </ul>
+            {% if desktop_type.details.features %}
               <h6>FEATURES</h6>
               <ul>
-              {% for app in desktop_type.details.features.apps %}
-                <li>{{ desktop_type.details.features.apps }}</li>
+              {% for feature in desktop_type.details.features %}
+                <li>{{ feature }}</li>
               {% endfor %}
               <ul>
             {% endif %}
@@ -46,10 +75,13 @@
           <div class="col-lg-12 col-xl-10 offset-xl-1">
             <div class="card shadow">
               <div class="card-body px-lg-5">
-                <h2 class="text-center mt-3 mb-5">This Desktop is great for...</h2>
+                <h2 class="text-center mt-3 mb-5">This desktop is great for...</h2>
                 <ul class="fa-ul mb-4">
-                  {% for feature in desktop_type.details.features %}
-                    <li class="h4"><span class="fa-li"><i class="fas fa-check-circle text-success"></i></span><span class="text-secondary">{{ feature }}</span></li>
+                  {% for highlight in desktop_type.details.highlights %}
+                    <li class="h5">
+                      <span class="fa-li"><i class="fas fa-check-circle text-success"></i></span>
+                      <span class="text-secondary">{{ highlight }}</span>
+                    </li>
                   {% endfor %}
                 </ul>
               </div>
