@@ -9,7 +9,7 @@
     <div>
       <a href="{% url 'desktop_details' desktop_name=desktop_type.id %}" class="btn btn-link mt-auto">View Details <i class="fas fa-arrow-right"></i></a>
     </div>
-    <table class="table my-1 my-md-2 my-lg-4"> 
+    <table class="table my-1 my-md-2 my-lg-3 d-none d-sm-table"> 
       <thead>
         <tr>
           <th scope="col">OPERATING SYSTEM</th>
@@ -33,9 +33,9 @@
     </table>
   </div>
 
-  {% block expiry_message %}
-    {% if what_to_show.expiration %}
-  <p class="text-center"><small>Your {{ desktop_type.name }} {{ requesting_feature }} is set to be shelved on or after {{ what_to_show.expiration.expires }}.</small></p>
+  {% block supersize_message %}
+    {% if what_to_show.expires %}
+      <p class="desktop-message text-center d-none d-sm-block"><small>Your {{ desktop_type.name }} {{ requesting_feature }} is set to be shelved on or after {{ what_to_show.expires }}.</small></p>
     {% endif %}
   {% endblock expiry_message %}
 
