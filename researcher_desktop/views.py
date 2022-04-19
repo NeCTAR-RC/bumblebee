@@ -12,7 +12,7 @@ from researcher_workspace.utils import not_support_staff, redirect_home, \
     agreed_to_terms
 from vm_manager.constants import REBOOT_BUTTON, SHELVE_BUTTON, \
     DELETE_BUTTON, BOOST_BUTTON, DOWNSIZE_BUTTON, EXTEND_BUTTON, \
-    EXTEND_BOOST_BUTTON
+    EXTEND_BOOST_BUTTON, UNSHELVE_BUTTON
 
 logger = logging.getLogger(__name__)
 
@@ -21,7 +21,8 @@ def render_modules(request):
     modules = []
     for desktop_type in desktop_types():
         buttons = [REBOOT_BUTTON, SHELVE_BUTTON, DELETE_BUTTON, BOOST_BUTTON,
-                   DOWNSIZE_BUTTON, EXTEND_BUTTON, EXTEND_BOOST_BUTTON]
+                   DOWNSIZE_BUTTON, EXTEND_BUTTON, EXTEND_BOOST_BUTTON,
+                   UNSHELVE_BUTTON]
         modules.append(
             vm_man_views.render_vm(
                 request, request.user, desktop_type, buttons)
