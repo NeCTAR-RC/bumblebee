@@ -12,7 +12,9 @@ users:
   lock_passwd: false
   gecos: VDI User
   groups:
+  - adm
   - sudo
+  - wheel
   shell: /bin/bash
   sudo: 'ALL=(ALL) NOPASSWD:ALL'
   ssh-authorized-keys: {% verbatim %}{{ v1.public_ssh_keys }}{% endverbatim %}
@@ -20,7 +22,7 @@ users:
 phone_home:
   url: {{ phone_home_url }}
   post:
-    - instance_id
+  - instance_id
   tries: 10
 
 write_files:
