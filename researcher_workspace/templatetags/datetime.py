@@ -1,17 +1,15 @@
 from datetime import datetime, timedelta
-import pytz
 
 from django.conf import settings
 from django import template
+from django.utils import timezone
 
 register = template.Library()
 
 
 @register.simple_tag
 def time_of_day():
-    # FIX ME (?) - should we use the user's timezone rather than the
-    # system (settings) timezone when greeting the user?
-    cur_time = datetime.now(tz=pytz.timezone(str(settings.TIME_ZONE)))
+    cur_time = datetime.now(tz=timezone.get_current_timezone())
     if cur_time.hour < 12:
         return 'Morning'
     elif 12 <= cur_time.hour < 18:
