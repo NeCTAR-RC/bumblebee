@@ -1,9 +1,10 @@
 {% extends 'vm_manager/html/VM_Okay.html' %}
+{% load static %}
 {% load datetime %}
 
 {% block expiry_message %}
 {% if what_to_show.expiration %}
-<p class="text-center"><small>Your boosted {{ desktop_type.name }} {{ requesting_feature }} is set to resize back to the default size on or after {{ what_to_show.expiration.expires }}.</small></p>
+<p class="text-center"><small>Your boosted desktop is set to resize back to the default size on or after {{ what_to_show.expiration.expires }}</small></p>
 {% endif %}
 {% endblock expiry_message %}
 
@@ -30,6 +31,10 @@
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body text-center">
+          <video autoplay loop muted playsinline class="ratio ratio-16x9 mb-1">
+            <source src="{% static 'videos/action-downsize.webm' %}" type="video/webm">
+            <img src="{% static 'img/action-downsize.gif' %}" class="img-fluid" />
+          </video>
           <p>Your desktop is currently boosted to {{ desktop_type.big_flavor.vcpus }} VCPUs {{ desktop_type.big_flavor.ram }} GB RAM. You have to option to downsize to the desktop default size now. The default size of you desktop is {{ desktop_type.default_flavor.vcpus }} VCPUs {{ desktop_type.default_flavor.ram }} GB RAM.</p>
           <p>Please save any work and close the connection to your {{ requesting_feature }} before downsizing it. Your {{ requesting_feature }} will be unreachable for five minutes while downsizing.</p>
           <p class="h5 py-4">Are you sure you want to downsize?</p>
@@ -51,11 +56,14 @@
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body text-center">
-          <p>You can extend your boosted {{ requesting_feature }} for <strong>
-              {% period what_to_show.extension %} </strong>.</p>
-          <p>The current expiration date is {{ what_to_show.expires }}</p>
-          <p>The new expiration date will be {{ what_to_show.extended_expiration }}</p>
-          <p class="h5 py-4">Do you want to extend the boost time now?</p>
+          <video autoplay loop muted playsinline class="ratio ratio-16x9 mb-1">
+            <source src="{% static 'videos/action-extend-boost.webm' %}" type="video/webm">
+            <img src="{% static 'img/action-extend-boost.gif' %}" class="img-fluid" />
+          </video>
+          <p>You can extend the boost for your {{ requesting_feature }}.</p>
+          <p>The current downsize date is {{ what_to_show.expiration.expires }}</p>
+          <p>The new downsize date will be {{ what_to_show.extended_expiration }}, which is <strong>{% period what_to_show.extension %}</strong> from now.</p>
+          <p class="h5 py-4">Are you sure you want to extend the boost time now?</p>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>

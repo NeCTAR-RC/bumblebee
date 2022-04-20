@@ -16,11 +16,6 @@
             </div>
             <div class="desktop-info col-md-12 col-lg-8">
               <p class="lead text-center text-white">Good {% time_of_day %} {{ user.first_name }}!</p>
-              {% block supersize_message %}
-                {% if what_to_show.expires %}
-                  <p class="desktop-message text-center d-block d-sm-none"><small>Your {{ desktop_type.name }} {{ requesting_feature }} is set to be shelved on or after {{ what_to_show.expires }}.</small></p>
-                {% endif %}
-              {% endblock supersize_message %}
               <div id="desktop-computer">
                 <img id="desktop-computer-frame" src="{% static 'img/desktop-computer.svg' %}">
                 <div id="desktop-computer-screen" class="bg-white d-flex align-items-center justify-content-center">
