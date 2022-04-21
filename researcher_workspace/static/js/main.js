@@ -25,6 +25,17 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
   });
 });
 
+// removes the focus state on from the buttons that were clicked to launch a modal
+document.querySelectorAll(".modal").forEach(modal => {
+  var modalButton = {};
+  modal.addEventListener("shown.bs.modal", function(e) {
+    modalButton = e.relatedTarget;
+    modal.addEventListener("hidden.bs.modal", function(e) {
+      modalButton.blur(); // Defocus the button that triggered the modal
+    });
+  });
+});
+
 // Custom functions
 function scrollToId(elId) {
   document.getElementById(elId).scrollIntoView({

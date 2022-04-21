@@ -1,4 +1,5 @@
 {% block script %}
+
 var beenClicked = false;
 {% if "DELETE_BUTTON" in buttons_to_display %}
 function delete_{{ app_name }}_{{ desktop_type.id }}(tag) {
