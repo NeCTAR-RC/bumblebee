@@ -48,7 +48,8 @@ logger = logging.getLogger(__name__)
 
 def _wrong_state_message(action, user, feature=None, desktop_type=None,
                          vm_status=None, vm_id=None):
-    status_str = f"in wrong state ({vm_status.status})" if vm_status else "missing"
+    status_str = (
+        f"in wrong state ({vm_status.status})" if vm_status else "missing")
     instance_str = (
         f", instance {vm_id}" if vm_id
         else f", instance {vm_status.instance.id}" if (vm_status
@@ -77,7 +78,8 @@ def launch_vm(user, desktop_type, zone) -> str:
         user=user, requesting_feature=desktop_type.feature,
         operating_system=desktop_type.id, status=VM_CREATING,
         wait_time=after_time(LAUNCH_WAIT_SECONDS),
-        status_progress=0, status_message="Starting desktop creation"
+        status_progress=0, status_message="Starting desktop creation",
+        status_done="has been created"
     )
     vm_status.save()
 
@@ -147,6 +149,7 @@ def shelve_vm(user, vm_id, requesting_feature) -> str:
     vm_status.status = VM_WAITING
     vm_status.status_progress = 0
     vm_status.status_message = "Starting desktop shelve"
+    vm_status.status_done = "has been shelved"
     vm_status.save()
     vm_status.instance.set_marked_for_deletion()
 
@@ -170,7 +173,8 @@ def unshelve_vm(user, desktop_type) -> str:
                          status=VM_CREATING,
                          wait_time=after_time(LAUNCH_WAIT_SECONDS),
                          status_progress=0,
-                         status_message="Starting desktop unshelve")
+                         status_message="Starting desktop unshelve",
+                         status_done="has been unshelved")
     vm_status.save()
 
     queue = django_rq.get_queue('default')
@@ -220,6 +224,7 @@ def reboot_vm(user, vm_id, reboot_level, requesting_feature) -> str:
     vm_status.wait_time = after_time(REBOOT_WAIT_SECONDS)
     vm_status.status_progress = 0
     vm_status.status_message = "Starting desktop reboot"
+    vm_status.status_done = "has been rebooted"
     vm_status.save()
 
     queue = django_rq.get_queue('default')
@@ -247,6 +252,7 @@ def supersize_vm(user, vm_id, requesting_feature) -> str:
     vm_status.wait_time = after_time(RESIZE_WAIT_SECONDS)
     vm_status.status_progress = 0
     vm_status.status_message = "Starting desktop boost"
+    vm_status.status_done = "has been boosted"
     vm_status.save()
 
     queue = django_rq.get_queue('default')
@@ -274,6 +280,7 @@ def downsize_vm(user, vm_id, requesting_feature) -> str:
     vm_status.wait_time = after_time(RESIZE_WAIT_SECONDS)
     vm_status.status_progress = 0
     vm_status.status_message = "Starting desktop downsize"
+    vm_status.status_done = "has been downsized"
     vm_status.save()
 
     queue = django_rq.get_queue('default')
@@ -295,6 +302,8 @@ def extend_vm(user, vm_id, requesting_feature) -> str:
             "extend", user, feature=requesting_feature, vm_status=vm_status,
             vm_id=vm_id)
     expiry = extend_instance(user, vm_id, requesting_feature)
+    vm_status.status_done = "has been extended"
+    vm_status.save()
     return str(vm_status)
 
 
@@ -313,13 +322,12 @@ def extend_boost_vm(user, vm_id, requesting_feature) -> str:
 
     # Also extend the instance expiry
     instance_expiry = extend_instance(user, vm_id, requesting_feature)
+    vm_status.status_done = "has been extended"
+    vm_status.save()
     return str(vm_status)
 
 
-def get_vm_state(user, desktop_type):
-    vm_status = VMStatus.objects.get_latest_vm_status(user, desktop_type)
-    logger.debug(f"get_vm_state: {vm_status}")
-
+def get_vm_state(vm_status, user, desktop_type):
     if (not vm_status) or (vm_status.status == VM_DELETED):
         return NO_VM, "No VM", None
 
@@ -409,10 +417,12 @@ def get_vm_status(user, desktop_type):
 
 
 def render_vm(request, user, desktop_type, buttons):
-    state, what_to_show, vm_id = get_vm_state(user, desktop_type)
+    vm_status = VMStatus.objects.get_latest_vm_status(user, desktop_type)
+    state, what_to_show, vm_id = get_vm_state(vm_status, user, desktop_type)
     app_name = desktop_type.feature.app_name
 
     if state in [VM_SUPERSIZED, VM_OKAY, VM_SHELVED]:
+        # Display 'toast' for expirations that have started (1st warning)
         expiration = what_to_show["expiration"]
         if expiration and expiration.is_expiring():
             action = (
@@ -421,6 +431,13 @@ def render_vm(request, user, desktop_type, buttons):
             messages.info(request, format_html(
                 f'Your {desktop_type.name} desktop is set to be '
                 f'{action} {naturaltime(expiration.expires)}'))
+
+        # Display 'toast' for last completed workflow, then clear it
+        if vm_status.status_done:
+            messages.info(request, format_html(
+                f'Your {desktop_type.name} desktop {vm_status.status_done}'))
+            vm_status.status_done = None
+            vm_status.save()
 
     # Remove buttons that are not allowed in the current context
     forbidden = []
@@ -434,7 +451,6 @@ def render_vm(request, user, desktop_type, buttons):
         if what_to_show.get('extension').total_seconds() == 0:
             forbidden.append(EXTEND_BUTTON)
 
-    vm_status = VMStatus.objects.get_latest_vm_status(user, desktop_type)
     context = {
         'state': state,
         'what_to_show': what_to_show,

@@ -517,9 +517,15 @@ class VMStatus(models.Model):
     operating_system = models.CharField(max_length=20)
     instance = models.ForeignKey(
         Instance, on_delete=models.PROTECT, null=True, blank=True)
+
     status = models.CharField(max_length=20)
+    # Message for current step in current workflow
     status_message = models.TextField(null=True, blank=True)
+    # Progress in workflow (0 to 100)
     status_progress = models.IntegerField(default=0)
+    # Message to show when workflow completes
+    status_done = models.TextField(null=True, blank=True)
+    # Polling should wait until this time for the workflow to complete
     wait_time = models.DateTimeField(null=True, blank=True)
 
     def error(self, message):

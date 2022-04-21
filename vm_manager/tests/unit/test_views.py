@@ -380,46 +380,47 @@ class VMManagerViewTests(TestCase):
 
     @patch('vm_manager.utils.utils.Nectar', new=FakeNectar)
     def test_get_vm_state(self):
-        self.assertEqual((NO_VM, "No VM", None),
-                         get_vm_state(self.user, self.desktop_type))
-
         self.build_existing_vm(None)
         self.assertEqual((NO_VM, "No VM", None),
-                         get_vm_state(self.user, self.desktop_type))
+                         get_vm_state(self.vm_status,
+                                      self.user, self.desktop_type))
 
         self.build_existing_vm(NO_VM)
         self.assertEqual((NO_VM, "No VM", None),
-                         get_vm_state(self.user, self.desktop_type))
+                         get_vm_state(self.vm_status,
+                                      self.user, self.desktop_type))
 
         self.build_existing_vm(VM_DELETED)
         self.assertEqual((NO_VM, "No VM", None),
-                         get_vm_state(self.user, self.desktop_type))
+                         get_vm_state(self.vm_status,
+                                      self.user, self.desktop_type))
 
         self.build_existing_vm(VM_ERROR)
         self.assertEqual((VM_ERROR, "VM has Errored", self.instance.id),
-                         get_vm_state(self.user, self.desktop_type))
+                         get_vm_state(self.vm_status,
+                                      self.user, self.desktop_type))
 
-        VMStatusFactory.create(
+        vm_status = VMStatusFactory.create(
             status=VM_ERROR, user=self.user,
             operating_system=self.desktop_type.id,
             requesting_feature=self.feature)
         self.assertEqual((VM_MISSING, "VM has Errored", None),
-                         get_vm_state(self.user, self.desktop_type))
+                         get_vm_state(vm_status, self.user, self.desktop_type))
 
-        VMStatusFactory.create(
+        vm_status = VMStatusFactory.create(
             status=VM_WAITING, user=self.user,
             operating_system=self.desktop_type.id,
             requesting_feature=self.feature, wait_time=after_time(10))
         self.assertEqual((VM_WAITING, "9", None),
-                         get_vm_state(self.user, self.desktop_type))
+                         get_vm_state(vm_status, self.user, self.desktop_type))
 
-        VMStatusFactory.create(
+        vm_status = VMStatusFactory.create(
             status=VM_WAITING, user=self.user,
             operating_system=self.desktop_type.id,
             requesting_feature=self.feature,
             instance=self.instance, wait_time=datetime.now(utc))
         self.assertEqual((VM_ERROR, "Instance Not Ready", self.instance.id),
-                         get_vm_state(self.user, self.desktop_type))
+                         get_vm_state(vm_status, self.user, self.desktop_type))
 
         vm_status = VMStatusFactory.create(
             status=VM_WAITING, user=self.user,
@@ -427,7 +428,7 @@ class VMManagerViewTests(TestCase):
             requesting_feature=self.feature,
             wait_time=datetime.now(utc))
         self.assertEqual((VM_MISSING, "VM has Errored", None),
-                         get_vm_state(self.user, self.desktop_type))
+                         get_vm_state(vm_status, self.user, self.desktop_type))
         # Changes the state to VM_ERROR
         self.assertEqual(VM_ERROR,
                          VMStatus.objects.get(pk=vm_status.pk).status)
@@ -436,7 +437,8 @@ class VMManagerViewTests(TestCase):
         fake_nectar.nova.servers.get.return_value = Fake(status=SHUTDOWN)
         self.build_existing_vm(VM_OKAY)
         self.assertEqual((VM_SHUTDOWN, "VM Shutdown", self.instance.id),
-                         get_vm_state(self.user, self.desktop_type))
+                         get_vm_state(self.vm_status,
+                                      self.user, self.desktop_type))
 
     @patch('vm_manager.utils.utils.Nectar', new=FakeNectar)
     @patch('vm_manager.models.Instance.get_url')
@@ -467,14 +469,16 @@ class VMManagerViewTests(TestCase):
                            'extended_expiration': date2
                           },
                           self.instance.id),
-                         get_vm_state(self.user, self.desktop_type))
+                         get_vm_state(self.vm_status,
+                                      self.user, self.desktop_type))
 
         for os_status in [BUILD, REBOOT, REBUILD, RESCUE]:   # just some
             fake_nectar.nova.servers.get.return_value = Fake(status=os_status)
             self.build_existing_vm("lalala")
             self.assertEqual((VM_ERROR, "Error at OpenStack level",
                               self.instance.id),
-                             get_vm_state(self.user, self.desktop_type))
+                             get_vm_state(self.vm_status,
+                                          self.user, self.desktop_type))
             instance = Instance.objects.get(pk=self.instance.pk)
             self.assertEqual(f"Error at OpenStack level. Status: {os_status}",
                              instance.error_message)
@@ -504,7 +508,7 @@ class VMManagerViewTests(TestCase):
         resize = ResizeFactory.create(instance=self.instance)
         resize.set_expires(date1)
 
-        res = get_vm_state(self.user, self.desktop_type)
+        res = get_vm_state(self.vm_status, self.user, self.desktop_type)
 
         self.assertEqual(
             (VM_SUPERSIZED,
@@ -514,7 +518,7 @@ class VMManagerViewTests(TestCase):
               'extended_expiration': date2
              },
              self.instance.id),
-            get_vm_state(self.user, self.desktop_type))
+            get_vm_state(self.vm_status, self.user, self.desktop_type))
 
     @patch('vm_manager.utils.utils.Nectar', new=FakeNectar)
     @patch('vm_manager.views.VolumeExpiryPolicy')
@@ -539,7 +543,8 @@ class VMManagerViewTests(TestCase):
                            'extended_expiration': date2
                           },
                           self.instance.id),
-                         get_vm_state(self.user, self.desktop_type))
+                         get_vm_state(self.vm_status,
+                                      self.user, self.desktop_type))
 
     @patch('vm_manager.views.loader')
     @patch('vm_manager.models.Instance.get_url')
