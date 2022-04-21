@@ -74,14 +74,12 @@
         </div>
       </section>
     {% else %}
-      <div class="container py-5">
-        <div class="row">
-          <div class="col-12 text-center align-items-center">
-            <h2 class="mb-4">Create a workspace to get started...</h2>
-            <a class="btn btn-primary btn-lg" href="{% url 'new_project' %}" role="button" title="Create Project">
-              <span class="btn-label"><i class="fas fa-plus"></i></span> Create Workspace
-            </a>
-          </div>
+      <div class="container">
+        <div class="text-center my-5">
+          <h2 class="mb-4">Create a workspace to get started...</h2>
+          <a class="btn btn-primary btn-lg" href="{% url 'new_project' %}" role="button" title="Create Project">
+            <span class="btn-label"><i class="fas fa-plus"></i></span> Create Workspace
+          </a>
         </div>
       </div>
     {% endif %}

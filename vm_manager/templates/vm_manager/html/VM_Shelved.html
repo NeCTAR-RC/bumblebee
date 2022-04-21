@@ -32,7 +32,7 @@
       </div>
     </div>
     {% if what_to_show.expiration %}
-    <p class="text-center"><small>Your shelved {{ desktop_type.name }} {{ requesting_feature }} is set to be deleted on or after {{ what_to_show.expiration.expires }}.</small></p>
+    <p class="text-center"><small>Your shelved desktop is set to be deleted on or after {{ what_to_show.expiration.expires }}</small></p>
     {% endif %}
     {% if "UNSHELVE_BUTTON" in buttons_to_display %}
     <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#{{ app_name }}-{{ desktop_type.id }}-unshelve-modal">
@@ -55,13 +55,11 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body text-center">
-	<!--
-	<video autoplay loop muted playsinline class="ratio ratio-16x9 mb-1">
-            <source src="{% static 'videos/action-reboot.webm' %}" type="video/webm">
-            <img src="{% static 'img/action-reboot.gif' %}" class="img-fluid" />
+        <video autoplay loop muted playsinline class="ratio ratio-16x9 mb-1">
+          <source src="{% static 'videos/action-unshelve.webm' %}" type="video/webm">
+          <img src="{% static 'img/action-unshelve.gif' %}" class="img-fluid" />
         </video>
-        -->
-        <p>Unshelving your Virtual Desktop will restore it to a state where you can use it.  It will take a few minutes to relaunch and boot the desktop.</p>
+        <p>Unshelving your Virtual Desktop will restore it to a state where you can use it. It will take a few minutes to relaunch and boot the desktop.</p>
         <p class="h5 py-4">Are you sure you want to unshelve your desktop?</p>
       </div>
       <div class="modal-footer text-center">

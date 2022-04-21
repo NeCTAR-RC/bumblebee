@@ -5,11 +5,11 @@
     <h6 class="d-none d-md-block d-lg-none d-xl-none">Your Virtual Desktop is</h6>
     <h3 class="d-none d-xl-block">Your Virtual Desktop is</h3>
     <img src="{{ desktop_type.logo }}" class="d-xl-none w-50" />
-    <img src="{{ desktop_type.logo }}" class="d-none d-xl-inline-block w-75 mb-1" />
+    <img src="{{ desktop_type.logo }}" class="d-none d-xl-inline-block w-50 mb-1" />
     <div>
       <a href="{% url 'desktop_details' desktop_name=desktop_type.id %}" class="btn btn-link mt-auto">View Details <i class="fas fa-arrow-right"></i></a>
     </div>
-    <table class="table my-1 my-md-2 my-lg-4"> 
+    <table class="table my-1 my-md-2 my-lg-3 d-none d-sm-table"> 
       <thead>
         <tr>
           <th scope="col">OPERATING SYSTEM</th>
@@ -27,15 +27,15 @@
               {{ desktop_type.default_flavor.vcpus }} VCPUs | {{ desktop_type.default_flavor.ram }} GB RAM
             {% endif %}
           </td>
-	  <td>{{ vm_status.instance.boot_volume.zone }}</td>
+	        <td>{{ vm_status.instance.boot_volume.zone }}</td>
         </tr>
       </tbody>
     </table>
   </div>
 
   {% block expiry_message %}
-    {% if what_to_show.expiration %}
-  <p class="text-center"><small>Your {{ desktop_type.name }} {{ requesting_feature }} is set to be shelved on or after {{ what_to_show.expiration.expires }}.</small></p>
+    {% if what_to_show.expires %}
+      <p class="desktop-message text-center d-none d-sm-block"><small>Your {{ desktop_type.name }} {{ requesting_feature }} is set to be shelved on or after {{ what_to_show.expires }}.</small></p>
     {% endif %}
   {% endblock expiry_message %}
 
@@ -155,17 +155,13 @@
       </div>
       <div class="modal-body text-center">
         <video autoplay loop muted playsinline class="ratio ratio-16x9 mb-3">
-<!--          <source src="{% static 'videos/action-shelve.webm' %}" type="video/webm">
-          <img src="{% static 'img/action-shelve.gif' %}" class="img-fluid" />
--->
+          <source src="{% static 'videos/action-extend-time.webm' %}" type="video/webm">
+          <img src="{% static 'img/action-extend-time.gif' %}" class="img-fluid" />
         </video>
-        <p>You can extend the time until your {{ requesting_feature }} is
-          shelved {{ requesting_feature }} for <strong>
-            {% period what_to_show.extension %} </strong>.</p>
-          <p>The current expiration date is {{ what_to_show.expires }}</p>
-          <p>The new expiration date will be {{ what_to_show.extended_expiration }}</p>
-          <p class="h5 py-4">Do you want to extend the shelve time now?</p>
-
+        <p>You can extend the time until your {{ requesting_feature }} is shelved.</p>
+        <p>The current shelving date is {{ what_to_show.expiration.expires }}</p>
+        <p>The new shelving date will be {{ what_to_show.extended_expiration }}, which is <strong>{% period what_to_show.extension %}</strong> from now.</p>
+        <p class="h5 py-4">Are you sure you want to extend the time until your desktop is shelved?</p>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
