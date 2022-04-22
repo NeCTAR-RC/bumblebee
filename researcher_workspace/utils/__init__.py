@@ -32,7 +32,10 @@ def send_notification(user, template_name, context):
     a blank line and then multiple lines comprising an HTML message body.
     '''
 
-    text = format_notification(user, template_name, context)
+    # Note: Strip any whitespace before separating the subject.
+    # Otherwise we get problems due to leading whitespace added by
+    # "{% load ... %}" etc directives at the start of the templates.
+    text = format_notification(user, template_name, context).strip()
     subject, _, body = text.partition('\n\n')
     user.email_user(subject.strip(), body.strip())
 
