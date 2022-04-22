@@ -254,8 +254,11 @@ def _create_instance(user, desktop_type, volume):
     )
 
     # Create guac connection
+    full_name = user.get_full_name()
+    desktop_name = desktop_type.name
+    connection_name = f"{full_name}'s {desktop_name} desktop"
     guac_connection = GuacamoleConnection.objects.create(
-        connection_name=desktop_type.name)
+        connection_name=connection_name)
 
     # Create record in DB
     instance = Instance.objects.create(
