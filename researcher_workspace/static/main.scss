@@ -53,8 +53,8 @@ $spacer: 1.25rem;
 $link-color: darken($info, 15%) !default;
 $btn-link-color: darken($primary, 10%) !default;
 $btn-link-hover-color: darken($btn-link-color, 20%) !default;
-$btn-box-shadow: none !default;
-$btn-active-box-shadow: none !default;
+$btn-box-shadow: false;
+$btn-active-box-shadow: false;
 
 // Bootstrap
 @import "scss/bootstrap/bootstrap";
