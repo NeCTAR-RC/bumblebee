@@ -90,6 +90,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'researcher_workspace.middleware.TimezoneMiddleware',
+    'researcher_workspace.middleware.MetricsAuthMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django_prometheus.middleware.PrometheusAfterMiddleware',
 ]
@@ -311,6 +312,10 @@ FRESHDESK_GROUP_ID = get_setting('FRESHDESK_GROUP_ID')
 FRESHDESK_EMAIL_CONFIG_ID = get_setting('FRESHDESK_EMAIL_CONFIG_ID')
 
 EMAIL_BACKEND = 'researcher_workspace.utils.freshdesk.FreshdeskEmailBackend'
+
+# Basic auth username/password for Prometheus metrics endpoint /metrics
+METRICS_USERNAME = get_setting('METRICS_USERNAME', 'metrics')
+METRICS_PASSWORD = get_setting('METRICS_PASSWORD')
 
 if SITE_URL and SITE_URL.startswith('https'):
     USE_X_FORWARDED_HOST = True
