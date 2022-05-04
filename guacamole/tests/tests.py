@@ -3,13 +3,28 @@ from django.test import TestCase
 from guacamole.models import GuacamoleUser, GuacamoleConnection
 from guacamole.models import GuacamoleConnectionParameter
 from guacamole.models import GuacamoleConnectionPermission
-from guacamole.utils import quick_rdp, quick_rdp_destroy
+from guacamole.utils import quick_rdp, quick_rdp_destroy, get_connection_path
+
+from guacamole.tests.factories import GuacamoleConnectionFactory
 
 
 class SimpleTestCase(TestCase):
     """
     Simple test cases that verifies basic model functionality.
     """
+
+    def test_get_connection_path(self):
+        conn = GuacamoleConnectionFactory.create(connection_id=1)
+        self.assertEqual(get_connection_path(conn), '#/client/MQBjAG15c3Fs')
+
+        conn = GuacamoleConnectionFactory.create(connection_id=54)
+        self.assertEqual(get_connection_path(conn), '#/client/NTQAYwBteXNxbA')
+
+        conn = GuacamoleConnectionFactory.create(connection_id=156)
+        self.assertEqual(get_connection_path(conn), '#/client/MTU2AGMAbXlzcWw')
+
+        conn = GuacamoleConnectionFactory.create(connection_id=1234)
+        self.assertEqual(get_connection_path(conn), '#/client/MTIzNABjAG15c3Fs')
 
     def test_quick_rdp(self):
         """

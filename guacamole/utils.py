@@ -18,11 +18,14 @@ def get_connection_path(conn):
     #   - The connection identifier (id?)
     #   - The type (c for connections)
     #   - The identifier of the auth provider storing the conn data (mysql)
-
+    # Lastly, strip any trailing = from the end (which seems to make it non
+    # base64 compliant, but this is what Guacamole does.
+    #
     components = [str(conn.connection_id), 'c', 'mysql']
     joined_components = '\x00'.join(components).encode('utf-8')
     hash_str = base64.b64encode(joined_components).decode('utf-8')
-    quote_hash_str = urllib.parse.quote(hash_str)
+    fixed_hash = hash_str.replace('=', '')
+    quote_hash_str = urllib.parse.quote(fixed_hash)
     return f'#/client/{quote_hash_str}'
 
 
