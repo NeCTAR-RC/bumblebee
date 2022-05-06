@@ -7,7 +7,7 @@ import novaclient
 
 from django.utils.timezone import utc
 
-from vm_manager.constants import NO_VM, \
+from vm_manager.constants import NO_VM, VM_SHELVED, \
     VOLUME_AVAILABLE, BACKUP_CREATING, BACKUP_AVAILABLE, VM_WAITING, \
     INSTANCE_DELETION_RETRY_WAIT_TIME, INSTANCE_DELETION_RETRY_COUNT, \
     INSTANCE_CHECK_SHUTOFF_RETRY_WAIT_TIME, \
