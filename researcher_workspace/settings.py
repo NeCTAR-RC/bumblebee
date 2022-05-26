@@ -270,8 +270,6 @@ MESSAGE_TAGS = {
 # must be set to localhost if we want to use 'debug' in templates...
 INTERNAL_IPS = "127.0.0.1"
 
-USER_LIMIT = 1000
-
 # The page that users are redirected to after using invitation token
 NEXT_PAGE = '/home'
 

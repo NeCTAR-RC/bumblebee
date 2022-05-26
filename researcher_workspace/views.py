@@ -278,8 +278,6 @@ def on_logout(sender, user, request, **kwargs):
                   redirect_field_name=None)
 def home(request):
     # Handle edge cases
-    if request.user.id > settings.USER_LIMIT:
-        return render(request, 'researcher_workspace/home/user_limit_home.html')
     if (hasattr(settings, 'GENERAL_WARNING_MESSAGE')
             and bool(settings.GENERAL_WARNING_MESSAGE)):
         messages.warning(
