@@ -27,7 +27,7 @@
               {{ desktop_type.default_flavor.vcpus }} VCPUs | {{ desktop_type.default_flavor.ram }} GB RAM
             {% endif %}
           </td>
-	        <td>{{ vm_status.instance.boot_volume.zone }}</td>
+                <td>{{ vm_status.instance.boot_volume.zone }}</td>
         </tr>
       </tbody>
     </table>
@@ -100,7 +100,8 @@
             <img src="{% static 'img/action-reboot.gif' %}" class="img-fluid" />
         </video>
         <p>Rebooting your Virtual Desktop allows you to shutdown and restart the operating system. Your desktop will be unreachable for three minutes while it reboots.</p>
-        <p>Please save any work and close the connection to your desktop before rebooting it.</p>
+        <p>Please save any work and close the connection to your desktop before rebooting it.  The in-memory state of
+        running applications will be lost when rebooting.</p>
         <div class="alert alert-warning" role="alert">
           <b>Note</b>: A <em>soft reboot</em> is a request to the operating system to reboot itself and is the safer option. A <em>hard
           reboot</em> is a power cycle for the machine, and should only be used as a last resort, as it can (on rare occasions)
@@ -131,9 +132,10 @@
           <source src="{% static 'videos/action-shelve.webm' %}" type="video/webm">
           <img src="{% static 'img/action-shelve.gif' %}" class="img-fluid" />
         </video>
-        <p>Shelving your {{ requesting_feature }} will put it in a suspended state, where it is no longer consuming cloud
-        resources. A shelved desktop can quickly be unshelved to get back to the state it was before shelving.</p>
-        <p>Please save any work and close the connection to your desktop before shelving it.</p>
+        <p>Shelving your {{ requesting_feature }} will power it off and detach the file system to reduce the cloud
+        resources that is consumes. A shelved desktop can quickly be unshelved so that you can start using it again.</p>
+        <p>Please save any work and close the connection to your desktop before shelving it.  The in-memory state of
+        running applications is not preserved when shelving.</p>
         <p class="h5 py-4">Are you sure you want to shelve your desktop?</p>
       </div>
       <div class="modal-footer">
@@ -211,7 +213,9 @@
           <img src="{% static 'img/action-boost.gif' %}" class="img-fluid" />
         </video>
         <p>Your can boost your Desktop size from {{ desktop_type.default_flavor.vcpus }} VCPUs {{ desktop_type.default_flavor.ram }} GB RAM to {{ desktop_type.big_flavor.vcpus }} VCPUs {{ desktop_type.big_flavor.ram }} GB RAM <strong>for {% get_setting "BOOST_EXPIRY" %} days initially, and up to {% get_setting "BOOST_LIFETIME" %} days in total.</strong>.</p>
-        <p>Please save any work and close the connection to your {{ requesting_feature }} before boosting it. Your {{ requesting_feature }} will be unreachable for five minutes while boosting.</p>
+        <p>Please save any work and close the connection to your {{ requesting_feature }} before boosting it.  The in-memory
+          state of running applications will be lost.  Your {{ requesting_feature }} will be unreachable for a few minutes
+          while boosting.</p>
         <p class="h5 py-4">Are you sure you want to boost for {% get_setting "BOOST_EXPIRY" %} days?</p>
       </div>
       <div class="modal-footer">
