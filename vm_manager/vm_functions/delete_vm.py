@@ -27,8 +27,7 @@ logger = logging.getLogger(__name__)
 
 
 def delete_vm_worker(instance, archive=False):
-    logger.info(f"About to delete vm at addr: {instance.get_ip_addr()} "
-                f"for user {instance.user.username}")
+    logger.info(f"About to delete {instance}")
 
     if instance.guac_connection:
         GuacamoleConnection.objects.filter(instance=instance).delete()
@@ -39,13 +38,13 @@ def delete_vm_worker(instance, archive=False):
     try:
         n.nova.servers.stop(instance.id)
     except novaclient.exceptions.NotFound:
-        logger.error(f"Trying to delete an instance that's missing "
-                     f"from OpenStack {instance}")
+        logger.error(f"Trying to delete {instance} but it is not "
+                     f"found in OpenStack.")
 
     # Check if the Instance is Shutoff before requesting OS to Delete it
-    logger.info(f"Checking whether {instance} is ShutOff "
+    logger.info(f"Checking whether {instance} is SHUTOFF "
                 f"after {INSTANCE_CHECK_SHUTOFF_RETRY_WAIT_TIME} "
-                f"seconds and Delete it")
+                f"seconds and delete it")
     scheduler = django_rq.get_scheduler('default')
     scheduler.enqueue_in(
         timedelta(seconds=INSTANCE_CHECK_SHUTOFF_RETRY_WAIT_TIME),
@@ -60,8 +59,9 @@ def _check_instance_is_shutoff_and_delete(
     scheduler = django_rq.get_scheduler('default')
     if not instance.check_shutdown_status() and retries > 0:
         # If the instance is not Shutoff, schedule the recheck
-        logger.info(f"{instance} is not shutoff yet! Will check again in "
-                    f"{INSTANCE_CHECK_SHUTOFF_RETRY_WAIT_TIME} seconds")
+        logger.info(f"{instance} is not yet SHUTOFF! Will check again "
+                    f"in {INSTANCE_CHECK_SHUTOFF_RETRY_WAIT_TIME} seconds with "
+                    f"{retries} retries remaining.")
         scheduler.enqueue_in(
             timedelta(seconds=INSTANCE_CHECK_SHUTOFF_RETRY_WAIT_TIME),
             _check_instance_is_shutoff_and_delete, instance,
@@ -69,8 +69,8 @@ def _check_instance_is_shutoff_and_delete(
         return
     if retries <= 0:
         # TODO - not sure we should delete the instance anyway ...
-        logger.info(f"Ran out of retries. {instance} shutoff took too long."
-                    f"Proceeding to delete Openstack instance anyway!")
+        logger.info(f"Ran out of retries shutting down {instance}. "
+                    f"Proceeding to delete OpenStack instance anyway!")
 
     # Update status if something is waiting
     vm_status = VMStatus.objects.get_vm_status_by_instance(
@@ -97,9 +97,9 @@ def delete_instance(instance):
         n.nova.servers.delete(instance.id)
         logger.info(f"Instructed OpenStack to delete {instance}")
     except novaclient.exceptions.NotFound:
-        logger.info(f"Instance {instance} already deleted")
+        logger.info(f"{instance} already deleted")
     except Exception as e:
-        logger.error(f"something went wrong with the instance deletion "
+        logger.error(f"Something went wrong with the instance deletion "
                      f"call for {instance}, it raised {e}")
 
 
@@ -108,18 +108,18 @@ def _dispose_volume_once_instance_is_deleted(instance, archive, retries):
     try:
         my_instance = n.nova.servers.get(instance.id)
         logger.debug(f"Instance delete status is retries: {retries} "
-                     f"openstack instance: {my_instance}")
+                     f"OpenStack instance: {my_instance}")
     except novaclient.exceptions.NotFound:
         instance.deleted = datetime.now(utc)
         instance.save()
         if archive:
-            logger.info(f"Instance {instance.id} successfully deleted, "
-                        "we can archive the volume now!")
+            logger.info(f"Instance {instance.id} successfully deleted. "
+                        f"Proceeding to archive {instance.boot_volume} now!")
             archive_vm_worker(instance.boot_volume,
                               instance.boot_volume.requesting_feature)
         else:
-            logger.info(f"Instance {instance.id} successfully deleted, "
-                        "we can delete the volume now!")
+            logger.info(f"Instance {instance.id} successfully deleted. "
+                        f"Proceeding to delete {instance.boot_volume} now!")
             delete_volume(instance.boot_volume)
         return
     except Exception as e:
@@ -142,7 +142,7 @@ def _dispose_volume_once_instance_is_deleted(instance, archive, retries):
         return
 
     if retries <= 0:
-        error_message = f"ran out of retries trying to delete"
+        error_message = f"Ran out of retries trying to delete"
         instance.error(error_message)
         instance.boot_volume.error(error_message)
         logger.error(f"{error_message} {instance}")

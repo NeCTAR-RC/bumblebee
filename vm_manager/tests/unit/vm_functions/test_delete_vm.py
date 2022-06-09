@@ -62,14 +62,13 @@ class DeleteVMTests(VMFunctionTestBase):
             (fake_instance, False, INSTANCE_DELETION_RETRY_COUNT))
 
         mock_logger.error.assert_called_once_with(
-            f"Trying to delete an instance that's missing "
-            f"from OpenStack {fake_instance}")
+            f"Trying to delete {fake_instance} but it is not found in "
+            "OpenStack.")
         mock_logger.info.assert_has_calls([
-            call(f"About to delete vm at addr: 10.0.0.99 "
-                 f"for user {self.user.username}"),
-            call(f"Checking whether {fake_instance} is ShutOff "
+            call(f"About to delete {fake_instance}"),
+            call(f"Checking whether {fake_instance} is SHUTOFF "
                  f"after {INSTANCE_CHECK_SHUTOFF_RETRY_WAIT_TIME} "
-                 f"seconds and Delete it")
+                 f"seconds and delete it")
             ])
 
     @patch('vm_manager.models.get_nectar')
@@ -86,13 +85,14 @@ class DeleteVMTests(VMFunctionTestBase):
         fake_nectar = FakeNectar()
         mock_get_nectar.return_value = fake_nectar
         fake_nectar.nova.servers.get.return_value = FakeServer(status=ACTIVE)
-
+        retries = 1
         _check_instance_is_shutoff_and_delete(
-            fake_instance, 1, funky, funky_args)
+            fake_instance, retries, funky, funky_args)
 
         mock_logger.info.assert_called_with(
-            f"{fake_instance} is not shutoff yet! Will check again in "
-            f"{INSTANCE_CHECK_SHUTOFF_RETRY_WAIT_TIME} seconds")
+            f"{fake_instance} is not yet SHUTOFF! Will check again in "
+            f"{INSTANCE_CHECK_SHUTOFF_RETRY_WAIT_TIME} seconds "
+            f"with {retries} retries remaining.")
         mock_rq.get_scheduler.assert_called_once_with("default")
         mock_scheduler.enqueue_in.assert_called_once_with(
             timedelta(seconds=INSTANCE_CHECK_SHUTOFF_RETRY_WAIT_TIME),
@@ -121,8 +121,8 @@ class DeleteVMTests(VMFunctionTestBase):
 
         mock_rq.get_scheduler.assert_called_once_with("default")
         mock_logger.info.assert_called_with(
-            f"Ran out of retries. {fake_instance} shutoff took too long."
-            f"Proceeding to delete Openstack instance anyway!")
+            f"Ran out of retries shutting down {fake_instance}. "
+            f"Proceeding to delete OpenStack instance anyway!")
         mock_worker.assert_called_once_with(fake_instance)
         mock_scheduler.enqueue_in.assert_called_once_with(
             timedelta(seconds=INSTANCE_DELETION_RETRY_WAIT_TIME),
@@ -153,8 +153,8 @@ class DeleteVMTests(VMFunctionTestBase):
 
         mock_rq.get_scheduler.assert_called_once_with("default")
         mock_logger.info.assert_called_with(
-            f"Ran out of retries. {fake_instance} shutoff took too long."
-            f"Proceeding to delete Openstack instance anyway!")
+            f"Ran out of retries shutting down {fake_instance}. "
+            f"Proceeding to delete OpenStack instance anyway!")
         mock_worker.assert_called_once_with(fake_instance)
         mock_scheduler.enqueue_in.assert_called_once_with(
             timedelta(seconds=INSTANCE_DELETION_RETRY_WAIT_TIME),
@@ -188,7 +188,7 @@ class DeleteVMTests(VMFunctionTestBase):
         fake_nectar.nova.servers.delete.assert_called_once_with(
             fake_instance.id)
         mock_logger.info.assert_called_once_with(
-            f"Instance {fake_instance} already deleted")
+            f"{fake_instance} already deleted")
 
     @patch('vm_manager.vm_functions.delete_vm.get_nectar')
     @patch('vm_manager.vm_functions.delete_vm.logger')
@@ -204,7 +204,7 @@ class DeleteVMTests(VMFunctionTestBase):
             fake_instance.id)
         mock_logger.info.assert_not_called()
         mock_logger.error.assert_called_once_with(
-            f"something went wrong with the instance deletion "
+            f"Something went wrong with the instance deletion "
             f"call for {fake_instance}, it raised weirdness")
 
     @patch('vm_manager.vm_functions.delete_vm.get_nectar')
@@ -226,8 +226,8 @@ class DeleteVMTests(VMFunctionTestBase):
         fake_nectar.nova.servers.get.assert_called_once_with(fake_instance.id)
         mock_delete.assert_called_once_with(fake_volume)
         mock_logger.info.assert_called_once_with(
-            f"Instance {fake_instance.id} successfully deleted, "
-            f"we can delete the volume now!")
+            f"Instance {fake_instance.id} successfully deleted. Proceeding "
+            f"to delete {fake_volume} now!")
         instance = Instance.objects.get(pk=fake_instance.pk)
         self.assertIsNotNone(instance.deleted)
 
@@ -309,7 +309,7 @@ class DeleteVMTests(VMFunctionTestBase):
         self.assertIsNone(
             _dispose_volume_once_instance_is_deleted(fake_instance, False, -1))
         mock_logger.info.assert_not_called()
-        message = "ran out of retries trying to delete"
+        message = "Ran out of retries trying to delete"
         mock_logger.error.assert_called_once_with(f"{message} {fake_instance}")
 
         fake_nectar.nova.servers.get.assert_called_once_with(fake_instance.id)
@@ -375,8 +375,8 @@ class DeleteVMTests(VMFunctionTestBase):
         mock_archive.assert_called_once_with(fake_volume, self.FEATURE)
         mock_delete.assert_not_called()
         mock_logger.info.assert_called_once_with(
-            f"Instance {fake_instance.id} successfully deleted, "
-            f"we can archive the volume now!")
+            f"Instance {fake_instance.id} successfully deleted. Proceeding "
+            f"to archive {fake_instance.boot_volume} now!")
         instance = Instance.objects.get(pk=fake_instance.pk)
         self.assertIsNotNone(instance.deleted)
 
