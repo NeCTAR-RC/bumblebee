@@ -6,11 +6,11 @@ import novaclient
 
 from django.utils.timezone import utc
 
-from vm_manager.constants import INSTANCE_DELETION_RETRY_WAIT_TIME, \
-    INSTANCE_DELETION_RETRY_COUNT, VM_SHELVED, VM_WAITING, VM_OKAY, \
+from vm_manager.constants import ACTIVE, SHUTDOWN, \
+    VM_SHELVED, VM_WAITING, VM_OKAY, VM_ERROR, \
+    INSTANCE_DELETION_RETRY_WAIT_TIME, INSTANCE_DELETION_RETRY_COUNT, \
     INSTANCE_CHECK_SHUTOFF_RETRY_WAIT_TIME, \
-    INSTANCE_CHECK_SHUTOFF_RETRY_COUNT, \
-    FORCED_SHELVE_WAIT_SECONDS
+    INSTANCE_CHECK_SHUTOFF_RETRY_COUNT, FORCED_SHELVE_WAIT_SECONDS
 from vm_manager.models import VMStatus
 from vm_manager.utils.expiry import VolumeExpiryPolicy
 from vm_manager.utils.utils import get_nectar, after_time
@@ -36,11 +36,20 @@ def shelve_vm_worker(instance):
 
     n = get_nectar()
     try:
-        n.nova.servers.stop(instance.id)
+        status = n.nova.servers.get(instance.id).status
+        if status == ACTIVE:
+            n.nova.servers.stop(instance.id)
+        elif status == SHUTDOWN:
+            logger.info(f"Instance {instance} already shutdown in Nova.")
+        else:
+            logger.error(f"Nova instance for {instance} is in unexpected "
+                         f"state {status}.  Needs manual cleanup.")
+            instance.error(f"Nova instance is {status}")
+            return
     except novaclient.exceptions.NotFound:
-        logger.error(f"Trying to shelve an instance that's missing "
-                     f"from OpenStack {instance}")
-        instance.error("Openstack instance is missing")
+        logger.error(f"Trying to shelve an instance that is missing "
+                     f"from Nova - {instance}")
+        instance.error("Nova instance is missing")
         return
 
     vm_status = VMStatus.objects.get_vm_status_by_instance(
@@ -111,7 +120,7 @@ def shelve_expired_vm(instance, requesting_feature):
     try:
         vm_status = VMStatus.objects.get_vm_status_by_instance(
             instance, requesting_feature)
-        if vm_status.status != VM_OKAY:
+        if vm_status.status not in (VM_OKAY, VM_ERROR):
             logger.info(f"Instance in unexpected state: {vm_status}")
         else:
             # Simulate the vm_status behavior of a normal shelve (with a

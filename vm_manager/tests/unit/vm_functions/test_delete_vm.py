@@ -10,8 +10,8 @@ from guacamole.tests.factories import GuacamoleConnectionFactory
 from vm_manager.tests.fakes import Fake, FakeServer, FakeNectar
 from vm_manager.tests.unit.vm_functions.base import VMFunctionTestBase
 
-from vm_manager.constants import \
-    ACTIVE, SHUTDOWN, VM_WAITING, VM_SHELVED, NO_VM, \
+from vm_manager.constants import ACTIVE, SHUTDOWN, RESCUE, \
+    VM_WAITING, VM_SHELVED, NO_VM, \
     INSTANCE_CHECK_SHUTOFF_RETRY_WAIT_TIME, \
     INSTANCE_DELETION_RETRY_WAIT_TIME, \
     INSTANCE_CHECK_SHUTOFF_RETRY_COUNT, INSTANCE_DELETION_RETRY_COUNT, \
@@ -40,12 +40,10 @@ class DeleteVMTests(VMFunctionTestBase):
         fake_instance.guac_connection = fake_guac
 
         fake_nectar = get_nectar()
-        fake_nectar.nova.servers.stop.side_effect = \
-            novaclient.exceptions.NotFound(code=42)  # the code is ignored
+        fake_nectar.nova.servers.get.return_value = FakeServer(status=ACTIVE)
 
-        result = delete_vm_worker(fake_instance)
+        delete_vm_worker(fake_instance)
 
-        self.assertIsNone(result)
         instance = Instance.objects.get(pk=fake_instance.pk)
         self.assertIsNone(instance.guac_connection)
         self.assertEqual(
@@ -61,15 +59,114 @@ class DeleteVMTests(VMFunctionTestBase):
             _dispose_volume_once_instance_is_deleted,
             (fake_instance, False, INSTANCE_DELETION_RETRY_COUNT))
 
+        mock_logger.info.assert_called_once_with(
+            f"About to delete {fake_instance}")
+
+    @patch('vm_manager.utils.utils.Nectar', new=FakeNectar)
+    @patch('vm_manager.vm_functions.delete_vm.django_rq')
+    @patch('vm_manager.vm_functions.delete_vm.logger')
+    def test_delete_vm_worker_missing_instance(self, mock_logger, mock_rq):
+        mock_scheduler = Mock()
+        mock_rq.get_scheduler.return_value = mock_scheduler
+        _, fake_instance = self.build_fake_vol_instance(ip_address='10.0.0.99')
+
+        fake_guac = GuacamoleConnectionFactory.create(instance=fake_instance)
+        fake_instance.guac_connection = fake_guac
+
+        fake_nectar = get_nectar()
+        fake_nectar.nova.servers.get = Mock()
+        fake_nectar.nova.servers.get.side_effect = \
+            novaclient.exceptions.NotFound(code=42)  # the code is ignored
+        fake_nectar.nova.servers.stop = Mock()
+
+        delete_vm_worker(fake_instance)
+
+        instance = Instance.objects.get(pk=fake_instance.pk)
+        self.assertIsNone(instance.guac_connection)
+        self.assertEqual(
+            0,
+            GuacamoleConnection.objects.filter(instance=instance).count())
+        fake_nectar.nova.servers.stop.assert_not_called()
+        mock_rq.get_scheduler.assert_called_once_with('default')
+        mock_scheduler.enqueue_in.assert_called_once_with(
+            timedelta(seconds=INSTANCE_CHECK_SHUTOFF_RETRY_WAIT_TIME),
+            _check_instance_is_shutoff_and_delete,
+            fake_instance,
+            INSTANCE_CHECK_SHUTOFF_RETRY_COUNT,
+            _dispose_volume_once_instance_is_deleted,
+            (fake_instance, False, INSTANCE_DELETION_RETRY_COUNT))
+
         mock_logger.error.assert_called_once_with(
-            f"Trying to delete {fake_instance} but it is not found in "
-            "OpenStack.")
+            f"Trying to delete {fake_instance} but it is not found in Nova.")
+        mock_logger.info.assert_called_once_with(
+            f"About to delete {fake_instance}")
+
+    @patch('vm_manager.utils.utils.Nectar', new=FakeNectar)
+    @patch('vm_manager.vm_functions.delete_vm.django_rq')
+    @patch('vm_manager.vm_functions.delete_vm.logger')
+    def test_delete_vm_worker_already_stopped(self, mock_logger, mock_rq):
+        mock_scheduler = Mock()
+        mock_rq.get_scheduler.return_value = mock_scheduler
+        _, fake_instance = self.build_fake_vol_instance(ip_address='10.0.0.99')
+
+        fake_guac = GuacamoleConnectionFactory.create(instance=fake_instance)
+        fake_instance.guac_connection = fake_guac
+
+        fake_nectar = get_nectar()
+        fake_nectar.nova.servers.get = Mock()
+        fake_nectar.nova.servers.get.return_value = FakeServer(status=SHUTDOWN)
+        fake_nectar.nova.servers.stop = Mock()
+
+        delete_vm_worker(fake_instance)
+
+        instance = Instance.objects.get(pk=fake_instance.pk)
+        self.assertIsNone(instance.guac_connection)
+        self.assertEqual(
+            0,
+            GuacamoleConnection.objects.filter(instance=instance).count())
+        fake_nectar.nova.servers.stop.assert_not_called()
+        mock_rq.get_scheduler.assert_called_once_with('default')
+        mock_scheduler.enqueue_in.assert_called_once_with(
+            timedelta(seconds=INSTANCE_CHECK_SHUTOFF_RETRY_WAIT_TIME),
+            _check_instance_is_shutoff_and_delete,
+            fake_instance,
+            INSTANCE_CHECK_SHUTOFF_RETRY_COUNT,
+            _dispose_volume_once_instance_is_deleted,
+            (fake_instance, False, INSTANCE_DELETION_RETRY_COUNT))
+
         mock_logger.info.assert_has_calls([
             call(f"About to delete {fake_instance}"),
-            call(f"Checking whether {fake_instance} is SHUTOFF "
-                 f"after {INSTANCE_CHECK_SHUTOFF_RETRY_WAIT_TIME} "
-                 f"seconds and delete it")
-            ])
+            call(f"{instance} already shutdown in Nova."),
+        ])
+
+    @patch('vm_manager.utils.utils.Nectar', new=FakeNectar)
+    @patch('vm_manager.vm_functions.delete_vm.django_rq')
+    @patch('vm_manager.vm_functions.delete_vm.logger')
+    def test_delete_vm_worker_wrong_state(self, mock_logger, mock_rq):
+        mock_scheduler = Mock()
+        mock_rq.get_scheduler.return_value = mock_scheduler
+        _, fake_instance = self.build_fake_vol_instance(ip_address='10.0.0.99')
+
+        fake_guac = GuacamoleConnectionFactory.create(instance=fake_instance)
+        fake_instance.guac_connection = fake_guac
+
+        fake_nectar = get_nectar()
+        fake_nectar.nova.servers.get = Mock()
+        fake_nectar.nova.servers.get.return_value = FakeServer(status=RESCUE)
+        fake_nectar.nova.servers.stop = Mock()
+
+        delete_vm_worker(fake_instance)
+
+        instance = Instance.objects.get(pk=fake_instance.pk)
+        self.assertIsNone(instance.guac_connection)
+        self.assertEqual(
+            0,
+            GuacamoleConnection.objects.filter(instance=instance).count())
+        fake_nectar.nova.servers.stop.assert_not_called()
+        mock_rq.get_scheduler.assert_not_called()
+        mock_logger.error.assert_called_once_with(
+            f"Nova instance for {fake_instance} is in unexpected state "
+            f"{RESCUE}.  Needs manual cleanup.")
 
     @patch('vm_manager.models.get_nectar')
     @patch('vm_manager.vm_functions.delete_vm.django_rq')
@@ -122,7 +219,7 @@ class DeleteVMTests(VMFunctionTestBase):
         mock_rq.get_scheduler.assert_called_once_with("default")
         mock_logger.info.assert_called_with(
             f"Ran out of retries shutting down {fake_instance}. "
-            f"Proceeding to delete OpenStack instance anyway!")
+            f"Proceeding to delete Nova instance anyway!")
         mock_worker.assert_called_once_with(fake_instance)
         mock_scheduler.enqueue_in.assert_called_once_with(
             timedelta(seconds=INSTANCE_DELETION_RETRY_WAIT_TIME),
@@ -154,7 +251,7 @@ class DeleteVMTests(VMFunctionTestBase):
         mock_rq.get_scheduler.assert_called_once_with("default")
         mock_logger.info.assert_called_with(
             f"Ran out of retries shutting down {fake_instance}. "
-            f"Proceeding to delete OpenStack instance anyway!")
+            f"Proceeding to delete Nova instance anyway!")
         mock_worker.assert_called_once_with(fake_instance)
         mock_scheduler.enqueue_in.assert_called_once_with(
             timedelta(seconds=INSTANCE_DELETION_RETRY_WAIT_TIME),
@@ -172,7 +269,7 @@ class DeleteVMTests(VMFunctionTestBase):
         fake_nectar.nova.servers.delete.assert_called_once_with(
             fake_instance.id)
         mock_logger.info.assert_called_once_with(
-            f"Instructed OpenStack to delete {fake_instance}")
+            f"Instructed Nova to delete {fake_instance}")
 
     @patch('vm_manager.vm_functions.delete_vm.get_nectar')
     @patch('vm_manager.vm_functions.delete_vm.logger')

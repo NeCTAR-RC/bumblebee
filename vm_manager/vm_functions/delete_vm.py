@@ -7,7 +7,7 @@ import novaclient
 
 from django.utils.timezone import utc
 
-from vm_manager.constants import NO_VM, VM_SHELVED, \
+from vm_manager.constants import ACTIVE, SHUTDOWN, NO_VM, VM_SHELVED, \
     VOLUME_AVAILABLE, BACKUP_CREATING, BACKUP_AVAILABLE, VM_WAITING, \
     INSTANCE_DELETION_RETRY_WAIT_TIME, INSTANCE_DELETION_RETRY_COUNT, \
     INSTANCE_CHECK_SHUTOFF_RETRY_WAIT_TIME, \
@@ -36,15 +36,25 @@ def delete_vm_worker(instance, archive=False):
 
     n = get_nectar()
     try:
-        n.nova.servers.stop(instance.id)
+        status = n.nova.servers.get(instance.id).status
+        if status == ACTIVE:
+            n.nova.servers.stop(instance.id)
+        elif status == SHUTDOWN:
+            logger.info(f"{instance} already shutdown in Nova.")
+        else:
+            # Possible states include stuck while resizing, paused / locked
+            # due to security incident, ERROR cause by stuck launching (?)
+            logger.error(f"Nova instance for {instance} is in unexpected "
+                         f"state {status}.  Needs manual cleanup.")
+            instance.error(f"Nova instance is {status}")
+            return
+
     except novaclient.exceptions.NotFound:
         logger.error(f"Trying to delete {instance} but it is not "
-                     f"found in OpenStack.")
+                     f"found in Nova.")
 
-    # Check if the Instance is Shutoff before requesting OS to Delete it
-    logger.info(f"Checking whether {instance} is SHUTOFF "
-                f"after {INSTANCE_CHECK_SHUTOFF_RETRY_WAIT_TIME} "
-                f"seconds and delete it")
+    # Next step is to check if the Instance is Shutoff in Nova before
+    # telling Nova to delete it
     scheduler = django_rq.get_scheduler('default')
     scheduler.enqueue_in(
         timedelta(seconds=INSTANCE_CHECK_SHUTOFF_RETRY_WAIT_TIME),
@@ -56,6 +66,7 @@ def delete_vm_worker(instance, archive=False):
 
 def _check_instance_is_shutoff_and_delete(
         instance, retries, func, func_args):
+    logger.info(f"Checking whether {instance} is ShutOff.")
     scheduler = django_rq.get_scheduler('default')
     if not instance.check_shutdown_status() and retries > 0:
         # If the instance is not Shutoff, schedule the recheck
@@ -70,7 +81,7 @@ def _check_instance_is_shutoff_and_delete(
     if retries <= 0:
         # TODO - not sure we should delete the instance anyway ...
         logger.info(f"Ran out of retries shutting down {instance}. "
-                    f"Proceeding to delete OpenStack instance anyway!")
+                    f"Proceeding to delete Nova instance anyway!")
 
     # Update status if something is waiting
     vm_status = VMStatus.objects.get_vm_status_by_instance(
@@ -95,7 +106,7 @@ def delete_instance(instance):
     instance.save()
     try:
         n.nova.servers.delete(instance.id)
-        logger.info(f"Instructed OpenStack to delete {instance}")
+        logger.info(f"Instructed Nova to delete {instance}")
     except novaclient.exceptions.NotFound:
         logger.info(f"{instance} already deleted")
     except Exception as e:
@@ -108,7 +119,7 @@ def _dispose_volume_once_instance_is_deleted(instance, archive, retries):
     try:
         my_instance = n.nova.servers.get(instance.id)
         logger.debug(f"Instance delete status is retries: {retries} "
-                     f"OpenStack instance: {my_instance}")
+                     f"Nova instance: {my_instance}")
     except novaclient.exceptions.NotFound:
         instance.deleted = datetime.now(utc)
         instance.save()
@@ -127,10 +138,10 @@ def _dispose_volume_once_instance_is_deleted(instance, archive, retries):
                      f"call for {instance}, it raised {e}")
         return
 
-    # Openstack still has the instance, and was able to return it to us
+    # Nova still has the instance, and was able to return it to us
     if retries == 0:
         # FIXME ... not sure about this.  Should already have sent the
-        # Openstack server delete request
+        # Nova server delete request
         delete_instance(instance)
         scheduler = django_rq.get_scheduler('default')
         # Note in this case I'm using `minutes=` not `seconds=` to give
@@ -149,7 +160,7 @@ def _dispose_volume_once_instance_is_deleted(instance, archive, retries):
         return
 
     # FIXME ... not sure about this.  Should already have sent the
-    # Openstack server delete request
+    # Nova server delete request
     delete_instance(instance)
     scheduler = django_rq.get_scheduler('default')
     scheduler.enqueue_in(
@@ -178,10 +189,10 @@ def archive_vm_worker(volume, requesting_feature):
     volume.save()
 
     n = get_nectar()
-    openstack_volume = n.cinder.volumes.get(volume_id=volume.id)
-    if openstack_volume.status != VOLUME_AVAILABLE:
+    cinder_volume = n.cinder.volumes.get(volume_id=volume.id)
+    if cinder_volume.status != VOLUME_AVAILABLE:
         msg = (f"Cannot archive a volume with status "
-               f"{openstack_volume.status}: {volume}")
+               f"{cinder_volume.status}: {volume}")
         logger.error(msg)
         raise RuntimeWarning(msg)
 
