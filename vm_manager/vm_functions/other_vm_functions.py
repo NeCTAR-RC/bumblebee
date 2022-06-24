@@ -2,11 +2,12 @@ from datetime import datetime, timedelta
 import logging
 
 import django_rq
+import novaclient
 
 from django.utils.timezone import utc
 
-from vm_manager.constants import REBOOT_CONFIRM_WAIT_SECONDS, \
-    REBOOT_CONFIRM_RETRIES
+from vm_manager.constants import ACTIVE, SHUTDOWN, REBOOT_HARD, \
+    REBOOT_CONFIRM_WAIT_SECONDS, REBOOT_CONFIRM_RETRIES
 from vm_manager.models import Instance, VMStatus
 from vm_manager.utils.utils import get_nectar
 
@@ -17,13 +18,30 @@ def reboot_vm_worker(user, vm_id, reboot_level,
                      target_status, requesting_feature):
     instance = Instance.objects.get_instance_by_untrusted_vm_id(
         vm_id, user, requesting_feature)
-    volume = instance.boot_volume
-    volume.rebooted = datetime.now(utc)
-    volume.save()
-    logger.info(f"About to {reboot_level} reboot VM {instance.id} "
-                f"for user {user.username}")
     n = get_nectar()
-    nova_server = n.nova.servers.get(instance.id)
+    try:
+        nova_server = n.nova.servers.get(instance.id)
+        if nova_server.status == ACTIVE:
+            pass
+        elif nova_server.status == SHUTDOWN:
+            logger.info(f"Forcing {REBOOT_HARD} reboot because Nova instance "
+                        f"was in state {nova_server.status}")
+            reboot_level = REBOOT_HARD
+        else:
+            logger.error(f"Nova instance for {instance} in unexpected state "
+                         f"{nova_server.status}.  Needs manual cleanup.")
+            instance.error(f"Nova instance is {nova_server.status}")
+            return
+    except novaclient.exceptions.NotFound:
+        logger.error(f"Nova instance is missing for {instance}")
+        instance.error("Nova instance is missing")
+        return
+
+    volume = instance.boot_volume
+    volume.rebooted_at = datetime.now(utc)
+    volume.save()
+
+    logger.info(f"Performing {reboot_level} reboot on {instance}")
     reboot_result = nova_server.reboot(reboot_level)
 
     vm_status = VMStatus.objects.get_vm_status_by_instance(
@@ -35,18 +53,18 @@ def reboot_vm_worker(user, vm_id, reboot_level,
     scheduler = django_rq.get_scheduler('default')
     scheduler.enqueue_in(
         timedelta(seconds=REBOOT_CONFIRM_WAIT_SECONDS),
-        check_power_state, REBOOT_CONFIRM_RETRIES,
+        _check_power_state, REBOOT_CONFIRM_RETRIES,
         instance, target_status, requesting_feature)
 
     return reboot_result
 
 
-def check_power_state(retries, instance, target_status, requesting_feature):
+def _check_power_state(retries, instance, target_status, requesting_feature):
     vm_status = VMStatus.objects.get_vm_status_by_instance(
         instance, requesting_feature)
     active = instance.check_active_status()
     if active:
-        logger.info(f"Instance {instance.id} is ACTIVE")
+        logger.info(f"Instance {instance.id} is {ACTIVE}")
         vm_status.status_progress = 66
         vm_status.status_message = "Instance restarted; waiting for reboot"
         vm_status.save()
@@ -55,10 +73,9 @@ def check_power_state(retries, instance, target_status, requesting_feature):
         scheduler = django_rq.get_scheduler('default')
         scheduler.enqueue_in(
             timedelta(seconds=REBOOT_CONFIRM_WAIT_SECONDS),
-            check_power_state, retries - 1, instance, target_status,
+            _check_power_state, retries - 1, instance, target_status,
             requesting_feature)
     else:
-        msg = "Instance {instance.id} has not gone ACTIVE after reboot."
+        msg = f"Instance {instance.id} has not gone {ACTIVE} after reboot"
         logger.error(msg)
         vm_status.error(msg)
-        vm_status.save()
