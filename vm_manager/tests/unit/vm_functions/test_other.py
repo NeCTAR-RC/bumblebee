@@ -127,6 +127,9 @@ class RebootVMTests(VMFunctionTestBase):
         self.assertIsNone(updated_status.status_message)
         updated_volume = Volume.objects.get(pk=fake_vol.pk)
         self.assertIsNone(updated_volume.rebooted_at)
+        instance = Instance.objects.get(pk=fake_instance.pk)
+        self.assertEqual(f"Nova instance state is {RESCUE}",
+                         instance.error_message)
 
     @patch('vm_manager.utils.utils.Nectar', new=FakeNectar)
     @patch('vm_manager.vm_functions.other_vm_functions.django_rq')
@@ -156,6 +159,8 @@ class RebootVMTests(VMFunctionTestBase):
         self.assertIsNone(updated_status.status_message)
         updated_volume = Volume.objects.get(pk=fake_vol.pk)
         self.assertIsNone(updated_volume.rebooted_at)
+        instance = Instance.objects.get(pk=fake_instance.pk)
+        self.assertEqual("Nova instance is missing", instance.error_message)
 
     @patch('vm_manager.utils.utils.Nectar', new=FakeNectar)
     @patch('vm_manager.vm_functions.other_vm_functions.django_rq')

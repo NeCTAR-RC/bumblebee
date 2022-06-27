@@ -1,8 +1,9 @@
 import logging
 from datetime import datetime, timedelta
-import django_rq
 
 from django.utils.timezone import utc
+import django_rq
+import novaclient
 
 from vm_manager.constants import \
     RESIZE, VERIFY_RESIZE, ACTIVE, \
@@ -22,9 +23,10 @@ def supersize_vm_worker(instance, desktop_type) -> str:
     supersize_result = _resize_vm(instance,
                                   desktop_type.big_flavor.id,
                                   VM_SUPERSIZED, desktop_type.feature)
-    now = datetime.now(utc)
-    resize = Resize(instance=instance, requested=now)
-    resize.set_expires(BoostExpiryPolicy().initial_expiry(now=now))
+    if supersize_result:
+        now = datetime.now(utc)
+        resize = Resize(instance=instance, requested=now)
+        resize.set_expires(BoostExpiryPolicy().initial_expiry(now=now))
     return supersize_result
 
 
@@ -35,13 +37,13 @@ def downsize_vm_worker(instance, desktop_type) -> str:
     downsize_result = _resize_vm(instance,
                                  desktop_type.default_flavor.id,
                                  VM_OKAY, desktop_type.feature)
-
-    resize = Resize.objects.get_latest_resize(instance.id)
-    if not resize:
-        logger.error("Missing resize record for instance {instance}")
-    else:
-        resize.reverted = datetime.now(utc)
-        resize.save()
+    if downsize_result:
+        resize = Resize.objects.get_latest_resize(instance.id)
+        if not resize:
+            logger.error("Missing resize record for instance {instance}")
+        else:
+            resize.reverted = datetime.now(utc)
+            resize.save()
     return downsize_result
 
 
@@ -64,7 +66,20 @@ def extend_boost(user, vm_id, requesting_feature) -> str:
 
 def _resize_vm(instance, flavor, target_status, requesting_feature):
     n = get_nectar()
-    server = n.nova.servers.get(instance.id)
+    try:
+        server = n.nova.servers.get(instance.id)
+    except novaclient.exceptions.NotFound:
+        logger.error(f"Trying to resize {instance} but it is not "
+                     "found in Nova.")
+        instance.error("Nova instance is missing")
+        return False
+
+    if server.status != ACTIVE:
+        logger.error(f"Nova instance for {instance} in unexpected state "
+                     f"{server.status}.  Needs manual cleanup.")
+        instance.error(f"Nova instance state is {server.status}")
+        return False
+
     current_flavor = server.flavor['id']
     if current_flavor == str(flavor):
         message = (

@@ -46,12 +46,15 @@ def delete_vm_worker(instance, archive=False):
             # due to security incident, ERROR cause by stuck launching (?)
             logger.error(f"Nova instance for {instance} is in unexpected "
                          f"state {status}.  Needs manual cleanup.")
-            instance.error(f"Nova instance is {status}")
+            instance.error(f"Nova instance state is {status}")
             return
 
     except novaclient.exceptions.NotFound:
         logger.error(f"Trying to delete {instance} but it is not "
                      f"found in Nova.")
+        # It no longer matters, but record the fact that the Nova instance
+        # went missing anyway.
+        instance.error(f"Nova instance is missing")
 
     # Next step is to check if the Instance is Shutoff in Nova before
     # telling Nova to delete it

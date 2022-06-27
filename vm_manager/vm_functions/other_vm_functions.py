@@ -30,7 +30,7 @@ def reboot_vm_worker(user, vm_id, reboot_level,
         else:
             logger.error(f"Nova instance for {instance} in unexpected state "
                          f"{nova_server.status}.  Needs manual cleanup.")
-            instance.error(f"Nova instance is {nova_server.status}")
+            instance.error(f"Nova instance state is {nova_server.status}")
             return
     except novaclient.exceptions.NotFound:
         logger.error(f"Nova instance is missing for {instance}")

@@ -6,15 +6,16 @@ from unittest.mock import Mock, patch, call
 from django.conf import settings
 from django.http import Http404
 from django.utils.timezone import utc
+from novaclient.exceptions import NotFound
 
 from vm_manager.tests.factories import ResizeFactory
 from vm_manager.tests.fakes import FakeServer, FakeNectar
 from vm_manager.tests.unit.vm_functions.base import VMFunctionTestBase
 
 from vm_manager.constants import ACTIVE, SHUTDOWN, RESIZE, VERIFY_RESIZE, \
-    VM_ERROR, VM_RESIZING, VM_OKAY, VM_WAITING, VM_SUPERSIZED, \
+    RESCUE, VM_ERROR, VM_RESIZING, VM_OKAY, VM_WAITING, VM_SUPERSIZED, \
     RESIZE_CONFIRM_WAIT_SECONDS, FORCED_DOWNSIZE_WAIT_SECONDS
-from vm_manager.models import VMStatus, Resize
+from vm_manager.models import VMStatus, Resize, Instance
 from vm_manager.vm_functions.resize_vm import supersize_vm_worker, \
     downsize_vm_worker, extend_boost, _resize_vm, _wait_to_confirm_resize, \
     downsize_expired_vm
@@ -56,6 +57,30 @@ class ResizeVMTests(VMFunctionTestBase):
         self.assertIsNotNone(resize.expiration)
         self.assertTrue(abs((exp_date
                              - resize.expiration.expires).seconds) < 2)
+
+    @patch('vm_manager.utils.utils.Nectar', new=FakeNectar)
+    @patch('vm_manager.vm_functions.resize_vm._resize_vm')
+    @patch('vm_manager.vm_functions.resize_vm.logger')
+    def test_supersize_vm_worker_failed(self, mock_logger, mock_resize):
+        # Covers all cases where _resize_vm returns False
+        fake_nectar = get_nectar()
+
+        _, fake_instance = self.build_fake_vol_instance(ip_address='10.0.0.99')
+        mock_resize.return_value = False
+
+        self.assertEqual(0, Resize.objects.all().count())
+
+        self.assertFalse(supersize_vm_worker(fake_instance, self.UBUNTU))
+        mock_resize.assert_called_once_with(
+            fake_instance, self.UBUNTU.big_flavor.id, VM_SUPERSIZED,
+            self.FEATURE)
+
+        mock_logger.info.assert_called_once_with(
+            f"About to supersize {self.UBUNTU.id} instance for user "
+            f"{self.user.username} to flavor {self.UBUNTU.big_flavor_name}"
+        )
+        self.assertEqual(
+            0, Resize.objects.filter(instance=fake_instance).count())
 
     @patch('vm_manager.utils.utils.Nectar', new=FakeNectar)
     @patch('vm_manager.vm_functions.resize_vm._resize_vm')
@@ -102,6 +127,27 @@ class ResizeVMTests(VMFunctionTestBase):
 
         resize = Resize.objects.get(pk=fake_resize.pk)
         self.assertIsNotNone(resize.reverted)
+
+    @patch('vm_manager.utils.utils.Nectar', new=FakeNectar)
+    @patch('vm_manager.vm_functions.resize_vm._resize_vm')
+    @patch('vm_manager.vm_functions.resize_vm.logger')
+    def test_downsize_vm_worker_failed(self, mock_logger, mock_resize):
+        # Covers all cases where _resize_vm returns False
+        fake_nectar = get_nectar()
+
+        _, fake_instance = self.build_fake_vol_instance(ip_address='10.0.0.99')
+        mock_resize.return_value = False
+
+        self.assertFalse(downsize_vm_worker(fake_instance, self.UBUNTU))
+        mock_resize.assert_called_once_with(
+            fake_instance, self.UBUNTU.default_flavor.id,
+            VM_OKAY, self.FEATURE)
+
+        mock_logger.info.assert_called_once_with(
+            f"About to downsize {self.UBUNTU.id} instance for user "
+            f"{self.user.username} to flavor {self.UBUNTU.default_flavor_name}"
+        )
+        mock_logger.error_assert_not_called()
 
     @patch('vm_manager.models.logger')
     @patch('vm_manager.vm_functions.resize_vm.BoostExpiryPolicy')
@@ -154,6 +200,7 @@ class ResizeVMTests(VMFunctionTestBase):
 
         fake_nectar = get_nectar()
         fake_nectar.nova.servers.get.return_value = FakeServer(
+            status=ACTIVE,
             flavor={'id': str(default_flavor_id)})
         fake_nectar.nova.servers.resize.return_value = "whatever"
         self.assertEqual(
@@ -189,12 +236,65 @@ class ResizeVMTests(VMFunctionTestBase):
         self.assertEqual(33, vm_status.status_progress)
 
     @patch('vm_manager.utils.utils.Nectar', new=FakeNectar)
+    @patch('vm_manager.vm_functions.resize_vm.django_rq')
+    def test_resize_vm_missing(self, mock_rq):
+        # The Nova instance is missing when we try to check its status.
+        _, fake_instance, fake_vm_status = self.build_fake_vol_inst_status(
+            status=VM_RESIZING, status_progress=0)
+        default_flavor_id = self.UBUNTU.default_flavor.id
+        big_flavor_id = self.UBUNTU.big_flavor.id
+        mock_scheduler = Mock()
+        mock_rq.get_scheduler.return_value = mock_scheduler
+
+        fake_nectar = get_nectar()
+        fake_nectar.nova.servers.get.side_effect = NotFound(code=42)
+
+        self.assertFalse(
+            _resize_vm(fake_instance, default_flavor_id,
+                       VM_OKAY, self.FEATURE))
+        fake_nectar.nova.servers.get.assert_called_with(fake_instance.id)
+        mock_rq.get_scheduler.assert_not_called()
+        instance = Instance.objects.get(pk=fake_instance.pk)
+        self.assertEqual("Nova instance is missing", instance.error_message)
+
+        fake_nectar.nova.servers.get.side_effect = None
+
+    @patch('vm_manager.utils.utils.Nectar', new=FakeNectar)
+    @patch('vm_manager.vm_functions.resize_vm.django_rq')
+    def test_resize_vm_wrong_state(self, mock_rq):
+        # The Nova instance has the wrong status for a resize.
+        _, fake_instance, fake_vm_status = self.build_fake_vol_inst_status(
+            status=VM_RESIZING, status_progress=0)
+        default_flavor_id = self.UBUNTU.default_flavor.id
+        big_flavor_id = self.UBUNTU.big_flavor.id
+        mock_scheduler = Mock()
+        mock_rq.get_scheduler.return_value = mock_scheduler
+
+        fake_nectar = get_nectar()
+        fake_nectar.nova.servers.get.side_effect = None
+        fake_nectar.nova.servers.get.return_value = FakeServer(
+            status=RESCUE,
+            flavor={'id': str(default_flavor_id)})
+
+        self.assertFalse(
+            _resize_vm(fake_instance, big_flavor_id,
+                       VM_OKAY, self.FEATURE))
+        fake_nectar.nova.servers.get.assert_called_with(fake_instance.id)
+        mock_rq.get_scheduler.assert_not_called()
+        instance = Instance.objects.get(pk=fake_instance.pk)
+        self.assertEqual(f"Nova instance state is {RESCUE}",
+                         instance.error_message)
+
+        fake_nectar.nova.servers.get.side_effect = None
+
+    @patch('vm_manager.utils.utils.Nectar', new=FakeNectar)
     @patch('vm_manager.vm_functions.resize_vm.logger')
     @patch('vm_manager.vm_functions.resize_vm.django_rq')
     def test_wait_to_confirm_resize(self, mock_rq, mock_logger):
         mock_scheduler = Mock()
         mock_rq.get_scheduler.return_value = mock_scheduler
         fake_nectar = get_nectar()
+        fake_nectar.nova.servers.get.side_effect = None
         fake_nectar.nova.servers.get.return_value = FakeServer(
             status=VERIFY_RESIZE)
         fake_nectar.nova.servers.confirm_resize.reset_mock()
@@ -222,6 +322,7 @@ class ResizeVMTests(VMFunctionTestBase):
         mock_scheduler = Mock()
         mock_rq.get_scheduler.return_value = mock_scheduler
         fake_nectar = get_nectar()
+        fake_nectar.nova.servers.get.side_effect = None
         fake_nectar.nova.servers.get.return_value = FakeServer(
             status=RESIZE)
         fake_nectar.nova.servers.confirm_resize.reset_mock()
@@ -254,6 +355,7 @@ class ResizeVMTests(VMFunctionTestBase):
         mock_scheduler = Mock()
         mock_rq.get_scheduler.return_value = mock_scheduler
         fake_nectar = get_nectar()
+        fake_nectar.nova.servers.get.side_effect = None
         fake_nectar.nova.servers.get.return_value = FakeServer(
             status=RESIZE)
         fake_nectar.nova.servers.confirm_resize.reset_mock()
@@ -306,6 +408,8 @@ class ResizeVMTests(VMFunctionTestBase):
         mock_rq.get_scheduler.assert_not_called()
         vm_status = VMStatus.objects.get(pk=fake_vm_status.pk)
         self.assertEqual(50, vm_status.status_progress)
+
+        fake_nectar.nova.servers.get.side_effect = None
 
     @patch('vm_manager.utils.utils.Nectar', new=FakeNectar)
     @patch('vm_manager.vm_functions.resize_vm.logger')

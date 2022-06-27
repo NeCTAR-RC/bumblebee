@@ -100,6 +100,8 @@ class DeleteVMTests(VMFunctionTestBase):
             f"Trying to delete {fake_instance} but it is not found in Nova.")
         mock_logger.info.assert_called_once_with(
             f"About to delete {fake_instance}")
+        instance = Instance.objects.get(pk=fake_instance.pk)
+        self.assertEqual("Nova instance is missing", instance.error_message)
 
     @patch('vm_manager.utils.utils.Nectar', new=FakeNectar)
     @patch('vm_manager.vm_functions.delete_vm.django_rq')
@@ -167,6 +169,9 @@ class DeleteVMTests(VMFunctionTestBase):
         mock_logger.error.assert_called_once_with(
             f"Nova instance for {fake_instance} is in unexpected state "
             f"{RESCUE}.  Needs manual cleanup.")
+        instance = Instance.objects.get(pk=fake_instance.pk)
+        self.assertEqual(f"Nova instance state is {RESCUE}",
+                         instance.error_message)
 
     @patch('vm_manager.models.get_nectar')
     @patch('vm_manager.vm_functions.delete_vm.django_rq')
