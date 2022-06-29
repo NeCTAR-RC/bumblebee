@@ -23,6 +23,9 @@ MISSING = "MISSING"
 # These are Openstack Cinder status values that the
 # python client library doesn't define constants for.
 VOLUME_AVAILABLE = "available"
+VOLUME_IN_USE = "in-use"
+VOLUME_CREATING = "creating"
+
 BACKUP_AVAILABLE = "available"
 BACKUP_CREATING = "creating"
 # (There are more ...)

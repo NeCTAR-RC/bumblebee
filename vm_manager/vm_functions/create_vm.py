@@ -3,6 +3,7 @@ import crypt
 from datetime import datetime, timedelta
 import logging
 
+import cinderclient
 import django_rq
 
 from django.conf import settings
@@ -11,7 +12,7 @@ from django.urls import reverse
 from django.utils.timezone import utc
 
 from vm_manager.constants import VOLUME_CREATION_TIMEOUT, \
-    INSTANCE_LAUNCH_TIMEOUT, NO_VM, VOLUME_AVAILABLE
+    INSTANCE_LAUNCH_TIMEOUT, NO_VM, VM_SHELVED, VOLUME_AVAILABLE
 from vm_manager.utils.expiry import InstanceExpiryPolicy
 from vm_manager.utils.utils import get_nectar, generate_server_name, \
     generate_hostname, generate_password
@@ -38,12 +39,13 @@ def launch_vm_worker(user, desktop_type, zone):
             raise RuntimeWarning(msg)
 
     volume = _create_volume(user, desktop_type, zone)
-    scheduler = django_rq.get_scheduler('default')
-    scheduler.enqueue_in(timedelta(seconds=5), wait_to_create_instance,
-                         user, desktop_type, volume,
-                         datetime.now(utc))
-    logger.info(f'{desktop_id} VM creation scheduled '
-                f'for {user.username}')
+    if volume:
+        scheduler = django_rq.get_scheduler('default')
+        scheduler.enqueue_in(timedelta(seconds=5), wait_to_create_instance,
+                             user, desktop_type, volume,
+                             datetime.now(utc))
+        logger.info(f'{desktop_id} VM creation scheduled '
+                    f'for {user.username}')
 
 
 def _create_volume(user, desktop_type, zone):
@@ -51,26 +53,48 @@ def _create_volume(user, desktop_type, zone):
     requesting_feature = desktop_type.feature
     volume = Volume.objects.get_volume(user, desktop_type)
     if volume:
+        # Check that the volume still exists in Cinder, and that it
+        # has status 'available', and is in the expected AZ.
+        n = get_nectar()
+        try:
+            cinder_volume = n.cinder.volumes.get(volume.id)
+            if cinder_volume.status != VOLUME_AVAILABLE:
+                logger.error(f"Cinder volume for {volume} in wrong state "
+                             f"{cinder_volume.status}. Needs manual cleanup.")
+                volume.error(f"Cinder volume in state {cinder_volume.status}")
+                return None
+            if cinder_volume.availability_zone != zone.name:
+                logger.error(f"Cinder volume for {volume} in wrong AZ. "
+                             "Needs manual cleanup")
+                volume.error("Cinder volume in wrong AZ")
+                return None
+        except cinderclient.exceptions.NotFound:
+            logger.error(f"Cinder volume missing for {volume}. "
+                         "Needs manual cleanup.")
+            volume.error("Cinder volume missing")
+            return None
+
         vm_status = VMStatus.objects.get_vm_status_by_volume(
             volume, requesting_feature)
-        if vm_status.status != NO_VM:
-            if volume.zone != zone.name:
-                # TODO - check if this scenario is possible ... and think
-                # about how to resolve it.
-                msg = (
-                    f"A live {desktop_id} Volume for {user} already "
-                    f"exists in a different availability zone ({volume.zone}) "
-                    f"to the one requested ({zone.name})")
-                logger.error(msg)
-                raise RuntimeWarning(msg)
-
+        if vm_status.status == VM_SHELVED:
             if volume.archived_at:
-                msg = f"Cannot launch vm from an archived volume: {volume}"
-                logger.error(msg)
-                raise RuntimeWarning(msg)
+                logger.error("Cannot launch shelved volume marked as "
+                             f"archived: {volume}")
+                return None
 
             volume.set_expires(None)
             return volume
+        else:
+            # It looks like a volume exists for the user, but it is not
+            # shelved.   We need to either delete it, or do something to
+            # recover it; i.e. make it unshelvable.
+            logger.error(f"VMstatus {vm_status.status} inconsistent with "
+                         f"existing {volume} in _create_volume.  Needs "
+                         "manual cleanup.")
+            return None
+
+    # Either there is no existing volume, or we have decided to ignore it
+    # and make a new one for the user.
 
     vm_status = VMStatus.objects.get_latest_vm_status(user, desktop_type)
     if vm_status:
@@ -294,8 +318,6 @@ def wait_for_instance_active(user, desktop_type, instance, start_time):
         vm_status.status_message = msg
         vm_status.save()
         instance.error(msg)
-        instance.save()
-        raise TimeoutError(msg)
     else:
         scheduler = django_rq.get_scheduler('default')
         scheduler.enqueue_in(timedelta(seconds=5), wait_for_instance_active,
