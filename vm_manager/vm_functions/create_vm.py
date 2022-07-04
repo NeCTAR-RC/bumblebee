@@ -12,7 +12,7 @@ from django.urls import reverse
 from django.utils.timezone import utc
 
 from vm_manager.constants import VOLUME_CREATION_TIMEOUT, \
-    INSTANCE_LAUNCH_TIMEOUT, NO_VM, VM_SHELVED, VOLUME_AVAILABLE
+    INSTANCE_LAUNCH_TIMEOUT, NO_VM, VM_SHELVED, VOLUME_AVAILABLE, ACTIVE
 from vm_manager.utils.expiry import InstanceExpiryPolicy
 from vm_manager.utils.utils import get_nectar, generate_server_name, \
     generate_hostname, generate_password
@@ -299,6 +299,7 @@ def _create_instance(user, desktop_type, volume):
 def wait_for_instance_active(user, desktop_type, instance, start_time):
     now = datetime.now(utc)
     if instance.check_active_status():
+        logger.info(f"Instance {instance.id} is now {ACTIVE}")
         vm_status = VMStatus.objects.get_vm_status_by_instance(
             instance, desktop_type.feature)
         vm_status.status_progress = 75
