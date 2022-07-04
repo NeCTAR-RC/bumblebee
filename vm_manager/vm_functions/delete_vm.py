@@ -186,33 +186,53 @@ def delete_volume(volume):
 
 
 def archive_vm_worker(volume, requesting_feature):
+    '''
+    Archive a volume by creating a Cinder backup then deleting the Cinder
+    volume.  Returns True if the backup request was accepted OR if the
+    Cinder volume was not found.
+    '''
+
     # This "hides" the volume from the get_volume method allowing
     # another one to be created / launched without errors.
     volume.marked_for_deletion = datetime.now(utc)
     volume.save()
 
     n = get_nectar()
-    cinder_volume = n.cinder.volumes.get(volume_id=volume.id)
-    if cinder_volume.status != VOLUME_AVAILABLE:
-        msg = (f"Cannot archive a volume with status "
-               f"{cinder_volume.status}: {volume}")
-        logger.error(msg)
-        raise RuntimeWarning(msg)
+    try:
+        cinder_volume = n.cinder.volumes.get(volume_id=volume.id)
+        if cinder_volume.status != VOLUME_AVAILABLE:
+            logger.error(
+                f"Cannot archive volume with Cinder status "
+                f"{cinder_volume.status}: {volume}. Manual cleanup needed.")
+            return False
+    except cinderclient.exceptions.NotFound:
+        logger.error(
+            f"Cinder volume missing for {volume}. Cannot be archived.")
+        return True
 
-    backup = n.cinder.backups.create(
-        volume.id, name=f"{volume.id}-archive")
-    logger.info(f'Cinder backup {backup.id} started for volume {volume.id}')
-
-    vm_status = VMStatus.objects.get_vm_status_by_volume(
-        volume, requesting_feature, allow_missing=True)
-    if vm_status:
-        # This allows the user to launch a new desktop immediately.
-        vm_status.status = NO_VM
-        vm_status.save()
+    try:
+        backup = n.cinder.backups.create(
+            volume.id, name=f"{volume.id}-archive")
+        logger.info(
+            f'Cinder backup {backup.id} started for volume {volume.id}')
+    except cinderclient.exceptions.ClientException as e:
+        logger.error(
+            f"Cinder backup failed for volume {volume.id}: {e}")
+        return False
 
     scheduler = django_rq.get_scheduler('default')
     scheduler.enqueue_in(timedelta(seconds=5), wait_for_backup,
-                         volume, backup.id, after_time(ARCHIVE_WAIT_SECONDS))
+                         volume, backup.id,
+                         after_time(ARCHIVE_WAIT_SECONDS))
+
+    # This allows the user to launch a new desktop immediately.
+    vm_status = VMStatus.objects.get_vm_status_by_volume(
+        volume, requesting_feature, allow_missing=True)
+    if vm_status:
+        vm_status.status = NO_VM
+        vm_status.save()
+
+    return True
 
 
 def wait_for_backup(volume, backup_id, deadline):

@@ -19,6 +19,12 @@ def days(days):
     return timedelta(days=days) if days and days > 0 else None
 
 
+# TODO - The expirers currently don't wait for the actions initiated by the
+# do_expire callbacks to complete.  So if the action ultimately fails, it
+# is not retried.  This can be worked around by manually resetting the
+# resource's Expiration.stage to EXP_FINAL_WARNING ... and the expirer
+# will try again next time.
+
 class Expirer(object):
     '''An Expirer is designed to be called periodically to send expiry
     warnings, and finally to perform the expiration action.  This class

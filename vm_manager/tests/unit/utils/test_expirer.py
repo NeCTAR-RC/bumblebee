@@ -71,6 +71,34 @@ class ExpirerTests(TestCase):
         self.assertRegex(args[0], "One is 1")
         self.assertEqual({}, kwargs)
 
+    def test_do_expire(self):
+        now = datetime.now(utc)
+        fake_expiration = Expiration(expires=now - timedelta(days=1),
+                                     stage=EXP_FINAL_WARNING,
+                                     stage_date=now - timedelta(days=2))
+        fake_expiration.save()
+        expirer = DummyExpirer(dry_run=False,
+                               final_warning=timedelta(days=1))
+        expirer.notify = Mock()
+        expirer.do_expire = Mock()
+
+        target = object()
+
+        # When do_expire returns False, don't update the Expiration
+        expirer.do_expire.return_value = False
+        expirer.do_stage(target, fake_expiration, self.user)
+        expiration = Expiration.objects.get(pk=fake_expiration.pk)
+        self.assertEqual(EXP_FINAL_WARNING, expiration.stage)
+        expirer.do_expire.assert_called_once_with(target)
+
+        # When do_expire returns True, update the Expiration
+        expirer.do_expire.reset_mock()
+        expirer.do_expire.return_value = True
+        expirer.do_stage(target, fake_expiration, self.user)
+        expiration = Expiration.objects.get(pk=fake_expiration.pk)
+        self.assertEqual(EXP_EXPIRED, expiration.stage)
+        expirer.do_expire.assert_called_once_with(target)
+
     def test_stages_1(self):
         '''
         Test the staging behavior of an expirer with final warning only.

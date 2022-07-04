@@ -2,16 +2,16 @@ from datetime import datetime, timedelta
 from uuid import uuid4
 from unittest.mock import Mock, patch, call
 
-import novaclient
-
+import cinderclient
 from django.utils.timezone import utc
+import novaclient
 
 from guacamole.tests.factories import GuacamoleConnectionFactory
 from vm_manager.tests.fakes import Fake, FakeServer, FakeNectar
 from vm_manager.tests.unit.vm_functions.base import VMFunctionTestBase
 
 from vm_manager.constants import ACTIVE, SHUTDOWN, RESCUE, \
-    VM_WAITING, VM_SHELVED, NO_VM, \
+    VOLUME_AVAILABLE, VM_WAITING, VM_SHELVED, NO_VM, \
     INSTANCE_CHECK_SHUTOFF_RETRY_WAIT_TIME, \
     INSTANCE_DELETION_RETRY_WAIT_TIME, \
     INSTANCE_CHECK_SHUTOFF_RETRY_COUNT, INSTANCE_DELETION_RETRY_COUNT, \
@@ -501,11 +501,12 @@ class DeleteVMTests(VMFunctionTestBase):
 
 class ArchiveVMTests(VMFunctionTestBase):
 
-    @patch('vm_manager.utils.utils.Nectar', new=FakeNectar)
     @patch('vm_manager.vm_functions.delete_vm.django_rq')
+    @patch('vm_manager.vm_functions.delete_vm.get_nectar')
     @patch('vm_manager.vm_functions.delete_vm.logger')
     @patch('vm_manager.utils.utils.datetime')
-    def test_archive_vm_worker(self, mock_datetime, mock_logger, mock_rq):
+    def test_archive_vm_worker(self, mock_datetime, mock_logger,
+                               mock_get, mock_rq):
         mock_scheduler = Mock()
         mock_rq.get_scheduler.return_value = mock_scheduler
         fake_volume, _, fake_vm_status = self.build_fake_vol_inst_status(
@@ -514,22 +515,13 @@ class ArchiveVMTests(VMFunctionTestBase):
         now = datetime.now(utc)
         mock_datetime.now.return_value = now
 
-        fake_nectar = get_nectar()
-        fake_nectar.cinder.volumes.get.return_value = Fake(status='sleeping')
-        fake_nectar.cinder.volumes.get.reset_mock()
-
-        with self.assertRaises(RuntimeWarning) as cm:
-            archive_vm_worker(fake_volume, self.FEATURE)
-        self.assertEqual(f"Cannot archive a volume with status sleeping: "
-                         f"{fake_volume}",
-                         str(cm.exception))
-        fake_nectar.cinder.volumes.get.assert_called_once_with(
-            volume_id=fake_volume.id)
-
-        fake_nectar.cinder.volumes.get.return_value = Fake(status='available')
-        fake_nectar.cinder.volumes.get.reset_mock()
+        fake_nectar = FakeNectar()
+        fake_nectar.cinder.volumes.get.return_value = Fake(
+            status=VOLUME_AVAILABLE)
         fake_nectar.cinder.backups.create.return_value = Fake(id=backup_id)
-        archive_vm_worker(fake_volume, self.FEATURE)
+        mock_get.return_value = fake_nectar
+
+        self.assertTrue(archive_vm_worker(fake_volume, self.FEATURE))
         vm_status = VMStatus.objects.get(pk=fake_vm_status.pk)
         self.assertEqual(NO_VM, vm_status.status)
 
@@ -545,20 +537,92 @@ class ArchiveVMTests(VMFunctionTestBase):
             timedelta(seconds=5), wait_for_backup, fake_volume, backup_id,
             now + timedelta(seconds=ARCHIVE_WAIT_SECONDS))
 
-    @patch('vm_manager.utils.utils.Nectar', new=FakeNectar)
+    @patch('vm_manager.vm_functions.delete_vm.django_rq')
+    @patch('vm_manager.vm_functions.delete_vm.get_nectar')
+    @patch('vm_manager.vm_functions.delete_vm.logger')
+    def test_archive_vm_worker_wrong_state(
+            self, mock_logger, mock_get, mock_rq):
+        fake_volume, _, fake_vm_status = self.build_fake_vol_inst_status(
+            status=VM_SHELVED)
+
+        fake_nectar = FakeNectar()
+        fake_nectar.cinder.volumes.get.return_value = Fake(status='sleeping')
+        mock_get.return_value = fake_nectar
+
+        self.assertFalse(archive_vm_worker(fake_volume, self.FEATURE))
+        mock_logger.error.assert_called_once_with(
+            f"Cannot archive volume with Cinder status "
+            f"sleeping: {fake_volume}. Manual cleanup needed.")
+        fake_nectar.cinder.volumes.get.assert_called_once_with(
+            volume_id=fake_volume.id)
+        vm_status = VMStatus.objects.get(pk=fake_vm_status.pk)
+        self.assertEqual(VM_SHELVED, vm_status.status)
+        mock_rq.get_scheduler.assert_not_called()
+
+    @patch('vm_manager.vm_functions.delete_vm.django_rq')
+    @patch('vm_manager.vm_functions.delete_vm.get_nectar')
+    @patch('vm_manager.vm_functions.delete_vm.logger')
+    def test_archive_vm_worker_backup_reject(self, mock_logger, mock_get,
+                                             mock_rq):
+        fake_volume, _, fake_vm_status = self.build_fake_vol_inst_status(
+            status=VM_SHELVED)
+
+        fake_nectar = FakeNectar()
+        fake_nectar.cinder.volumes.get.return_value = Fake(
+            status=VOLUME_AVAILABLE)
+        fake_nectar.cinder.backups.create.side_effect = \
+            cinderclient.exceptions.ClientException(
+                message="Eternal error", code=504)
+        mock_get.return_value = fake_nectar
+
+        self.assertFalse(archive_vm_worker(fake_volume, self.FEATURE))
+        mock_logger.error.assert_called_once_with(
+            f'Cinder backup failed for volume {fake_volume.id}: '
+            'Eternal error (HTTP 504)')
+        fake_nectar.cinder.backups.create.assert_called_once_with(
+            fake_volume.id, name=f"{fake_volume.id}-archive")
+        vm_status = VMStatus.objects.get(pk=fake_vm_status.pk)
+        self.assertEqual(VM_SHELVED, vm_status.status)
+        mock_rq.get_scheduler.assert_not_called()
+
+    @patch('vm_manager.vm_functions.delete_vm.django_rq')
+    @patch('vm_manager.vm_functions.delete_vm.get_nectar')
+    @patch('vm_manager.vm_functions.delete_vm.logger')
+    def test_archive_vm_worker_wrong_state(
+            self, mock_logger, mock_get, mock_rq):
+        fake_volume, _, fake_vm_status = self.build_fake_vol_inst_status(
+            status=VM_SHELVED)
+
+        fake_nectar = FakeNectar()
+        fake_nectar.cinder.volumes.get.return_value = Fake(status='sleeping')
+        mock_get.return_value = fake_nectar
+
+        self.assertFalse(archive_vm_worker(fake_volume, self.FEATURE))
+        mock_logger.error.assert_called_once_with(
+            f"Cannot archive volume with Cinder status "
+            f"sleeping: {fake_volume}. Manual cleanup needed.")
+        fake_nectar.cinder.volumes.get.assert_called_once_with(
+            volume_id=fake_volume.id)
+        vm_status = VMStatus.objects.get(pk=fake_vm_status.pk)
+        self.assertEqual(VM_SHELVED, vm_status.status)
+        mock_rq.get_scheduler.assert_not_called()
+
     @patch('vm_manager.vm_functions.delete_vm.django_rq')
     @patch('vm_manager.vm_functions.delete_vm.logger')
     @patch('vm_manager.vm_functions.delete_vm.delete_volume')
-    def test_wait_for_backup(self, mock_delete, mock_logger, mock_rq):
+    @patch('vm_manager.vm_functions.delete_vm.get_nectar')
+    def test_wait_for_backup(self, mock_get, mock_delete,
+                             mock_logger, mock_rq):
         mock_scheduler = Mock()
         mock_rq.get_scheduler.return_value = mock_scheduler
         fake_volume, _, fake_vm_status = self.build_fake_vol_inst_status(
             status=VM_SHELVED)
         backup_id = uuid4()
 
-        fake_nectar = get_nectar()
+        fake_nectar = FakeNectar()
         fake_nectar.cinder.backups.get.return_value = Fake(
             status=BACKUP_CREATING, id=backup_id)
+        mock_get.return_value = fake_nectar
 
         deadline = datetime.now(utc) - timedelta(seconds=10)
         wait_for_backup(fake_volume, backup_id, deadline)
