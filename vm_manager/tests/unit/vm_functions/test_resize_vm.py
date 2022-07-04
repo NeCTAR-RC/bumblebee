@@ -203,9 +203,7 @@ class ResizeVMTests(VMFunctionTestBase):
             status=ACTIVE,
             flavor={'id': str(default_flavor_id)})
         fake_nectar.nova.servers.resize.return_value = "whatever"
-        self.assertEqual(
-            f"Instance {fake_instance.id} already has flavor "
-            f"{default_flavor_id}. Skipping the resize.",
+        self.assertFalse(
             _resize_vm(fake_instance, default_flavor_id,
                        VM_OKAY, self.FEATURE))
         fake_nectar.nova.servers.get.assert_called_with(fake_instance.id)
@@ -218,8 +216,7 @@ class ResizeVMTests(VMFunctionTestBase):
         fake_vm_status.status = VM_RESIZING
         fake_vm_status.save()
 
-        self.assertEqual(
-            "whatever",
+        self.assertTrue(
             _resize_vm(fake_instance, big_flavor_id,
                        VM_SUPERSIZED, self.FEATURE))
 

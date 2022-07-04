@@ -82,15 +82,13 @@ def _resize_vm(instance, flavor, target_status, requesting_feature):
 
     current_flavor = server.flavor['id']
     if current_flavor == str(flavor):
-        message = (
-            f"Instance {instance.id} already has flavor {flavor}. "
-            f"Skipping the resize.")
-        logger.error(message)
+        logger.error(f"Instance {instance.id} already has flavor {flavor}. "
+                     "Skipping the resize.")
         vm_status = VMStatus.objects.get_vm_status_by_instance(
             instance, requesting_feature)
         vm_status.status = target_status
         vm_status.save()
-        return message
+        return False
 
     resize_result = n.nova.servers.resize(instance.id, flavor)
     vm_status = VMStatus.objects.get_vm_status_by_instance(
@@ -104,7 +102,7 @@ def _resize_vm(instance, flavor, target_status, requesting_feature):
                          instance, flavor, target_status,
                          after_time(RESIZE_CONFIRM_WAIT_SECONDS),
                          requesting_feature)
-    return resize_result
+    return True
 
 
 def _wait_to_confirm_resize(instance, flavor, target_status,
