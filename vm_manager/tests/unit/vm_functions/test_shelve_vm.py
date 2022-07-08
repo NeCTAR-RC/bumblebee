@@ -7,7 +7,7 @@ from django.utils.timezone import utc
 
 from guacamole.tests.factories import GuacamoleConnectionFactory
 from vm_manager.constants import ACTIVE, SHUTDOWN, RESCUE, \
-    VM_OKAY, VM_WAITING, VM_ERROR, VM_SHELVED, \
+    VM_OKAY, VM_WAITING, VM_ERROR, VM_SHELVED, VM_SUPERSIZED, \
     FORCED_SHELVE_WAIT_SECONDS, INSTANCE_CHECK_SHUTOFF_RETRY_COUNT, \
     INSTANCE_DELETION_RETRY_COUNT, INSTANCE_CHECK_SHUTOFF_RETRY_WAIT_TIME, \
     INSTANCE_DELETION_RETRY_WAIT_TIME
@@ -207,36 +207,22 @@ class ShelveVMTests(VMFunctionTestBase):
         instance = Instance.objects.get(pk=fake_instance.pk)
         self.assertIsNone(instance.deleted)
 
-    @patch('vm_manager.utils.utils.Nectar', new=FakeNectar)
     @patch('vm_manager.vm_functions.shelve_vm.shelve_vm_worker')
     def test_shelve_expired_vm(self, mock_shelve):
         now = datetime.now(utc)
-        fake_nectar = get_nectar()
 
         _, fake_instance, fake_vm_status = self.build_fake_vol_inst_status(
             status=VM_OKAY, expires=(now - timedelta(days=2)))
 
         self.assertTrue(shelve_expired_vm(fake_instance, self.FEATURE))
         mock_shelve.assert_called_once_with(fake_instance)
-        vm_status = VMStatus.objects.get(pk=fake_vm_status.pk)
-        self.assertEqual(VM_WAITING, vm_status.status)
-        self.assertEqual(0, vm_status.status_progress)
-        self.assertTrue(vm_status.wait_time >= now + timedelta(
-            seconds=FORCED_SHELVE_WAIT_SECONDS))
 
-    @patch('vm_manager.utils.utils.Nectar', new=FakeNectar)
     @patch('vm_manager.vm_functions.shelve_vm.shelve_vm_worker')
     def test_shelve_expired_vm_2(self, mock_shelve):
         now = datetime.now(utc)
-        fake_nectar = get_nectar()
 
         _, fake_instance, fake_vm_status = self.build_fake_vol_inst_status(
             status=VM_ERROR, expires=(now - timedelta(days=1)))
 
-        self.assertTrue(shelve_expired_vm(fake_instance, self.FEATURE))
-        mock_shelve.assert_called_once_with(fake_instance)
-        vm_status = VMStatus.objects.get(pk=fake_vm_status.pk)
-        self.assertEqual(VM_WAITING, vm_status.status)
-        self.assertEqual(0, vm_status.status_progress)
-        self.assertTrue(vm_status.wait_time >= now + timedelta(
-            seconds=FORCED_SHELVE_WAIT_SECONDS))
+        self.assertFalse(shelve_expired_vm(fake_instance, self.FEATURE))
+        mock_shelve.assert_not_called()

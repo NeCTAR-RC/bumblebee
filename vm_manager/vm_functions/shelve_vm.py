@@ -7,7 +7,7 @@ import novaclient
 from django.utils.timezone import utc
 
 from vm_manager.constants import ACTIVE, SHUTDOWN, \
-    VM_SHELVED, VM_WAITING, VM_OKAY, VM_ERROR, \
+    VM_MISSING, VM_SHELVED, VM_WAITING, VM_OKAY, VM_ERROR, VM_SUPERSIZED, \
     INSTANCE_DELETION_RETRY_WAIT_TIME, INSTANCE_DELETION_RETRY_COUNT, \
     INSTANCE_CHECK_SHUTOFF_RETRY_WAIT_TIME, \
     INSTANCE_CHECK_SHUTOFF_RETRY_COUNT, FORCED_SHELVE_WAIT_SECONDS
@@ -34,31 +34,37 @@ def shelve_vm_worker(instance):
         instance.guac_connection = None
         instance.save()
 
+    vm_status = VMStatus.objects.get_vm_status_by_instance(
+        instance, None, allow_missing=True)
+
     n = get_nectar()
     try:
         status = n.nova.servers.get(instance.id).status
-        if status == ACTIVE:
-            n.nova.servers.stop(instance.id)
-        elif status == SHUTDOWN:
-            logger.info(f"Instance {instance} already shutdown in Nova.")
-        else:
+        if status not in (ACTIVE, SHUTDOWN):
             logger.error(f"Nova instance for {instance} is in unexpected "
                          f"state {status}.  Needs manual cleanup.")
             instance.error(f"Nova instance is {status}")
-            return
+            if vm_status:
+                vm_status.status = VM_ERROR
+                vm_status.save()
+            return False
     except novaclient.exceptions.NotFound:
         logger.error(f"Trying to shelve an instance that is missing "
                      f"from Nova - {instance}")
         instance.error("Nova instance is missing")
-        return
+        if vm_status:
+            vm_status.status = VM_MISSING
+            vm_status.save()
+        return True
 
-    vm_status = VMStatus.objects.get_vm_status_by_instance(
-        instance, None, allow_missing=True)
+    if status == ACTIVE:
+        n.nova.servers.stop(instance.id)
+    else:
+        logger.info(f"Instance {instance} already shutdown in Nova.")
 
     if vm_status:
-        if vm_status.status != VM_WAITING:
-            vm_status.status = VM_WAITING
-            vm_status.wait_time = after_time(FORCED_SHELVE_WAIT_SECONDS)
+        vm_status.status = VM_WAITING
+        vm_status.wait_time = after_time(FORCED_SHELVE_WAIT_SECONDS)
         vm_status.status_progress = 33
         vm_status.status_message = 'Instance stopping'
         vm_status.save()
@@ -117,22 +123,12 @@ def unshelve_vm_worker(user, desktop_type, zone):
 
 
 def shelve_expired_vm(instance, requesting_feature):
-    try:
-        vm_status = VMStatus.objects.get_vm_status_by_instance(
-            instance, requesting_feature)
-        if vm_status.status not in (VM_OKAY, VM_ERROR):
-            logger.info(f"Instance in unexpected state: {vm_status}")
-        else:
-            # Simulate the vm_status behavior of a normal shelve (with a
-            # longer timeout) in case the user does a browser refresh while
-            # the auto-shelve is happening.
-            vm_status.wait_time = after_time(FORCED_SHELVE_WAIT_SECONDS)
-            vm_status.status_progress = 0
-            vm_status.status_message = "Forced shelve starting"
-            vm_status.status = VM_WAITING
-            vm_status.save()
-            shelve_vm_worker(instance)
-            return True
-    except Exception:
-        logger.exception(f"Problem shelving expired instance {instance}")
-    return False
+    vm_status = VMStatus.objects.get_vm_status_by_instance(
+        instance, requesting_feature, allow_missing=True)
+    if vm_status and vm_status.status not in (VM_OKAY, VM_SUPERSIZED):
+        logger.info(f"Instance in unexpected state: {vm_status}")
+        return False
+    else:
+        # Don't need to update vm_status ourselves.  The shelve_vm_worker
+        # call does it.
+        return shelve_vm_worker(instance)

@@ -176,28 +176,29 @@ def _wait_to_confirm_resize(instance, flavor, target_status,
 
 
 def downsize_expired_vm(resize, requesting_feature):
-    try:
-        vm_status = VMStatus.objects.get_vm_status_by_instance(
-            resize.instance, requesting_feature)
-        if vm_status.status != VM_SUPERSIZED:
-            logger.info(f"Skipping downsize of instance in wrong state: "
-                        f"{vm_status}")
-        else:
-            # Simulate the vm_status behavior of a normal downsize (with a
-            # longer timeout) in case the user does a browser refresh while
-            # the auto-downsize is happening.
-            vm_status.wait_time = after_time(FORCED_DOWNSIZE_WAIT_SECONDS)
-            vm_status.status_progress = 0
-            vm_status.status_message = "Forced downsize starting"
-            vm_status.status = VM_RESIZING
-            vm_status.save()
-            _resize_vm(resize.instance, resize.instance.boot_volume.flavor,
-                       VM_OKAY, requesting_feature)
+    vm_status = VMStatus.objects.get_vm_status_by_instance(
+        resize.instance, requesting_feature, allow_missing=True)
+    if vm_status and vm_status.status != VM_SUPERSIZED:
+        # There may be cleanup needed, but we are only concerned with
+        # the downsizing here.
+        logger.info(f"Skipping downsize of instance in wrong state: "
+                    f"{vm_status}")
+        return True
+    else:
+        result = _resize_vm(resize.instance,
+                            resize.instance.boot_volume.flavor,
+                            VM_OKAY, requesting_feature)
+        if result:
+            if vm_status:
+                # Simulate vm_status behavior of a normal downsize (with a
+                # longer timeout) in case user does a browser refresh while
+                # auto-downsize is happening.
+                vm_status.wait_time = after_time(FORCED_DOWNSIZE_WAIT_SECONDS)
+                vm_status.status_progress = 0
+                vm_status.status_message = "Forced downsize starting"
+                vm_status.status = VM_RESIZING
+                vm_status.save()
+
             resize.reverted = datetime.now(utc)
             resize.save()
-            return True
-    except Exception:
-        logger.exception(
-            f"Cannot retrieve vm_status for {resize.instance}")
-
-    return False
+        return result

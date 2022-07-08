@@ -500,20 +500,19 @@ class ResizeVMTests(VMFunctionTestBase):
         self.assertEqual(error, vm_status.instance.boot_volume.error_message)
         self.assertEqual(50, vm_status.status_progress)
 
-    @patch('vm_manager.utils.utils.Nectar', new=FakeNectar)
     @patch('vm_manager.vm_functions.resize_vm.logger')
     @patch('vm_manager.vm_functions.resize_vm._resize_vm')
     def test_downsize_expired_vm(self, mock_resize, mock_logger):
         now = datetime.now(utc)
-        fake_nectar = get_nectar()
 
         _, fake_instance, fake_vm_status = self.build_fake_vol_inst_status(
             status=VM_SUPERSIZED)
+        mock_resize.return_value = True
 
         resize = ResizeFactory.create(instance=fake_instance)
         resize.set_expires(now - timedelta(days=1))
 
-        self.assertEqual(1, downsize_expired_vm(resize, self.FEATURE))
+        self.assertEqual(True, downsize_expired_vm(resize, self.FEATURE))
         mock_resize.assert_called_once_with(
             fake_instance, self.UBUNTU.default_flavor.id,
             VM_OKAY, self.FEATURE)
@@ -525,12 +524,10 @@ class ResizeVMTests(VMFunctionTestBase):
         self.assertTrue(vm_status.wait_time >= now + timedelta(
             seconds=FORCED_DOWNSIZE_WAIT_SECONDS))
 
-    @patch('vm_manager.utils.utils.Nectar', new=FakeNectar)
     @patch('vm_manager.vm_functions.resize_vm.logger')
     @patch('vm_manager.vm_functions.resize_vm._resize_vm')
     def test_downsize_expired_vm_2(self, mock_resize, mock_logger):
         now = datetime.now(utc)
-        fake_nectar = get_nectar()
 
         _, fake_instance, fake_vm_status = self.build_fake_vol_inst_status(
             status=VM_ERROR)
@@ -538,5 +535,26 @@ class ResizeVMTests(VMFunctionTestBase):
         resize = ResizeFactory.create(instance=fake_instance)
         resize.set_expires(now - timedelta(days=1))
 
-        self.assertEqual(0, downsize_expired_vm(resize, self.FEATURE))
+        self.assertEqual(True, downsize_expired_vm(resize, self.FEATURE))
         mock_resize.assert_not_called()
+
+    @patch('vm_manager.vm_functions.resize_vm.logger')
+    @patch('vm_manager.vm_functions.resize_vm._resize_vm')
+    def test_downsize_expired_vm_3(self, mock_resize, mock_logger):
+        now = datetime.now(utc)
+
+        _, fake_instance, fake_vm_status = self.build_fake_vol_inst_status(
+            status=VM_SUPERSIZED)
+        mock_resize.return_value = False
+
+        resize = ResizeFactory.create(instance=fake_instance)
+        resize.set_expires(now - timedelta(days=1))
+
+        self.assertEqual(False, downsize_expired_vm(resize, self.FEATURE))
+        mock_resize.assert_called_once_with(
+            fake_instance, self.UBUNTU.default_flavor.id,
+            VM_OKAY, self.FEATURE)
+        resize = Resize.objects.get(pk=resize.pk)
+        self.assertIsNone(resize.reverted)
+        vm_status = VMStatus.objects.get(pk=fake_vm_status.pk)
+        self.assertEqual(VM_SUPERSIZED, vm_status.status)
