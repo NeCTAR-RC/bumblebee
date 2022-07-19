@@ -20,7 +20,10 @@ def connection_callback(sender, connection, **kwargs):
     if not connection.settings_dict['NAME'] == 'file:memorydb_default?mode=memory&cache=shared':
         if not monitoring_initialised:
             from researcher_workspace import metrics
-            REGISTRY.register(metrics.BumblebeeMetricsCollector())
+            import sys
+            # NOTE(yoctozepto): It should not try to access the database when running the migrations.
+            if not ('makemigrations' in sys.argv or 'migrate' in sys.argv):
+                REGISTRY.register(metrics.BumblebeeMetricsCollector())
             monitoring_initialised = True
 
 

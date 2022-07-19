@@ -8,6 +8,14 @@ services:
     tty: true
     ports:
     - 8000:8000
+    environment: &bb_env
+      DEBUG: "True"
+
+      DB_HOST: mariadb
+      DB_USER: root
+      DB_PASSWORD: toor
+
+      REDIS_HOST: redis
     env_file:
       - .env
     volumes:
@@ -26,8 +34,9 @@ services:
     links:
     - mariadb:mariadb
     - redis:redis
-    env_file:
-    - .env
+    environment:
+      <<: *bb_env
+      DJANGO_MIGRATE: "True"
     volumes:
     - .:/app
     restart: on-failure
@@ -35,6 +44,7 @@ services:
 
   rqscheduler:
     build: .
+    environment: *bb_env
     env_file:
       - .env
     restart: on-failure
@@ -53,6 +63,7 @@ services:
     links:
     - mariadb:mariadb
     - redis:redis
+    environment: *bb_env
     env_file:
     - .env
     restart: on-failure
@@ -60,20 +71,18 @@ services:
     depends_on:
     - mariadb
     - redis
-    links:
-    - mariadb:mariadb
-    - redis:redis
     volumes:
     - .:/app
 
   mariadb:
     image: mariadb
-    env_file:
-    - .env
+    environment:
+      MARIADB_ROOT_PASSWORD: toor
     ports:
     - 3306:3306
     volumes:
     - dbdata:/var/lib/mysql
+    - ./initdb:/docker-entrypoint-initdb.d
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "--silent"]
 
@@ -81,6 +90,8 @@ services:
     image: redis:alpine
     ports:
     - 6379:6379
+    volumes:
+      - redis_data:/data
 
   guacd:
     image: guacamole/guacd:1.3.0
@@ -91,13 +102,39 @@ services:
   guacamole:
     image: guacamole/guacamole:1.3.0
     restart: unless-stopped
+    environment:
+
+      GUACD_HOSTNAME: guacd
+
+      # Guacamole has to share the database with Bumblebee.
+      MYSQL_HOSTNAME: mariadb
+      MYSQL_DATABASE: bumblebee
+      MYSQL_USER: root
+      MYSQL_PASSWORD: toor
+
     env_file:
       - .env
     ports:
-    - 8080:8080
+    - 9000:8080
     depends_on:
-    - mysql
+    - mariadb
     - guacd
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:18.0.2
+    environment:
+      KC_DB: mariadb
+      KC_DB_URL: jdbc:mariadb://mariadb/keycloak
+      KC_DB_USERNAME: root
+      KC_DB_PASSWORD: toor
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+    ports:
+      - 8080:8080
+    depends_on:
+      - mariadb
+    command: start-dev
 
 volumes:
   dbdata:
+  redis_data:

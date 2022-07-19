@@ -1,6 +1,7 @@
 import logging
 import unicodedata
 
+from django.conf import settings
 from mozilla_django_oidc.auth import OIDCAuthenticationBackend
 
 from guacamole import models as guac_models
@@ -127,7 +128,7 @@ class NectarAuthBackend(OIDCAuthenticationBackend):
         # Currently we only allow Australian users via AAF
         federation = claims.get('federation', 'not found')
 
-        if federation != 'aaf':
+        if federation != 'aaf' and settings.REQUIRE_AAF:
             email = claims.get('email')
             logger.warning(
                 f"Login for {email} is denied due to federation ({federation}) "
