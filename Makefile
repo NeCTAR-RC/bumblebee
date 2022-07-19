@@ -11,7 +11,7 @@ BUILDER_ARGS=
 build:
 	echo "Derived image tag: $(DESCRIBE)"
 	echo "Actual image tag: $(IMAGE_TAG)"
-	$(BUILDER) build -f docker/Dockerfile $(BUILDER_ARGS) -t $(IMAGE) .
+	$(BUILDER) build $(BUILDER_ARGS) -t $(IMAGE) .
 
 push:
 	$(BUILDER) push $(IMAGE)

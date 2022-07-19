@@ -123,8 +123,6 @@ WSGI_APPLICATION = 'researcher_workspace.wsgi.application'
 
 SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_BROWSER_XSS_FILTER = True
-SESSION_COOKIE_SECURE = True
-CSRF_COOKIE_SECURE = True
 X_FRAME_OPTIONS = 'DENY'
 
 # Database
@@ -158,7 +156,7 @@ RQ_QUEUES = {
 OS_APPLICATION_CREDENTIAL_ID = get_setting('OS_APPLICATION_CREDENTIAL_ID')
 OS_APPLICATION_CREDENTIAL_SECRET = get_setting('OS_APPLICATION_CREDENTIAL_SECRET')
 
-OS_AUTH_URL = get_setting('OS_AUTH_URL', 'https://keystone.rc.nectar.org.au:5000/v3/')
+OS_AUTH_URL = get_setting('OS_AUTH_URL')
 OS_SECGROUPS = get_setting('OS_SECGROUPS', 'bumblebee').split(',')
 OS_KEYNAME = get_setting('OS_KEYNAME')
 
@@ -172,10 +170,14 @@ AUTHENTICATION_BACKENDS = [
 AUTH_USER_MODEL = 'researcher_workspace.User'
 
 # OpenID Connect Auth settings
-OIDC_SERVER_URL = get_setting('OIDC_SERVER_URL', 'https://sso.rc.nectar.org.au/auth/realms/nectar/protocol/openid-connect')
+OIDC_SERVER_URL = get_setting('OIDC_SERVER_URL')
 OIDC_RP_CLIENT_ID = get_setting('OIDC_RP_CLIENT_ID', 'bumblebee')
 OIDC_RP_SIGN_ALGO = 'RS256'
 OIDC_USERNAME_ALGO = 'researcher_workspace.auth.generate_username'
+
+# OIDC_RP_SCOPES should include a scope that serves the ``roles`` claim
+# in the ID token, with an array of user's roles.
+OIDC_RP_SCOPES = get_setting('OIDC_RP_SCOPES', 'openid email')
 
 # Internationalization
 LANGUAGE_CODE = 'en-us'
@@ -291,15 +293,22 @@ DESKTOP_TYPES = get_setting('DESKTOP_TYPES')
 ZONES = get_setting('ZONES')
 
 GENERAL_WARNING_MESSAGE = get_setting('GENERAL_WARNING_MESSAGE')
+# Friendly name for the current environment.
 ENVIRONMENT_NAME = get_setting('ENVIRONMENT_NAME')
 ENVIRONMENT_COLOR = get_setting('ENVIRONMENT_COLOR')
 
 # Values that need to be set in local_settings.py
 SECRET_KEY = get_setting('SECRET_KEY', 'secret')
 
+# https SITE_URL assumes there is a proxy in front
 SITE_URL = get_setting('SITE_URL', 'http://localhost:8000')
 NOTIFY_URL = get_setting('NOTIFY_URL', SITE_URL)
 
+# GUACAMOLE_URL_TEMPLATE uses three variables on templating:
+#   env=settings.ENVIRONMENT_NAME
+#   zone=self.boot_volume.zone.lower()
+#   path=guac_utils.get_connection_path(self.guac_connection)
+# e.g. GUACAMOLE_URL_TEMPLATE=http://{env}-guacamole-{zone}.example.com/{path}
 GUACAMOLE_URL_TEMPLATE = get_setting('GUACAMOLE_URL_TEMPLATE')
 
 OIDC_RP_CLIENT_SECRET = get_setting('OIDC_RP_CLIENT_SECRET')
@@ -318,6 +327,8 @@ METRICS_PASSWORD = get_setting('METRICS_PASSWORD')
 if SITE_URL and SITE_URL.startswith('https'):
     USE_X_FORWARDED_HOST = True
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
 
 try:
     from researcher_workspace.local_settings import *  # noqa
@@ -365,3 +376,6 @@ OIDC_OP_JWKS_ENDPOINT = f'{OIDC_SERVER_URL}/certs'
 if DEBUG:
     MESSAGE_LEVEL = message_constants.DEBUG
     EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+# Whether to require authN with AAF (Australian Access Federation).
+REQUIRE_AAF = strtobool(get_setting('REQUIRE_AAF', 'True'))
