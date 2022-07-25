@@ -217,12 +217,6 @@ class NectarAuthBackendTestCase(TestCase):
         self.assertTrue(auth_user.is_staff)
         self.assertTrue(auth_user.is_superuser)
 
-        gentity = guac_models.GuacamoleEntity.objects.get(
-            name=user_data['email'], type='USER',)
-        gperm = guac_models.GuacamoleSystemPermission.objects.filter(
-            entity=gentity, permission='ADMINISTER').first()
-        self.assertIsNotNone(gperm)
-
     @patch('mozilla_django_oidc.auth.requests')
     @patch('mozilla_django_oidc.auth.OIDCAuthenticationBackend.verify_token')
     def test_user_staff_permissions_granted_from_roles(
@@ -245,11 +239,6 @@ class NectarAuthBackendTestCase(TestCase):
         auth_user = self.backend.authenticate(request=auth_request)
         self.assertTrue(auth_user.is_staff)
         self.assertFalse(auth_user.is_superuser)
-        gentity = guac_models.GuacamoleEntity.objects.get(
-            name=user_data['email'], type='USER',)
-        gperm = guac_models.GuacamoleSystemPermission.objects.filter(
-            entity=gentity, permission='ADMINISTER').first()
-        self.assertIsNone(gperm)
 
     @patch('mozilla_django_oidc.auth.requests')
     @patch('mozilla_django_oidc.auth.OIDCAuthenticationBackend.verify_token')
@@ -286,8 +275,6 @@ class NectarAuthBackendTestCase(TestCase):
 
         gentity1 = guac_models.GuacamoleEntity.objects.create(
             name=test_old_email, type='USER')
-        gperm1 = guac_models.GuacamoleSystemPermission.objects.create(
-            entity=gentity1, permission='ADMINISTER')
 
         auth_user = self.backend.authenticate(request=auth_request)
         self.assertEqual(auth_user, test_user)
@@ -298,7 +285,3 @@ class NectarAuthBackendTestCase(TestCase):
             name=test_new_email, type='USER')
         # Ensure no new entity created, but just updated
         self.assertEqual(gentity1.entity_id, gentity2.entity_id)
-        # Ensure our guac permissions are revoked
-        gperm2 = guac_models.GuacamoleSystemPermission.objects.filter(
-            entity=gentity2, permission='ADMINISTER').first()
-        self.assertIsNone(gperm2)

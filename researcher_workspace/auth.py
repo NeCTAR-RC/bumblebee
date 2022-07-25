@@ -51,10 +51,6 @@ class NectarAuthBackend(OIDCAuthenticationBackend):
             disabled=False,
             expired=False,)
 
-        if user.is_superuser:
-            guac_models.GuacamoleSystemPermission.objects.create(
-                entity=gentity, permission='ADMINISTER')
-
         user.save()
         return user
 
@@ -108,19 +104,6 @@ class NectarAuthBackend(OIDCAuthenticationBackend):
                 password_hash='x',
                 disabled=False,
                 expired=False,)
-
-        if user.is_superuser:
-            guac_models.GuacamoleSystemPermission.objects.update_or_create(
-                entity=gentity, permission='ADMINISTER')
-        else:
-            # No longer an admin, so clean up permission record
-            try:
-                gperm = guac_models.GuacamoleSystemPermission.objects.get(
-                    entity=guser.entity, permission='ADMINISTER')
-                gperm.delete()
-            except guac_models.GuacamoleSystemPermission.DoesNotExist:
-                # Already doesn't exist
-                pass
 
         user.save()
         return user
