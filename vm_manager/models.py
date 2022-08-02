@@ -304,7 +304,7 @@ class Instance(CloudResource):
             ('ignore-cert', 'true'),
             ('resize-method', 'display-update'),
             ('enable-drive', 'true'),
-            ('drive-path', '/var/lib/guacd/shared-drive'),
+            ('drive-path', f'/var/lib/guacd/shared-drive/{self.id}'),
             ('create-drive-path', 'true'),
         ]
 
