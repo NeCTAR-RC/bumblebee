@@ -339,7 +339,7 @@ COMPRESS_OFFLINE = get_setting('COMPRESS_OFFLINE', not DEBUG)
 
 BOOST_EXPIRY = int(get_setting('BOOST_EXPIRY', '7'))
 BOOST_EXTENSION = int(get_setting('BOOST_EXTENSION', '7'))
-BOOST_LIFETIME = int(get_setting('BOOT_LIFETIME', '14'))
+BOOST_LIFETIME = int(get_setting('BOOST_LIFETIME', '-1'))
 BOOST_WARNING_1 = int(get_setting('BOOST_WARNING_1', '-1'))
 BOOST_WARNING_2 = int(get_setting('BOOST_WARNING_2', '1'))
 
