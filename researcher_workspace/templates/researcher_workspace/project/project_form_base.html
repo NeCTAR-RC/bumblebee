@@ -8,15 +8,30 @@
     <fieldset>
       <div class="mb-3">
         <div class="form-label">Title</div>
-        <div>{{ form.title }}</div>
+        <div>
+          {{ form.title }}
+          {% for error in form.title.errors %}
+          <span class="text-danger">{{ error }}</span>
+          {% endfor %}
+        </div>
       </div>
       <div class="mb-3">
         <div class="form-label">Description</div>
-        <div>{{ form.description }}</div>
+        <div>
+          {{ form.description }}
+          {% for error in form.description.errors %}
+          <span class="text-danger">{{ error }}</span>
+          {% endfor %}
+        </div>
       </div>
       <div class="mb-3">
         <div class="form-label">Chief Investigator (CI) email address</div>
-        <div>{{ form.chief_investigator }}</div>
+        <div>
+          {{ form.chief_investigator }}
+          {% for error in form.chief_investigator.errors %}
+          <span class="text-danger">{{ error }}</span>
+          {% endfor %}
+        </div>
         <div class="form-text">
           <p>Note: Undergraduate and RHD students should enter the
             primary academic supervisor for their project as their CI.</p>
@@ -36,11 +51,21 @@
         </div>
         <div class="mb-3">
           <div class="form-label">First Field of Research Code</div>
-          <div>{{ form.FoR_code }}</div>
+          <div>
+            {{ form.FoR_code }}
+            {% for error in form.FoR_code.errors %}
+            <span class="text-danger">{{ error }}</span>
+            {% endfor %}
+          </div>
         </div>
         <div class="mb-3">
           <div class="form-label">Optional Second Field of Research Code</div>
-          <div>{{ form.FoR_code2 }}</div>
+          <div>
+            {{ form.FoR_code2 }}
+            {% for error in form.FoR_code2.errors %}
+            <span class="text-danger">{{ error }}</span>
+            {% endfor %}
+          </div>
         </div>
       </div>
     </fieldset>
