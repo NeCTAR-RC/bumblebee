@@ -562,6 +562,31 @@ class ArchiveVMTests(VMFunctionTestBase):
     @patch('vm_manager.vm_functions.delete_vm.django_rq')
     @patch('vm_manager.vm_functions.delete_vm.get_nectar')
     @patch('vm_manager.vm_functions.delete_vm.logger')
+    def test_archive_vm_worker_missing(
+            self, mock_logger, mock_get, mock_rq):
+        fake_volume, _, fake_vm_status = self.build_fake_vol_inst_status(
+            status=VM_SHELVED)
+
+        fake_nectar = FakeNectar()
+        fake_nectar.cinder.volumes.get.side_effect = \
+            cinderclient.exceptions.NotFound(400)
+        mock_get.return_value = fake_nectar
+
+        self.assertTrue(archive_vm_worker(fake_volume, self.FEATURE))
+        mock_logger.error.assert_called_once_with(
+            f"Cinder volume missing for {fake_volume}. Cannot be archived.")
+        fake_nectar.cinder.volumes.get.assert_called_once_with(
+            volume_id=fake_volume.id)
+        vm_status = VMStatus.objects.get(pk=fake_vm_status.pk)
+        self.assertEqual(VM_SHELVED, vm_status.status)
+        mock_rq.get_scheduler.assert_not_called()
+        volume = Volume.objects.get(pk=fake_volume.pk)
+        self.assertEqual("Cinder volume missing.  Cannot be archived.",
+                         volume.error_message)
+
+    @patch('vm_manager.vm_functions.delete_vm.django_rq')
+    @patch('vm_manager.vm_functions.delete_vm.get_nectar')
+    @patch('vm_manager.vm_functions.delete_vm.logger')
     def test_archive_vm_worker_backup_reject(self, mock_logger, mock_get,
                                              mock_rq):
         fake_volume, _, fake_vm_status = self.build_fake_vol_inst_status(
@@ -584,6 +609,8 @@ class ArchiveVMTests(VMFunctionTestBase):
         vm_status = VMStatus.objects.get(pk=fake_vm_status.pk)
         self.assertEqual(VM_SHELVED, vm_status.status)
         mock_rq.get_scheduler.assert_not_called()
+        volume = Volume.objects.get(pk=fake_volume.pk)
+        self.assertEqual("Cinder backup failed", volume.error_message)
 
     @patch('vm_manager.vm_functions.delete_vm.django_rq')
     @patch('vm_manager.vm_functions.delete_vm.get_nectar')

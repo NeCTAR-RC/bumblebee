@@ -206,6 +206,7 @@ def archive_vm_worker(volume, requesting_feature):
                 f"{cinder_volume.status}: {volume}. Manual cleanup needed.")
             return False
     except cinderclient.exceptions.NotFound:
+        volume.error("Cinder volume missing.  Cannot be archived.")
         logger.error(
             f"Cinder volume missing for {volume}. Cannot be archived.")
         return True
@@ -216,6 +217,7 @@ def archive_vm_worker(volume, requesting_feature):
         logger.info(
             f'Cinder backup {backup.id} started for volume {volume.id}')
     except cinderclient.exceptions.ClientException as e:
+        volume.error("Cinder backup failed")
         logger.error(
             f"Cinder backup failed for volume {volume.id}: {e}")
         return False
