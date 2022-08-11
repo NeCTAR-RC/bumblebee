@@ -22,7 +22,7 @@ from vm_manager.utils.Check_ResearchDesktop_Availability import \
     check_availability
 from vm_manager.utils.utils import after_time, get_nectar
 from vm_manager.vm_functions.delete_vm import \
-    delete_vm_worker, delete_volume, archive_vm_worker
+    delete_vm_worker, delete_volume, archive_volume_worker
 from vm_manager.vm_functions.resize_vm import downsize_vm_worker
 from vm_manager.vm_functions.shelve_vm import shelve_vm_worker
 
@@ -70,7 +70,7 @@ def admin_archive_instance_and_volume(request, instance):
     volume = instance.boot_volume
     if instance.deleted:
         volume.set_marked_for_deletion()
-        archive_vm_worker(volume, volume.requesting_feature)
+        archive_volume_worker(volume, volume.requesting_feature)
         logger.info(f"{request.user} admin archived volume {volume.id}")
     else:
         instance.set_marked_for_deletion()
@@ -102,7 +102,7 @@ def admin_archive_volume(request, volume):
         vm_status.status = VM_DELETED
         vm_status.save()
 
-    archive_vm_worker(volume, volume.requesting_feature)
+    archive_volume_worker(volume, volume.requesting_feature)
     logger.info(f"{request.user} admin archiving volume {volume.id}")
 
 

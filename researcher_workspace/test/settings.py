@@ -305,6 +305,7 @@ INSTANCE_WARNING_2 = 1
 VOLUME_EXPIRY = 90
 VOLUME_WARNING_1 = 7
 VOLUME_WARNING_2 = 1
+BACKUP_LIFETIME = 90
 
 # Values that need to be set in local_settings.py
 PROXY_URL = False

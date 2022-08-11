@@ -355,6 +355,9 @@ VOLUME_EXPIRY = int(get_setting('SHELVED_VOLUME_EXPIRY', '30'))
 VOLUME_WARNING_1 = int(get_setting('SHELVED_VOLUME_WARNING_1', '7'))
 VOLUME_WARNING_2 = int(get_setting('SHELVED_VOLUME_WARNING_2', '1'))
 
+# Backups (archived desktops) are kept this number of days.
+BACKUP_LIFETIME = int(get_setting('BACKUP_LIFETIME', '90'))
+
 # OpenID Connect settings
 OIDC_OP_AUTHORIZATION_ENDPOINT = f'{OIDC_SERVER_URL}/auth'
 OIDC_OP_TOKEN_ENDPOINT = f'{OIDC_SERVER_URL}/token'

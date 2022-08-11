@@ -2,13 +2,15 @@ import logging
 from datetime import datetime, timedelta
 
 from django.conf import settings
+from django.db.models import Q
 from django.utils.timezone import utc
 
 from researcher_workspace.utils import send_notification, format_notification
 from researcher_desktop.models import DesktopType
 from vm_manager.models import Instance, Volume, Resize, \
     EXP_INITIAL, EXP_FIRST_WARNING, EXP_FINAL_WARNING, EXP_EXPIRED
-from vm_manager.vm_functions.delete_vm import archive_expired_vm
+from vm_manager.vm_functions.delete_vm import \
+    archive_expired_volume, delete_backup
 from vm_manager.vm_functions.resize_vm import downsize_expired_vm
 from vm_manager.vm_functions.shelve_vm import shelve_expired_vm
 
@@ -152,12 +154,40 @@ class VolumeExpirer(Expirer):
         return count
 
     def do_expire(self, volume):
-        return archive_expired_vm(volume, volume.requesting_feature)
+        return archive_expired_volume(volume, volume.requesting_feature)
 
     def add_target_details(self, volume, context):
         context['desktop_type'] = DesktopType.objects.get_desktop_type(
             volume.operating_system)
         context['volume'] = volume
+
+
+class ArchiveExpirer():
+    '''This expirer deletes archives (backups) for archived volumes.
+    Note that this doesn't need to do notification and staging, and
+    doesn't have an associated Expiration record.
+    '''
+
+    def __init__(self, dry_run=False, verbose=False,
+                 backup_lifetime=days(settings.BACKUP_LIFETIME)):
+        self.dry_run = dry_run
+        self.verbose = verbose
+        self.now = datetime.now(utc)
+        self.backup_lifetime = backup_lifetime
+
+    def run(self, feature):
+        count = 0
+        for v in Volume.objects.exclude(
+                Q(archived_at=None) | Q(backup_id=None)):
+            if v.archived_at + self.backup_lifetime < self.now:
+                if self.dry_run:
+                    logger.error(f"Would have deleted backup for {v}")
+                    count += 1
+                elif delete_backup(v):
+                    count += 1
+                else:
+                    logger.error(f"Backup deletion failed for {v}")
+        return count
 
 
 class InstanceExpirer(Expirer):

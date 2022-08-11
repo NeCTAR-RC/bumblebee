@@ -22,7 +22,7 @@ from vm_manager.models import VMStatus, Volume, Instance
 from vm_manager.vm_functions.delete_vm import delete_vm_worker, \
     _check_instance_is_shutoff_and_delete, delete_instance, \
     _dispose_volume_once_instance_is_deleted, delete_volume, \
-    archive_vm_worker, wait_for_backup
+    archive_volume_worker, wait_for_backup, delete_backup
 from vm_manager.utils.utils import get_nectar
 
 
@@ -459,7 +459,7 @@ class DeleteVMTests(VMFunctionTestBase):
     @patch('vm_manager.vm_functions.delete_vm.get_nectar')
     @patch('vm_manager.vm_functions.delete_vm.logger')
     @patch('vm_manager.vm_functions.delete_vm.delete_volume')
-    @patch('vm_manager.vm_functions.delete_vm.archive_vm_worker')
+    @patch('vm_manager.vm_functions.delete_vm.archive_volume_worker')
     def test_dispose_volume_once_instance_is_deleted_6(
             self, mock_archive, mock_delete, mock_logger, mock_get_nectar):
         fake_nectar = FakeNectar()
@@ -489,14 +489,47 @@ class DeleteVMTests(VMFunctionTestBase):
 
         fake_nectar = FakeNectar()
         mock_get_nectar.return_value = fake_nectar
-        fake_nectar.cinder.volumes.return_value = 99
 
-        self.assertIsNone(delete_volume(fake_volume))
+        self.assertTrue(delete_volume(fake_volume))
         mock_get_nectar.assert_called_once()
         fake_nectar.cinder.volumes.delete.assert_called_once_with(
             fake_volume.id)
         volume = Volume.objects.get(pk=fake_volume.pk)
         self.assertIsNotNone(volume.deleted)
+
+    @patch('vm_manager.vm_functions.delete_vm.get_nectar')
+    def test_delete_volume_missing(self, mock_get_nectar):
+
+        fake_volume = self.build_fake_volume()
+
+        fake_nectar = FakeNectar()
+        mock_get_nectar.return_value = fake_nectar
+        fake_nectar.cinder.volumes.delete.side_effect = \
+            cinderclient.exceptions.NotFound(404)
+
+        self.assertTrue(delete_volume(fake_volume))
+        mock_get_nectar.assert_called_once()
+        fake_nectar.cinder.volumes.delete.assert_called_once_with(
+            fake_volume.id)
+        volume = Volume.objects.get(pk=fake_volume.pk)
+        self.assertIsNotNone(volume.deleted)
+
+    @patch('vm_manager.vm_functions.delete_vm.get_nectar')
+    def test_delete_volume_failed(self, mock_get_nectar):
+
+        fake_volume = self.build_fake_volume()
+
+        fake_nectar = FakeNectar()
+        mock_get_nectar.return_value = fake_nectar
+        fake_nectar.cinder.volumes.delete.side_effect = \
+            cinderclient.exceptions.ClientException(400)
+
+        self.assertFalse(delete_volume(fake_volume))
+        mock_get_nectar.assert_called_once()
+        fake_nectar.cinder.volumes.delete.assert_called_once_with(
+            fake_volume.id)
+        volume = Volume.objects.get(pk=fake_volume.pk)
+        self.assertIsNone(volume.deleted)
 
 
 class ArchiveVMTests(VMFunctionTestBase):
@@ -505,7 +538,7 @@ class ArchiveVMTests(VMFunctionTestBase):
     @patch('vm_manager.vm_functions.delete_vm.get_nectar')
     @patch('vm_manager.vm_functions.delete_vm.logger')
     @patch('vm_manager.utils.utils.datetime')
-    def test_archive_vm_worker(self, mock_datetime, mock_logger,
+    def test_archive_volume_worker(self, mock_datetime, mock_logger,
                                mock_get, mock_rq):
         mock_scheduler = Mock()
         mock_rq.get_scheduler.return_value = mock_scheduler
@@ -521,7 +554,7 @@ class ArchiveVMTests(VMFunctionTestBase):
         fake_nectar.cinder.backups.create.return_value = Fake(id=backup_id)
         mock_get.return_value = fake_nectar
 
-        self.assertTrue(archive_vm_worker(fake_volume, self.FEATURE))
+        self.assertTrue(archive_volume_worker(fake_volume, self.FEATURE))
         vm_status = VMStatus.objects.get(pk=fake_vm_status.pk)
         self.assertEqual(NO_VM, vm_status.status)
 
@@ -540,7 +573,7 @@ class ArchiveVMTests(VMFunctionTestBase):
     @patch('vm_manager.vm_functions.delete_vm.django_rq')
     @patch('vm_manager.vm_functions.delete_vm.get_nectar')
     @patch('vm_manager.vm_functions.delete_vm.logger')
-    def test_archive_vm_worker_wrong_state(
+    def test_archive_volume_worker_wrong_state(
             self, mock_logger, mock_get, mock_rq):
         fake_volume, _, fake_vm_status = self.build_fake_vol_inst_status(
             status=VM_SHELVED)
@@ -549,7 +582,7 @@ class ArchiveVMTests(VMFunctionTestBase):
         fake_nectar.cinder.volumes.get.return_value = Fake(status='sleeping')
         mock_get.return_value = fake_nectar
 
-        self.assertFalse(archive_vm_worker(fake_volume, self.FEATURE))
+        self.assertFalse(archive_volume_worker(fake_volume, self.FEATURE))
         mock_logger.error.assert_called_once_with(
             f"Cannot archive volume with Cinder status "
             f"sleeping: {fake_volume}. Manual cleanup needed.")
@@ -562,7 +595,7 @@ class ArchiveVMTests(VMFunctionTestBase):
     @patch('vm_manager.vm_functions.delete_vm.django_rq')
     @patch('vm_manager.vm_functions.delete_vm.get_nectar')
     @patch('vm_manager.vm_functions.delete_vm.logger')
-    def test_archive_vm_worker_missing(
+    def test_archive_volume_worker_missing(
             self, mock_logger, mock_get, mock_rq):
         fake_volume, _, fake_vm_status = self.build_fake_vol_inst_status(
             status=VM_SHELVED)
@@ -572,7 +605,7 @@ class ArchiveVMTests(VMFunctionTestBase):
             cinderclient.exceptions.NotFound(400)
         mock_get.return_value = fake_nectar
 
-        self.assertTrue(archive_vm_worker(fake_volume, self.FEATURE))
+        self.assertTrue(archive_volume_worker(fake_volume, self.FEATURE))
         mock_logger.error.assert_called_once_with(
             f"Cinder volume missing for {fake_volume}. Cannot be archived.")
         fake_nectar.cinder.volumes.get.assert_called_once_with(
@@ -587,8 +620,8 @@ class ArchiveVMTests(VMFunctionTestBase):
     @patch('vm_manager.vm_functions.delete_vm.django_rq')
     @patch('vm_manager.vm_functions.delete_vm.get_nectar')
     @patch('vm_manager.vm_functions.delete_vm.logger')
-    def test_archive_vm_worker_backup_reject(self, mock_logger, mock_get,
-                                             mock_rq):
+    def test_archive_volume_worker_backup_reject(
+            self, mock_logger, mock_get, mock_rq):
         fake_volume, _, fake_vm_status = self.build_fake_vol_inst_status(
             status=VM_SHELVED)
 
@@ -600,7 +633,7 @@ class ArchiveVMTests(VMFunctionTestBase):
                 message="Eternal error", code=504)
         mock_get.return_value = fake_nectar
 
-        self.assertFalse(archive_vm_worker(fake_volume, self.FEATURE))
+        self.assertFalse(archive_volume_worker(fake_volume, self.FEATURE))
         mock_logger.error.assert_called_once_with(
             f'Cinder backup failed for volume {fake_volume.id}: '
             'Eternal error (HTTP 504)')
@@ -615,7 +648,7 @@ class ArchiveVMTests(VMFunctionTestBase):
     @patch('vm_manager.vm_functions.delete_vm.django_rq')
     @patch('vm_manager.vm_functions.delete_vm.get_nectar')
     @patch('vm_manager.vm_functions.delete_vm.logger')
-    def test_archive_vm_worker_wrong_state(
+    def test_archive_volume_worker_wrong_state(
             self, mock_logger, mock_get, mock_rq):
         fake_volume, _, fake_vm_status = self.build_fake_vol_inst_status(
             status=VM_SHELVED)
@@ -624,7 +657,7 @@ class ArchiveVMTests(VMFunctionTestBase):
         fake_nectar.cinder.volumes.get.return_value = Fake(status='sleeping')
         mock_get.return_value = fake_nectar
 
-        self.assertFalse(archive_vm_worker(fake_volume, self.FEATURE))
+        self.assertFalse(archive_volume_worker(fake_volume, self.FEATURE))
         mock_logger.error.assert_called_once_with(
             f"Cannot archive volume with Cinder status "
             f"sleeping: {fake_volume}. Manual cleanup needed.")
@@ -698,3 +731,58 @@ class ArchiveVMTests(VMFunctionTestBase):
         mock_logger.error.assert_called_once_with(
             f'Backup {backup_id} for volume {fake_volume} '
             f'is in unexpected state reversing')
+
+    @patch('vm_manager.vm_functions.delete_vm.get_nectar')
+    def test_delete_backup(self, mock_get_nectar):
+        backup_id = uuid4()
+        fake_volume = self.build_fake_volume()
+        fake_volume.archived_at = datetime.now(utc)
+        fake_volume.backup_id = backup_id
+        fake_volume.save()
+
+        fake_nectar = FakeNectar()
+        mock_get_nectar.return_value = fake_nectar
+
+        self.assertTrue(delete_backup(fake_volume))
+        mock_get_nectar.assert_called_once()
+        fake_nectar.cinder.backups.delete.assert_called_once_with(backup_id)
+        volume = Volume.objects.get(pk=fake_volume.pk)
+        self.assertIsNone(volume.backup_id)
+
+    @patch('vm_manager.vm_functions.delete_vm.get_nectar')
+    def test_delete_backup_missing(self, mock_get_nectar):
+        backup_id = uuid4()
+        fake_volume = self.build_fake_volume()
+        fake_volume.archived_at = datetime.now(utc)
+        fake_volume.backup_id = backup_id
+        fake_volume.save()
+
+        fake_nectar = FakeNectar()
+        mock_get_nectar.return_value = fake_nectar
+        fake_nectar.cinder.backups.delete.side_effect = \
+            cinderclient.exceptions.NotFound(404)
+
+        self.assertTrue(delete_backup(fake_volume))
+        mock_get_nectar.assert_called_once()
+        fake_nectar.cinder.backups.delete.assert_called_once_with(backup_id)
+        volume = Volume.objects.get(pk=fake_volume.pk)
+        self.assertIsNone(volume.backup_id)
+
+    @patch('vm_manager.vm_functions.delete_vm.get_nectar')
+    def test_delete_backup_failed(self, mock_get_nectar):
+        backup_id = uuid4()
+        fake_volume = self.build_fake_volume()
+        fake_volume.archived_at = datetime.now(utc)
+        fake_volume.backup_id = backup_id
+        fake_volume.save()
+
+        fake_nectar = FakeNectar()
+        mock_get_nectar.return_value = fake_nectar
+        fake_nectar.cinder.backups.delete.side_effect = \
+            cinderclient.exceptions.ClientException(400)
+
+        self.assertFalse(delete_backup(fake_volume))
+        mock_get_nectar.assert_called_once()
+        fake_nectar.cinder.backups.delete.assert_called_once_with(backup_id)
+        volume = Volume.objects.get(pk=fake_volume.pk)
+        self.assertIsNotNone(volume.backup_id)

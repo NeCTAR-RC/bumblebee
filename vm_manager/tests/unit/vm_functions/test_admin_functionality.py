@@ -13,7 +13,7 @@ from vm_manager.vm_functions.admin_functionality import \
     admin_delete_volume, admin_archive_volume, \
     admin_archive_instance_and_volume, admin_downsize_resize
 from vm_manager.vm_functions.delete_vm import \
-    archive_vm_worker, delete_vm_worker
+    archive_volume_worker, delete_vm_worker
 from vm_manager.vm_functions.resize_vm import downsize_vm_worker
 from vm_manager.vm_functions.shelve_vm import shelve_vm_worker
 
@@ -66,7 +66,7 @@ class AdminVMTests(VMFunctionTestBase):
         mock_delete.assert_called_once_with(fake_volume)
 
     @patch('vm_manager.vm_functions.admin_functionality.django_rq')
-    @patch('vm_manager.vm_functions.admin_functionality.archive_vm_worker')
+    @patch('vm_manager.vm_functions.admin_functionality.archive_volume_worker')
     def test_admin_archive_instance_and_volume(self, mock_archive, mock_rq):
         mock_queue = Mock()
         mock_rq.get_queue.return_value = mock_queue
@@ -89,7 +89,7 @@ class AdminVMTests(VMFunctionTestBase):
         mock_archive.assert_not_called()
 
     @patch('vm_manager.vm_functions.admin_functionality.django_rq')
-    @patch('vm_manager.vm_functions.admin_functionality.archive_vm_worker')
+    @patch('vm_manager.vm_functions.admin_functionality.archive_volume_worker')
     def test_admin_archive_instance_and_volume_2(self, mock_archive, mock_rq):
         mock_queue = Mock()
         mock_rq.get_queue.return_value = mock_queue
@@ -131,7 +131,7 @@ class AdminVMTests(VMFunctionTestBase):
         mock_delete.assert_called_once_with(fake_volume)
 
     @patch('vm_manager.vm_functions.admin_functionality.django_rq')
-    @patch('vm_manager.vm_functions.admin_functionality.archive_vm_worker')
+    @patch('vm_manager.vm_functions.admin_functionality.archive_volume_worker')
     def test_admin_archive_volume(self, mock_archive, mock_rq):
         mock_queue = Mock()
         mock_rq.get_queue.return_value = mock_queue

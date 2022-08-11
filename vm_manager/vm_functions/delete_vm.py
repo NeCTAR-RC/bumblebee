@@ -129,8 +129,8 @@ def _dispose_volume_once_instance_is_deleted(instance, archive, retries):
         if archive:
             logger.info(f"Instance {instance.id} successfully deleted. "
                         f"Proceeding to archive {instance.boot_volume} now!")
-            archive_vm_worker(instance.boot_volume,
-                              instance.boot_volume.requesting_feature)
+            archive_volume_worker(instance.boot_volume,
+                                  instance.boot_volume.requesting_feature)
         else:
             logger.info(f"Instance {instance.id} successfully deleted. "
                         f"Proceeding to delete {instance.boot_volume} now!")
@@ -175,17 +175,39 @@ def _dispose_volume_once_instance_is_deleted(instance, archive, retries):
 def delete_volume(volume):
     n = get_nectar()
     try:
-        delete_result = str(n.cinder.volumes.delete(volume.id))
-        logger.debug(f"Delete result is {delete_result}")
+        n.cinder.volumes.delete(volume.id)
     except cinderclient.exceptions.NotFound:
-        pass
-    # TODO ... should set to mark for deletion, then wait for delete
-    # to complete
+        logger.info(f"Cinder volume missing for {volume}.  Can't delete it.")
+    except cinderclient.exceptions.ClientException:
+        logger.exception(f"Cinder volume delete failed for {volume}")
+        return False
+
+    # TODO ... should we wait for delete to complete?
     volume.deleted = datetime.now(utc)
     volume.save()
+    return True
 
 
-def archive_vm_worker(volume, requesting_feature):
+def delete_backup(volume):
+    if not volume.backup_id:
+        logger.info(f"No backup to delete for {volume}")
+        return True
+    n = get_nectar()
+    try:
+        n.cinder.backups.delete(volume.backup_id)
+    except cinderclient.exceptions.NotFound:
+        logger.info(f"Cinder backup missing for {volume}.  Can't delete it.")
+    except cinderclient.exceptions.ClientException:
+        logger.exception(f"Cinder backup delete failed for {volume}")
+        return False
+
+    # TODO ... should we wait for the backup deletion to complete?
+    volume.backup_id = None
+    volume.save()
+    return True
+
+
+def archive_volume_worker(volume, requesting_feature):
     '''
     Archive a volume by creating a Cinder backup then deleting the Cinder
     volume.  Returns True if the backup request was accepted OR if the
@@ -267,7 +289,7 @@ def wait_for_backup(volume, backup_id, deadline):
                      f"unexpected state {details.status}")
 
 
-def archive_expired_vm(volume, requesting_feature, dry_run=False):
+def archive_expired_volume(volume, requesting_feature, dry_run=False):
     try:
         vm_status = VMStatus.objects.get_vm_status_by_volume(
             volume, requesting_feature)
@@ -275,7 +297,7 @@ def archive_expired_vm(volume, requesting_feature, dry_run=False):
             logger.info(f"Skipping archiving of {volume} "
                         f"in unexpected state: {vm_status}")
         elif not dry_run:
-            archive_vm_worker(volume, requesting_feature)
+            archive_volume_worker(volume, requesting_feature)
             return True
     except Exception:
         logger.exception(f"Cannot retrieve vm_status for {volume}")

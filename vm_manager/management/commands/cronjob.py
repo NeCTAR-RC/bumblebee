@@ -4,7 +4,7 @@ from django.core.management.base import BaseCommand
 
 from researcher_desktop.utils.utils import desktops_feature
 from vm_manager.utils.expirer import VolumeExpirer, InstanceExpirer, \
-    ResizeExpirer
+    ResizeExpirer, ArchiveExpirer
 
 logger = logging.getLogger(__name__)
 
@@ -19,6 +19,8 @@ class Command(BaseCommand):
                             help='Run the downsize job')
         parser.add_argument('--archive', action='store_true',
                             help='Run the archive job')
+        parser.add_argument('--delete-archives', action='store_true',
+                            help='Run the archive deletion job')
         parser.add_argument('--dry-run', action='store_true',
                             help='Only count the affected objects')
         parser.add_argument('--verbose', action='store_true',
@@ -36,6 +38,8 @@ class Command(BaseCommand):
             self.downsize_job()
         if options['archive']:
             self.archive_job()
+        if options['delete_archives']:
+            self.delete_archives_job()
 
     def downsize_job(self):
         feature = desktops_feature()
@@ -57,3 +61,10 @@ class Command(BaseCommand):
         expirer = VolumeExpirer(dry_run=self.dry_run, verbose=self.verbose)
         count = expirer.run(feature)
         logger.info(f"Archiving {count} volumes")
+
+    def delete_archives_job(self):
+        feature = desktops_feature()
+        logger.info(f"Starting archive deletions")
+        expirer = ArchiveExpirer(dry_run=self.dry_run, verbose=self.verbose)
+        count = expirer.run(feature)
+        logger.info(f"Removed {count} archived volumes")
