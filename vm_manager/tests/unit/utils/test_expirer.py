@@ -10,17 +10,19 @@ from researcher_desktop.utils.utils import get_desktop_type, desktops_feature
 
 from vm_manager.models import Expiration
 from vm_manager.utils.expirer import Expirer, \
-    EXP_INITIAL, EXP_FINAL_WARNING, EXP_EXPIRED
+    EXP_INITIAL, EXP_FIRST_WARNING, EXP_FINAL_WARNING, EXP_EXPIRING, \
+    EXP_EXPIRY_COMPLETED, EXP_EXPIRY_FAILED, EXP_EXPIRY_FAILED_RETRYABLE, \
+    EXP_NOTIFY, EXP_SUCCESS, EXP_FAIL, EXP_RETRY, EXP_SKIP, EXP_STARTED
 
 from researcher_workspace.tests.factories import UserFactory
 
 
 class DummyExpirer(Expirer):
-    def __init__(self, **kwargs):
+    def __init__(self, res=EXP_SUCCESS, **kwargs):
         super().__init__('email/test_expiry.html', **kwargs)
-
-    do_expire = Mock()
-    add_target_details = Mock()
+        self.do_expire = Mock()
+        self.do_expire.return_value = res
+        self.add_target_details = Mock()
 
     def run(self, resource, expiration, user):
         return self.do_stage(resource, expiration, user)
@@ -71,33 +73,163 @@ class ExpirerTests(TestCase):
         self.assertRegex(args[0], "One is 1")
         self.assertEqual({}, kwargs)
 
-    def test_do_expire(self):
+    def test_accumulate(self):
+        expirer = DummyExpirer()
+        expirer.accumulate("fee")
+        expirer.accumulate("fee")
+        expirer.accumulate("fi")
+        self.assertEqual({'fee': 2, 'fi': 1}, expirer.counts)
+
+    def test_do_expire_first_time(self):
+        '''
+        Tests simulating first attempt at expiring
+        '''
+
         now = datetime.now(utc)
+        target = object()
+
+        # When do_expire returns EXP_SUCCESS ...
         fake_expiration = Expiration(expires=now - timedelta(days=1),
                                      stage=EXP_FINAL_WARNING,
                                      stage_date=now - timedelta(days=2))
         fake_expiration.save()
-        expirer = DummyExpirer(dry_run=False,
+        expirer = DummyExpirer(final_warning=timedelta(days=1))
+        self.assertEqual(EXP_SUCCESS,
+                         expirer.do_stage(target, fake_expiration, self.user))
+        expiration = Expiration.objects.get(pk=fake_expiration.pk)
+        self.assertEqual(EXP_EXPIRY_COMPLETED, expiration.stage)
+        expirer.do_expire.assert_called_once_with(target)
+
+        # When do_expire returns EXP_FAIL ...
+        fake_expiration = Expiration(expires=now - timedelta(days=1),
+                                     stage=EXP_FINAL_WARNING,
+                                     stage_date=now - timedelta(days=2))
+        fake_expiration.save()
+        expirer = DummyExpirer(res=EXP_FAIL, final_warning=timedelta(days=1))
+        self.assertEqual(EXP_FAIL,
+                         expirer.do_stage(target, fake_expiration, self.user))
+        expiration = Expiration.objects.get(pk=fake_expiration.pk)
+        self.assertEqual(EXP_EXPIRY_FAILED, expiration.stage)
+        expirer.do_expire.assert_called_once_with(target)
+
+        # When do_expire returns EXP_STARTED ...
+        fake_expiration = Expiration(expires=now - timedelta(days=1),
+                                     stage=EXP_FINAL_WARNING,
+                                     stage_date=now - timedelta(days=2))
+        fake_expiration.save()
+        expirer = DummyExpirer(res=EXP_STARTED,
                                final_warning=timedelta(days=1))
-        expirer.notify = Mock()
-        expirer.do_expire = Mock()
+        self.assertEqual(EXP_STARTED,
+                         expirer.do_stage(target, fake_expiration, self.user))
+        expiration = Expiration.objects.get(pk=fake_expiration.pk)
+        self.assertEqual(EXP_EXPIRING, expiration.stage)
+        expirer.do_expire.assert_called_once_with(target)
 
-        target = object()
+        # When do_expire returns EXP_RETRY ...
+        fake_expiration = Expiration(expires=now - timedelta(days=1),
+                                     stage=EXP_FINAL_WARNING,
+                                     stage_date=now - timedelta(days=2))
+        fake_expiration.save()
+        expirer = DummyExpirer(res=EXP_RETRY,
+                               final_warning=timedelta(days=1))
+        self.assertEqual(EXP_RETRY,
+                         expirer.do_stage(target, fake_expiration, self.user))
+        expiration = Expiration.objects.get(pk=fake_expiration.pk)
+        self.assertEqual(EXP_EXPIRY_FAILED_RETRYABLE, expiration.stage)
+        expirer.do_expire.assert_called_once_with(target)
 
-        # When do_expire returns False, don't update the Expiration
-        expirer.do_expire.return_value = False
-        expirer.do_stage(target, fake_expiration, self.user)
+        # When do_expire returns EXP_SKIP ...
+        fake_expiration = Expiration(expires=now - timedelta(days=1),
+                                     stage=EXP_FINAL_WARNING,
+                                     stage_date=now - timedelta(days=2))
+        fake_expiration.save()
+        expirer = DummyExpirer(res=EXP_SKIP,
+                               final_warning=timedelta(days=1))
+        self.assertEqual(EXP_SKIP,
+                         expirer.do_stage(target, fake_expiration, self.user))
         expiration = Expiration.objects.get(pk=fake_expiration.pk)
         self.assertEqual(EXP_FINAL_WARNING, expiration.stage)
         expirer.do_expire.assert_called_once_with(target)
 
-        # When do_expire returns True, update the Expiration
-        expirer.do_expire.reset_mock()
-        expirer.do_expire.return_value = True
-        expirer.do_stage(target, fake_expiration, self.user)
+    def test_do_expire_retry(self):
+        '''
+        Test simulating a retry
+        '''
+
+        now = datetime.now(utc)
+        target = object()
+
+        fake_expiration = Expiration(expires=now - timedelta(days=1),
+                                     stage=EXP_EXPIRY_FAILED_RETRYABLE,
+                                     stage_date=now - timedelta(days=2))
+        fake_expiration.save()
+        expirer = DummyExpirer(final_warning=timedelta(days=1))
+        self.assertEqual(EXP_SUCCESS,
+                         expirer.do_stage(target, fake_expiration, self.user))
         expiration = Expiration.objects.get(pk=fake_expiration.pk)
-        self.assertEqual(EXP_EXPIRED, expiration.stage)
+        self.assertEqual(EXP_EXPIRY_COMPLETED, expiration.stage)
         expirer.do_expire.assert_called_once_with(target)
+
+    @patch("vm_manager.utils.expirer.logger")
+    def test_do_expire_long_running(self, mock_logger):
+        '''
+        Test simulating a long running expiry action
+        '''
+
+        now = datetime.now(utc)
+        target = object()
+
+        fake_expiration = Expiration(expires=now - timedelta(days=1),
+                                     stage=EXP_EXPIRING,
+                                     stage_date=now - timedelta(days=2))
+        fake_expiration.save()
+        expirer = DummyExpirer(final_warning=timedelta(days=1))
+        self.assertEqual(EXP_SKIP,
+                         expirer.do_stage(target, fake_expiration, self.user))
+        expiration = Expiration.objects.get(pk=fake_expiration.pk)
+        self.assertEqual(EXP_EXPIRING, expiration.stage)
+        expirer.do_expire.assert_not_called()
+        mock_logger.warning.assert_called_once_with(
+            f"Expiration already running for {fake_expiration}: skip")
+
+    @patch("vm_manager.utils.expirer.logger")
+    def test_do_expire_wrong_state(self, mock_logger):
+        '''
+        Test calls to do_stage in the wrong state
+        '''
+
+        now = datetime.now(utc)
+        target = object()
+
+        fake_expiration = Expiration(expires=now - timedelta(days=1),
+                                     stage=EXP_EXPIRY_COMPLETED,
+                                     stage_date=now - timedelta(days=2))
+        fake_expiration.save()
+        expirer = DummyExpirer(final_warning=timedelta(days=1))
+        self.assertEqual(EXP_SKIP,
+                         expirer.do_stage(target, fake_expiration, self.user))
+        expiration = Expiration.objects.get(pk=fake_expiration.pk)
+        self.assertEqual(EXP_EXPIRY_COMPLETED, expiration.stage)
+        expirer.do_expire.assert_not_called()
+        mock_logger.error.assert_called_once_with(
+            "Expiration stage wrong: "
+            f"{expirer}, {target}, {fake_expiration}, {self.user}: skip")
+
+        mock_logger.error.reset_mock()
+
+        fake_expiration = Expiration(expires=now - timedelta(days=1),
+                                     stage=EXP_EXPIRY_FAILED,
+                                     stage_date=now - timedelta(days=2))
+        fake_expiration.save()
+        expirer = DummyExpirer(final_warning=timedelta(days=1))
+        self.assertEqual(EXP_SKIP,
+                         expirer.do_stage(target, fake_expiration, self.user))
+        expiration = Expiration.objects.get(pk=fake_expiration.pk)
+        self.assertEqual(EXP_EXPIRY_FAILED, expiration.stage)
+        expirer.do_expire.assert_not_called()
+        mock_logger.error.assert_called_once_with(
+            "Expiration stage wrong: "
+            f"{expirer}, {target}, {fake_expiration}, {self.user}: skip")
 
     def test_stages_1(self):
         '''
@@ -118,16 +250,21 @@ class ExpirerTests(TestCase):
         target = object()
 
         stage = EXP_INITIAL
-        for i in range(0, 8):
+        # The i values are simulated days into the future
+        for i in range(0, 9):
             old_stage_date = expiration.stage_date
             # Time warping the expirer.
             expirer.now = now + timedelta(days=i)
 
-            expirer.do_stage(target, expiration, self.user)
+            res = expirer.do_stage(target, expiration, self.user)
+            self.assertEqual(EXP_SUCCESS if i == 7
+                             else EXP_NOTIFY if i == 6
+                             else EXP_SKIP,
+                             res)
             if i in (6, 7):
                 # The 'first warning' stage should be skipped.
                 next_stage = (EXP_FINAL_WARNING if stage == EXP_INITIAL
-                              else EXP_EXPIRED)
+                              else EXP_EXPIRY_COMPLETED)
                 self.assertEqual(next_stage, expiration.stage)
                 stage = next_stage
                 if i == 7:
@@ -177,10 +314,18 @@ class ExpirerTests(TestCase):
             # Time warping the expirer
             expirer.now = now + timedelta(days=i)
 
-            expirer.do_stage(target, expiration, self.user)
+            res = expirer.do_stage(target, expiration, self.user)
+            self.assertEqual(EXP_SUCCESS if i == 14
+                             else EXP_NOTIFY if i in (7, 13)
+                             else EXP_SKIP,
+                             res)
             if i in (7, 13, 14):
-                self.assertEqual(stage + 1, expiration.stage)
-                stage += 1
+                next_stage = (
+                    EXP_FIRST_WARNING if stage == EXP_INITIAL
+                    else EXP_FINAL_WARNING if stage == EXP_FIRST_WARNING
+                    else EXP_EXPIRY_COMPLETED)
+                self.assertEqual(next_stage, expiration.stage)
+                stage = next_stage
                 if i == 14:
                     expirer.notify.assert_not_called()
                     expirer.do_expire.assert_called_once_with(target)
@@ -190,7 +335,8 @@ class ExpirerTests(TestCase):
                     _, args, kwargs = expirer.notify.mock_calls[0]
                     self.assertEqual(2, len(args))
                     self.assertEqual(self.user, args[0])
-                    self.assertEqual('first' if stage == 1 else 'final',
+                    self.assertEqual('first' if stage == EXP_FIRST_WARNING
+                                     else 'final',
                                      args[1]['warning'])
                     self.assertEqual({}, kwargs)
                     expirer.notify.reset_mock()

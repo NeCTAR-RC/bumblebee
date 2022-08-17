@@ -29,7 +29,10 @@ logger = logging.getLogger(__name__)
 EXP_INITIAL = 0
 EXP_FIRST_WARNING = 1
 EXP_FINAL_WARNING = 2
-EXP_EXPIRED = 3
+EXP_EXPIRING = 3
+EXP_EXPIRY_COMPLETED = 4
+EXP_EXPIRY_FAILED = 5
+EXP_EXPIRY_FAILED_RETRYABLE = 6
 
 
 class Expiration(models.Model):

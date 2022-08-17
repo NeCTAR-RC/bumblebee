@@ -49,16 +49,23 @@ def shelve_vm_worker(instance):
                 vm_status.save()
             return False
     except novaclient.exceptions.NotFound:
-        logger.error(f"Trying to shelve an instance that is missing "
+        logger.error("Trying to shelve an instance that is missing "
                      f"from Nova - {instance}")
         instance.error("Nova instance is missing")
         if vm_status:
             vm_status.status = VM_MISSING
             vm_status.save()
         return True
+    except novaclient.exceptions.ClientException:
+        logger.exception("Instance get failed - {instance}")
+        return False
 
     if status == ACTIVE:
-        n.nova.servers.stop(instance.id)
+        try:
+            n.nova.servers.stop(instance.id)
+        except novaclient.exceptions.ClientException:
+            logger.exception("Instance stop failed - {instance}")
+            return False
     else:
         logger.info(f"Instance {instance} already shutdown in Nova.")
 
@@ -77,6 +84,8 @@ def shelve_vm_worker(instance):
         INSTANCE_CHECK_SHUTOFF_RETRY_COUNT,
         _confirm_instance_deleted,
         (instance, INSTANCE_DELETION_RETRY_COUNT))
+
+    return True
 
 
 def _confirm_instance_deleted(instance, retries):

@@ -8,7 +8,8 @@ from django.utils.timezone import utc
 from researcher_workspace.utils import send_notification, format_notification
 from researcher_desktop.models import DesktopType
 from vm_manager.models import Instance, Volume, Resize, \
-    EXP_INITIAL, EXP_FIRST_WARNING, EXP_FINAL_WARNING, EXP_EXPIRED
+    EXP_INITIAL, EXP_FIRST_WARNING, EXP_FINAL_WARNING, EXP_EXPIRING, \
+    EXP_EXPIRY_COMPLETED, EXP_EXPIRY_FAILED, EXP_EXPIRY_FAILED_RETRYABLE
 from vm_manager.vm_functions.delete_vm import \
     archive_expired_volume, delete_backup
 from vm_manager.vm_functions.resize_vm import downsize_expired_vm
@@ -16,18 +17,55 @@ from vm_manager.vm_functions.shelve_vm import shelve_expired_vm
 
 logger = logging.getLogger(__name__)
 
+#
+# These are the possible responses from do_stage or from a
+# do_expire callback.
+#
+
+# Action completed
+EXP_SUCCESS = 'succeeded'
+
+# User notified
+EXP_NOTIFY = 'notified'
+
+# Action started but not completed.  Continues in the background
+EXP_STARTED = 'started'
+
+# Action failed - retryable
+EXP_RETRY = 'failed: retryable'
+
+# Action failed - non-retryable
+EXP_FAIL = 'failed'
+
+# Action skipped; e.g. because we are not ready to expire it yet, or
+# the expiry is already running.
+EXP_SKIP = 'skipped'
+
 
 def days(days):
     return timedelta(days=days) if days and days > 0 else None
 
 
-# TODO - The expirers currently don't wait for the actions initiated by the
-# do_expire callbacks to complete.  So if the action ultimately fails, it
-# is not retried.  This can be worked around by manually resetting the
-# resource's Expiration.stage to EXP_FINAL_WARNING ... and the expirer
-# will try again next time.
+class BaseExpirer(object):
+    '''Temporary base class for regular expirers and the "special"
+    one for archive/backup deletion.  The latter will be rewritten
+    later to use an Expiration object.
+    '''
 
-class Expirer(object):
+    def __init__(self, dry_run=False, verbose=False):
+        self.dry_run = dry_run
+        self.verbose = verbose
+        self.now = datetime.now(utc)
+        self.counts = {}
+
+    def accumulate(self, outcome):
+        if outcome in self.counts:
+            self.counts[outcome] = self.counts[outcome] + 1
+        else:
+            self.counts[outcome] = 1
+
+
+class Expirer(BaseExpirer):
     '''An Expirer is designed to be called periodically to send expiry
     warnings, and finally to perform the expiration action.  This class
     is implements a 4-stage state machine:
@@ -55,16 +93,14 @@ class Expirer(object):
     of a resource.
     '''
 
-    def __init__(self, template, dry_run=False, verbose=False,
-                 first_warning=None, final_warning=None):
+    def __init__(self, template, first_warning=None, final_warning=None,
+                 **kwargs):
+        super().__init__(**kwargs)
         self.template = template
-        self.dry_run = dry_run
-        self.verbose = verbose
         if first_warning and not final_warning:
             raise Exception("Config error: first warning w/o final warning")
         self.first_warning = first_warning
         self.final_warning = final_warning
-        self.now = datetime.now(utc)
 
     def notify(self, user, context):
         if not self.dry_run:
@@ -73,14 +109,23 @@ class Expirer(object):
             text = format_notification(user, self.template, context)
             print(f"email: {user.email}\nsubject: {text}")
 
-    def do_stage(self, target, expiration, user) -> int:
-        # TODO - rather than returning an 'int' (zero or one), return
-        # something that distinguishes the action performed in a way
-        # that allows the called to provide more meaningful statistics.
+    def do_stage(self, target, expiration, user) -> str:
+        """Returns one of EXP_SUCCESS, EXP_STARTED, EXP_RETRY, EXP_FAIL
+        or EXP_SKIP to indicate the outcome.
+        """
 
         logger.debug(f"do_stage for {self}, {target}, {expiration}, {user}")
         stage = None
-        if expiration.stage == EXP_INITIAL:
+        if expiration.stage == EXP_EXPIRING:
+            logger.warning(
+                f"Expiration already running for {expiration}: skip")
+            return EXP_SKIP
+        elif expiration.stage in (EXP_EXPIRY_COMPLETED, EXP_EXPIRY_FAILED):
+            logger.error(
+                "Expiration stage wrong: "
+                f"{self}, {target}, {expiration}, {user}: skip")
+            return EXP_SKIP
+        elif expiration.stage == EXP_INITIAL:
             if self.first_warning:
                 if expiration.expires - self.first_warning <= self.now:
                     stage = EXP_FIRST_WARNING
@@ -91,7 +136,7 @@ class Expirer(object):
                     remaining = self.final_warning
             else:
                 # No warnings ...
-                stage = EXP_EXPIRED
+                stage = EXP_EXPIRING
                 remaining = timedelta(seconds=0)
         elif expiration.stage == EXP_FIRST_WARNING:
             if expiration.expires - self.final_warning <= self.now:
@@ -99,9 +144,15 @@ class Expirer(object):
                 remaining = self.final_warning
         elif expiration.stage == EXP_FINAL_WARNING:
             if expiration.expires <= self.now:
-                stage = EXP_EXPIRED
+                stage = EXP_EXPIRING
                 remaining = timedelta(seconds=0)
-        logger.debug(f"Stage is {stage}")
+        else:
+            logger.warning(f"Retrying expiry for {target}")
+            stage = EXP_EXPIRING
+            remaining = timedelta(seconds=0)
+
+        logger.debug(f"Stage {expiration.stage} -> {stage}")
+        res = None
         if stage:
             if stage in [EXP_FIRST_WARNING, EXP_FINAL_WARNING]:
                 context = {
@@ -113,15 +164,26 @@ class Expirer(object):
                 }
                 self.add_target_details(target, context)
                 self.notify(user, context)
-            elif stage == EXP_EXPIRED:
+                res = EXP_NOTIFY
+            elif stage == EXP_EXPIRING:
                 if not self.dry_run:
-                    if not self.do_expire(target):
+                    res = self.do_expire(target)
+                    if res in (EXP_FAIL, EXP_RETRY):
                         logger.error(f"Expiration action failed for {target}")
-                        # Don't update the expiration record!
-                        return 0
+                    if res == EXP_SUCCESS:
+                        stage = EXP_EXPIRY_COMPLETED
+                    elif res == EXP_FAIL:
+                        stage = EXP_EXPIRY_FAILED
+                    elif res == EXP_RETRY:
+                        stage = EXP_EXPIRY_FAILED_RETRYABLE
+                    elif res == EXP_STARTED:
+                        stage = EXP_EXPIRING
                 else:
-                    logger.error(f"Would have expired {target}")
-            if not self.dry_run:
+                    # Pretend it would have worked
+                    res = EXP_SUCCESS
+                    logger.info(f"Would have expired {target}")
+            if not (self.dry_run or res == EXP_SKIP):
+                logger.debug(f"Stage persisted as {stage}")
                 expiration.stage = stage
                 expiration.stage_date = self.now
                 expiration.expires = self.now + remaining
@@ -129,9 +191,8 @@ class Expirer(object):
             else:
                 logger.debug(f"Would have updated expiration for {target} "
                              f"to stage {stage}, stage_date {self.now}")
-            return 1
-        else:
-            return 0
+        logger.debug(f"do_stage returning {res}")
+        return res or EXP_SKIP
 
 
 class VolumeExpirer(Expirer):
@@ -145,16 +206,18 @@ class VolumeExpirer(Expirer):
                          **kwargs)
 
     def run(self, feature):
-        count = 0
         for v in Volume.objects.exclude(expiration=None) \
                                .filter(deleted=None,
                                        marked_for_deletion=None) \
                                .prefetch_related('expiration', 'user'):
-            count += self.do_stage(v, v.expiration, v.user)
-        return count
+            self.accumulate(self.do_stage(v, v.expiration, v.user))
+        return self.counts
 
     def do_expire(self, volume):
-        return archive_expired_volume(volume, volume.requesting_feature)
+        if archive_expired_volume(volume, volume.requesting_feature):
+            return EXP_SUCCESS
+        else:
+            return EXP_FAIL
 
     def add_target_details(self, volume, context):
         context['desktop_type'] = DesktopType.objects.get_desktop_type(
@@ -162,32 +225,32 @@ class VolumeExpirer(Expirer):
         context['volume'] = volume
 
 
-class ArchiveExpirer():
+class ArchiveExpirer(BaseExpirer):
     '''This expirer deletes archives (backups) for archived volumes.
     Note that this doesn't need to do notification and staging, and
     doesn't have an associated Expiration record.
     '''
 
-    def __init__(self, dry_run=False, verbose=False,
-                 backup_lifetime=days(settings.BACKUP_LIFETIME)):
-        self.dry_run = dry_run
-        self.verbose = verbose
-        self.now = datetime.now(utc)
+    def __init__(self, backup_lifetime=days(settings.BACKUP_LIFETIME),
+                 **kwargs):
+        super().__init__(**kwargs)
         self.backup_lifetime = backup_lifetime
 
     def run(self, feature):
-        count = 0
         for v in Volume.objects.exclude(
                 Q(archived_at=None) | Q(backup_id=None)):
             if v.archived_at + self.backup_lifetime < self.now:
                 if self.dry_run:
                     logger.error(f"Would have deleted backup for {v}")
-                    count += 1
+                    self.accumulate(EXP_SUCCESS)
                 elif delete_backup(v):
-                    count += 1
+                    self.accumulate(EXP_SUCCESS)
                 else:
                     logger.error(f"Backup deletion failed for {v}")
-        return count
+                    self.accumulate(EXP_SUCCESS)
+            else:
+                self.accumulate(EXP_SKIP)
+        return self.counts
 
 
 class InstanceExpirer(Expirer):
@@ -201,17 +264,19 @@ class InstanceExpirer(Expirer):
                          **kwargs)
 
     def run(self, feature):
-        count = 0
         for i in Instance.objects.exclude(expiration=None) \
                                  .filter(deleted=None,
                                          marked_for_deletion=None) \
                                  .prefetch_related('expiration', 'user'):
-            count += self.do_stage(i, i.expiration, i.user)
-        return count
+            self.accumulate(self.do_stage(i, i.expiration, i.user))
+        return self.counts
 
     def do_expire(self, instance):
-        return shelve_expired_vm(instance,
-                                 instance.boot_volume.requesting_feature)
+        if shelve_expired_vm(instance,
+                             instance.boot_volume.requesting_feature):
+            return EXP_SUCCESS
+        else:
+            return EXP_FAIL
 
     def add_target_details(self, instance, context):
         context['desktop_type'] = DesktopType.objects.get_desktop_type(
@@ -231,19 +296,21 @@ class ResizeExpirer(Expirer):
                          **kwargs)
 
     def run(self, feature):
-        count = 0
         for r in Resize.objects.exclude(expiration=None) \
                                .filter(reverted=None,
                                        instance__marked_for_deletion=None,
                                        instance__deleted=None) \
                                .prefetch_related('expiration', 'instance'):
-            count += self.do_stage(r, r.expiration, r.instance.user)
-        return count
+            self.accumulate(self.do_stage(r, r.expiration, r.instance.user))
+        return self.counts
 
     def do_expire(self, resize):
-        return downsize_expired_vm(
-            resize,
-            resize.instance.boot_volume.requesting_feature)
+        if downsize_expired_vm(
+                resize,
+                resize.instance.boot_volume.requesting_feature):
+            return EXP_SUCCESS
+        else:
+            return EXP_FAIL
 
     def add_target_details(self, resize, context):
         context['desktop_type'] = DesktopType.objects.get_desktop_type(

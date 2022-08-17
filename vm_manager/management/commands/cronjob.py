@@ -45,26 +45,26 @@ class Command(BaseCommand):
         feature = desktops_feature()
         logger.info("Starting boost expiry")
         expirer = ResizeExpirer(dry_run=self.dry_run, verbose=self.verbose)
-        count = expirer.run(feature)
-        logger.info(f"Downsizing {count} instances")
+        counts = expirer.run(feature)
+        logger.info(f"Downsizing counts: {counts}")
 
     def shelve_job(self):
         feature = desktops_feature()
         logger.info("Starting instance expiry")
         expirer = InstanceExpirer(dry_run=self.dry_run, verbose=self.verbose)
-        count = expirer.run(feature)
-        logger.info(f"Shelving {count} instances")
+        counts = expirer.run(feature)
+        logger.info(f"Shelving counts: {counts}")
 
     def archive_job(self):
         feature = desktops_feature()
         logger.info(f"Starting volume archiving")
         expirer = VolumeExpirer(dry_run=self.dry_run, verbose=self.verbose)
-        count = expirer.run(feature)
-        logger.info(f"Archiving {count} volumes")
+        counts = expirer.run(feature)
+        logger.info(f"Archiving counts: {counts}")
 
     def delete_archives_job(self):
         feature = desktops_feature()
         logger.info(f"Starting archive deletions")
         expirer = ArchiveExpirer(dry_run=self.dry_run, verbose=self.verbose)
-        count = expirer.run(feature)
-        logger.info(f"Removed {count} archived volumes")
+        counts = expirer.run(feature)
+        logger.info(f"Archive deletion counts: {counts}")
