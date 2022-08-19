@@ -8,10 +8,13 @@ import novaclient
 from vm_manager.constants import \
     RESIZE, VERIFY_RESIZE, ACTIVE, \
     RESIZE_CONFIRM_WAIT_SECONDS, FORCED_DOWNSIZE_WAIT_SECONDS, \
-    VM_SUPERSIZED, VM_RESIZING, VM_OKAY
+    VM_SUPERSIZED, VM_RESIZING, VM_OKAY, \
+    WF_SUCCESS, WF_FAIL, WF_RETRY, WF_STARTED, WF_CONTINUE
 from vm_manager.utils.utils import after_time, get_nectar
 from vm_manager.utils.expiry import BoostExpiryPolicy
-from vm_manager.models import VMStatus, Instance, Resize
+from vm_manager.models import VMStatus, Instance, Resize, \
+    EXP_EXPIRING, EXP_EXPIRY_COMPLETED, EXP_EXPIRY_FAILED, \
+    EXP_EXPIRY_FAILED_RETRYABLE
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +26,7 @@ def supersize_vm_worker(instance, desktop_type) -> str:
     supersize_result = _resize_vm(instance,
                                   desktop_type.big_flavor.id,
                                   VM_SUPERSIZED, desktop_type.feature)
-    if supersize_result:
+    if supersize_result in (WF_SUCCESS, WF_STARTED):
         now = datetime.now(utc)
         resize = Resize(instance=instance, requested=now)
         resize.set_expires(BoostExpiryPolicy().initial_expiry(now=now))
@@ -37,10 +40,11 @@ def downsize_vm_worker(instance, desktop_type) -> str:
     downsize_result = _resize_vm(instance,
                                  desktop_type.default_flavor.id,
                                  VM_OKAY, desktop_type.feature)
-    if downsize_result:
+    if downsize_result in (WF_SUCCESS, WF_STARTED):
         resize = Resize.objects.get_latest_resize(instance.id)
         if not resize:
             logger.error("Missing resize record for instance {instance}")
+            return WF_FAIL
         else:
             resize.reverted = datetime.now(utc)
             resize.save()
@@ -48,6 +52,7 @@ def downsize_vm_worker(instance, desktop_type) -> str:
 
 
 # TODO - Analyse for possible race conditions with supersize/downsize
+# This would be with a expiry downsize ...
 def extend_boost(user, vm_id, requesting_feature) -> str:
     instance = Instance.objects.get_instance_by_untrusted_vm_id(
         vm_id, user, requesting_feature)
@@ -61,7 +66,7 @@ def extend_boost(user, vm_id, requesting_feature) -> str:
         return message
     resize.set_expires(BoostExpiryPolicy().new_expiry(resize))
     resize.save()
-    return str(resize)
+    return WF_SUCCESS
 
 
 def _resize_vm(instance, flavor, target_status, requesting_feature):
@@ -72,13 +77,13 @@ def _resize_vm(instance, flavor, target_status, requesting_feature):
         logger.error(f"Trying to resize {instance} but it is not "
                      "found in Nova.")
         instance.error("Nova instance is missing")
-        return False
+        return WF_FAIL
 
     if server.status != ACTIVE:
         logger.error(f"Nova instance for {instance} in unexpected state "
                      f"{server.status}.  Needs manual cleanup.")
         instance.error(f"Nova instance state is {server.status}")
-        return False
+        return WF_FAIL
 
     current_flavor = server.flavor['id']
     if current_flavor == str(flavor):
@@ -88,7 +93,7 @@ def _resize_vm(instance, flavor, target_status, requesting_feature):
             instance, requesting_feature)
         vm_status.status = target_status
         vm_status.save()
-        return False
+        return WF_SUCCESS
 
     resize_result = n.nova.servers.resize(instance.id, flavor)
     vm_status = VMStatus.objects.get_vm_status_by_instance(
@@ -102,7 +107,7 @@ def _resize_vm(instance, flavor, target_status, requesting_feature):
                          instance, flavor, target_status,
                          after_time(RESIZE_CONFIRM_WAIT_SECONDS),
                          requesting_feature)
-    return True
+    return WF_STARTED
 
 
 def _wait_to_confirm_resize(instance, flavor, target_status,
@@ -115,14 +120,22 @@ def _wait_to_confirm_resize(instance, flavor, target_status,
     status = instance.get_status()
     if status == VERIFY_RESIZE:
         logger.info(f"Confirming resize of {instance}")
-        n.nova.servers.confirm_resize(instance.id)
+        try:
+            n.nova.servers.confirm_resize(instance.id)
+        except novaclient.exception.ClientException:
+            logger.exception(f"Instance resize confirm failed for {instance}")
+            return end_resize(instance, target_status, WF_FAIL)
+
+        if target_status == VM_OKAY:
+            resize = Resize.objects.get_latest_resize(instance.id)
+            resize.reverted = datetime.now(utc)
+            resize.save()
         vm_status.status_progress = 66
         vm_status.status_message = "Resize completed; waiting for reboot"
         vm_status.save()
         logger.debug(f"new vm_status: {vm_status}")
-
         # The final step is done in response to a phone_home request
-        return str(vm_status)
+        return WF_CONTINUE
 
     elif status == RESIZE:
         logger.info(f"Waiting for resize of {instance}")
@@ -132,7 +145,7 @@ def _wait_to_confirm_resize(instance, flavor, target_status,
                                  _wait_to_confirm_resize,
                                  instance, flavor, target_status, deadline,
                                  requesting_feature)
-            return str(vm_status)
+            return WF_CONTINUE
         else:
             logger.error("Resize has taken too long")
 
@@ -140,10 +153,9 @@ def _wait_to_confirm_resize(instance, flavor, target_status,
         try:
             resized_instance = n.nova.servers.get(instance.id)
             instance_flavor = resized_instance.flavor['id']
-        except Exception as e:
-            logger.error(f"Something went wrong with the instance get call "
-                         f"for {instance}: it raised {e}")
-            return
+        except novaclient.exceptions.ClientException:
+            logger.exception(f"Instance get failed for {instance}")
+            return end_resize(instance, target_status, WF_FAIL)
 
         if instance_flavor != str(flavor):
             message = (
@@ -153,26 +165,44 @@ def _wait_to_confirm_resize(instance, flavor, target_status,
                 f"Expected Flavor: {flavor}")
             logger.error(message)
             vm_status.error(message)
-            vm_status.save()
             logger.debug(f"new vm_status: {vm_status}")
-            return message
+            return end_resize(instance, target_status, WF_FAIL)
 
-        message = f"Resize of {instance} was confirmed automatically"
-        logger.info(message)
+        logger.info(f"Resize of {instance} was confirmed automatically")
+        if target_status == VM_OKAY:
+            resize = Resize.objects.get_latest_resize(instance.id)
+            resize.reverted = datetime.now(utc)
+            resize.save()
         vm_status.status_progress = 66
         vm_status.status_message = "Resize completed; waiting for reboot"
         vm_status.save()
         logger.debug(f"new vm_status: {vm_status}")
         # The final step is done in response to a phone_home request
-        return message
+        return WF_CONTINUE
 
     message = (
         f"Instance ({instance}) resize failed instance in state: {status}")
     logger.error(message)
     vm_status.error(message)
-    vm_status.save()
     logger.debug(f"new vm_status: {vm_status}")
-    return message
+    return end_resize(instance, target_status, WF_FAIL)
+
+
+def end_resize(instance, target_status, wf_status):
+    if target_status == VM_OKAY:
+        # This is a downsize so the Resize should exist ...
+        resize = Resize.objects.get_latest_resize(instance.id)
+        assert resize is not None
+        if resize.expiration and resize.expiration.stage == EXP_EXPIRING:
+            if wf_status == WF_FAIL:
+                resize.expiration.stage = EXP_EXPIRY_FAILED
+            elif wf_status == WF_RETRY:
+                resize.expiration.stage = EXP_EXPIRY_FAILED_RETRYABLE
+            elif wf_status == WF_SUCCESS:
+                resize.expiration.stage = EXP_EXPIRY_COMPLETED
+            resize.expiration.stage_date = datetime.now(utc)
+            resize.expiration.save()
+    return wf_status
 
 
 def downsize_expired_vm(resize, requesting_feature):
@@ -183,22 +213,28 @@ def downsize_expired_vm(resize, requesting_feature):
         # the downsizing here.
         logger.info(f"Skipping downsize of instance in wrong state: "
                     f"{vm_status}")
-        return True
+        return WF_SUCCESS
     else:
         result = _resize_vm(resize.instance,
                             resize.instance.boot_volume.flavor,
                             VM_OKAY, requesting_feature)
-        if result:
-            if vm_status:
-                # Simulate vm_status behavior of a normal downsize (with a
-                # longer timeout) in case user does a browser refresh while
-                # auto-downsize is happening.
-                vm_status.wait_time = after_time(FORCED_DOWNSIZE_WAIT_SECONDS)
-                vm_status.status_progress = 0
-                vm_status.status_message = "Forced downsize starting"
-                vm_status.status = VM_RESIZING
-                vm_status.save()
-
+        if result in (WF_SUCCESS, WF_STARTED):
             resize.reverted = datetime.now(utc)
             resize.save()
+            if vm_status:
+                # Refetch because _resize_vm may have updated it
+                vm_status = VMStatus.objects.get(pk=vm_status.pk)
+                if vm_status.status == VM_SUPERSIZED:
+                    if result == WF_STARTED:
+                        # Simulate vm_status behavior of a normal downsize
+                        # (with # longer timeout) in case user does a
+                        # browser refresh while auto-downsize is happening.
+                        vm_status.wait_time = after_time(
+                            FORCED_DOWNSIZE_WAIT_SECONDS)
+                        vm_status.status_progress = 0
+                        vm_status.status_message = "Forced downsize starting"
+                        vm_status.status = VM_RESIZING
+                    else:
+                        vm_status.status = VM_OKAY
+                    vm_status.save()
         return result

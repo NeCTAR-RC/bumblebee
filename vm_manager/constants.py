@@ -77,6 +77,23 @@ VOLUME_CREATION_TIMEOUT = 120
 INSTANCE_LAUNCH_TIMEOUT = 120
 
 
+# Workflow outcomes.  These are returned by function calls that
+# (may) start workflows involving rqworker.  We will progressively
+# switch to these (replacing True / False or other responses) starting
+# with the workflows performed by the expirers.
+#
+# Workflow completed
+WF_SUCCESS = 'succeeded'
+# Workflow started but not completed.  Continues in the background
+WF_STARTED = 'started'
+# Workflow continues
+WF_CONTINUE = 'continue'
+# Workflow failed - retryable
+WF_RETRY = 'failed_retryable'
+# Workflow failed - non-retryable
+WF_FAIL = 'failed'
+
+
 # Button names
 
 REBOOT_BUTTON = "REBOOT_BUTTON"

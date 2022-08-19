@@ -7,6 +7,7 @@ from django.utils.timezone import utc
 
 from researcher_workspace.utils import send_notification, format_notification
 from researcher_desktop.models import DesktopType
+from vm_manager.constants import WF_SUCCESS, WF_STARTED, WF_RETRY, WF_FAIL
 from vm_manager.models import Instance, Volume, Resize, \
     EXP_INITIAL, EXP_FIRST_WARNING, EXP_FINAL_WARNING, EXP_EXPIRING, \
     EXP_EXPIRY_COMPLETED, EXP_EXPIRY_FAILED, EXP_EXPIRY_FAILED_RETRYABLE
@@ -23,19 +24,19 @@ logger = logging.getLogger(__name__)
 #
 
 # Action completed
-EXP_SUCCESS = 'succeeded'
+EXP_SUCCESS = WF_SUCCESS
 
 # User notified
 EXP_NOTIFY = 'notified'
 
 # Action started but not completed.  Continues in the background
-EXP_STARTED = 'started'
+EXP_STARTED = WF_STARTED
 
 # Action failed - retryable
-EXP_RETRY = 'failed: retryable'
+EXP_RETRY = WF_RETRY
 
 # Action failed - non-retryable
-EXP_FAIL = 'failed'
+EXP_FAIL = WF_FAIL
 
 # Action skipped; e.g. because we are not ready to expire it yet, or
 # the expiry is already running.
@@ -305,12 +306,9 @@ class ResizeExpirer(Expirer):
         return self.counts
 
     def do_expire(self, resize):
-        if downsize_expired_vm(
-                resize,
-                resize.instance.boot_volume.requesting_feature):
-            return EXP_SUCCESS
-        else:
-            return EXP_FAIL
+        return downsize_expired_vm(
+            resize,
+            resize.instance.boot_volume.requesting_feature)
 
     def add_target_details(self, resize, context):
         context['desktop_type'] = DesktopType.objects.get_desktop_type(

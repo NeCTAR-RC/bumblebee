@@ -1,8 +1,6 @@
 from datetime import datetime
 import logging
 from math import ceil
-
-import django_rq
 from operator import itemgetter
 
 from django.contrib.auth.decorators import login_required
@@ -14,6 +12,8 @@ from django.template import loader
 from django.utils.html import format_html
 from django.utils.timezone import utc
 from django.views.decorators.csrf import csrf_exempt
+import django_rq
+import novaclient
 
 from researcher_desktop.models import AvailabilityZone
 from researcher_desktop.utils.utils import get_desktop_type
@@ -24,11 +24,12 @@ from vm_manager.constants import VM_ERROR, VM_OKAY, VM_WAITING, \
     CLOUD_INIT_FINISHED, CLOUD_INIT_STARTED, REBOOT_WAIT_SECONDS, \
     RESIZE_WAIT_SECONDS, SHELVE_WAIT_SECONDS, \
     REBOOT_SOFT, REBOOT_HARD, SCRIPT_OKAY, \
-    BOOST_BUTTON, EXTEND_BUTTON, EXTEND_BOOST_BUTTON
-from vm_manager.models import VMStatus, Instance, Resize, Volume
+    BOOST_BUTTON, EXTEND_BUTTON, EXTEND_BOOST_BUTTON, \
+    WF_SUCCESS, WF_RETRY
+from vm_manager.models import VMStatus, Instance, Resize, Volume, EXP_EXPIRING
 from vm_manager.utils.expiry import BoostExpiryPolicy, InstanceExpiryPolicy, \
     VolumeExpiryPolicy
-from vm_manager.utils.utils import after_time, generate_hostname
+from vm_manager.utils.utils import after_time, generate_hostname, get_nectar
 
 # These are needed, as they're consumed by researcher_workspace/views.py
 from vm_manager.vm_functions.admin_functionality import \
@@ -41,7 +42,7 @@ from vm_manager.vm_functions.other_vm_functions import reboot_vm_worker
 from vm_manager.vm_functions.shelve_vm import shelve_vm_worker, \
     unshelve_vm_worker
 from vm_manager.vm_functions.resize_vm import supersize_vm_worker, \
-    downsize_vm_worker, extend_boost
+    downsize_vm_worker, extend_boost, end_resize
 
 logger = logging.getLogger(__name__)
 
@@ -345,6 +346,12 @@ def get_vm_state(vm_status, user, desktop_type):
             return VM_WAITING, time, None
         else:  # Time up waiting
             if vm_status.instance:
+                # If this was an expiry-triggered downsize, mark it as failed
+                resize = Resize.objects.get_latest_resize(instance.id)
+                if resize and resize.expiration \
+                   and resize.expiration.stage == EXP_EXPIRING:
+                    end_resize(instance, VM_OKAY, WF_RETRY)
+
                 vm_status.error(f"Instance {instance.id} not ready "
                                 f"at {vm_status.wait_time} timeout")
                 return VM_ERROR, "Instance Not Ready", instance.id
@@ -405,13 +412,16 @@ def get_vm_status(user, desktop_type):
         curr_time = datetime.now(utc)
         if vm_status.wait_time <= curr_time:
             # Time up waiting
-            logger.error(f"get_vm_status: timed out after {vm_status.wait_time}")
+            logger.error(
+                f"get_vm_status: timed out after {vm_status.wait_time}")
             if vm_status.instance:
-                vm_status.error(f"Instance {vm_status.instance.id} not ready "
-                                f"at {vm_status.wait_time} timeout")
+                vm_status.error(
+                    f"Instance {vm_status.instance.id} not ready "
+                    f"at {vm_status.wait_time} timeout")
             else:
-                vm_status.error(f"Instance is missing at timeout {vm_status.id}, "
-                                f"{user}, {desktop_type}")
+                vm_status.error(
+                    f"Instance is missing at timeout {vm_status.id}, "
+                    f"{user}, {desktop_type}")
             logger.debug(f"get_vm_status: updated {vm_status}")
     return model_to_dict(vm_status)
 
@@ -537,12 +547,17 @@ def phone_home(request, requesting_feature):
 
     resize = Resize.objects.get_latest_resize(instance.id)
     status = VM_SUPERSIZED if resize and not resize.reverted else VM_OKAY
+    if resize and resize.expiration \
+       and resize.expiration.stage == EXP_EXPIRING:
+        # This marks the expiration complete for a expiry-triggered downsize
+        end_resize(instance, status, WF_SUCCESS)
 
     vm_status.status_progress = 100
     vm_status.status_message = 'Instance ready'
     vm_status.status = status
     vm_status.save()
-    result = f"Phone home for {instance} successful!"
+    outcome = "success" if status in (VM_OKAY, VM_SUPERSIZED) else "failed"
+    result = f"Phone home for {instance} - {outcome}!"
     logger.info(result)
     return result
 
