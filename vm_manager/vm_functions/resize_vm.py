@@ -76,8 +76,8 @@ def _resize_vm(instance, flavor, target_status, requesting_feature):
     except novaclient.exceptions.NotFound:
         logger.error(f"Trying to resize {instance} but it is not "
                      "found in Nova.")
-        instance.error("Nova instance is missing")
-        return WF_FAIL
+        instance.error("Nova instance is missing", gone=True)
+        return WF_SUCCESS
 
     if server.status != ACTIVE:
         logger.error(f"Nova instance for {instance} in unexpected state "

@@ -273,11 +273,8 @@ class InstanceExpirer(Expirer):
         return self.counts
 
     def do_expire(self, instance):
-        if shelve_expired_vm(instance,
-                             instance.boot_volume.requesting_feature):
-            return EXP_SUCCESS
-        else:
-            return EXP_FAIL
+        return shelve_expired_vm(instance,
+                                 instance.boot_volume.requesting_feature)
 
     def add_target_details(self, instance, context):
         context['desktop_type'] = DesktopType.objects.get_desktop_type(

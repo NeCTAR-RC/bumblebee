@@ -69,9 +69,11 @@ class CloudResource(models.Model):
     error_flag = models.DateTimeField(null=True, blank=True)
     error_message = models.TextField(null=True, blank=True)
 
-    def error(self, msg):
+    def error(self, msg, gone=False):
         self.error_flag = datetime.now(utc)
         self.error_message = msg
+        if gone:
+            self.marked_for_deletion = datetime.now(utc)
         self.save()
 
     def set_marked_for_deletion(self):

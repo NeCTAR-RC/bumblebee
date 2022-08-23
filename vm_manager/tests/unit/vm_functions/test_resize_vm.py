@@ -254,13 +254,14 @@ class ResizeVMTests(VMFunctionTestBase):
         fake_nectar = get_nectar()
         fake_nectar.nova.servers.get.side_effect = NotFound(code=42)
 
-        self.assertEqual(WF_FAIL,
+        self.assertEqual(WF_SUCCESS,
             _resize_vm(fake_instance, default_flavor_id,
                        VM_OKAY, self.FEATURE))
         fake_nectar.nova.servers.get.assert_called_with(fake_instance.id)
         mock_rq.get_scheduler.assert_not_called()
         instance = Instance.objects.get(pk=fake_instance.pk)
         self.assertEqual("Nova instance is missing", instance.error_message)
+        self.assertIsNotNone(instance.marked_for_deletion)
 
         fake_nectar.nova.servers.get.side_effect = None
 

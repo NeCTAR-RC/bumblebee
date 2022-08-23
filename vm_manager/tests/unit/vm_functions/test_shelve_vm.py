@@ -10,7 +10,8 @@ from vm_manager.constants import ACTIVE, SHUTDOWN, RESCUE, \
     VM_OKAY, VM_WAITING, VM_ERROR, VM_SHELVED, VM_SUPERSIZED, \
     FORCED_SHELVE_WAIT_SECONDS, INSTANCE_CHECK_SHUTOFF_RETRY_COUNT, \
     INSTANCE_DELETION_RETRY_COUNT, INSTANCE_CHECK_SHUTOFF_RETRY_WAIT_TIME, \
-    INSTANCE_DELETION_RETRY_WAIT_TIME
+    INSTANCE_DELETION_RETRY_WAIT_TIME, \
+    WF_RETRY, WF_SUCCESS, WF_CONTINUE
 from vm_manager.models import VMStatus, Instance, Volume
 from vm_manager.tests.common import UUID_4
 from vm_manager.tests.fakes import FakeNectar, FakeServer
@@ -38,7 +39,7 @@ class ShelveVMTests(VMFunctionTestBase):
         fake_guac = GuacamoleConnectionFactory.create(instance=fake_instance)
         fake_instance.guac_connection = fake_guac
 
-        shelve_vm_worker(fake_instance)
+        self.assertEqual(WF_RETRY, shelve_vm_worker(fake_instance))
 
         fake_nectar.nova.servers.get.assert_called_once_with(UUID_4)
         mock_rq.get_scheduler.assert_not_called()
@@ -60,7 +61,7 @@ class ShelveVMTests(VMFunctionTestBase):
         fake_guac = GuacamoleConnectionFactory.create(instance=fake_instance)
         fake_instance.guac_connection = fake_guac
 
-        shelve_vm_worker(fake_instance)
+        self.assertEqual(WF_SUCCESS, shelve_vm_worker(fake_instance))
 
         fake_nectar.nova.servers.get.assert_called_once_with(UUID_4)
         mock_rq.get_scheduler.assert_not_called()
@@ -83,7 +84,7 @@ class ShelveVMTests(VMFunctionTestBase):
         fake_guac = GuacamoleConnectionFactory.create(instance=fake_instance)
         fake_instance.guac_connection = fake_guac
 
-        shelve_vm_worker(fake_instance)
+        self.assertEqual(WF_CONTINUE, shelve_vm_worker(fake_instance))
 
         fake_nectar.nova.servers.get.assert_called_once_with(UUID_4)
         fake_nectar.nova.servers.stop.assert_not_called()
@@ -117,7 +118,7 @@ class ShelveVMTests(VMFunctionTestBase):
         fake_guac = GuacamoleConnectionFactory.create(instance=fake_instance)
         fake_instance.guac_connection = fake_guac
 
-        shelve_vm_worker(fake_instance)
+        self.assertEqual(WF_CONTINUE, shelve_vm_worker(fake_instance))
 
         fake_nectar.nova.servers.get.assert_called_once_with(UUID_4)
         fake_nectar.nova.servers.stop.assert_called_once_with(UUID_4)
@@ -149,7 +150,8 @@ class ShelveVMTests(VMFunctionTestBase):
         _, fake_instance, fake_vm_status = self.build_fake_vol_inst_status(
             ip_address='10.0.0.99', status=VM_WAITING)
 
-        _confirm_instance_deleted(fake_instance, 0)
+        self.assertEqual(WF_SUCCESS,
+                         _confirm_instance_deleted(fake_instance, 0))
 
         mock_rq.get_scheduler.assert_not_called()
 
@@ -176,7 +178,8 @@ class ShelveVMTests(VMFunctionTestBase):
         fake_nectar.nova.servers.get.return_value = FakeServer(
             id=fake_instance.id)
 
-        _confirm_instance_deleted(fake_instance, 3)
+        self.assertEqual(WF_CONTINUE,
+                         _confirm_instance_deleted(fake_instance, 3))
 
         mock_rq.get_scheduler.assert_called_once_with('default')
         mock_scheduler.enqueue_in.assert_called_once_with(
@@ -200,7 +203,8 @@ class ShelveVMTests(VMFunctionTestBase):
         fake_nectar.nova.servers.get.return_value = FakeServer(
             id=fake_instance.id)
 
-        _confirm_instance_deleted(fake_instance, 0)
+        self.assertEqual(WF_RETRY,
+                         _confirm_instance_deleted(fake_instance, 0))
 
         mock_rq.get_scheduler.assert_not_called()
 
@@ -210,11 +214,13 @@ class ShelveVMTests(VMFunctionTestBase):
     @patch('vm_manager.vm_functions.shelve_vm.shelve_vm_worker')
     def test_shelve_expired_vm(self, mock_shelve):
         now = datetime.now(utc)
+        mock_shelve.return_value = WF_SUCCESS
 
         _, fake_instance, fake_vm_status = self.build_fake_vol_inst_status(
             status=VM_OKAY, expires=(now - timedelta(days=2)))
 
-        self.assertTrue(shelve_expired_vm(fake_instance, self.FEATURE))
+        self.assertEqual(WF_SUCCESS,
+                         shelve_expired_vm(fake_instance, self.FEATURE))
         mock_shelve.assert_called_once_with(fake_instance)
 
     @patch('vm_manager.vm_functions.shelve_vm.shelve_vm_worker')
@@ -224,5 +230,6 @@ class ShelveVMTests(VMFunctionTestBase):
         _, fake_instance, fake_vm_status = self.build_fake_vol_inst_status(
             status=VM_ERROR, expires=(now - timedelta(days=1)))
 
-        self.assertFalse(shelve_expired_vm(fake_instance, self.FEATURE))
+        self.assertEqual(WF_RETRY,
+                         shelve_expired_vm(fake_instance, self.FEATURE))
         mock_shelve.assert_not_called()

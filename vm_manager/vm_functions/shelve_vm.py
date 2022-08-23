@@ -10,8 +10,10 @@ from vm_manager.constants import ACTIVE, SHUTDOWN, \
     VM_MISSING, VM_SHELVED, VM_WAITING, VM_OKAY, VM_ERROR, VM_SUPERSIZED, \
     INSTANCE_DELETION_RETRY_WAIT_TIME, INSTANCE_DELETION_RETRY_COUNT, \
     INSTANCE_CHECK_SHUTOFF_RETRY_WAIT_TIME, \
-    INSTANCE_CHECK_SHUTOFF_RETRY_COUNT, FORCED_SHELVE_WAIT_SECONDS
-from vm_manager.models import VMStatus
+    INSTANCE_CHECK_SHUTOFF_RETRY_COUNT, FORCED_SHELVE_WAIT_SECONDS, \
+    WF_SUCCESS, WF_FAIL, WF_RETRY, WF_CONTINUE
+from vm_manager.models import VMStatus, Expiration, EXP_EXPIRING, \
+    EXP_EXPIRY_FAILED, EXP_EXPIRY_FAILED_RETRYABLE, EXP_EXPIRY_COMPLETED
 from vm_manager.utils.expiry import VolumeExpiryPolicy
 from vm_manager.utils.utils import get_nectar, after_time
 from vm_manager.vm_functions.create_vm import launch_vm_worker
@@ -25,9 +27,7 @@ logger = logging.getLogger(__name__)
 
 
 def shelve_vm_worker(instance):
-    logger.info(f"About to shelve {instance.boot_volume.operating_system} "
-                f"vm at addr: {instance.get_ip_addr()} "
-                f"for user {instance.user.username}")
+    logger.info(f"About to shelve {instance}")
 
     if instance.guac_connection:
         GuacamoleConnection.objects.filter(instance=instance).delete()
@@ -47,25 +47,25 @@ def shelve_vm_worker(instance):
             if vm_status:
                 vm_status.status = VM_ERROR
                 vm_status.save()
-            return False
+            return _end_shelve(instance, WF_RETRY)
     except novaclient.exceptions.NotFound:
         logger.error("Trying to shelve an instance that is missing "
                      f"from Nova - {instance}")
-        instance.error("Nova instance is missing")
+        instance.error("Nova instance is missing", gone=True)
         if vm_status:
             vm_status.status = VM_MISSING
             vm_status.save()
-        return True
+        return _end_shelve(instance, WF_SUCCESS)
     except novaclient.exceptions.ClientException:
         logger.exception("Instance get failed - {instance}")
-        return False
+        return _end_shelve(instance, WF_FAIL)
 
     if status == ACTIVE:
         try:
             n.nova.servers.stop(instance.id)
         except novaclient.exceptions.ClientException:
             logger.exception("Instance stop failed - {instance}")
-            return False
+            return _end_shelve(instance, WF_FAIL)
     else:
         logger.info(f"Instance {instance} already shutdown in Nova.")
 
@@ -84,8 +84,7 @@ def shelve_vm_worker(instance):
         INSTANCE_CHECK_SHUTOFF_RETRY_COUNT,
         _confirm_instance_deleted,
         (instance, INSTANCE_DELETION_RETRY_COUNT))
-
-    return True
+    return WF_CONTINUE
 
 
 def _confirm_instance_deleted(instance, retries):
@@ -111,24 +110,29 @@ def _confirm_instance_deleted(instance, retries):
             vm_status.status_message = 'Instance shelved'
             vm_status.status = VM_SHELVED
             vm_status.save()
-        return
+        return _end_shelve(instance, WF_SUCCESS)
+    except novaclient.exceptions.ClientException:
+        logger.exception(f"Nova instance get failed for {instance}")
+        return _end_shelve(instance, WF_FAIL)
 
     if retries <= 0:
         error_message = (f"ran out of retries trying to "
                          f"terminate shelved instance")
         instance.error(error_message)
         logger.error(f"{error_message} {instance}")
+        return _end_shelve(instance, WF_RETRY)
     else:
         scheduler = django_rq.get_scheduler('default')
         scheduler.enqueue_in(
             timedelta(seconds=INSTANCE_DELETION_RETRY_WAIT_TIME),
             _confirm_instance_deleted, instance, retries - 1)
+        return WF_CONTINUE
 
 
 def unshelve_vm_worker(user, desktop_type, zone):
     logger.info(f'Unshelving {desktop_type.id} VM '
                 f'for {user.username}')
-    launch_vm_worker(user, desktop_type, zone)
+    return launch_vm_worker(user, desktop_type, zone)
 
 
 def shelve_expired_vm(instance, requesting_feature):
@@ -136,8 +140,21 @@ def shelve_expired_vm(instance, requesting_feature):
         instance, requesting_feature, allow_missing=True)
     if vm_status and vm_status.status not in (VM_OKAY, VM_SUPERSIZED):
         logger.info(f"Instance in unexpected state: {vm_status}")
-        return False
+        return WF_RETRY
     else:
-        # Don't need to update vm_status ourselves.  The shelve_vm_worker
-        # call does it.
         return shelve_vm_worker(instance)
+
+
+def _end_shelve(instance, wf_status):
+    if instance.expiration:
+        expiration = Expiration.objects.get(pk=instance.expiration.pk)
+        if expiration.stage == EXP_EXPIRING:
+            if wf_status == WF_FAIL:
+                expiration.stage = EXP_EXPIRY_FAILED
+            elif wf_status == WF_RETRY:
+                expiration.stage = EXP_EXPIRY_FAILED_RETRYABLE
+            elif wf_status == WF_SUCCESS:
+                expiration.stage = EXP_EXPIRY_COMPLETED
+            expiration.stage_date = datetime.now(utc)
+            expiration.save()
+    return wf_status
