@@ -12,8 +12,9 @@ from vm_manager.constants import ACTIVE, SHUTDOWN, NO_VM, VM_SHELVED, \
     INSTANCE_DELETION_RETRY_WAIT_TIME, INSTANCE_DELETION_RETRY_COUNT, \
     INSTANCE_CHECK_SHUTOFF_RETRY_WAIT_TIME, \
     INSTANCE_CHECK_SHUTOFF_RETRY_COUNT, \
-    ARCHIVE_POLL_SECONDS, ARCHIVE_WAIT_SECONDS
-from vm_manager.models import VMStatus
+    ARCHIVE_POLL_SECONDS, ARCHIVE_WAIT_SECONDS, \
+    WF_RETRY, WF_SUCCESS, WF_FAIL, WF_CONTINUE
+from vm_manager.models import VMStatus, Expiration, EXP_EXPIRING
 from vm_manager.utils.utils import get_nectar, after_time
 
 from guacamole.models import GuacamoleConnection
@@ -47,14 +48,14 @@ def delete_vm_worker(instance, archive=False):
             logger.error(f"Nova instance for {instance} is in unexpected "
                          f"state {status}.  Needs manual cleanup.")
             instance.error(f"Nova instance state is {status}")
-            return
+            return WF_RETRY
 
     except novaclient.exceptions.NotFound:
         logger.error(f"Trying to delete {instance} but it is not "
                      f"found in Nova.")
         # It no longer matters, but record the fact that the Nova instance
         # went missing anyway.
-        instance.error(f"Nova instance is missing")
+        instance.error(f"Nova instance is missing", gone=True)
 
     # Next step is to check if the Instance is Shutoff in Nova before
     # telling Nova to delete it
@@ -65,6 +66,7 @@ def delete_vm_worker(instance, archive=False):
         INSTANCE_CHECK_SHUTOFF_RETRY_COUNT,
         _dispose_volume_once_instance_is_deleted,
         (instance, archive, INSTANCE_DELETION_RETRY_COUNT))
+    return WF_CONTINUE
 
 
 def _check_instance_is_shutoff_and_delete(
@@ -80,7 +82,7 @@ def _check_instance_is_shutoff_and_delete(
             timedelta(seconds=INSTANCE_CHECK_SHUTOFF_RETRY_WAIT_TIME),
             _check_instance_is_shutoff_and_delete, instance,
             retries - 1, func, func_args)
-        return
+        return WF_CONTINUE
     if retries <= 0:
         # TODO - not sure we should delete the instance anyway ...
         logger.info(f"Ran out of retries shutting down {instance}. "
@@ -94,27 +96,30 @@ def _check_instance_is_shutoff_and_delete(
         vm_status.status_message = 'Instance shelving'
         vm_status.save()
 
-    delete_instance(instance)
+    if not delete_instance(instance):
+        return WF_FAIL
 
     # The 'func' will do the next step; e.g. delete the volume
     # or mark the volume as shelved.
     scheduler.enqueue_in(
         timedelta(seconds=INSTANCE_DELETION_RETRY_WAIT_TIME),
         func, *func_args)
+    return WF_CONTINUE
 
 
 def delete_instance(instance):
     n = get_nectar()
-    instance.marked_for_deletion = datetime.now(utc)
-    instance.save()
     try:
         n.nova.servers.delete(instance.id)
         logger.info(f"Instructed Nova to delete {instance}")
     except novaclient.exceptions.NotFound:
         logger.info(f"{instance} already deleted")
-    except Exception as e:
-        logger.error(f"Something went wrong with the instance deletion "
-                     f"call for {instance}, it raised {e}")
+    except novaclient.exceptions.ClientException:
+        logger.exception(f"Instance deletion call for {instance} failed")
+        return False
+    instance.marked_for_deletion = datetime.now(utc)
+    instance.save()
+    return True
 
 
 def _dispose_volume_once_instance_is_deleted(instance, archive, retries):
@@ -129,23 +134,19 @@ def _dispose_volume_once_instance_is_deleted(instance, archive, retries):
         if archive:
             logger.info(f"Instance {instance.id} successfully deleted. "
                         f"Proceeding to archive {instance.boot_volume} now!")
-            archive_volume_worker(instance.boot_volume,
-                                  instance.boot_volume.requesting_feature)
+            return archive_volume_worker(
+                instance.boot_volume, instance.boot_volume.requesting_feature)
         else:
             logger.info(f"Instance {instance.id} successfully deleted. "
                         f"Proceeding to delete {instance.boot_volume} now!")
-            delete_volume(instance.boot_volume)
-        return
-    except Exception as e:
-        logger.error("something went wrong with the instance get "
-                     f"call for {instance}, it raised {e}")
-        return
+            return (WF_SUCCESS if delete_volume(instance.boot_volume)
+                    else WF_FAIL)
+    except novaclient.exceptions.ClientException:
+        logger.exception(f"Instance get call for {instance} failed")
+        return WF_RETRY
 
-    # Nova still has the instance, and was able to return it to us
-    if retries == 0:
-        # FIXME ... not sure about this.  Should already have sent the
-        # Nova server delete request
-        delete_instance(instance)
+    # Nova still has the instance
+    if retries > 0:
         scheduler = django_rq.get_scheduler('default')
         # Note in this case I'm using `minutes=` not `seconds=` to give
         # a long wait time that should be sufficient
@@ -153,23 +154,13 @@ def _dispose_volume_once_instance_is_deleted(instance, archive, retries):
             timedelta(minutes=INSTANCE_DELETION_RETRY_WAIT_TIME),
             _dispose_volume_once_instance_is_deleted, instance, archive,
             retries - 1)
-        return
-
-    if retries <= 0:
+        return WF_CONTINUE
+    else:
         error_message = f"Ran out of retries trying to delete"
         instance.error(error_message)
         instance.boot_volume.error(error_message)
         logger.error(f"{error_message} {instance}")
-        return
-
-    # FIXME ... not sure about this.  Should already have sent the
-    # Nova server delete request
-    delete_instance(instance)
-    scheduler = django_rq.get_scheduler('default')
-    scheduler.enqueue_in(
-        timedelta(seconds=INSTANCE_DELETION_RETRY_WAIT_TIME),
-        _dispose_volume_once_instance_is_deleted, instance,
-        archive, retries - 1)
+        return WF_RETRY
 
 
 def delete_volume(volume):
@@ -226,12 +217,12 @@ def archive_volume_worker(volume, requesting_feature):
             logger.error(
                 f"Cannot archive volume with Cinder status "
                 f"{cinder_volume.status}: {volume}. Manual cleanup needed.")
-            return False
+            return WF_RETRY
     except cinderclient.exceptions.NotFound:
         volume.error("Cinder volume missing.  Cannot be archived.")
         logger.error(
             f"Cinder volume missing for {volume}. Cannot be archived.")
-        return True
+        return WF_SUCCESS
 
     try:
         backup = n.cinder.backups.create(
@@ -242,7 +233,7 @@ def archive_volume_worker(volume, requesting_feature):
         volume.error("Cinder backup failed")
         logger.error(
             f"Cinder backup failed for volume {volume.id}: {e}")
-        return False
+        return WF_RETRY
 
     scheduler = django_rq.get_scheduler('default')
     scheduler.enqueue_in(timedelta(seconds=5), wait_for_backup,
@@ -256,7 +247,7 @@ def archive_volume_worker(volume, requesting_feature):
         vm_status.status = NO_VM
         vm_status.save()
 
-    return True
+    return WF_CONTINUE
 
 
 def wait_for_backup(volume, backup_id, deadline):
@@ -267,16 +258,17 @@ def wait_for_backup(volume, backup_id, deadline):
         # The backup has disappeared ...
         logger.error(f"Backup {backup_id} for volume {volume} not "
                      "found.  Presumed failed.")
-        return
+        return _end_backup(volume, WF_RETRY)
 
     if details.status == BACKUP_CREATING:
         if datetime.now(utc) > deadline:
             logger.error(f"Backup took too long: backup {backup_id}, "
                          f"volume {volume}")
-            return
+            return _end_backup(volume, WF_RETRY)
         scheduler = django_rq.get_scheduler('default')
         scheduler.enqueue_in(timedelta(seconds=ARCHIVE_POLL_SECONDS),
                              wait_for_backup, volume, backup_id, deadline)
+        return WF_CONTINUE
     elif details.status == BACKUP_AVAILABLE:
         logger.info(f"Backup {backup_id} completed for volume {volume}")
         volume.backup_id = backup_id
@@ -284,21 +276,38 @@ def wait_for_backup(volume, backup_id, deadline):
         volume.save()
         logger.info(f"About to delete the archived volume {volume}")
         delete_volume(volume)
+        return _end_backup(volume, WF_SUCCESS)
     else:
         logger.error(f"Backup {backup_id} for volume {volume} is in "
                      f"unexpected state {details.status}")
+        return _end_backup(volume, WF_FAIL)
 
 
-def archive_expired_volume(volume, requesting_feature, dry_run=False):
+def _end_backup(volume, wf_outcome):
+    if volume.expiration:
+        expiration = Expiration.objects.get(pk=volume.expiration.pk)
+        if expiration.stage == EXP_EXPIRING:
+            stage = (EXP_EXPIRY_COMPLETE if wf_outcome == WF_SUCCESS
+                     else EXP_EXPIRY_FAILED if wf_outcome == WF_FAIL
+                     else EXP_EXPIRY_FAILED_RETRYABLE if wf_outcome == WF_RETRY
+                     else EXP_EXPIRING)   # probably shouldn't happen
+            expiration.stage = stage
+            expiration.stage_date = datetime.now(utc)
+            expiration.save()
+    return wf_outcome
+
+
+def archive_expired_volume(volume, requesting_feature):
     try:
         vm_status = VMStatus.objects.get_vm_status_by_volume(
             volume, requesting_feature)
         if vm_status.status != VM_SHELVED:
             logger.info(f"Skipping archiving of {volume} "
                         f"in unexpected state: {vm_status}")
-        elif not dry_run:
-            archive_volume_worker(volume, requesting_feature)
-            return True
+            return WF_SKIP
+        else:
+            return archive_volume_worker(volume, requesting_feature)
     except Exception:
+        # FIX ME - this isn't right ...
         logger.exception(f"Cannot retrieve vm_status for {volume}")
-    return False
+    return WF_FAIL

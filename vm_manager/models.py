@@ -45,7 +45,8 @@ class Expiration(models.Model):
                 f"stage_date {self.stage_date}")
 
     def is_expiring(self):
-        return self.stage in [EXP_FIRST_WARNING, EXP_FINAL_WARNING]
+        return self.stage in [EXP_FIRST_WARNING, EXP_FINAL_WARNING,
+                              EXP_EXPIRING]
 
 
 class ResourceExpiration(Expiration):

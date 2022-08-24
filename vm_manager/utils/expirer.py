@@ -215,10 +215,7 @@ class VolumeExpirer(Expirer):
         return self.counts
 
     def do_expire(self, volume):
-        if archive_expired_volume(volume, volume.requesting_feature):
-            return EXP_SUCCESS
-        else:
-            return EXP_FAIL
+        return archive_expired_volume(volume, volume.requesting_feature)
 
     def add_target_details(self, volume, context):
         context['desktop_type'] = DesktopType.objects.get_desktop_type(
