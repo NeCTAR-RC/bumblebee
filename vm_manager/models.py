@@ -48,12 +48,37 @@ class Expiration(models.Model):
         return self.stage in [EXP_FIRST_WARNING, EXP_FINAL_WARNING,
                               EXP_EXPIRING]
 
+    @staticmethod
+    def do_set_expires(target, expiration_class, expires, stage=EXP_INITIAL,
+                       expiration_field='expiration'):
+        if expires is None:
+            setattr(target, expiration_field, None)
+            target.save()
+        else:
+            expiration = getattr(target, expiration_field, None)
+            if expiration:
+                expiration.expires = expires
+                expiration.stage = stage
+                expiration.stage_date = datetime.now(utc)
+                expiration.save()
+            else:
+                expiration = expiration_class(
+                    expires=expires, stage=stage,
+                    stage_date=datetime.now(utc))
+                expiration.save()
+                setattr(target, expiration_field, expiration)
+                target.save()
+
 
 class ResourceExpiration(Expiration):
     pass
 
 
 class ResizeExpiration(Expiration):
+    pass
+
+
+class BackupExpiration(Expiration):
     pass
 
 
@@ -82,20 +107,8 @@ class CloudResource(models.Model):
         self.save()
 
     def set_expires(self, expires, stage=EXP_INITIAL):
-        if expires is None:
-            self.expiration = None
-            self.save()
-        elif self.expiration:
-            self.expiration.expires = expires
-            self.expiration.stage = stage
-            self.expiration.stage_date = datetime.now(utc)
-            self.expiration.save()
-        else:
-            self.expiration = ResourceExpiration(expires=expires)
-            self.expiration.stage = stage
-            self.expiration.stage_date = datetime.now(utc)
-            self.expiration.save()
-            self.save()
+        Expiration.do_set_expires(self, ResourceExpiration, expires,
+                                  stage=stage)
 
     def get_expires(self):
         return self.expiration.expires if self.expiration else None
@@ -133,6 +146,10 @@ class Volume(CloudResource):
     shelved_at = models.DateTimeField(null=True, blank=True)
     archived_at = models.DateTimeField(null=True, blank=True)
     backup_id = models.UUIDField(null=True, blank=True)
+    backup_expiration = models.OneToOneField(BackupExpiration,
+                                             on_delete=models.CASCADE,
+                                             null=True,
+                                             related_name='expiration_for')
     rebooted_at = models.DateTimeField(null=True, blank=True)
 
     objects = VolumeManager()
@@ -140,6 +157,11 @@ class Volume(CloudResource):
     def __str__(self):
         return (f"Volume {self.id} of {self.operating_system} "
                 f"for {self.user}")
+
+    def set_backup_expires(self, expires, stage=EXP_INITIAL):
+        Expiration.do_set_expires(self, BackupExpiration, expires,
+                                  stage=stage,
+                                  expiration_field='backup_expiration')
 
     def save(self, *args, **kwargs):
         if not self.hostname_id:
@@ -399,20 +421,7 @@ class Resize(models.Model):
         return self.reverted or self.instance.deleted
 
     def set_expires(self, expires, stage=EXP_INITIAL):
-        if expires is None:
-            self.expiration = None
-            self.save()
-        elif self.expiration:
-            self.expiration.expires = expires
-            self.expiration.stage = stage
-            self.expiration.stage_date = datetime.now(utc)
-            self.expiration.save()
-        else:
-            self.expiration = ResizeExpiration(expires=expires)
-            self.expiration.stage = stage
-            self.expiration.stage_date = datetime.now(utc)
-            self.expiration.save()
-            self.save()
+        Expiration.do_set_expires(self, ResizeExpiration, expires, stage=stage)
 
     def get_expires(self):
         return self.expiration.expires if self.expiration else None

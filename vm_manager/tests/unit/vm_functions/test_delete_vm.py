@@ -13,17 +13,22 @@ from vm_manager.tests.unit.vm_functions.base import VMFunctionTestBase
 from vm_manager.constants import ACTIVE, SHUTDOWN, RESCUE, \
     VOLUME_AVAILABLE, VM_WAITING, VM_SHELVED, NO_VM, \
     INSTANCE_CHECK_SHUTOFF_RETRY_WAIT_TIME, \
-    INSTANCE_DELETION_RETRY_WAIT_TIME, \
+    VOLUME_DELETION_RETRY_WAIT_TIME, VOLUME_DELETION_RETRY_COUNT, \
+    INSTANCE_DELETION_RETRY_WAIT_TIME, BACKUP_DELETION_RETRY_WAIT_TIME, \
     INSTANCE_CHECK_SHUTOFF_RETRY_COUNT, INSTANCE_DELETION_RETRY_COUNT, \
+    BACKUP_DELETION_RETRY_COUNT, \
     ARCHIVE_POLL_SECONDS, ARCHIVE_WAIT_SECONDS, \
     BACKUP_CREATING, BACKUP_AVAILABLE, \
     WF_RETRY, WF_SUCCESS, WF_CONTINUE, WF_FAIL
 from guacamole.models import GuacamoleConnection
-from vm_manager.models import VMStatus, Volume, Instance
+from vm_manager.models import VMStatus, Volume, Instance, \
+    EXP_INITIAL, EXP_EXPIRING, EXP_EXPIRY_COMPLETED, \
+    EXP_EXPIRY_FAILED_RETRYABLE
 from vm_manager.vm_functions.delete_vm import delete_vm_worker, \
     _check_instance_is_shutoff_and_delete, delete_instance, \
     _dispose_volume_once_instance_is_deleted, delete_volume, \
-    archive_volume_worker, wait_for_backup, delete_backup
+    archive_volume_worker, wait_for_backup, delete_backup_worker, \
+    _wait_until_backup_is_deleted, _wait_until_volume_is_deleted
 from vm_manager.utils.utils import get_nectar
 
 
@@ -320,20 +325,23 @@ class DeleteVMTests(VMFunctionTestBase):
     @patch('vm_manager.vm_functions.delete_vm.get_nectar')
     @patch('vm_manager.vm_functions.delete_vm.logger')
     @patch('vm_manager.vm_functions.delete_vm.delete_volume')
+    @patch('vm_manager.vm_functions.delete_vm.django_rq')
     def test_dispose_volume_once_instance_is_deleted(
-            self, mock_delete, mock_logger, mock_get_nectar):
+            self, mock_rq, mock_delete, mock_logger, mock_get_nectar):
         fake_nectar = FakeNectar()
         mock_get_nectar.return_value = fake_nectar
         fake_nectar.nova.servers.get.side_effect = \
             novaclient.exceptions.NotFound(code=400)
         mock_delete.return_value = True
+        mock_scheduler = Mock()
+        mock_rq.get_scheduler.return_value = mock_scheduler
 
         fake_volume, fake_instance = self.build_fake_vol_instance(
             ip_address='10.0.0.99')
         self.assertIsNone(fake_instance.deleted)
 
         self.assertEqual(
-            WF_SUCCESS,
+            WF_CONTINUE,
             _dispose_volume_once_instance_is_deleted(fake_instance, False, 1))
         fake_nectar.nova.servers.get.assert_called_once_with(fake_instance.id)
         mock_delete.assert_called_once_with(fake_volume)
@@ -342,6 +350,11 @@ class DeleteVMTests(VMFunctionTestBase):
             f"to delete {fake_volume} now!")
         instance = Instance.objects.get(pk=fake_instance.pk)
         self.assertIsNotNone(instance.deleted)
+        mock_rq.get_scheduler.assert_called_once_with("default")
+        mock_scheduler.enqueue_in.assert_called_once_with(
+            timedelta(seconds=VOLUME_DELETION_RETRY_WAIT_TIME),
+            _wait_until_volume_is_deleted, fake_volume,
+            VOLUME_DELETION_RETRY_COUNT)
 
     @patch('vm_manager.vm_functions.delete_vm.get_nectar')
     @patch('vm_manager.vm_functions.delete_vm.logger')
@@ -433,7 +446,6 @@ class DeleteVMTests(VMFunctionTestBase):
         mock_scheduler.enqueue_in.assert_not_called()
         instance = Instance.objects.get(pk=fake_instance.pk)
         self.assertEqual(message, instance.error_message)
-        self.assertEqual(message, instance.boot_volume.error_message)
 
     @patch('vm_manager.vm_functions.delete_vm.get_nectar')
     @patch('vm_manager.vm_functions.delete_vm.logger')
@@ -700,6 +712,8 @@ class ArchiveVMTests(VMFunctionTestBase):
         volume = Volume.objects.get(pk=fake_volume.pk)
         self.assertEqual(backup_id, volume.backup_id)
         self.assertIsNotNone(volume.archived_at)
+        self.assertIsNotNone(volume.backup_expiration)
+        self.assertEqual(EXP_INITIAL, volume.backup_expiration.stage)
         mock_delete.assert_called_once_with(fake_volume)
 
         mock_logger.info.reset_mock()
@@ -713,58 +727,285 @@ class ArchiveVMTests(VMFunctionTestBase):
         mock_logger.error.assert_called_once_with(
             f'Backup {backup_id} for volume {fake_volume} '
             f'is in unexpected state reversing')
+        mock_rq.get_scheduler.assert_not_called()
 
+    @patch('vm_manager.vm_functions.delete_vm.django_rq')
     @patch('vm_manager.vm_functions.delete_vm.get_nectar')
-    def test_delete_backup(self, mock_get_nectar):
-        backup_id = uuid4()
-        fake_volume = self.build_fake_volume()
-        fake_volume.archived_at = datetime.now(utc)
-        fake_volume.backup_id = backup_id
-        fake_volume.save()
-
+    def test_delete_backup(self, mock_get_nectar, mock_rq):
+        '''Backup deletion starts successfully
+        '''
+        fake_volume, backup_id = self.build_fake_volume_with_backup()
         fake_nectar = FakeNectar()
         mock_get_nectar.return_value = fake_nectar
+        mock_scheduler = Mock()
+        mock_rq.get_scheduler.return_value = mock_scheduler
 
-        self.assertTrue(delete_backup(fake_volume))
+        self.assertEqual(WF_CONTINUE, delete_backup_worker(fake_volume))
         mock_get_nectar.assert_called_once()
         fake_nectar.cinder.backups.delete.assert_called_once_with(backup_id)
         volume = Volume.objects.get(pk=fake_volume.pk)
-        self.assertIsNone(volume.backup_id)
+        self.assertIsNotNone(volume.backup_id)
+        mock_rq.get_scheduler.assert_called_once_with("default")
+        mock_scheduler.enqueue_in.assert_called_once_with(
+            timedelta(seconds=BACKUP_DELETION_RETRY_WAIT_TIME),
+            _wait_until_backup_is_deleted,
+            fake_volume, BACKUP_DELETION_RETRY_COUNT)
 
+    @patch('vm_manager.vm_functions.delete_vm.django_rq')
     @patch('vm_manager.vm_functions.delete_vm.get_nectar')
-    def test_delete_backup_missing(self, mock_get_nectar):
-        backup_id = uuid4()
-        fake_volume = self.build_fake_volume()
-        fake_volume.archived_at = datetime.now(utc)
-        fake_volume.backup_id = backup_id
-        fake_volume.save()
+    def test_delete_backup_missing(self, mock_get_nectar, mock_rq):
+        '''Backup has already been deleted
+        '''
 
+        fake_volume, backup_id = self.build_fake_volume_with_backup()
         fake_nectar = FakeNectar()
         mock_get_nectar.return_value = fake_nectar
         fake_nectar.cinder.backups.delete.side_effect = \
             cinderclient.exceptions.NotFound(404)
 
-        self.assertTrue(delete_backup(fake_volume))
+        self.assertEqual(WF_SUCCESS, delete_backup_worker(fake_volume))
         mock_get_nectar.assert_called_once()
         fake_nectar.cinder.backups.delete.assert_called_once_with(backup_id)
         volume = Volume.objects.get(pk=fake_volume.pk)
         self.assertIsNone(volume.backup_id)
+        mock_rq.get_scheduler.assert_not_called()
 
+    @patch('vm_manager.vm_functions.delete_vm.django_rq')
     @patch('vm_manager.vm_functions.delete_vm.get_nectar')
-    def test_delete_backup_failed(self, mock_get_nectar):
-        backup_id = uuid4()
-        fake_volume = self.build_fake_volume()
-        fake_volume.archived_at = datetime.now(utc)
-        fake_volume.backup_id = backup_id
-        fake_volume.save()
+    def test_delete_backup_failed(self, mock_get_nectar, mock_rq):
+        '''Backup deletion request failed
+        '''
 
+        fake_volume, backup_id = self.build_fake_volume_with_backup()
         fake_nectar = FakeNectar()
         mock_get_nectar.return_value = fake_nectar
         fake_nectar.cinder.backups.delete.side_effect = \
             cinderclient.exceptions.ClientException(400)
 
-        self.assertFalse(delete_backup(fake_volume))
+        self.assertEqual(WF_RETRY, delete_backup_worker(fake_volume))
         mock_get_nectar.assert_called_once()
         fake_nectar.cinder.backups.delete.assert_called_once_with(backup_id)
         volume = Volume.objects.get(pk=fake_volume.pk)
         self.assertIsNotNone(volume.backup_id)
+        mock_rq.get_scheduler.assert_not_called()
+
+    @patch('vm_manager.vm_functions.delete_vm.django_rq')
+    @patch('vm_manager.vm_functions.delete_vm.get_nectar')
+    def test_wait_until_backup_deleted(self, mock_get_nectar, mock_rq):
+        '''Backup deletion still progressing
+        '''
+
+        fake_volume, backup_id = self.build_fake_volume_with_backup(
+            stage=EXP_EXPIRING)
+        fake_nectar = FakeNectar()
+        fake_nectar.cinder.backups.get.side_effect = \
+            cinderclient.exceptions.NotFound(404)
+        mock_get_nectar.return_value = fake_nectar
+        mock_scheduler = Mock()
+        mock_rq.get_scheduler.return_value = mock_scheduler
+
+        self.assertEqual(
+            WF_SUCCESS,
+            _wait_until_backup_is_deleted(fake_volume, 5))
+        mock_get_nectar.assert_called_once()
+        fake_nectar.cinder.backups.get.assert_called_once_with(backup_id)
+        volume = Volume.objects.get(pk=fake_volume.pk)
+        self.assertIsNone(volume.backup_id)
+        self.assertEqual(EXP_EXPIRY_COMPLETED,
+                         volume.backup_expiration.stage)
+        mock_rq.get_scheduler.assert_not_called()
+
+    @patch('vm_manager.vm_functions.delete_vm.django_rq')
+    @patch('vm_manager.vm_functions.delete_vm.get_nectar')
+    def test_wait_until_backup_deleted_2(self, mock_get_nectar, mock_rq):
+        '''Backup deletion still progressing
+        '''
+
+        fake_volume, backup_id = self.build_fake_volume_with_backup(
+            stage=EXP_EXPIRING)
+        fake_nectar = FakeNectar()
+        mock_get_nectar.return_value = fake_nectar
+        mock_scheduler = Mock()
+        mock_rq.get_scheduler.return_value = mock_scheduler
+
+        self.assertEqual(
+            WF_CONTINUE,
+            _wait_until_backup_is_deleted(fake_volume, 5))
+        mock_get_nectar.assert_called_once()
+        fake_nectar.cinder.backups.get.assert_called_once_with(backup_id)
+        volume = Volume.objects.get(pk=fake_volume.pk)
+        self.assertIsNotNone(volume.backup_id)
+        self.assertEqual(EXP_EXPIRING, volume.backup_expiration.stage)
+        mock_rq.get_scheduler.assert_called_once_with("default")
+        mock_scheduler.enqueue_in.assert_called_once_with(
+            timedelta(seconds=BACKUP_DELETION_RETRY_WAIT_TIME),
+            _wait_until_backup_is_deleted,
+            fake_volume, 4)
+
+    @patch('vm_manager.vm_functions.delete_vm.django_rq')
+    @patch('vm_manager.vm_functions.delete_vm.get_nectar')
+    def test_wait_until_backup_deleted_3(self, mock_get_nectar, mock_rq):
+        '''Backup deletion did not complete in time
+        '''
+
+        fake_volume, backup_id = self.build_fake_volume_with_backup(
+            stage=EXP_EXPIRING)
+        fake_nectar = FakeNectar()
+        mock_get_nectar.return_value = fake_nectar
+
+        self.assertEqual(
+            WF_RETRY,
+            _wait_until_backup_is_deleted(fake_volume, 0))
+        mock_get_nectar.assert_called_once()
+        fake_nectar.cinder.backups.get.assert_called_once_with(backup_id)
+        volume = Volume.objects.get(pk=fake_volume.pk)
+        self.assertIsNotNone(volume.backup_id)
+        self.assertEqual(EXP_EXPIRY_FAILED_RETRYABLE,
+                         volume.backup_expiration.stage)
+        mock_rq.get_scheduler.assert_not_called()
+
+    @patch('vm_manager.vm_functions.delete_vm.django_rq')
+    @patch('vm_manager.vm_functions.delete_vm.get_nectar')
+    @patch('vm_manager.vm_functions.delete_vm.logger')
+    def test_wait_until_backup_deleted_4(self, mock_logger,
+                                         mock_get_nectar, mock_rq):
+        '''Backup get call failed
+        '''
+
+        fake_volume, backup_id = self.build_fake_volume_with_backup(
+            stage=EXP_EXPIRING)
+        fake_nectar = FakeNectar()
+        fake_nectar.cinder.backups.get.side_effect = \
+            cinderclient.exceptions.ClientException(500)
+        mock_get_nectar.return_value = fake_nectar
+
+        self.assertEqual(
+            WF_RETRY,
+            _wait_until_backup_is_deleted(fake_volume, 5))
+        mock_get_nectar.assert_called_once()
+        fake_nectar.cinder.backups.get.assert_called_once_with(backup_id)
+        volume = Volume.objects.get(pk=fake_volume.pk)
+        self.assertIsNotNone(volume.backup_id)
+        self.assertEqual(EXP_EXPIRY_FAILED_RETRYABLE,
+                         volume.backup_expiration.stage)
+        mock_rq.get_scheduler.assert_not_called()
+        mock_logger.exception.assert_called_once()
+
+    @patch('vm_manager.vm_functions.delete_vm.django_rq')
+    @patch('vm_manager.vm_functions.delete_vm.get_nectar')
+    def test_wait_until_volume_deleted(self, mock_get_nectar, mock_rq):
+        '''Volume deletion still progressing
+        '''
+
+        fake_volume = self.build_fake_volume(stage=EXP_EXPIRING)
+        fake_nectar = FakeNectar()
+        fake_nectar.cinder.volumes.get.side_effect = \
+            cinderclient.exceptions.NotFound(404)
+        mock_get_nectar.return_value = fake_nectar
+        mock_scheduler = Mock()
+        mock_rq.get_scheduler.return_value = mock_scheduler
+
+        self.assertEqual(
+            WF_SUCCESS,
+            _wait_until_volume_is_deleted(fake_volume, 5))
+        mock_get_nectar.assert_called_once()
+        fake_nectar.cinder.volumes.get.assert_called_once_with(fake_volume.id)
+        volume = Volume.objects.get(pk=fake_volume.pk)
+        self.assertIsNotNone(volume.deleted)
+        self.assertEqual(EXP_EXPIRY_COMPLETED, volume.expiration.stage)
+        mock_rq.get_scheduler.assert_not_called()
+
+    @patch('vm_manager.vm_functions.delete_vm.django_rq')
+    @patch('vm_manager.vm_functions.delete_vm.get_nectar')
+    def test_wait_until_volume_deleted_2(self, mock_get_nectar, mock_rq):
+        '''Volume deletion still progressing
+        '''
+
+        fake_volume = self.build_fake_volume(stage=EXP_EXPIRING)
+        fake_nectar = FakeNectar()
+        fake_nectar.cinder.volumes.get.return_value = Fake(status='deleting')
+        mock_get_nectar.return_value = fake_nectar
+        mock_scheduler = Mock()
+        mock_rq.get_scheduler.return_value = mock_scheduler
+
+        self.assertEqual(
+            WF_CONTINUE,
+            _wait_until_volume_is_deleted(fake_volume, 5))
+        mock_get_nectar.assert_called_once()
+        fake_nectar.cinder.volumes.get.assert_called_once_with(fake_volume.id)
+        volume = Volume.objects.get(pk=fake_volume.pk)
+        self.assertIsNone(volume.deleted)
+        self.assertEqual(EXP_EXPIRING, volume.expiration.stage)
+        mock_rq.get_scheduler.assert_called_once_with("default")
+        mock_scheduler.enqueue_in.assert_called_once_with(
+            timedelta(seconds=BACKUP_DELETION_RETRY_WAIT_TIME),
+            _wait_until_volume_is_deleted,
+            fake_volume, 4)
+
+    @patch('vm_manager.vm_functions.delete_vm.django_rq')
+    @patch('vm_manager.vm_functions.delete_vm.get_nectar')
+    def test_wait_until_volume_deleted_3(self, mock_get_nectar, mock_rq):
+        '''Volume deletion did not complete in time
+        '''
+
+        fake_volume = self.build_fake_volume(stage=EXP_EXPIRING)
+        fake_nectar = FakeNectar()
+        mock_get_nectar.return_value = fake_nectar
+
+        self.assertEqual(
+            WF_RETRY,
+            _wait_until_volume_is_deleted(fake_volume, 0))
+        mock_get_nectar.assert_called_once()
+        fake_nectar.cinder.volumes.get.assert_called_once_with(fake_volume.id)
+        volume = Volume.objects.get(pk=fake_volume.pk)
+        self.assertIsNone(volume.deleted)
+        self.assertEqual(EXP_EXPIRY_FAILED_RETRYABLE, volume.expiration.stage)
+        mock_rq.get_scheduler.assert_not_called()
+
+    @patch('vm_manager.vm_functions.delete_vm.django_rq')
+    @patch('vm_manager.vm_functions.delete_vm.get_nectar')
+    @patch('vm_manager.vm_functions.delete_vm.logger')
+    def test_wait_until_volume_deleted_4(self, mock_logger,
+                                         mock_get_nectar, mock_rq):
+        '''Volume get call failed
+        '''
+
+        fake_volume = self.build_fake_volume(stage=EXP_EXPIRING)
+        fake_nectar = FakeNectar()
+        fake_nectar.cinder.volumes.get.side_effect = \
+            cinderclient.exceptions.ClientException(500)
+        mock_get_nectar.return_value = fake_nectar
+
+        self.assertEqual(
+            WF_RETRY,
+            _wait_until_volume_is_deleted(fake_volume, 5))
+        mock_get_nectar.assert_called_once()
+        fake_nectar.cinder.volumes.get.assert_called_once_with(fake_volume.id)
+        volume = Volume.objects.get(pk=fake_volume.pk)
+        self.assertIsNone(volume.deleted)
+        self.assertEqual(EXP_EXPIRY_FAILED_RETRYABLE, volume.expiration.stage)
+        mock_rq.get_scheduler.assert_not_called()
+        mock_logger.exception.assert_called_once()
+
+    @patch('vm_manager.vm_functions.delete_vm.django_rq')
+    @patch('vm_manager.vm_functions.delete_vm.get_nectar')
+    def test_wait_until_volume_deleted_5(self, mock_get_nectar, mock_rq):
+        '''Volume delete goes to bad state
+        '''
+
+        fake_volume = self.build_fake_volume(stage=EXP_EXPIRING)
+        fake_nectar = FakeNectar()
+        fake_nectar.cinder.volumes.get.return_value = Fake(status='smoldering')
+        mock_get_nectar.return_value = fake_nectar
+        mock_scheduler = Mock()
+        mock_rq.get_scheduler.return_value = mock_scheduler
+
+        self.assertEqual(
+            WF_RETRY,
+            _wait_until_volume_is_deleted(fake_volume, 5))
+        mock_get_nectar.assert_called_once()
+        fake_nectar.cinder.volumes.get.assert_called_once_with(fake_volume.id)
+        volume = Volume.objects.get(pk=fake_volume.pk)
+        self.assertIsNone(volume.deleted)
+        self.assertEqual(EXP_EXPIRY_FAILED_RETRYABLE, volume.expiration.stage)
+        mock_rq.get_scheduler.assert_not_called()

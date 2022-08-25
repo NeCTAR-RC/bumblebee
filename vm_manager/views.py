@@ -37,7 +37,8 @@ from vm_manager.vm_functions.admin_functionality import \
 
 from vm_manager.vm_functions.admin_functionality import db_check
 from vm_manager.vm_functions.create_vm import launch_vm_worker, extend_instance
-from vm_manager.vm_functions.delete_vm import delete_vm_worker, delete_volume
+from vm_manager.vm_functions.delete_vm import delete_vm_worker, \
+    delete_volume_worker
 from vm_manager.vm_functions.other_vm_functions import reboot_vm_worker
 from vm_manager.vm_functions.shelve_vm import shelve_vm_worker, \
     unshelve_vm_worker
@@ -202,8 +203,8 @@ def delete_shelved_vm(user, desktop_type) -> str:
 
     volume = Volume.objects.get_volume(user, desktop_type)
     if volume:
-        logger.info(f"Deleting volume {volume}")
-        delete_volume(volume)
+        logger.info(f"Deleting shelved volume {volume}")
+        delete_volume_worker(volume)
     return str(vm_status)
 
 

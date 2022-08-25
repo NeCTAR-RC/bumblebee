@@ -1,6 +1,8 @@
+from datetime import datetime
 import uuid
 
 from django.test import TestCase
+from django.utils.timezone import utc
 
 from researcher_workspace.tests.factories import UserFactory
 from researcher_desktop.utils.utils import get_desktop_type, desktops_feature
@@ -26,10 +28,10 @@ class VMFunctionTestBase(TestCase):
             name="a_zone", zone_weight=1,
             network_id=uuid.uuid4())
 
-    def build_fake_volume(self, id=None):
+    def build_fake_volume(self, id=None, stage=None):
         if id is None:
             id = UUID_3
-        return VolumeFactory.create(
+        fake_volume = VolumeFactory.create(
             id=id,
             user=self.user,
             image=self.UBUNTU_source_volume_id,
@@ -37,6 +39,19 @@ class VMFunctionTestBase(TestCase):
             requesting_feature=self.UBUNTU.feature,
             zone=self.zone.name,
             flavor=self.UBUNTU.default_flavor.id)
+        if stage is not None:
+            fake_volume.set_expires(datetime.now(utc), stage=stage)
+        return fake_volume
+
+    def build_fake_volume_with_backup(self, stage=None):
+        backup_id = uuid.uuid4()
+        fake_volume = self.build_fake_volume()
+        fake_volume.archived_at = datetime.now(utc)
+        fake_volume.backup_id = backup_id
+        fake_volume.save()
+        if stage is not None:
+            fake_volume.set_backup_expires(datetime.now(utc), stage=stage)
+        return fake_volume, backup_id
 
     def build_fake_vol_instance(self, volume_id=None, instance_id=None,
                                 ip_address=None, expires=None):

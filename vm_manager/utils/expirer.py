@@ -12,7 +12,7 @@ from vm_manager.models import Instance, Volume, Resize, \
     EXP_INITIAL, EXP_FIRST_WARNING, EXP_FINAL_WARNING, EXP_EXPIRING, \
     EXP_EXPIRY_COMPLETED, EXP_EXPIRY_FAILED, EXP_EXPIRY_FAILED_RETRYABLE
 from vm_manager.vm_functions.delete_vm import \
-    archive_expired_volume, delete_backup
+    archive_expired_volume, delete_backup_worker
 from vm_manager.vm_functions.resize_vm import downsize_expired_vm
 from vm_manager.vm_functions.shelve_vm import shelve_expired_vm
 
@@ -47,26 +47,7 @@ def days(days):
     return timedelta(days=days) if days and days > 0 else None
 
 
-class BaseExpirer(object):
-    '''Temporary base class for regular expirers and the "special"
-    one for archive/backup deletion.  The latter will be rewritten
-    later to use an Expiration object.
-    '''
-
-    def __init__(self, dry_run=False, verbose=False):
-        self.dry_run = dry_run
-        self.verbose = verbose
-        self.now = datetime.now(utc)
-        self.counts = {}
-
-    def accumulate(self, outcome):
-        if outcome in self.counts:
-            self.counts[outcome] = self.counts[outcome] + 1
-        else:
-            self.counts[outcome] = 1
-
-
-class Expirer(BaseExpirer):
+class Expirer(object):
     '''An Expirer is designed to be called periodically to send expiry
     warnings, and finally to perform the expiration action.  This class
     is implements a 4-stage state machine:
@@ -95,13 +76,22 @@ class Expirer(BaseExpirer):
     '''
 
     def __init__(self, template, first_warning=None, final_warning=None,
-                 **kwargs):
-        super().__init__(**kwargs)
+                 dry_run=False, verbose=False):
+        self.dry_run = dry_run
+        self.verbose = verbose
+        self.now = datetime.now(utc)
         self.template = template
         if first_warning and not final_warning:
             raise Exception("Config error: first warning w/o final warning")
         self.first_warning = first_warning
         self.final_warning = final_warning
+        self.counts = {}
+
+    def accumulate(self, outcome):
+        if outcome in self.counts:
+            self.counts[outcome] = self.counts[outcome] + 1
+        else:
+            self.counts[outcome] = 1
 
     def notify(self, user, context):
         if not self.dry_run:
@@ -223,32 +213,29 @@ class VolumeExpirer(Expirer):
         context['volume'] = volume
 
 
-class ArchiveExpirer(BaseExpirer):
+class ArchiveExpirer(Expirer):
     '''This expirer deletes archives (backups) for archived volumes.
     Note that this doesn't need to do notification and staging, and
     doesn't have an associated Expiration record.
     '''
 
-    def __init__(self, backup_lifetime=days(settings.BACKUP_LIFETIME),
-                 **kwargs):
-        super().__init__(**kwargs)
-        self.backup_lifetime = backup_lifetime
+    def __init__(self, **kwargs):
+        super().__init__(None, **kwargs)
 
     def run(self, feature):
-        for v in Volume.objects.exclude(
-                Q(archived_at=None) | Q(backup_id=None)):
-            if v.archived_at + self.backup_lifetime < self.now:
-                if self.dry_run:
-                    logger.error(f"Would have deleted backup for {v}")
-                    self.accumulate(EXP_SUCCESS)
-                elif delete_backup(v):
-                    self.accumulate(EXP_SUCCESS)
-                else:
-                    logger.error(f"Backup deletion failed for {v}")
-                    self.accumulate(EXP_SUCCESS)
-            else:
-                self.accumulate(EXP_SKIP)
+        for v in Volume.objects \
+                       .exclude(backup_expiration=None) \
+                       .exclude(backup_expiration__stage__in=[
+                           EXP_EXPIRY_COMPLETED, EXP_EXPIRY_FAILED]) \
+                       .prefetch_related('backup_expiration', 'user'):
+            self.accumulate(self.do_stage(v, v.backup_expiration, v.user))
         return self.counts
+
+    def do_expire(self, volume):
+        return delete_backup_worker(volume)
+
+    def add_target_details(self, volume, context):
+        pass
 
 
 class InstanceExpirer(Expirer):

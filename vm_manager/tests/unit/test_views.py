@@ -1041,7 +1041,7 @@ class VMManagerViewTests(TestCase):
             f"is {VM_SHELVED}")
 
     @patch('vm_manager.views.logger')
-    @patch('vm_manager.views.delete_volume')
+    @patch('vm_manager.views.delete_volume_worker')
     def test_delete_shelved_vm(self, mock_delete, mock_logger):
         self.build_existing_vm(VM_SHELVED)
         self.instance.deleted = datetime.now(utc)
@@ -1053,5 +1053,5 @@ class VMManagerViewTests(TestCase):
             delete_shelved_vm(self.user, self.UBUNTU))
         mock_logger.error.assert_not_called()
         mock_logger.info.assert_called_once_with(
-            f"Deleting volume {self.volume}")
+            f"Deleting shelved volume {self.volume}")
         mock_delete.assert_called_once_with(self.volume)
