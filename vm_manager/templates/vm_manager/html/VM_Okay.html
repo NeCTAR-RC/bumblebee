@@ -212,7 +212,13 @@
           <source src="{% static 'videos/action-boost.webm' %}" type="video/webm">
           <img src="{% static 'img/action-boost.gif' %}" class="img-fluid" />
         </video>
-        <p>Your can boost your Desktop size from {{ desktop_type.default_flavor.vcpus }} VCPUs {{ desktop_type.default_flavor.ram }} GB RAM to {{ desktop_type.big_flavor.vcpus }} VCPUs {{ desktop_type.big_flavor.ram }} GB RAM <strong>for {% get_setting "BOOST_EXPIRY" %} days initially, and up to {% get_setting "BOOST_LIFETIME" %} days in total.</strong>.</p>
+        <p>Your can boost your Desktop size from {{ desktop_type.default_flavor.vcpus }} VCPUs {{ desktop_type.default_flavor.ram }} GB RAM to {{ desktop_type.big_flavor.vcpus }} VCPUs {{ desktop_type.big_flavor.ram }} GB RAM <strong>for {% get_setting "BOOST_EXPIRY" %}
+            {% add_setting "BOOST_LIFETIME" "boost_lifetime" %}
+            {% if boost_lifetime >= 0 %}
+            initially, and up to {{ boost_lifetime }} days in total</strong>.
+            {% else %}
+            days</strong>.
+            {% endif %}</p>
         <p>Please save any work and close the connection to your {{ requesting_feature }} before boosting it.  The in-memory
           state of running applications will be lost.  Your {{ requesting_feature }} will be unreachable for a few minutes
           while boosting.</p>
