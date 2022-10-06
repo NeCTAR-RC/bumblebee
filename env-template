@@ -13,6 +13,18 @@ ALLOWED_HOSTS=
 # https SITE_URL assumes there is a proxy in front
 SITE_URL=
 
+### Bumblebee credentials
+
+# If no database credentials are set, the username 'root' and the password
+# 'toor' are used as defaults.
+#DB_USER=
+#DB_PASSWORD=
+
+# If no keycloak credentials are set, the username 'admin' and the password
+# 'admin' are used as defaults.
+#KC_USER=
+#KC_PASSWORD=
+
 ### Bumblebee Guacamole integration config
 
 # GUACAMOLE_URL_TEMPLATE uses three variables on templating:

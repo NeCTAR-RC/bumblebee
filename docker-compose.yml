@@ -12,8 +12,8 @@ services:
       DEBUG: "True"
 
       DB_HOST: mariadb
-      DB_USER: root
-      DB_PASSWORD: toor
+      DB_USER: ${DB_USER:-root}
+      DB_PASSWORD: ${DB_PASSWORD:-toor}
 
       REDIS_HOST: redis
     env_file:
@@ -77,7 +77,7 @@ services:
   mariadb:
     image: mariadb
     environment:
-      MARIADB_ROOT_PASSWORD: toor
+      MARIADB_ROOT_PASSWORD: ${DB_PASSWORD:-toor}
     ports:
     - 3306:3306
     volumes:
@@ -109,8 +109,8 @@ services:
       # Guacamole has to share the database with Bumblebee.
       MYSQL_HOSTNAME: mariadb
       MYSQL_DATABASE: bumblebee
-      MYSQL_USER: root
-      MYSQL_PASSWORD: toor
+      MYSQL_USER: ${DB_USER:-root}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-toor}
 
     env_file:
       - .env
@@ -125,10 +125,10 @@ services:
     environment:
       KC_DB: mariadb
       KC_DB_URL: jdbc:mariadb://mariadb/keycloak
-      KC_DB_USERNAME: root
-      KC_DB_PASSWORD: toor
-      KEYCLOAK_ADMIN: admin
-      KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_DB_USERNAME: ${DB_USER:-root}
+      KC_DB_PASSWORD: ${DB_PASSWORD:-toor}
+      KEYCLOAK_ADMIN: ${KC_USER:-admin}
+      KEYCLOAK_ADMIN_PASSWORD: ${KC_PASSWORD:-admin}
     ports:
       - 8080:8080
     depends_on:
