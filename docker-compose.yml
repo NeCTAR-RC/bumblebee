@@ -23,8 +23,10 @@ services:
     restart: unless-stopped
     command: django-admin runserver 0.0.0.0:8000
     depends_on:
-    - mariadb
-    - redis
+      mariadb:
+        condition: service_healthy
+      redis:
+        condition: service_started
     links:
     - mariadb:mariadb
     - redis:redis
@@ -40,6 +42,9 @@ services:
     volumes:
     - .:/app
     restart: on-failure
+    depends_on:
+      mariadb:
+        condition: service_healthy
     command: /docker-setup.sh
 
   rqscheduler:
@@ -50,8 +55,10 @@ services:
     restart: on-failure
     command: django-admin rqscheduler -i5
     depends_on:
-    - mariadb
-    - redis
+      mariadb:
+        condition: service_healthy
+      redis:
+        condition: service_started
     links:
     - mariadb:mariadb
     - redis:redis
@@ -69,8 +76,10 @@ services:
     restart: on-failure
     command: django-admin rqworker
     depends_on:
-    - mariadb
-    - redis
+      mariadb:
+        condition: service_healthy
+      redis:
+        condition: service_started
     volumes:
     - .:/app
 
@@ -84,7 +93,7 @@ services:
     - dbdata:/var/lib/mysql
     - ./initdb:/docker-entrypoint-initdb.d
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "--silent"]
+      test: [ "CMD", "mysqladmin", "--user=${DB_USER:-root}", "--password=${DB_PASSWORD:-toor}", "ping", "--silent" ]
 
   redis:
     image: redis:alpine
@@ -117,8 +126,10 @@ services:
     ports:
     - 9000:8080
     depends_on:
-    - mariadb
-    - guacd
+      mariadb:
+        condition: service_healthy
+      guacd:
+        condition: service_started
 
   keycloak:
     image: quay.io/keycloak/keycloak:18.0.2
@@ -132,7 +143,8 @@ services:
     ports:
       - 8080:8080
     depends_on:
-      - mariadb
+      mariadb:
+        condition: service_healthy
     command: start-dev
 
 volumes:
