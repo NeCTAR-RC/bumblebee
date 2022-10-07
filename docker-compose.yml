@@ -45,6 +45,8 @@ services:
     environment:
       <<: *bb_env
       DJANGO_MIGRATE: "True"
+    env_file:
+      - .env
     volumes:
       - .:/app
     restart: on-failure
@@ -174,13 +176,17 @@ services:
     depends_on:
       mariadb:
         condition: service_healthy
+    volumes:
+      - ./initkc:/opt/keycloak/data/import
+      - kcdata:/opt/keycloak/data
     healthcheck:
-      test: ["CMD", "curl", "--fail", "http://localhost:8080/realms/master"]
+      test: ["CMD", "curl", "--fail", "http://localhost:8080/realms/bumblebee"]
       interval: 10s
       retries: 9
       start_period: 5s
-    command: start-dev
+    command: start-dev --import-realm
 
 volumes:
   dbdata:
+  kcdata:
   redis_data:

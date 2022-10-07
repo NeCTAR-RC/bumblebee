@@ -8,6 +8,8 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/2.2/ref/settings/
 """
 
+from ast import literal_eval
+
 import logging
 import os
 
@@ -30,6 +32,10 @@ def get_setting(setting, default=None, required=False):
     if required and not value:
         logger.info('Setting value for %s not found!', setting)
     return value
+
+def strtodictorlist(str):
+    dictlist = literal_eval(str)
+    return dictlist
 
 NAME = 'ARDC Nectar Virtual Desktop'
 
@@ -289,8 +295,8 @@ AUTO_APPROVE_WORKSPACES = bool(strtobool(
 # is approved.  (A list of the Feature 'app_name' values.)
 PROJECT_DEFAULT_FEATURES = ['researcher_desktop']
 
-DESKTOP_TYPES = get_setting('DESKTOP_TYPES')
-ZONES = get_setting('ZONES')
+DESKTOP_TYPES = strtodictorlist(get_setting('DESKTOP_TYPES', '[]'))
+ZONES = strtodictorlist(get_setting('ZONES', '[]'))
 
 GENERAL_WARNING_MESSAGE = get_setting('GENERAL_WARNING_MESSAGE')
 # Friendly name for the current environment.

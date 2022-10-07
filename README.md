@@ -44,13 +44,42 @@ Guacamole and Keycloak:
 cp env-template .env
 # read the .env file thoroughly and modify it properly
 docker-compose up -d
-# set up Keycloak
-# modify the .env file
-docker-compose up -d
 ```
 
-Currently, Keycloak has to be set up manually. The admin/admin user can be
-used for that purpose. Any valid realm may be created and its details put
-in the ``.env`` file afterwards with a final run of docker-compose to get
-Bumblebee working with it. Both Bumblebee and Guacamole need their own
-clients set up in Keycloak to work with it.
+Currently, a Keycloak instance is set up automatically to provide the following
+default users for testing all user roles supported by Bumblebee:
+
+  - Test user for the `admin` role:
+    * Username: admin
+    * Password: admin
+  - Test user for the `coreservices` role:
+    * Username: coreservices
+    * Password: coreservices
+  - Test user for the `staff` role:
+    * Username: staff
+    * Password: staff
+  - Test user for the `user` role:
+    * Username: user
+    * Password: user
+
+The Keycloak instance can be accessed with the admin/admin user to configure
+further OpenID Connect settings if needed. Both Bumblebee and Guacamole need
+their own OpenID Connect client endpoints to request authentication of a user.
+Therefore, the Keycloak instance provides two OpenID Connect clients
+configured properly.
+
+A successful docker-compose test setup with a proper authentication only works
+if your Docker host machine can resolve the names of all Docker services. The
+name resolution can be implemented by using a DNS proxy server or by adding the
+following line to the `/etc/hosts` file of the Docker host machine:
+
+```
+127.0.0.1  bumblebee rqscheduler rqworker mariadb redis guacd guacamole keycloak
+```
+
+Then you can access the running Bumblebee service from your Docker host machine
+under the following URL:
+
+```
+http://bumblebee:8000
+```

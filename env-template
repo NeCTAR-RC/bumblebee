@@ -4,14 +4,14 @@
 REQUIRE_AAF=False
 
 # Friendly name for the current environment.
-ENVIRONMENT_NAME=
+ENVIRONMENT_NAME=Bumblebee
 
 # Names/addresses under which Bumblebee is accessible. Comma-separated.
-ALLOWED_HOSTS=
+ALLOWED_HOSTS=localhost,bumblebee
 
 # Full URL to the entry point to Bumblebee.
 # https SITE_URL assumes there is a proxy in front
-SITE_URL=
+SITE_URL=http://bumblebee:8000
 
 ### Bumblebee credentials
 
@@ -32,11 +32,11 @@ SITE_URL=
 #   zone=self.boot_volume.zone.lower()
 #   path=guac_utils.get_connection_path(self.guac_connection)
 # e.g. GUACAMOLE_URL_TEMPLATE=http://{env}-guacamole-{zone}.example.com/{path}
-GUACAMOLE_URL_TEMPLATE=
+GUACAMOLE_URL_TEMPLATE=http://guacamole:9000/guacamole/{path}
 
 ### Bumblebee OpenID Connect integration config
 
-OIDC_SERVER_URL=
+OIDC_SERVER_URL=http://keycloak:8080/realms/bumblebee/protocol/openid-connect
 
 OIDC_RP_CLIENT_ID=bumblebee
 OIDC_RP_CLIENT_SECRET=
@@ -58,8 +58,8 @@ OS_KEYNAME=bumblebee
 ### Guacamole OpenID Connect integration config
 
 # Guacamole requires a non-confidential OIDC client with implicit flow enabled.
-OPENID_AUTHORIZATION_ENDPOINT=
-OPENID_JWKS_ENDPOINT=
-OPENID_ISSUER=
+OPENID_AUTHORIZATION_ENDPOINT=http://keycloak:8080/realms/bumblebee/protocol/openid-connect/auth
+OPENID_JWKS_ENDPOINT=http://keycloak:8080/realms/bumblebee/protocol/openid-connect/certs
+OPENID_ISSUER=http://keycloak:8080/realms/bumblebee
 OPENID_CLIENT_ID=guacamole
-OPENID_REDIRECT_URI=
+OPENID_REDIRECT_URI=http://guacamole:9000/guacamole
