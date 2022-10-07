@@ -26,7 +26,13 @@ services:
       mariadb:
         condition: service_healthy
       redis:
-        condition: service_started
+        condition: service_healthy
+      init:
+        condition: service_completed_successfully
+      keycloak:
+        condition: service_healthy
+      guacamole:
+        condition: service_healthy
     links:
     - mariadb:mariadb
     - redis:redis
@@ -58,7 +64,9 @@ services:
       mariadb:
         condition: service_healthy
       redis:
-        condition: service_started
+        condition: service_healthy
+      init:
+        condition: service_completed_successfully
     links:
     - mariadb:mariadb
     - redis:redis
@@ -79,7 +87,9 @@ services:
       mariadb:
         condition: service_healthy
       redis:
-        condition: service_started
+        condition: service_healthy
+      init:
+        condition: service_completed_successfully
     volumes:
     - .:/app
 
@@ -94,6 +104,9 @@ services:
     - ./initdb:/docker-entrypoint-initdb.d
     healthcheck:
       test: [ "CMD", "mysqladmin", "--user=${DB_USER:-root}", "--password=${DB_PASSWORD:-toor}", "ping", "--silent" ]
+      interval: 10s
+      retries: 9
+      start_period: 5s
 
   redis:
     image: redis:alpine
@@ -101,12 +114,22 @@ services:
     - 6379:6379
     volumes:
       - redis_data:/data
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      retries: 9
+      start_period: 5s
 
   guacd:
     image: guacamole/guacd:1.3.0
     restart: unless-stopped
     ports:
     - 4822:4822
+    healthcheck:
+      # Use healthcheck command from guacd Dockerfile
+      interval: 10s
+      retries: 9
+      start_period: 5s
 
   guacamole:
     image: guacamole/guacamole:1.3.0
@@ -125,11 +148,16 @@ services:
       - .env
     ports:
     - 9000:8080
+    healthcheck:
+      test: [ "CMD", "curl", "--fail", "http://localhost:8080/guacamole" ]
+      interval: 10s
+      retries: 9
+      start_period: 5s
     depends_on:
       mariadb:
         condition: service_healthy
       guacd:
-        condition: service_started
+        condition: service_healthy
 
   keycloak:
     image: quay.io/keycloak/keycloak:18.0.2
@@ -145,6 +173,11 @@ services:
     depends_on:
       mariadb:
         condition: service_healthy
+    healthcheck:
+      test: [ "CMD", "curl", "--fail", "http://localhost:8080/realms/master" ]
+      interval: 10s
+      retries: 9
+      start_period: 5s
     command: start-dev
 
 volumes:
