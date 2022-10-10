@@ -190,6 +190,18 @@ def _create_hostname_id():
 
 
 class InstanceManager(models.Manager):
+    def get_live_instances(self, user, desktop_type):
+        """Get the live instances for a user, where 'live' means not
+        deleted / marked for deletion, and not missing on the OpenStack
+        side.  If 'desktop_type' is not None, also filter by that.
+        """
+        qs = self.filter(user=user, deleted=None, marked_for_deletion=None)
+        if desktop_type:
+            qs = qs.filter(
+                boot_volume__operating_system=desktop_type.id,
+                boot_volume__requesting_feature=desktop_type.feature)
+        return [i for i in qs if i.get_status != MISSING]
+
     def get_instance(self, user, desktop_type):
         try:
             instance = self.get(
@@ -437,20 +449,6 @@ class Resize(models.Model):
 
 
 class VMStatusManager(models.Manager):
-    def get_latest_vm_statuses(self, user, excluded_states=[VM_DELETED]):
-        """This is used to check if a User has any live desktop instances.
-        We check each desktop type, and look for the latest VMStatus for
-        the user.  If it is not in the excluded states, we include it
-        in the result list.
-        """
-        statuses = []
-        for desktop_type in DesktopType.objects.all():
-            # Note that this includes disabled DesktopTypes.
-            vm_status = self.get_latest_vm_status(user, desktop_type)
-            if vm_status and vm_status.status not in excluded_states:
-                statuses.append(vm_status)
-        return statuses
-
     def get_latest_vm_status(self, user, desktop_type):
         """Get the latest VMStatus for this User and DesktopType in
         any state.  Returns None if there are none.

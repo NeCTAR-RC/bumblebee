@@ -79,12 +79,28 @@ class VMManagerViewTests(TestCase):
         mock_rq.get_queue.assert_not_called()
 
     @patch('vm_manager.views.django_rq')
+    def test_launch_vm_not_properly_deleted(self, mock_rq):
+        self.build_existing_vm(VM_DELETED)
+
+        mock_queue = Mock()
+        mock_rq.get_queue.return_value = mock_queue
+
+        self.assertEqual(
+            f"User {self.user} already has 1 live desktops",
+            launch_vm(self.user, self.UBUNTU, self.zone))
+        vm_status = VMStatus.objects.get_latest_vm_status(
+            self.user, self.UBUNTU)
+
+    @patch('vm_manager.views.django_rq')
     def test_launch_vm(self, mock_rq):
         self.build_existing_vm(VM_DELETED)
 
         mock_queue = Mock()
         mock_rq.get_queue.return_value = mock_queue
         now = datetime.now(utc)
+
+        self.instance.deleted = now
+        self.instance.save()
 
         self.assertEqual(
             f"Status of {self.UBUNTU} for {self.user} "
@@ -205,10 +221,11 @@ class VMManagerViewTests(TestCase):
             f"is missing. Cannot unshelve VM.",
             unshelve_vm(self.user, self.UBUNTU))
 
-        self.build_existing_vm(None)
-
         for status in ALL_VM_STATES - {VM_SHELVED}:
             self.build_existing_vm(status)
+            now = datetime.now(utc)
+            self.instance.deleted = now
+            self.instance.save()
             self.assertEqual(
                 f"VMStatus for user {self.user}, "
                 f"desktop_type {self.UBUNTU.id}, "
@@ -219,10 +236,24 @@ class VMManagerViewTests(TestCase):
         mock_rq.get_queue.assert_not_called()
 
     @patch('vm_manager.views.django_rq')
+    def test_unshelve_vm_existing(self, mock_rq):
+        mock_queue = Mock()
+        mock_rq.get_queue.return_value = mock_queue
+        self.build_existing_vm(VM_SHELVED)
+
+        self.assertEqual(
+            f"User {self.user} already has 1 live desktops",
+            unshelve_vm(self.user, self.UBUNTU))
+        mock_rq.get_queue.assert_not_called()
+
+    @patch('vm_manager.views.django_rq')
     def test_unshelve_vm(self, mock_rq):
         mock_queue = Mock()
         mock_rq.get_queue.return_value = mock_queue
         self.build_existing_vm(VM_SHELVED)
+        now = datetime.now(utc)
+        self.instance.deleted = now
+        self.instance.save()
 
         self.assertEqual(
             f"Status of {self.UBUNTU.id} for {self.user} "

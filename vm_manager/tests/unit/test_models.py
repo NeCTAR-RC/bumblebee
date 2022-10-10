@@ -397,6 +397,43 @@ class InstanceModelTests(VMManagerModelTestBase):
             "Got a vm that is marked for deletion "
             f"- vm_id: {id}, called by {self.user}")
 
+    def test_get_live_instances(self):
+        self.assertEqual([],
+                         Instance.objects.get_live_instances(self.user, None))
+
+        fake_volume = self.make_volume()
+        fake_instance = InstanceFactory.create(
+            id=uuid.uuid4(), user=self.user, boot_volume=fake_volume)
+        self.assertEqual([fake_instance],
+                         Instance.objects.get_live_instances(self.user, None))
+
+        fake_volume2 = self.make_volume()
+        fake_instance2 = InstanceFactory.create(
+            id=uuid.uuid4(), user=self.user, boot_volume=fake_volume2)
+        self.assertEqual([fake_instance, fake_instance2],
+                         Instance.objects.get_live_instances(self.user, None))
+
+        fake_instance2.deleted = datetime.now(utc)
+        fake_instance2.save()
+        self.assertEqual([fake_instance],
+                         Instance.objects.get_live_instances(self.user, None))
+
+        desktop_type2 = DesktopTypeFactory.create(
+            id='desktop2', name='desktop2', feature=self.feature)
+        fake_volume3 = self.make_volume(
+            operating_system=desktop_type2.id,
+            requesting_feature=desktop_type2.feature)
+        fake_instance3 = InstanceFactory.create(
+            id=uuid.uuid4(), user=self.user, boot_volume=fake_volume3)
+        self.assertEqual(
+            [fake_instance],
+            Instance.objects.get_live_instances(self.user,
+                                                self.desktop_type))
+        self.assertEqual(
+            [fake_instance3],
+            Instance.objects.get_live_instances(self.user,
+                                                desktop_type2))
+
 
 class ResizeModelTests(VMManagerModelTestBase):
 
@@ -514,24 +551,6 @@ class VMStatusModelTests(VMManagerModelTestBase):
         self.assertEqual(vmstatus2,
                          VMStatus.objects.get_latest_vm_status(
                              self.user, self.desktop_type))
-
-    def test_get_latest_vm_statuses(self):
-        self.assertEqual([],
-                         VMStatus.objects.get_latest_vm_statuses(self.user))
-        vmstatus = self.make_vmstatus(status="1")
-        self.assertEqual([vmstatus],
-                         VMStatus.objects.get_latest_vm_statuses(self.user))
-
-        vmstatus2 = self.make_vmstatus(status="2")
-        other_desktop_type = DesktopTypeFactory.create(
-            id='other_desktop', name='other_desktop', feature=self.feature)
-        vmstatus3 = self.make_vmstatus(status="3",
-                                       operating_system=other_desktop_type.id)
-        self.assertEqual([vmstatus2, vmstatus3],
-                         VMStatus.objects.get_latest_vm_statuses(self.user))
-        vmstatus4 = self.make_vmstatus(status=VM_DELETED)
-        self.assertEqual([vmstatus3],
-                         VMStatus.objects.get_latest_vm_statuses(self.user))
 
     def test_get_vm_status_by_volume(self):
         other_feature = FeatureFactory.create()

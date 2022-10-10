@@ -41,6 +41,7 @@ import researcher_desktop.views as rdesk_views
 from vm_manager.constants import NO_VM
 from vm_manager.models import VMStatus
 from vm_manager.utils.utils import get_nectar
+from vm_manager.views import desktop_limit_check
 
 logger = logging.getLogger(__name__)
 
@@ -484,11 +485,10 @@ def custom_page_error(request, exception=None):
 def desktop_details(request, desktop_name):
     desktop_type = get_desktop_type(desktop_name)
     zones = get_applicable_zones(desktop_type)
-    launch_allowed = len(
-        VMStatus.objects.get_latest_vm_statuses(request.user)) == 0
+    launch_blocked = desktop_limit_check(request.user, desktop_type)
     return render(request, 'researcher_workspace/desktop_details.html',
                   {'app_name': 'researcher_workspace',
-                   'launch_allowed': launch_allowed,
+                   'launch_allowed': not launch_blocked,
                    'desktop_type': desktop_type,
                    'applicable_zones': zones})
 

@@ -67,15 +67,25 @@ def _wrong_state_message(action, user, feature=None, desktop_type=None,
     return message
 
 
+def desktop_limit_check(user, desktop_type, log=False) -> str:
+    # Policy on number of simultaneous desktops: one per user.  As it is
+    # designed the UI shouldn't give the user the option of creating more
+    # than one desktop.  This is to guard against accidents ...
+    existing = Instance.objects.get_live_instances(user, None)
+    if existing:
+        message = f"User {user} already has {len(existing)} live desktops"
+        if log:
+            logger.error(message)
+        return message
+    else:
+        return None
+
+
 def launch_vm(user, desktop_type, zone) -> str:
     # TODO - the handling of race conditions (below) is dodgy
 
-    vm_statuses = VMStatus.objects.get_latest_vm_statuses(user)
-    if vm_statuses:
-        message = f"User {user} already has {len(vm_statuses)} live desktops"
-        logger.error(message)
-        return message
-
+    if res := desktop_limit_check(user, desktop_type, log=True):
+        return res
     vm_status = VMStatus(
         user=user, requesting_feature=desktop_type.feature,
         operating_system=desktop_type.id, status=VM_CREATING,
@@ -162,6 +172,9 @@ def shelve_vm(user, vm_id, requesting_feature) -> str:
 
 
 def unshelve_vm(user, desktop_type) -> str:
+    if res := desktop_limit_check(user, desktop_type, log=True):
+        return res
+
     vm_status = VMStatus.objects.get_latest_vm_status(user, desktop_type)
     if not vm_status or vm_status.status != VM_SHELVED:
         return _wrong_state_message(
