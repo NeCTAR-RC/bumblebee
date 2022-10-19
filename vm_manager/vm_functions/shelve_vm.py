@@ -58,7 +58,7 @@ def shelve_vm_worker(instance):
         return _end_shelve(instance, WF_SUCCESS)
     except novaclient.exceptions.ClientException:
         logger.exception("Instance get failed - {instance}")
-        return _end_shelve(instance, WF_FAIL)
+        return _end_shelve(instance, WF_RETRY)
 
     if status == ACTIVE:
         try:
@@ -139,7 +139,7 @@ def shelve_expired_vm(instance, requesting_feature):
     vm_status = VMStatus.objects.get_vm_status_by_instance(
         instance, requesting_feature, allow_missing=True)
     if vm_status and vm_status.status not in (VM_OKAY, VM_SUPERSIZED):
-        logger.info(f"Instance in unexpected state: {vm_status}")
+        logger.error(f"Instance in unexpected state: {vm_status}")
         return WF_RETRY
     else:
         return shelve_vm_worker(instance)

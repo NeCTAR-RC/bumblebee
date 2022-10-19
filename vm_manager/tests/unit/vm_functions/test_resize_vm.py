@@ -15,7 +15,7 @@ from vm_manager.tests.unit.vm_functions.base import VMFunctionTestBase
 from vm_manager.constants import ACTIVE, SHUTDOWN, RESIZE, VERIFY_RESIZE, \
     RESCUE, VM_ERROR, VM_RESIZING, VM_OKAY, VM_WAITING, VM_SUPERSIZED, \
     RESIZE_CONFIRM_WAIT_SECONDS, FORCED_DOWNSIZE_WAIT_SECONDS, \
-    WF_SUCCESS, WF_FAIL, WF_STARTED, WF_CONTINUE
+    WF_SUCCESS, WF_FAIL, WF_CONTINUE
 from vm_manager.models import VMStatus, Resize, Instance
 from vm_manager.vm_functions.resize_vm import supersize_vm_worker, \
     downsize_vm_worker, extend_boost, _resize_vm, _wait_to_confirm_resize, \
@@ -33,11 +33,11 @@ class ResizeVMTests(VMFunctionTestBase):
         fake_nectar = get_nectar()
 
         _, fake_instance = self.build_fake_vol_instance(ip_address='10.0.0.99')
-        mock_resize.return_value = WF_STARTED
+        mock_resize.return_value = WF_CONTINUE
 
         self.assertEqual(0, Resize.objects.all().count())
 
-        self.assertEqual(WF_STARTED,
+        self.assertEqual(WF_CONTINUE,
                          supersize_vm_worker(fake_instance, self.UBUNTU))
         mock_resize.assert_called_once_with(
             fake_instance, self.UBUNTU.big_flavor.id, VM_SUPERSIZED,
@@ -114,10 +114,10 @@ class ResizeVMTests(VMFunctionTestBase):
         fake_nectar = get_nectar()
 
         _, fake_instance = self.build_fake_vol_instance(ip_address='10.0.0.99')
-        mock_resize.return_value = WF_STARTED
+        mock_resize.return_value = WF_CONTINUE
         fake_resize = ResizeFactory.create(instance=fake_instance)
 
-        self.assertEqual(WF_STARTED,
+        self.assertEqual(WF_CONTINUE,
                          downsize_vm_worker(fake_instance, self.UBUNTU))
         mock_resize.assert_called_once_with(
             fake_instance, self.UBUNTU.default_flavor.id,
@@ -224,7 +224,7 @@ class ResizeVMTests(VMFunctionTestBase):
         fake_vm_status.save()
 
         # Normal resize
-        self.assertEqual(WF_STARTED,
+        self.assertEqual(WF_CONTINUE,
             _resize_vm(fake_instance, big_flavor_id,
                        VM_SUPERSIZED, self.FEATURE))
 
@@ -563,12 +563,13 @@ class ResizeVMTests(VMFunctionTestBase):
 
         _, fake_instance, fake_vm_status = self.build_fake_vol_inst_status(
             status=VM_SUPERSIZED)
-        mock_resize.return_value = WF_STARTED
+        mock_resize.return_value = WF_CONTINUE
 
         resize = ResizeFactory.create(instance=fake_instance)
         resize.set_expires(now - timedelta(days=1))
 
-        self.assertEqual(WF_STARTED, downsize_expired_vm(resize, self.FEATURE))
+        self.assertEqual(WF_CONTINUE,
+                         downsize_expired_vm(resize, self.FEATURE))
         mock_resize.assert_called_once_with(
             fake_instance, self.UBUNTU.default_flavor.id,
             VM_OKAY, self.FEATURE)

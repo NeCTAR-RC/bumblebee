@@ -9,7 +9,7 @@ from vm_manager.constants import \
     RESIZE, VERIFY_RESIZE, ACTIVE, \
     RESIZE_CONFIRM_WAIT_SECONDS, FORCED_DOWNSIZE_WAIT_SECONDS, \
     VM_SUPERSIZED, VM_RESIZING, VM_OKAY, \
-    WF_SUCCESS, WF_FAIL, WF_RETRY, WF_STARTED, WF_CONTINUE
+    WF_SUCCESS, WF_FAIL, WF_RETRY, WF_CONTINUE
 from vm_manager.utils.utils import after_time, get_nectar
 from vm_manager.utils.expiry import BoostExpiryPolicy
 from vm_manager.models import VMStatus, Instance, Resize, \
@@ -26,7 +26,7 @@ def supersize_vm_worker(instance, desktop_type) -> str:
     supersize_result = _resize_vm(instance,
                                   desktop_type.big_flavor.id,
                                   VM_SUPERSIZED, desktop_type.feature)
-    if supersize_result in (WF_SUCCESS, WF_STARTED):
+    if supersize_result in (WF_SUCCESS, WF_CONTINUE):
         now = datetime.now(utc)
         resize = Resize(instance=instance, requested=now)
         resize.set_expires(BoostExpiryPolicy().initial_expiry(now=now))
@@ -40,7 +40,7 @@ def downsize_vm_worker(instance, desktop_type) -> str:
     downsize_result = _resize_vm(instance,
                                  desktop_type.default_flavor.id,
                                  VM_OKAY, desktop_type.feature)
-    if downsize_result in (WF_SUCCESS, WF_STARTED):
+    if downsize_result in (WF_SUCCESS, WF_CONTINUE):
         resize = Resize.objects.get_latest_resize(instance.id)
         if not resize:
             logger.error("Missing resize record for instance {instance}")
@@ -107,7 +107,7 @@ def _resize_vm(instance, flavor, target_status, requesting_feature):
                          instance, flavor, target_status,
                          after_time(RESIZE_CONFIRM_WAIT_SECONDS),
                          requesting_feature)
-    return WF_STARTED
+    return WF_CONTINUE
 
 
 def _wait_to_confirm_resize(instance, flavor, target_status,
@@ -218,14 +218,14 @@ def downsize_expired_vm(resize, requesting_feature):
         result = _resize_vm(resize.instance,
                             resize.instance.boot_volume.flavor,
                             VM_OKAY, requesting_feature)
-        if result in (WF_SUCCESS, WF_STARTED):
+        if result in (WF_SUCCESS, WF_CONTINUE):
             resize.reverted = datetime.now(utc)
             resize.save()
             if vm_status:
                 # Refetch because _resize_vm may have updated it
                 vm_status = VMStatus.objects.get(pk=vm_status.pk)
                 if vm_status.status == VM_SUPERSIZED:
-                    if result == WF_STARTED:
+                    if result == WF_CONTINUE:
                         # Simulate vm_status behavior of a normal downsize
                         # (with # longer timeout) in case user does a
                         # browser refresh while auto-downsize is happening.

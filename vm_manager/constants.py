@@ -88,8 +88,6 @@ INSTANCE_LAUNCH_TIMEOUT = 120
 #
 # Workflow completed
 WF_SUCCESS = 'succeeded'
-# Workflow started but not completed.  Continues in the background
-WF_STARTED = 'started'
 # Workflow continues
 WF_CONTINUE = 'continue'
 # Workflow failed - retryable

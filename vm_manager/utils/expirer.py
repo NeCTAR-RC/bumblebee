@@ -7,7 +7,7 @@ from django.utils.timezone import utc
 
 from researcher_workspace.utils import send_notification, format_notification
 from researcher_desktop.models import DesktopType
-from vm_manager.constants import WF_SUCCESS, WF_STARTED, WF_RETRY, WF_FAIL
+from vm_manager.constants import WF_SUCCESS, WF_CONTINUE, WF_RETRY, WF_FAIL
 from vm_manager.models import Instance, Volume, Resize, \
     EXP_INITIAL, EXP_FIRST_WARNING, EXP_FINAL_WARNING, EXP_EXPIRING, \
     EXP_EXPIRY_COMPLETED, EXP_EXPIRY_FAILED, EXP_EXPIRY_FAILED_RETRYABLE
@@ -30,7 +30,7 @@ EXP_SUCCESS = WF_SUCCESS
 EXP_NOTIFY = 'notified'
 
 # Action started but not completed.  Continues in the background
-EXP_STARTED = WF_STARTED
+EXP_STARTED = WF_CONTINUE
 
 # Action failed - retryable
 EXP_RETRY = WF_RETRY
@@ -160,7 +160,8 @@ class Expirer(object):
                 if not self.dry_run:
                     res = self.do_expire(target)
                     if res in (EXP_FAIL, EXP_RETRY):
-                        logger.error(f"Expiration action failed for {target}")
+                        logger.error(f"Expiration action failed ({res})"
+                                     f" for {target}")
                     if res == EXP_SUCCESS:
                         stage = EXP_EXPIRY_COMPLETED
                     elif res == EXP_FAIL:
