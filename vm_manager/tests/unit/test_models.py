@@ -100,7 +100,7 @@ class VolumeModelTests(VMManagerModelTestBase):
         with self.assertRaises(Volume.MultipleObjectsReturned) as cm:
             Volume.objects.get_volume(self.user, self.desktop_type)
         self.assertEqual(
-            f"Multiple current volumes found in the database with "
+            "Multiple current volumes found in the database with "
             f"user={self.user} and os={self.desktop_type.id}",
             str(cm.exception))
 
@@ -211,7 +211,8 @@ class InstanceModelTests(VMManagerModelTestBase):
         # This is what create_guac_connection is used for ...
         url = fake_instance.get_url()
         self.assertTrue(
-            url.startswith(f"https://tiger-guacamole-qriscloud.example.com/#/client/"))
+            url.startswith("https://tiger-guacamole-qriscloud.example.com"
+                           "/#/client/"))
 
     def test_get_instance(self):
         self.assertIsNone(
@@ -231,7 +232,7 @@ class InstanceModelTests(VMManagerModelTestBase):
 
         with self.assertRaises(Instance.MultipleObjectsReturned) as cm:
             Instance.objects.get_instance(self.user, self.desktop_type)
-        self.assertEqual(f"Multiple current instances found in the database "
+        self.assertEqual("Multiple current instances found in the database "
                          f"with user={self.user} and "
                          f"os={self.desktop_type.name}",
                          str(cm.exception))
@@ -260,7 +261,7 @@ class InstanceModelTests(VMManagerModelTestBase):
         with self.assertRaises(Instance.MultipleObjectsReturned) as cm:
             Instance.objects.get_instance_by_ip_address(
                 ip_address, self.desktop_type.feature)
-        self.assertEqual(f"Multiple current instances found in the database "
+        self.assertEqual("Multiple current instances found in the database "
                          f"with ip_address={ip_address}",
                          str(cm.exception))
 
@@ -326,14 +327,14 @@ class InstanceModelTests(VMManagerModelTestBase):
             Instance.objects.get_instance_by_untrusted_vm_id(
                 None, self.user, self.feature)
         mock_logger.error.assert_called_with(
-            f"Trying to get a vm that doesn't exist with "
+            "Trying to get a vm that doesn't exist with "
             f"vm_id: None, called by {self.user}")
 
         with self.assertRaises(Http404):
             Instance.objects.get_instance_by_untrusted_vm_id(
                 'fnoord', self.user, self.feature)
         mock_logger.error.assert_called_with(
-            f"Validation error (['“fnoord” is not a valid UUID.']) trying "
+            "Validation error (['“fnoord” is not a valid UUID.']) trying "
             f"to get a VM with vm_id: fnoord, called by {self.user}")
 
         id = uuid.uuid4()
@@ -341,7 +342,7 @@ class InstanceModelTests(VMManagerModelTestBase):
             Instance.objects.get_instance_by_untrusted_vm_id(
                 id, self.user, self.feature)
         mock_logger.error.assert_called_with(
-            f"Trying to get a vm that doesn't exist with "
+            "Trying to get a vm that doesn't exist with "
             f"vm_id: {id}, called by {self.user}")
 
         fake_volume = self.make_volume()
@@ -358,7 +359,7 @@ class InstanceModelTests(VMManagerModelTestBase):
             Instance.objects.get_instance_by_untrusted_vm_id(
                 id, fake_user, self.feature)
         mock_logger.error.assert_called_with(
-            f"Trying to get a vm that doesn't belong "
+            "Trying to get a vm that doesn't belong "
             f"to {fake_user} with vm_id: {id}, "
             f"this vm belongs to {self.user}")
 
@@ -572,7 +573,7 @@ class VMStatusModelTests(VMManagerModelTestBase):
         with self.assertRaises(VMStatus.MultipleObjectsReturned) as cm:
             VMStatus.objects.get_vm_status_by_volume(
                 self.volume, self.feature)
-        self.assertEqual(f"Multiple vm_statuses found in the database "
+        self.assertEqual("Multiple vm_statuses found in the database "
                          f"with instance={self.instance}",
                          str(cm.exception))
 
@@ -594,6 +595,6 @@ class VMStatusModelTests(VMManagerModelTestBase):
         with self.assertRaises(VMStatus.MultipleObjectsReturned) as cm:
             VMStatus.objects.get_vm_status_by_instance(
                 self.instance, self.feature)
-        self.assertEqual(f"Multiple vm_statuses found in the database "
+        self.assertEqual("Multiple vm_statuses found in the database "
                          f"with instance={self.instance}",
                          str(cm.exception))

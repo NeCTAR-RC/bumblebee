@@ -104,7 +104,7 @@ def launch_vm(user, desktop_type, zone) -> str:
                         .exclude(status__in=[NO_VM, VM_SHELVED])
     if check_vm_status.count() > 1:
         vm_status.delete()
-        error_message = f"A VMStatus with that User and OS already exists"
+        error_message = f"A VMStatus for user {user} already exists"
         logger.error(error_message)
         return error_message
 
@@ -156,7 +156,7 @@ def shelve_vm(user, vm_id, requesting_feature) -> str:
 
     logger.info(f"Changing the VMStatus of {vm_id} "
                 f"from {vm_status.status} to {VM_WAITING} "
-                f"and Mark for Deletion is set on the Instance")
+                "and Mark for Deletion is set on the Instance")
     vm_status.wait_time = after_time(SHELVE_WAIT_SECONDS)
     vm_status.status = VM_WAITING
     vm_status.status_progress = 0
@@ -414,7 +414,7 @@ def get_vm_state(vm_status, user, desktop_type):
             'expiration': expiration,
             'extended_expiration': policy.new_expiry(resize),
         }, instance.id
-    logger.error(f"get_vm_state for to an unhandled state "
+    logger.error("get_vm_state for to an unhandled state "
                  f"for {user} requesting {desktop_type}")
     raise NotImplementedError
 
@@ -505,13 +505,13 @@ def notify_vm(request, requesting_feature):
     instance = Instance.objects.get_instance_by_ip_address(
         ip_address, requesting_feature)
     if not instance:
-        logger.error(f"No current Instance found with "
+        logger.error("No current Instance found with "
                      f"IP address {ip_address}")
         raise Http404
     volume = instance.boot_volume
     if generate_hostname(volume.hostname_id,
                          volume.operating_system) != hostname:
-        logger.error(f"Hostname provided in request does not match "
+        logger.error("Hostname provided in request does not match "
                      f"hostname of volume {instance}, {hostname}")
         raise Http404
     if state == SCRIPT_OKAY:
@@ -540,7 +540,7 @@ def notify_vm(request, requesting_feature):
 @csrf_exempt
 def phone_home(request, requesting_feature):
     if 'instance_id' not in request.POST:
-        logger.error(f"Instance ID not found in data")
+        logger.error("Instance ID not found in data")
         raise Http404
 
     instance_id = request.POST['instance_id']

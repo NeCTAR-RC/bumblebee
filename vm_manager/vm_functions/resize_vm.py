@@ -56,7 +56,7 @@ def downsize_vm_worker(instance, desktop_type) -> str:
 def extend_boost(user, vm_id, requesting_feature) -> str:
     instance = Instance.objects.get_instance_by_untrusted_vm_id(
         vm_id, user, requesting_feature)
-    logger.info(f"Extending the expiration of "
+    logger.info("Extending the expiration of "
                 f"{instance.boot_volume.operating_system} instance "
                 f"for user {user.username}")
     resize = Resize.objects.get_latest_resize(instance.id)
@@ -160,7 +160,7 @@ def _wait_to_confirm_resize(instance, flavor, target_status,
         if instance_flavor != str(flavor):
             message = (
                 f"Instance ({instance}) resize failed as "
-                f"instance hasn't changed flavor: "
+                "instance hasn't changed flavor: "
                 f"Actual Flavor: {instance_flavor}, "
                 f"Expected Flavor: {flavor}")
             logger.error(message)
@@ -211,7 +211,7 @@ def downsize_expired_vm(resize, requesting_feature):
     if vm_status and vm_status.status != VM_SUPERSIZED:
         # There may be cleanup needed, but we are only concerned with
         # the downsizing here.
-        logger.info(f"Skipping downsize of instance in wrong state: "
+        logger.info("Skipping downsize of instance in wrong state: "
                     f"{vm_status}")
         return WF_SUCCESS
     else:

@@ -57,7 +57,7 @@ class CreateVMTests(VMFunctionTestBase):
         with self.assertRaises(RuntimeWarning) as cm:
             launch_vm_worker(self.user, self.UBUNTU, self.zone)
             self.assertEqual(f"A {self.UBUNTU.id} VM for {self.user.username} "
-                             f"already exists",
+                             "already exists",
                              str(cm.exception))
 
         mock_create.assert_not_called()

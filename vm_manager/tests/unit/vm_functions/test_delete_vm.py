@@ -235,7 +235,7 @@ class DeleteVMTests(VMFunctionTestBase):
         mock_rq.get_scheduler.assert_called_once_with("default")
         mock_logger.info.assert_called_with(
             f"Ran out of retries shutting down {fake_instance}. "
-            f"Proceeding to delete Nova instance anyway!")
+            "Proceeding to delete Nova instance anyway!")
         mock_worker.assert_called_once_with(fake_instance)
         mock_scheduler.enqueue_in.assert_called_once_with(
             timedelta(seconds=INSTANCE_DELETION_RETRY_WAIT_TIME),
@@ -269,7 +269,7 @@ class DeleteVMTests(VMFunctionTestBase):
         mock_rq.get_scheduler.assert_called_once_with("default")
         mock_logger.info.assert_called_with(
             f"Ran out of retries shutting down {fake_instance}. "
-            f"Proceeding to delete Nova instance anyway!")
+            "Proceeding to delete Nova instance anyway!")
         mock_worker.assert_called_once_with(fake_instance)
         mock_scheduler.enqueue_in.assert_called_once_with(
             timedelta(seconds=INSTANCE_DELETION_RETRY_WAIT_TIME),
@@ -576,7 +576,7 @@ class ArchiveVMTests(VMFunctionTestBase):
 
         self.assertFalse(archive_volume_worker(fake_volume, self.FEATURE))
         mock_logger.error.assert_called_once_with(
-            f"Cannot archive volume with Cinder status "
+            "Cannot archive volume with Cinder status "
             f"sleeping: {fake_volume}. Manual cleanup needed.")
         fake_nectar.cinder.volumes.get.assert_called_once_with(
             volume_id=fake_volume.id)
@@ -653,7 +653,7 @@ class ArchiveVMTests(VMFunctionTestBase):
         self.assertEqual(
             WF_RETRY, archive_volume_worker(fake_volume, self.FEATURE))
         mock_logger.error.assert_called_once_with(
-            f"Cannot archive volume with Cinder status "
+            "Cannot archive volume with Cinder status "
             f"sleeping: {fake_volume}. Manual cleanup needed.")
         fake_nectar.cinder.volumes.get.assert_called_once_with(
             volume_id=fake_volume.id)
@@ -726,7 +726,7 @@ class ArchiveVMTests(VMFunctionTestBase):
         fake_nectar.cinder.backups.get.assert_called_once_with(backup_id)
         mock_logger.error.assert_called_once_with(
             f'Backup {backup_id} for volume {fake_volume} '
-            f'is in unexpected state reversing')
+            'is in unexpected state reversing')
         mock_rq.get_scheduler.assert_not_called()
 
     @patch('vm_manager.vm_functions.delete_vm.django_rq')

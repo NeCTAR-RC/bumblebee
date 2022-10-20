@@ -44,7 +44,7 @@ def get_best_zone(email, desktop_type, chosen_zone) -> AvailabilityZone:
             logger.error(f"Chosen AZ {chosen_zone} is unknown or "
                          "disallowed for this desktop type")
         else:
-            logger.error(f"No AZs allowed for this desktop type")
+            logger.error("No AZs allowed for this desktop type")
         raise Http404
     return zone
 

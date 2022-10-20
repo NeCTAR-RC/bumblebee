@@ -130,21 +130,21 @@ class VMManagerViewTests(TestCase):
         self.build_existing_vm(None)
         self.assertEqual(
             f"VMStatus for user {self.user}, feature {self.FEATURE} "
-            f"is missing. Cannot delete VM.",
+            "is missing. Cannot delete VM.",
             delete_vm(self.user, self.instance.id, self.FEATURE))
 
         self.build_existing_vm(NO_VM)
         self.assertEqual(
             f"VMStatus for user {self.user}, feature {self.FEATURE}, "
             f"instance {self.instance.id} is in wrong state ({NO_VM}). "
-            f"Cannot delete VM.",
+            "Cannot delete VM.",
             delete_vm(self.user, self.instance.id, self.FEATURE))
 
         self.build_existing_vm(VM_DELETED)
         self.assertEqual(
             f"VMStatus for user {self.user}, feature {self.FEATURE}, "
             f"instance {self.instance.id} is in wrong state ({VM_DELETED}). "
-            f"Cannot delete VM.",
+            "Cannot delete VM.",
             delete_vm(self.user, self.instance.id, self.FEATURE))
 
         mock_rq.get_queue.assert_not_called()
@@ -180,7 +180,7 @@ class VMManagerViewTests(TestCase):
         self.assertEqual(
             f"VMStatus for user {self.user}, "
             f"feature {self.FEATURE}, instance {self.instance.id} "
-            f"is missing. Cannot shelve VM.",
+            "is missing. Cannot shelve VM.",
             shelve_vm(self.user, self.instance.id, self.FEATURE))
 
         for status in ALL_VM_STATES - {VM_OKAY, VM_SUPERSIZED}:
@@ -218,7 +218,7 @@ class VMManagerViewTests(TestCase):
         self.assertEqual(
             f"VMStatus for user {self.user}, "
             f"desktop_type {self.UBUNTU.id} "
-            f"is missing. Cannot unshelve VM.",
+            "is missing. Cannot unshelve VM.",
             unshelve_vm(self.user, self.UBUNTU))
 
         for status in ALL_VM_STATES - {VM_SHELVED}:
@@ -287,7 +287,7 @@ class VMManagerViewTests(TestCase):
             self.assertEqual(
                 f"VMStatus for user {self.user}, feature {self.FEATURE}, "
                 f"instance {self.instance.id} is in wrong state ({status}). "
-                f"Cannot reboot VM.",
+                "Cannot reboot VM.",
                 reboot_vm(self.user, self.instance.id,
                           REBOOT_SOFT, self.FEATURE))
 
@@ -336,7 +336,7 @@ class VMManagerViewTests(TestCase):
             self.assertEqual(
                 f"VMStatus for user {self.user}, feature {self.FEATURE}, "
                 f"instance {self.instance.id} is in wrong state ({state}). "
-                f"Cannot supersize VM.",
+                "Cannot supersize VM.",
                 supersize_vm(self.user, self.instance.id, self.FEATURE))
 
         mock_rq.get_queue.assert_not_called()
@@ -380,7 +380,7 @@ class VMManagerViewTests(TestCase):
             self.assertEqual(
                 f"VMStatus for user {self.user}, feature {self.FEATURE}, "
                 f"instance {self.instance.id} is in wrong state ({state}). "
-                f"Cannot downsize VM.",
+                "Cannot downsize VM.",
                 downsize_vm(self.user, self.instance.id, self.FEATURE))
 
         mock_rq.get_queue.assert_not_called()
@@ -799,7 +799,7 @@ class VMManagerViewTests(TestCase):
         with self.assertRaises(Http404):
             notify_vm(fake_request, self.FEATURE)
         mock_logger.error.assert_called_with(
-            f"Hostname provided in request does not match "
+            "Hostname provided in request does not match "
             f"hostname of volume {self.instance}, foo")
         mock_gen.assert_called_with(
             self.volume.hostname_id, self.UBUNTU.id)
@@ -860,13 +860,13 @@ class VMManagerViewTests(TestCase):
 
         self.assertEqual(
             f"{self.instance.ip_address}, {self.UBUNTU.id}, "
-            f"42, Other Message",
+            "42, Other Message",
             notify_vm(fake_request, self.FEATURE))
 
         mock_gen.assert_called_with(
             self.volume.hostname_id, self.UBUNTU.id)
         mock_logger.error.assert_called_with(
-            f"Notify VM Error: Other Message for instance: "
+            "Notify VM Error: Other Message for instance: "
             f"\"{self.instance}\"")
         vm_status = VMStatus.objects.get(pk=self.vm_status.pk)
         self.assertEqual(VM_ERROR, vm_status.status)
@@ -890,7 +890,7 @@ class VMManagerViewTests(TestCase):
         with self.assertRaises(Http404):
             phone_home(fake_request, self.FEATURE)
         mock_logger_2.error.assert_called_with(
-            f"Trying to get a vm that doesn't exist with vm_id: "
+            "Trying to get a vm that doesn't exist with vm_id: "
             f"{fake_id}, called by internal")
 
         # Unexpected phone home: instance already OKAY.  (This would
@@ -1046,7 +1046,7 @@ class VMManagerViewTests(TestCase):
         self.assertEqual(
             f"VMStatus for user {self.user}, "
             f"desktop_type {self.UBUNTU.id} "
-            f"is missing. Cannot delete shelved VM.",
+            "is missing. Cannot delete shelved VM.",
             delete_shelved_vm(self.user, self.UBUNTU))
 
         self.build_existing_vm(None)

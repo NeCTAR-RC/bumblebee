@@ -131,8 +131,8 @@ class NectarAuthBackend(OIDCAuthenticationBackend):
         if federation != 'aaf' and settings.REQUIRE_AAF:
             email = claims.get('email')
             logger.warning(
-                f"Login for {email} is denied due to federation ({federation}) "
-                f"not being set to aaf")
+                f"Login for {email} is denied due to federation "
+                f"({federation}) not being set to aaf")
             return
 
         return verified

@@ -95,7 +95,7 @@ def _confirm_instance_deleted(instance, retries):
                      f"openstack instance: {my_instance}")
     except novaclient.exceptions.NotFound:
         logger.info(f"Instance {instance.id} successfully deleted, "
-                    f"we can mark the volume as shelved now!")
+                    "we can mark the volume as shelved now!")
         now = datetime.now(utc)
         instance.deleted = now
         instance.save()
@@ -116,8 +116,8 @@ def _confirm_instance_deleted(instance, retries):
         return _end_shelve(instance, WF_FAIL)
 
     if retries <= 0:
-        error_message = (f"ran out of retries trying to "
-                         f"terminate shelved instance")
+        error_message = (
+            "ran out of retries trying to terminate shelved instance")
         instance.error(error_message)
         logger.error(f"{error_message} {instance}")
         return _end_shelve(instance, WF_RETRY)

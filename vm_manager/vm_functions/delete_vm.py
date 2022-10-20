@@ -57,10 +57,10 @@ def delete_vm_worker(instance, archive=False):
 
     except novaclient.exceptions.NotFound:
         logger.error(f"Trying to delete {instance} but it is not "
-                     f"found in Nova.")
+                     "found in Nova.")
         # It no longer matters, but record the fact that the Nova instance
         # went missing anyway.
-        instance.error(f"Nova instance is missing", gone=True)
+        instance.error("Nova instance is missing", gone=True)
 
     # Next step is to check if the Instance is Shutoff in Nova before
     # telling Nova to delete it
@@ -91,7 +91,7 @@ def _check_instance_is_shutoff_and_delete(
     if retries <= 0:
         # TODO - not sure we should delete the instance anyway ...
         logger.info(f"Ran out of retries shutting down {instance}. "
-                    f"Proceeding to delete Nova instance anyway!")
+                    "Proceeding to delete Nova instance anyway!")
 
     # Update status if something is waiting
     vm_status = VMStatus.objects.get_vm_status_by_instance(
@@ -169,7 +169,7 @@ def _dispose_volume_once_instance_is_deleted(instance, archive, retries):
             retries - 1)
         return WF_CONTINUE
     else:
-        error_message = f"Ran out of retries trying to delete"
+        error_message = "Ran out of retries trying to delete"
         instance.error(error_message)
         logger.error(f"{error_message} {instance}")
         return WF_RETRY
@@ -223,7 +223,7 @@ def _wait_until_volume_is_deleted(volume, retries):
             _wait_until_volume_is_deleted, volume, retries - 1)
         return WF_CONTINUE
     else:
-        error_message = f"Ran out of retries trying to delete"
+        error_message = "Ran out of retries trying to delete"
         volume.error(error_message)
         logger.error(f"{error_message} {volume}")
         return _end_delete(volume, WF_RETRY)
@@ -317,7 +317,7 @@ def archive_volume_worker(volume, requesting_feature):
         cinder_volume = n.cinder.volumes.get(volume_id=volume.id)
         if cinder_volume.status != VOLUME_AVAILABLE:
             logger.error(
-                f"Cannot archive volume with Cinder status "
+                "Cannot archive volume with Cinder status "
                 f"{cinder_volume.status}: {volume}. Manual cleanup needed.")
             return _end_delete(volume, WF_RETRY)
     except cinderclient.exceptions.NotFound:

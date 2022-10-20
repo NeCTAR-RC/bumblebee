@@ -156,7 +156,7 @@ def _get_source_volume_id(desktop_type, zone):
 
     if len(matches) < 1:
         msg = (
-            f"No source volume with image names starting with "
+            "No source volume with image names starting with "
             f"{desktop_type.image_name} in availability zone {zone.name})")
         logger.error(msg)
         raise RuntimeWarning(msg)
@@ -329,7 +329,7 @@ def wait_for_instance_active(user, desktop_type, instance, start_time):
 def extend_instance(user, vm_id, requesting_feature) -> str:
     instance = Instance.objects.get_instance_by_untrusted_vm_id(
         vm_id, user, requesting_feature)
-    logger.info(f"Extending the expiration of boosted "
+    logger.info("Extending the expiration of boosted "
                 f"{instance.boot_volume.operating_system} vm "
                 f"for user {user.username}")
     instance.set_expires(InstanceExpiryPolicy().new_expiry(instance))

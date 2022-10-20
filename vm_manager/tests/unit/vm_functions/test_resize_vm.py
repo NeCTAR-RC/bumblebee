@@ -444,7 +444,7 @@ class ResizeVMTests(VMFunctionTestBase):
                 fake_instance, self.UBUNTU.big_flavor.id,
                 VM_SUPERSIZED, deadline, self.FEATURE))
         error = (f"Instance ({fake_instance}) resize failed as "
-                 f"instance hasn't changed flavor: "
+                 "instance hasn't changed flavor: "
                  f"Actual Flavor: {self.UBUNTU.default_flavor.id}, "
                  f"Expected Flavor: {self.UBUNTU.big_flavor.id}")
         mock_logger.info.assert_not_called()

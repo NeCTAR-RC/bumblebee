@@ -237,7 +237,7 @@ def orion_report(request):
     response = StreamingHttpResponse(
         output,
         content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-    response['Content-Disposition'] = f'attachment; filename=Orion_Report.xlsx'
+    response['Content-Disposition'] = 'attachment; filename=Orion_Report.xlsx'
     return response
 
 
@@ -351,14 +351,14 @@ def home(request):
 #            request_form = ""
 #        # User can request access if there's a valid request form, or if the feature has not been granted access and there is not an already active request
 #        requestable = request_form or (not project_already_has_feature and not previously_requested)
-#        feature_html = loader.render_to_string(f'researcher_workspace/home/discover/feature.html',
+#        feature_html = loader.render_to_string('researcher_workspace/home/discover/feature.html',
 #            {'feature': feature, 'previously_requested': previously_requested,
 #             'project_already_has_feature': project_already_has_feature,
 #             'request_form': request_form, 'requestable': requestable}, request)
 #        discover_features.append(feature_html)
 #
     # Get the services to display on the Discover tab
-    # discover_services = [loader.render_to_string(f'researcher_workspace/home/discover/service.html',
+    # discover_services = [loader.render_to_string('researcher_workspace/home/discover/service.html',
     #        {'service': service}, request) for service in Feature.objects.filter(feature_or_service=False)]
     context = {
         'active_module': active_module,
@@ -550,13 +550,13 @@ def new_project(request):
                 my_project.accept(auto_approved=True)
                 messages.success(request, format_html(
                     f'Your workspace <strong>{my_project.title}</strong> '
-                    f'has been created and auto-approved.'))
+                    'has been created and auto-approved.'))
             else:
                 _notify_managers_to_review_project(my_project, "created")
                 messages.success(request, format_html(
                     f'Your workspace <strong>{my_project.title}</strong> '
-                    f'has been created. '
-                    f'You may start using it once it has been approved.'))
+                    'has been created. '
+                    'You may start using it once it has been approved.'))
             return HttpResponseRedirect(reverse('home'))
     else:
         form = ProjectForm()
@@ -585,20 +585,25 @@ def projects(request):
                   redirect_field_name=None)
 def project_edit(request, project_id):
     if request.method == 'POST':
-        project = Project.objects.get_project_by_untrusted_project_id(project_id, request.user)
+        project = Project.objects.get_project_by_untrusted_project_id(
+            project_id, request.user)
         form = ProjectForm(request.POST, instance=project)
         if form.is_valid():
             form.save()
             if project.ARO_approval is None:
                 _notify_managers_to_review_project(project, "updated")
             messages.success(request, format_html(
-                f'Your project <strong>{project.title}</strong> has been edited successfully.'))
+                f'Your project <strong>{project.title}</strong> '
+                'has been edited successfully.'))
             return HttpResponseRedirect(reverse('projects'))
     else:
-        project = Project.objects.get_project_by_untrusted_project_id(project_id, request.user)
+        project = Project.objects.get_project_by_untrusted_project_id(
+            project_id, request.user)
         form = ProjectForm(instance=project)
-    required_fields = [field_name for field_name, field in form.fields.items() if field.required]
-    return render(request, 'researcher_workspace/project/project_edit.html', {'form': form, 'required_fields': required_fields})
+    required_fields = [field_name for field_name, field
+                       in form.fields.items() if field.required]
+    return render(request, 'researcher_workspace/project/project_edit.html',
+                  {'form': form, 'required_fields': required_fields})
 
 
 @login_required(login_url='login')

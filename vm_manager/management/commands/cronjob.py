@@ -57,14 +57,14 @@ class Command(BaseCommand):
 
     def archive_job(self):
         feature = desktops_feature()
-        logger.info(f"Starting volume archiving")
+        logger.info("Starting volume archiving")
         expirer = VolumeExpirer(dry_run=self.dry_run, verbose=self.verbose)
         counts = expirer.run(feature)
         logger.info(f"Archiving counts: {counts}")
 
     def delete_archives_job(self):
         feature = desktops_feature()
-        logger.info(f"Starting archive deletions")
+        logger.info("Starting archive deletions")
         expirer = ArchiveExpirer(dry_run=self.dry_run, verbose=self.verbose)
         counts = expirer.run(feature)
         logger.info(f"Archive deletion counts: {counts}")

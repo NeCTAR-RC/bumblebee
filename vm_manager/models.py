@@ -127,7 +127,7 @@ class VolumeManager(models.Manager):
         except Volume.MultipleObjectsReturned as e:
             logger.error(e)
             error = Volume.MultipleObjectsReturned(
-                f"Multiple current volumes found in the database with "
+                "Multiple current volumes found in the database with "
                 f"user={user} and os={desktop_type.id}")
             logger.error(error)
             raise error
@@ -168,7 +168,7 @@ class Volume(CloudResource):
             hostname_id = _create_hostname_id()
             if hostname_id == ERROR:
                 logger.error(
-                    f"Could not assign random value to volume "
+                    "Could not assign random value to volume "
                     f"{self.id} for user {self.user}")
                 n = get_nectar()
                 n.cinder.volumes.delete(self.id)
@@ -215,7 +215,7 @@ class InstanceManager(models.Manager):
         except Instance.MultipleObjectsReturned as e:
             logger.error(e)
             error = Instance.MultipleObjectsReturned(
-                f"Multiple current instances found in the database with "
+                "Multiple current instances found in the database with "
                 f"user={user} and os={desktop_type.name}")
             logger.error(error)
             raise error
@@ -254,7 +254,7 @@ class InstanceManager(models.Manager):
         except Instance.MultipleObjectsReturned as e:
             logger.error(e)
             error = Instance.MultipleObjectsReturned(
-                f"Multiple current instances found in the database "
+                "Multiple current instances found in the database "
                 f"with ip_address={ip_address}")
             logger.error(error)
             raise error
@@ -267,7 +267,7 @@ class InstanceManager(models.Manager):
             vm_id, requesting_feature, user=user)
         if instance.user != user:
             logger.error(
-                f"Trying to get a vm that doesn't belong "
+                "Trying to get a vm that doesn't belong "
                 f"to {user} with vm_id: {vm_id}, "
                 f"this vm belongs to {instance.user}")
             raise Http404
@@ -475,14 +475,14 @@ class VMStatusManager(models.Manager):
             else:
                 logger.error(e)
                 error = VMStatus.DoesNotExist(
-                    f"No vm_statuses found in the database "
+                    "No vm_statuses found in the database "
                     f"with instance={instance}")
                 logger.error(error)
                 raise error
         except VMStatus.MultipleObjectsReturned as e:
             logger.error(e)
             error = VMStatus.MultipleObjectsReturned(
-                f"Multiple vm_statuses found in the database "
+                "Multiple vm_statuses found in the database "
                 f"with instance={instance}")
             logger.error(error)
             raise error
@@ -491,7 +491,7 @@ class VMStatusManager(models.Manager):
                                 allow_missing=False):
         if volume.requesting_feature != requesting_feature:
             logger.error(
-                f"Trying to get a vm that doesn't belong to "
+                "Trying to get a vm that doesn't belong to "
                 f"{requesting_feature} with vm_id: {volume.id}"
                 f"this vm belongs to {volume.requesting_feature}")
             raise Http404
@@ -502,7 +502,7 @@ class VMStatusManager(models.Manager):
         except Instance.DoesNotExist as e:
             logger.error(
                 f"Trying to get_vm_status_by_volume {volume}, "
-                f"could not find an instance with that volume,"
+                "could not find an instance with that volume,"
                 f"raised error {e}")
             raise e
 
