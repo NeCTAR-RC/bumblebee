@@ -12,7 +12,7 @@ python-neutronclient
 django-mathfilters
 django-currentuser
 mysqlclient
-mozilla-django-oidc
+git+https://github.com/NeCTAR-RC/mozilla-django-oidc@5a5eec0#egg=mozilla-django-oidc
 nanoid
 django-rq
 rq-scheduler
