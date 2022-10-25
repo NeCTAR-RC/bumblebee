@@ -22,7 +22,9 @@ def connection_callback(sender, connection, **kwargs):
             from researcher_workspace import metrics
             import sys
             # NOTE(yoctozepto): It should not try to access the database when running the migrations.
-            if not ('makemigrations' in sys.argv or 'migrate' in sys.argv):
+            if not ('makemigrations' in sys.argv
+                    or 'showmigrations' in sys.argv
+                    or 'migrate' in sys.argv):
                 REGISTRY.register(metrics.BumblebeeMetricsCollector())
             monitoring_initialised = True
 
