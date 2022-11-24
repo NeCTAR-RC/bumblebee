@@ -36,6 +36,32 @@ document.querySelectorAll(".modal").forEach(modal => {
   });
 });
 
+// Does the welcome background exist?
+if(document.getElementById("welcome-bg")) {
+  // Stop css animations after 1 minute
+  setTimeout(function() {
+    
+    // pause all line animations
+    const linesDashed = document.getElementById('lines-dashed');
+    for(const path of linesDashed.getElementsByTagName("path")) {
+      path.classList.add('paused');
+    }
+    for(const line of linesDashed.getElementsByTagName("line")) {
+      line.classList.add('paused');
+    }
+
+    // pause cog animations
+    for(const path of document.getElementById('cogs').getElementsByTagName("path")) {
+      path.classList.add('paused');
+    }
+
+    // pause flashing light animations
+    for(const flashingLight of document.getElementsByClassName("flashing-light")) {
+      flashingLight.classList.add('paused');
+    }
+  }, 60000);
+}
+
 // Custom functions
 function scrollToId(elId) {
   document.getElementById(elId).scrollIntoView({
