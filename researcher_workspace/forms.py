@@ -127,13 +127,7 @@ class SupportRequestForm(forms.Form):
         label="What do you need help with?",
         help_text="Please describe your problem you need help with in as "
         "much detail as you can.  If it would help, please add a screenshot "
-        "as well to illustrate the problem.",
-        validators=[
-            # Check for message consisting of just white-space ...
-            RegexValidator(r'^\s*$', flags=re.M, inverse_match=True,
-                           message="We will not be able to help you unless "
-                           "you describe the problem you are having."),
-        ]
+        "as well to illustrate the problem."
     )
     message.widget.attrs = {'class': 'form-control', 'rows': 5}
     screenshot = forms.FileField(
