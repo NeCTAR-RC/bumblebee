@@ -29,15 +29,15 @@ from vm_manager.vm_functions.delete_vm import delete_vm_worker, \
     _dispose_volume_once_instance_is_deleted, delete_volume, \
     archive_volume_worker, wait_for_backup, delete_backup_worker, \
     _wait_until_backup_is_deleted, _wait_until_volume_is_deleted
-from vm_manager.utils.utils import get_nectar
+from vm_manager.utils.utils import get_nectar, NectarFactory
 
 
 class DeleteVMTests(VMFunctionTestBase):
 
-    @patch('vm_manager.utils.utils.Nectar', new=FakeNectar)
+    @patch.object(NectarFactory, 'create', return_value=FakeNectar())
     @patch('vm_manager.vm_functions.delete_vm.django_rq')
     @patch('vm_manager.vm_functions.delete_vm.logger')
-    def test_delete_vm_worker(self, mock_logger, mock_rq):
+    def test_delete_vm_worker(self, mock_logger, mock_rq, mock_cn):
         mock_scheduler = Mock()
         mock_rq.get_scheduler.return_value = mock_scheduler
         _, fake_instance = self.build_fake_vol_instance(ip_address='10.0.0.99')
@@ -68,10 +68,11 @@ class DeleteVMTests(VMFunctionTestBase):
         mock_logger.info.assert_called_once_with(
             f"About to delete {fake_instance}")
 
-    @patch('vm_manager.utils.utils.Nectar', new=FakeNectar)
+    @patch.object(NectarFactory, 'create', return_value=FakeNectar())
     @patch('vm_manager.vm_functions.delete_vm.django_rq')
     @patch('vm_manager.vm_functions.delete_vm.logger')
-    def test_delete_vm_worker_missing_instance(self, mock_logger, mock_rq):
+    def test_delete_vm_worker_missing_instance(self, mock_logger, mock_rq,
+                                               mock_cn):
         mock_scheduler = Mock()
         mock_rq.get_scheduler.return_value = mock_scheduler
         _, fake_instance = self.build_fake_vol_instance(ip_address='10.0.0.99')
@@ -110,10 +111,11 @@ class DeleteVMTests(VMFunctionTestBase):
         self.assertEqual("Nova instance is missing", instance.error_message)
         self.assertIsNotNone(instance.marked_for_deletion)
 
-    @patch('vm_manager.utils.utils.Nectar', new=FakeNectar)
+    @patch.object(NectarFactory, 'create', return_value=FakeNectar())
     @patch('vm_manager.vm_functions.delete_vm.django_rq')
     @patch('vm_manager.vm_functions.delete_vm.logger')
-    def test_delete_vm_worker_already_stopped(self, mock_logger, mock_rq):
+    def test_delete_vm_worker_already_stopped(self, mock_logger, mock_rq,
+                                              mock_cn):
         mock_scheduler = Mock()
         mock_rq.get_scheduler.return_value = mock_scheduler
         _, fake_instance = self.build_fake_vol_instance(ip_address='10.0.0.99')
@@ -148,10 +150,10 @@ class DeleteVMTests(VMFunctionTestBase):
             call(f"{instance} already shutdown in Nova."),
         ])
 
-    @patch('vm_manager.utils.utils.Nectar', new=FakeNectar)
+    @patch.object(NectarFactory, 'create', return_value=FakeNectar())
     @patch('vm_manager.vm_functions.delete_vm.django_rq')
     @patch('vm_manager.vm_functions.delete_vm.logger')
-    def test_delete_vm_worker_wrong_state(self, mock_logger, mock_rq):
+    def test_delete_vm_worker_wrong_state(self, mock_logger, mock_rq, mock_cn):
         mock_scheduler = Mock()
         mock_rq.get_scheduler.return_value = mock_scheduler
         _, fake_instance = self.build_fake_vol_instance(ip_address='10.0.0.99')
@@ -180,11 +182,12 @@ class DeleteVMTests(VMFunctionTestBase):
         self.assertEqual(f"Nova instance state is {RESCUE}",
                          instance.error_message)
 
+    @patch.object(NectarFactory, 'create', return_value=FakeNectar())
     @patch('vm_manager.models.get_nectar')
     @patch('vm_manager.vm_functions.delete_vm.django_rq')
     @patch('vm_manager.vm_functions.delete_vm.logger')
     def test_check_instance_shutoff(self, mock_logger, mock_rq,
-                                    mock_get_nectar):
+                                    mock_get_nectar, mock_cn):
         mock_scheduler = Mock()
         mock_rq.get_scheduler.return_value = mock_scheduler
         _, fake_instance = self.build_fake_vol_instance(ip_address='10.0.0.99')
@@ -210,12 +213,13 @@ class DeleteVMTests(VMFunctionTestBase):
             _check_instance_is_shutoff_and_delete, fake_instance,
             0, funky, funky_args)
 
+    @patch.object(NectarFactory, 'create', return_value=FakeNectar())
     @patch('vm_manager.models.get_nectar')
     @patch('vm_manager.vm_functions.delete_vm.django_rq')
     @patch('vm_manager.vm_functions.delete_vm.logger')
     @patch('vm_manager.vm_functions.delete_vm.delete_instance')
     def test_check_instance_shutoff_2(self, mock_worker, mock_logger,
-                                      mock_rq, mock_get_nectar):
+                                      mock_rq, mock_get_nectar, mock_cn):
         mock_scheduler = Mock()
         mock_rq.get_scheduler.return_value = mock_scheduler
         _, fake_instance, fake_status = self.build_fake_vol_inst_status(
@@ -244,12 +248,13 @@ class DeleteVMTests(VMFunctionTestBase):
         self.assertEqual(66, updated_status.status_progress)
         self.assertIsNotNone(updated_status.status_message)
 
+    @patch.object(NectarFactory, 'create', return_value=FakeNectar())
     @patch('vm_manager.models.get_nectar')
     @patch('vm_manager.vm_functions.delete_vm.django_rq')
     @patch('vm_manager.vm_functions.delete_vm.logger')
     @patch('vm_manager.vm_functions.delete_vm.delete_instance')
     def test_check_instance_shutoff_3(self, mock_worker, mock_logger,
-                                      mock_rq, mock_get_nectar):
+                                      mock_rq, mock_get_nectar, mock_cn):
         # This is the case where there is no VMStatus ...
         mock_scheduler = Mock()
         mock_rq.get_scheduler.return_value = mock_scheduler
@@ -275,9 +280,10 @@ class DeleteVMTests(VMFunctionTestBase):
             timedelta(seconds=INSTANCE_DELETION_RETRY_WAIT_TIME),
             funky, *funky_args)
 
+    @patch.object(NectarFactory, 'create', return_value=FakeNectar())
     @patch('vm_manager.vm_functions.delete_vm.get_nectar')
     @patch('vm_manager.vm_functions.delete_vm.logger')
-    def test_delete_instance(self, mock_logger, mock_get_nectar):
+    def test_delete_instance(self, mock_logger, mock_get_nectar, mock_cn):
         fake_nectar = FakeNectar()
         mock_get_nectar.return_value = fake_nectar
 
@@ -289,9 +295,10 @@ class DeleteVMTests(VMFunctionTestBase):
         mock_logger.info.assert_called_once_with(
             f"Instructed Nova to delete {fake_instance}")
 
+    @patch.object(NectarFactory, 'create', return_value=FakeNectar())
     @patch('vm_manager.vm_functions.delete_vm.get_nectar')
     @patch('vm_manager.vm_functions.delete_vm.logger')
-    def test_delete_instance_2(self, mock_logger, mock_get_nectar):
+    def test_delete_instance_2(self, mock_logger, mock_get_nectar, mock_cn):
         fake_nectar = FakeNectar()
         mock_get_nectar.return_value = fake_nectar
         fake_nectar.nova.servers.delete.side_effect = \
@@ -305,9 +312,10 @@ class DeleteVMTests(VMFunctionTestBase):
         mock_logger.info.assert_called_once_with(
             f"{fake_instance} already deleted")
 
+    @patch.object(NectarFactory, 'create', return_value=FakeNectar())
     @patch('vm_manager.vm_functions.delete_vm.get_nectar')
     @patch('vm_manager.vm_functions.delete_vm.logger')
-    def test_delete_instance_3(self, mock_logger, mock_get_nectar):
+    def test_delete_instance_3(self, mock_logger, mock_get_nectar, mock_cn):
         fake_nectar = FakeNectar()
         mock_get_nectar.return_value = fake_nectar
         fake_nectar.nova.servers.delete.side_effect = \
@@ -489,8 +497,9 @@ class DeleteVMTests(VMFunctionTestBase):
         volume = Volume.objects.get(pk=fake_volume.pk)
         self.assertIsNotNone(volume.deleted)
 
+    @patch.object(NectarFactory, 'create', return_value=FakeNectar())
     @patch('vm_manager.vm_functions.delete_vm.get_nectar')
-    def test_delete_volume_missing(self, mock_get_nectar):
+    def test_delete_volume_missing(self, mock_get_nectar, mock_cn):
 
         fake_volume = self.build_fake_volume()
 
@@ -506,8 +515,9 @@ class DeleteVMTests(VMFunctionTestBase):
         volume = Volume.objects.get(pk=fake_volume.pk)
         self.assertIsNotNone(volume.deleted)
 
+    @patch.object(NectarFactory, 'create', return_value=FakeNectar())
     @patch('vm_manager.vm_functions.delete_vm.get_nectar')
-    def test_delete_volume_failed(self, mock_get_nectar):
+    def test_delete_volume_failed(self, mock_get_nectar, mock_cn):
 
         fake_volume = self.build_fake_volume()
 
@@ -527,11 +537,12 @@ class DeleteVMTests(VMFunctionTestBase):
 class ArchiveVMTests(VMFunctionTestBase):
 
     @patch('vm_manager.vm_functions.delete_vm.django_rq')
+    @patch.object(NectarFactory, 'create', return_value=FakeNectar())
     @patch('vm_manager.vm_functions.delete_vm.get_nectar')
     @patch('vm_manager.vm_functions.delete_vm.logger')
     @patch('vm_manager.utils.utils.datetime')
     def test_archive_volume_worker(self, mock_datetime, mock_logger,
-                               mock_get, mock_rq):
+                               mock_get, mock_cn, mock_rq):
         mock_scheduler = Mock()
         mock_rq.get_scheduler.return_value = mock_scheduler
         fake_volume, _, fake_vm_status = self.build_fake_vol_inst_status(
@@ -664,8 +675,9 @@ class ArchiveVMTests(VMFunctionTestBase):
     @patch('vm_manager.vm_functions.delete_vm.django_rq')
     @patch('vm_manager.vm_functions.delete_vm.logger')
     @patch('vm_manager.vm_functions.delete_vm.delete_volume')
+    @patch.object(NectarFactory, 'create', return_value=FakeNectar())
     @patch('vm_manager.vm_functions.delete_vm.get_nectar')
-    def test_wait_for_backup(self, mock_get, mock_delete,
+    def test_wait_for_backup(self, mock_get, mock_cn, mock_delete,
                              mock_logger, mock_rq):
         mock_scheduler = Mock()
         mock_rq.get_scheduler.return_value = mock_scheduler
@@ -730,8 +742,9 @@ class ArchiveVMTests(VMFunctionTestBase):
         mock_rq.get_scheduler.assert_not_called()
 
     @patch('vm_manager.vm_functions.delete_vm.django_rq')
+    @patch.object(NectarFactory, 'create', return_value=FakeNectar())
     @patch('vm_manager.vm_functions.delete_vm.get_nectar')
-    def test_delete_backup(self, mock_get_nectar, mock_rq):
+    def test_delete_backup(self, mock_get_nectar, mock_cn, mock_rq):
         '''Backup deletion starts successfully
         '''
         fake_volume, backup_id = self.build_fake_volume_with_backup()
@@ -752,8 +765,9 @@ class ArchiveVMTests(VMFunctionTestBase):
             fake_volume, BACKUP_DELETION_RETRY_COUNT)
 
     @patch('vm_manager.vm_functions.delete_vm.django_rq')
+    @patch.object(NectarFactory, 'create', return_value=FakeNectar())
     @patch('vm_manager.vm_functions.delete_vm.get_nectar')
-    def test_delete_backup_missing(self, mock_get_nectar, mock_rq):
+    def test_delete_backup_missing(self, mock_get_nectar, mock_cn, mock_rq):
         '''Backup has already been deleted
         '''
 
@@ -771,8 +785,9 @@ class ArchiveVMTests(VMFunctionTestBase):
         mock_rq.get_scheduler.assert_not_called()
 
     @patch('vm_manager.vm_functions.delete_vm.django_rq')
+    @patch.object(NectarFactory, 'create', return_value=FakeNectar())
     @patch('vm_manager.vm_functions.delete_vm.get_nectar')
-    def test_delete_backup_failed(self, mock_get_nectar, mock_rq):
+    def test_delete_backup_failed(self, mock_get_nectar, mock_cn, mock_rq):
         '''Backup deletion request failed
         '''
 
@@ -790,8 +805,9 @@ class ArchiveVMTests(VMFunctionTestBase):
         mock_rq.get_scheduler.assert_not_called()
 
     @patch('vm_manager.vm_functions.delete_vm.django_rq')
+    @patch.object(NectarFactory, 'create', return_value=FakeNectar())
     @patch('vm_manager.vm_functions.delete_vm.get_nectar')
-    def test_wait_until_backup_deleted(self, mock_get_nectar, mock_rq):
+    def test_wait_until_backup_deleted(self, mock_get_nectar, mock_cn, mock_rq):
         '''Backup deletion still progressing
         '''
 
@@ -816,8 +832,10 @@ class ArchiveVMTests(VMFunctionTestBase):
         mock_rq.get_scheduler.assert_not_called()
 
     @patch('vm_manager.vm_functions.delete_vm.django_rq')
+    @patch.object(NectarFactory, 'create', return_value=FakeNectar())
     @patch('vm_manager.vm_functions.delete_vm.get_nectar')
-    def test_wait_until_backup_deleted_2(self, mock_get_nectar, mock_rq):
+    def test_wait_until_backup_deleted_2(self, mock_get_nectar, mock_cn,
+                                         mock_rq):
         '''Backup deletion still progressing
         '''
 
@@ -843,8 +861,10 @@ class ArchiveVMTests(VMFunctionTestBase):
             fake_volume, 4)
 
     @patch('vm_manager.vm_functions.delete_vm.django_rq')
+    @patch.object(NectarFactory, 'create', return_value=FakeNectar())
     @patch('vm_manager.vm_functions.delete_vm.get_nectar')
-    def test_wait_until_backup_deleted_3(self, mock_get_nectar, mock_rq):
+    def test_wait_until_backup_deleted_3(self, mock_get_nectar, mock_cn,
+                                         mock_rq):
         '''Backup deletion did not complete in time
         '''
 
@@ -865,10 +885,11 @@ class ArchiveVMTests(VMFunctionTestBase):
         mock_rq.get_scheduler.assert_not_called()
 
     @patch('vm_manager.vm_functions.delete_vm.django_rq')
+    @patch.object(NectarFactory, 'create', return_value=FakeNectar())
     @patch('vm_manager.vm_functions.delete_vm.get_nectar')
     @patch('vm_manager.vm_functions.delete_vm.logger')
     def test_wait_until_backup_deleted_4(self, mock_logger,
-                                         mock_get_nectar, mock_rq):
+                                         mock_get_nectar, mock_cn, mock_rq):
         '''Backup get call failed
         '''
 
@@ -892,8 +913,9 @@ class ArchiveVMTests(VMFunctionTestBase):
         mock_logger.exception.assert_called_once()
 
     @patch('vm_manager.vm_functions.delete_vm.django_rq')
+    @patch.object(NectarFactory, 'create', return_value=FakeNectar())
     @patch('vm_manager.vm_functions.delete_vm.get_nectar')
-    def test_wait_until_volume_deleted(self, mock_get_nectar, mock_rq):
+    def test_wait_until_volume_deleted(self, mock_get_nectar, mock_cn, mock_rq):
         '''Volume deletion still progressing
         '''
 
@@ -916,8 +938,10 @@ class ArchiveVMTests(VMFunctionTestBase):
         mock_rq.get_scheduler.assert_not_called()
 
     @patch('vm_manager.vm_functions.delete_vm.django_rq')
+    @patch.object(NectarFactory, 'create', return_value=FakeNectar())
     @patch('vm_manager.vm_functions.delete_vm.get_nectar')
-    def test_wait_until_volume_deleted_2(self, mock_get_nectar, mock_rq):
+    def test_wait_until_volume_deleted_2(self, mock_get_nectar, mock_cn,
+                                         mock_rq):
         '''Volume deletion still progressing
         '''
 
@@ -943,8 +967,10 @@ class ArchiveVMTests(VMFunctionTestBase):
             fake_volume, 4)
 
     @patch('vm_manager.vm_functions.delete_vm.django_rq')
+    @patch.object(NectarFactory, 'create', return_value=FakeNectar())
     @patch('vm_manager.vm_functions.delete_vm.get_nectar')
-    def test_wait_until_volume_deleted_3(self, mock_get_nectar, mock_rq):
+    def test_wait_until_volume_deleted_3(self, mock_get_nectar, mock_cn,
+                                         mock_rq):
         '''Volume deletion did not complete in time
         '''
 
@@ -963,10 +989,11 @@ class ArchiveVMTests(VMFunctionTestBase):
         mock_rq.get_scheduler.assert_not_called()
 
     @patch('vm_manager.vm_functions.delete_vm.django_rq')
+    @patch.object(NectarFactory, 'create', return_value=FakeNectar())
     @patch('vm_manager.vm_functions.delete_vm.get_nectar')
     @patch('vm_manager.vm_functions.delete_vm.logger')
     def test_wait_until_volume_deleted_4(self, mock_logger,
-                                         mock_get_nectar, mock_rq):
+                                         mock_get_nectar, mock_cn, mock_rq):
         '''Volume get call failed
         '''
 
@@ -988,8 +1015,10 @@ class ArchiveVMTests(VMFunctionTestBase):
         mock_logger.exception.assert_called_once()
 
     @patch('vm_manager.vm_functions.delete_vm.django_rq')
+    @patch.object(NectarFactory, 'create', return_value=FakeNectar())
     @patch('vm_manager.vm_functions.delete_vm.get_nectar')
-    def test_wait_until_volume_deleted_5(self, mock_get_nectar, mock_rq):
+    def test_wait_until_volume_deleted_5(self, mock_get_nectar, mock_cn,
+                                         mock_rq):
         '''Volume delete goes to bad state
         '''
 

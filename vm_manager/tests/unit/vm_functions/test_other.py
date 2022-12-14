@@ -18,15 +18,15 @@ from vm_manager.constants import ACTIVE, SHUTDOWN, RESCUE, REBOOT, \
 from vm_manager.models import VMStatus, Volume, Instance
 from vm_manager.vm_functions.other_vm_functions import reboot_vm_worker, \
     _check_power_state
-from vm_manager.utils.utils import get_nectar
+from vm_manager.utils.utils import get_nectar, NectarFactory
 
 
 class RebootVMTests(VMFunctionTestBase):
 
-    @patch('vm_manager.utils.utils.Nectar', new=FakeNectar)
+    @patch.object(NectarFactory, 'create', return_value=FakeNectar())
     @patch('vm_manager.vm_functions.other_vm_functions.django_rq')
     @patch('vm_manager.vm_functions.other_vm_functions.logger')
-    def test_reboot_vm_worker(self, mock_logger, mock_rq):
+    def test_reboot_vm_worker(self, mock_logger, mock_rq, mock_cn):
         mock_scheduler = Mock()
         mock_rq.get_scheduler.return_value = mock_scheduler
         fake_vol, fake_instance, fake_status = self.build_fake_vol_inst_status(
@@ -58,10 +58,10 @@ class RebootVMTests(VMFunctionTestBase):
         updated_volume = Volume.objects.get(pk=fake_vol.pk)
         self.assertIsNotNone(updated_volume.rebooted_at)
 
-    @patch('vm_manager.utils.utils.Nectar', new=FakeNectar)
+    @patch.object(NectarFactory, 'create', return_value=FakeNectar())
     @patch('vm_manager.vm_functions.other_vm_functions.django_rq')
     @patch('vm_manager.vm_functions.other_vm_functions.logger')
-    def test_reboot_vm_worker_shutdown(self, mock_logger, mock_rq):
+    def test_reboot_vm_worker_shutdown(self, mock_logger, mock_rq, mock_cn):
         mock_scheduler = Mock()
         mock_rq.get_scheduler.return_value = mock_scheduler
         fake_vol, fake_instance, fake_status = self.build_fake_vol_inst_status(
@@ -96,10 +96,10 @@ class RebootVMTests(VMFunctionTestBase):
         updated_volume = Volume.objects.get(pk=fake_vol.pk)
         self.assertIsNotNone(updated_volume.rebooted_at)
 
-    @patch('vm_manager.utils.utils.Nectar', new=FakeNectar)
+    @patch.object(NectarFactory, 'create', return_value=FakeNectar())
     @patch('vm_manager.vm_functions.other_vm_functions.django_rq')
     @patch('vm_manager.vm_functions.other_vm_functions.logger')
-    def test_reboot_vm_worker_wrong_state(self, mock_logger, mock_rq):
+    def test_reboot_vm_worker_wrong_state(self, mock_logger, mock_rq, mock_cn):
         mock_scheduler = Mock()
         mock_rq.get_scheduler.return_value = mock_scheduler
         fake_vol, fake_instance, fake_status = self.build_fake_vol_inst_status(
@@ -131,10 +131,10 @@ class RebootVMTests(VMFunctionTestBase):
         self.assertEqual(f"Nova instance state is {RESCUE}",
                          instance.error_message)
 
-    @patch('vm_manager.utils.utils.Nectar', new=FakeNectar)
+    @patch.object(NectarFactory, 'create', return_value=FakeNectar())
     @patch('vm_manager.vm_functions.other_vm_functions.django_rq')
     @patch('vm_manager.vm_functions.other_vm_functions.logger')
-    def test_reboot_vm_worker_missing(self, mock_logger, mock_rq):
+    def test_reboot_vm_worker_missing(self, mock_logger, mock_rq, mock_cn):
         mock_scheduler = Mock()
         mock_rq.get_scheduler.return_value = mock_scheduler
         fake_vol, fake_instance, fake_status = self.build_fake_vol_inst_status(
@@ -162,10 +162,10 @@ class RebootVMTests(VMFunctionTestBase):
         instance = Instance.objects.get(pk=fake_instance.pk)
         self.assertEqual("Nova instance is missing", instance.error_message)
 
-    @patch('vm_manager.utils.utils.Nectar', new=FakeNectar)
+    @patch.object(NectarFactory, 'create', return_value=FakeNectar())
     @patch('vm_manager.vm_functions.other_vm_functions.django_rq')
     @patch('vm_manager.vm_functions.other_vm_functions.logger')
-    def test_check_power_state(self, mock_logger, mock_rq):
+    def test_check_power_state(self, mock_logger, mock_rq, mock_cn):
         mock_scheduler = Mock()
         mock_rq.get_scheduler.return_value = mock_scheduler
         _, fake_instance, fake_status = self.build_fake_vol_inst_status(
@@ -188,10 +188,10 @@ class RebootVMTests(VMFunctionTestBase):
         self.assertEqual(66, updated_status.status_progress)
         self.assertIsNotNone(updated_status.status_message)
 
-    @patch('vm_manager.utils.utils.Nectar', new=FakeNectar)
+    @patch.object(NectarFactory, 'create', return_value=FakeNectar())
     @patch('vm_manager.vm_functions.other_vm_functions.django_rq')
     @patch('vm_manager.vm_functions.other_vm_functions.logger')
-    def test_check_power_state_2(self, mock_logger, mock_rq):
+    def test_check_power_state_2(self, mock_logger, mock_rq, mock_cn):
         mock_scheduler = Mock()
         mock_rq.get_scheduler.return_value = mock_scheduler
         _, fake_instance, fake_status = self.build_fake_vol_inst_status(
@@ -218,10 +218,10 @@ class RebootVMTests(VMFunctionTestBase):
         self.assertEqual(0, updated_status.status_progress)
         self.assertIsNone(updated_status.status_message)
 
-    @patch('vm_manager.utils.utils.Nectar', new=FakeNectar)
+    @patch.object(NectarFactory, 'create', return_value=FakeNectar())
     @patch('vm_manager.vm_functions.other_vm_functions.django_rq')
     @patch('vm_manager.vm_functions.other_vm_functions.logger')
-    def test_check_power_state_3(self, mock_logger, mock_rq):
+    def test_check_power_state_3(self, mock_logger, mock_rq, mock_cn):
         mock_scheduler = Mock()
         mock_rq.get_scheduler.return_value = mock_scheduler
         _, fake_instance, fake_status = self.build_fake_vol_inst_status(

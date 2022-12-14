@@ -16,7 +16,7 @@ from vm_manager.models import VMStatus, Instance, Volume
 from vm_manager.tests.common import UUID_4
 from vm_manager.tests.fakes import FakeNectar, FakeServer
 from vm_manager.tests.unit.vm_functions.base import VMFunctionTestBase
-from vm_manager.utils.utils import get_nectar
+from vm_manager.utils.utils import get_nectar, NectarFactory
 from vm_manager.vm_functions.shelve_vm import shelve_vm_worker, \
     shelve_expired_vm, _confirm_instance_deleted, \
     _check_instance_is_shutoff_and_delete
@@ -24,9 +24,9 @@ from vm_manager.vm_functions.shelve_vm import shelve_vm_worker, \
 
 class ShelveVMTests(VMFunctionTestBase):
 
-    @patch('vm_manager.utils.utils.Nectar', new=FakeNectar)
+    @patch.object(NectarFactory, 'create', return_value=FakeNectar())
     @patch('vm_manager.vm_functions.shelve_vm.django_rq')
-    def test_shelve_vm_worker_wrong_state(self, mock_rq):
+    def test_shelve_vm_worker_wrong_state(self, mock_rq, mock_cn):
         mock_scheduler = Mock()
         mock_rq.get_scheduler.return_value = mock_scheduler
         fake_nectar = get_nectar()
@@ -46,9 +46,9 @@ class ShelveVMTests(VMFunctionTestBase):
         instance = Instance.objects.get(pk=fake_instance.pk)
         self.assertIsNotNone(instance.error_message)
 
-    @patch('vm_manager.utils.utils.Nectar', new=FakeNectar)
+    @patch.object(NectarFactory, 'create', return_value=FakeNectar())
     @patch('vm_manager.vm_functions.shelve_vm.django_rq')
-    def test_shelve_vm_worker_missing(self, mock_rq):
+    def test_shelve_vm_worker_missing(self, mock_rq, mock_cn):
         mock_scheduler = Mock()
         mock_rq.get_scheduler.return_value = mock_scheduler
         fake_nectar = get_nectar()
@@ -68,9 +68,9 @@ class ShelveVMTests(VMFunctionTestBase):
         instance = Instance.objects.get(pk=fake_instance.pk)
         self.assertIsNotNone(instance.error_message)
 
-    @patch('vm_manager.utils.utils.Nectar', new=FakeNectar)
+    @patch.object(NectarFactory, 'create', return_value=FakeNectar())
     @patch('vm_manager.vm_functions.shelve_vm.django_rq')
-    def test_shelve_vm_worker_shutdown(self, mock_rq):
+    def test_shelve_vm_worker_shutdown(self, mock_rq, mock_cn):
         mock_scheduler = Mock()
         mock_rq.get_scheduler.return_value = mock_scheduler
         now = datetime.now(utc)
@@ -102,9 +102,9 @@ class ShelveVMTests(VMFunctionTestBase):
             _confirm_instance_deleted,
             (fake_instance, INSTANCE_DELETION_RETRY_COUNT))
 
-    @patch('vm_manager.utils.utils.Nectar', new=FakeNectar)
+    @patch.object(NectarFactory, 'create', return_value=FakeNectar())
     @patch('vm_manager.vm_functions.shelve_vm.django_rq')
-    def test_shelve_vm_worker(self, mock_rq):
+    def test_shelve_vm_worker(self, mock_rq, mock_cn):
         mock_scheduler = Mock()
         mock_rq.get_scheduler.return_value = mock_scheduler
         now = datetime.now(utc)
@@ -136,9 +136,9 @@ class ShelveVMTests(VMFunctionTestBase):
             _confirm_instance_deleted,
             (fake_instance, INSTANCE_DELETION_RETRY_COUNT))
 
-    @patch('vm_manager.utils.utils.Nectar', new=FakeNectar)
+    @patch.object(NectarFactory, 'create', return_value=FakeNectar())
     @patch('vm_manager.vm_functions.shelve_vm.django_rq')
-    def test_confirm_instance_deleted(self, mock_rq):
+    def test_confirm_instance_deleted(self, mock_rq, mock_cn):
         mock_scheduler = Mock()
         mock_rq.get_scheduler.return_value = mock_scheduler
         now = datetime.now(utc)
@@ -164,9 +164,9 @@ class ShelveVMTests(VMFunctionTestBase):
         self.assertEqual(VM_SHELVED, vm_status.status)
         self.assertEqual(100, vm_status.status_progress)
 
-    @patch('vm_manager.utils.utils.Nectar', new=FakeNectar)
+    @patch.object(NectarFactory, 'create', return_value=FakeNectar())
     @patch('vm_manager.vm_functions.shelve_vm.django_rq')
-    def test_confirm_instance_deleted_2(self, mock_rq):
+    def test_confirm_instance_deleted_2(self, mock_rq, mock_cn):
         mock_scheduler = Mock()
         mock_rq.get_scheduler.return_value = mock_scheduler
         now = datetime.now(utc)
@@ -189,9 +189,9 @@ class ShelveVMTests(VMFunctionTestBase):
         instance = Instance.objects.get(pk=fake_instance.pk)
         self.assertIsNone(instance.deleted)
 
-    @patch('vm_manager.utils.utils.Nectar', new=FakeNectar)
+    @patch.object(NectarFactory, 'create', return_value=FakeNectar())
     @patch('vm_manager.vm_functions.shelve_vm.django_rq')
-    def test_confirm_instance_deleted_3(self, mock_rq):
+    def test_confirm_instance_deleted_3(self, mock_rq, mock_cn):
         mock_scheduler = Mock()
         mock_rq.get_scheduler.return_value = mock_scheduler
         now = datetime.now(utc)

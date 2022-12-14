@@ -162,6 +162,11 @@ OS_KEYNAME = get_setting('OS_KEYNAME')
 
 OS_PROJECT_ID = get_setting('OS_PROJECT_ID', '')
 
+# Type of desktop console server that is used by the Guacamole server:
+# 'openstack_hypervisor' uses the builtin VNC server of the OpenStack hypervisor
+# 'instance_builtin' uses an RDP server running within a created OpenStack desktop instance
+OS_CONSOLE_SERVER = get_setting('OS_CONSOLE_SERVER', 'instance_builtin')
+
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
     'researcher_workspace.auth.NectarAuthBackend',

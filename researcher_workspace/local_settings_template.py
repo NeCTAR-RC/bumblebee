@@ -39,6 +39,11 @@ OS_KEYNAME = ""  # ¡Change!
 OS_NETWORK = ""  # ¡Change!
 OS_SECGROUPS = []  # ¡Change!
 
+# Type of desktop console server that is used by the Guacamole server:
+# 'openstack_hypervisor' uses the builtin VNC server of the OpenStack hypervisor
+# 'instance_builtin' uses an RDP server running within a created OpenStack desktop instance
+OS_CONSOLE_SERVER = 'instance_builtin'
+
 ### Researcher Desktop Settings
 
 # Banner label on site only visible by users with is_superuser=True

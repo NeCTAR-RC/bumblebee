@@ -317,6 +317,8 @@ class InstanceManager(models.Manager):
 class Instance(CloudResource):
     boot_volume = models.ForeignKey(Volume, on_delete=models.PROTECT, )
     ip_address = models.GenericIPAddressField(null=True, blank=True)
+    console_addr = models.GenericIPAddressField(null=True, blank=True)
+    console_port = models.PositiveIntegerField(null=True, blank=True)
     guac_connection = models.ForeignKey(GuacamoleConnection,
         on_delete=models.SET_NULL, null=True, blank=True)
     username = models.CharField(max_length=20)
@@ -335,18 +337,44 @@ class Instance(CloudResource):
                 self.save()
             return self.ip_address
 
+    def get_console_addr_port(self):
+        if self.console_addr and self.console_port:
+            return self.console_addr, self.console_port
+        else:
+            n = get_nectar()
+            console_addr, console_port = n.get_console_connection(self.id)
+            self.console_addr = console_addr
+            self.console_port = console_port
+            self.save()
+            return self.console_addr, self.console_port
+
+    def get_console_protocol(self):
+        n = get_nectar()
+        return n.get_console_protocol()
+
     def create_guac_connection(self):
+        # save console connection information of OpenStack instance
+        console_addr, console_port = self.get_console_addr_port()
+        console_protocol = self.get_console_protocol()
+
+        # prepare Guacamole connection parameters
         params = [
-            ('hostname', self.get_ip_addr()),
-            ('username', self.username),
-            ('password', self.password),
-            ('security', 'tls'),
-            ('ignore-cert', 'true'),
-            ('resize-method', 'display-update'),
-            ('enable-drive', 'true'),
-            ('drive-path', f'/var/lib/guacd/shared-drive/{self.id}'),
-            ('create-drive-path', 'true'),
+            ('hostname', console_addr),
+            ('port', console_port)
         ]
+
+        if console_protocol == 'rdp':
+            # RDP connections need additional Guacamole connection parameters
+            params.extend([
+                ('username', self.username),
+                ('password', self.password),
+                ('security', 'tls'),
+                ('ignore-cert', 'true'),
+                ('resize-method', 'display-update'),
+                ('enable-drive', 'true'),
+                ('drive-path', f'/var/lib/guacd/shared-drive/{self.id}'),
+                ('create-drive-path', 'true')
+            ])
 
         for k, v in params:
             gcp, created = GuacamoleConnectionParameter.objects.get_or_create(

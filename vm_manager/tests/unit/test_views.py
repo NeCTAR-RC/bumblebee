@@ -25,7 +25,7 @@ from vm_manager.constants import ACTIVE, SHUTDOWN, BUILD, REBUILD, \
 from vm_manager.models import VMStatus, Instance, Volume, Resize, Expiration, \
     EXP_INITIAL, EXP_FIRST_WARNING, EXP_EXPIRING, EXP_EXPIRY_COMPLETED, \
     EXP_EXPIRY_FAILED_RETRYABLE
-from vm_manager.utils.utils import get_nectar, after_time
+from vm_manager.utils.utils import get_nectar, after_time, NectarFactory
 from vm_manager.views import launch_vm_worker, delete_vm_worker, \
     shelve_vm_worker, unshelve_vm_worker, reboot_vm_worker, \
     supersize_vm_worker, downsize_vm_worker
@@ -408,8 +408,8 @@ class VMManagerViewTests(TestCase):
         self.assertEqual(0, vm_status.status_progress)
         self.assertTrue(now < vm_status.wait_time)
 
-    @patch('vm_manager.utils.utils.Nectar', new=FakeNectar)
-    def test_get_vm_state(self):
+    @patch.object(NectarFactory, 'create', return_value=FakeNectar())
+    def test_get_vm_state(self, mock_cn):
         self.build_existing_vm(None)
         self.assertEqual((NO_VM, "No VM", None),
                          get_vm_state(self.vm_status,
@@ -486,10 +486,10 @@ class VMManagerViewTests(TestCase):
                          get_vm_state(self.vm_status,
                                       self.user, self.UBUNTU))
 
-    @patch('vm_manager.utils.utils.Nectar', new=FakeNectar)
+    @patch.object(NectarFactory, 'create', return_value=FakeNectar())
     @patch('vm_manager.models.Instance.get_url')
     @patch('vm_manager.views.InstanceExpiryPolicy')
-    def test_get_vm_state_2(self, mock_policy_class, mock_get_url):
+    def test_get_vm_state_2(self, mock_policy_class, mock_get_url, mock_cn):
         url = "https://foo/bar"
         mock_get_url.return_value = url
 
@@ -530,10 +530,10 @@ class VMManagerViewTests(TestCase):
                              instance.error_message)
             self.assertIsNone(instance.boot_volume.error_message)
 
-    @patch('vm_manager.utils.utils.Nectar', new=FakeNectar)
+    @patch.object(NectarFactory, 'create', return_value=FakeNectar())
     @patch('vm_manager.models.Instance.get_url')
     @patch('vm_manager.views.BoostExpiryPolicy')
-    def test_get_vm_state_3(self, mock_policy_class, mock_get_url):
+    def test_get_vm_state_3(self, mock_policy_class, mock_get_url, mock_cn):
         url = "https://foo/bar"
         mock_get_url.return_value = url
 
@@ -566,9 +566,9 @@ class VMManagerViewTests(TestCase):
              self.instance.id),
             get_vm_state(self.vm_status, self.user, self.UBUNTU))
 
-    @patch('vm_manager.utils.utils.Nectar', new=FakeNectar)
+    @patch.object(NectarFactory, 'create', return_value=FakeNectar())
     @patch('vm_manager.views.VolumeExpiryPolicy')
-    def test_get_vm_state_4(self, mock_policy_class):
+    def test_get_vm_state_4(self, mock_policy_class, mock_cn):
 
         # Not testing the expiration policy decisions
         mock_policy = Mock()

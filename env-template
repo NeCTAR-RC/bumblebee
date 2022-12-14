@@ -43,6 +43,11 @@ OS_APPLICATION_CREDENTIAL_SECRET=
 OS_SECGROUPS=bumblebee
 OS_KEYNAME=bumblebee
 
+# Type of desktop console server that is used by the Guacamole server:
+# 'openstack_hypervisor' uses the builtin VNC server of the OpenStack hypervisor
+# 'instance_builtin' uses an RDP server running within a created OpenStack desktop instance
+OS_CONSOLE_SERVER=instance_builtin
+
 ### Guacamole OpenID Connect integration config
 
 # Guacamole requires a non-confidential OIDC client with implicit flow enabled.
