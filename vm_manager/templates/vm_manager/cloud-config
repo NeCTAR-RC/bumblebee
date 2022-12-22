@@ -17,7 +17,6 @@ users:
   - wheel
   shell: /bin/bash
   sudo: 'ALL=(ALL) NOPASSWD:ALL'
-  ssh-authorized-keys: {% verbatim %}{{ v1.public_ssh_keys }}{% endverbatim %}
 
 phone_home:
   url: {{ phone_home_url }}
