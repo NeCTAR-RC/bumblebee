@@ -16,7 +16,7 @@ from vm_manager.tests.factories import InstanceFactory, VolumeFactory, \
     ResizeFactory, VMStatusFactory
 from vm_manager.tests.fakes import Fake, FakeNectar
 from vm_manager.constants import ERROR, VM_DELETED
-from vm_manager.utils.utils import get_nectar
+from vm_manager.utils.utils import get_nectar, NectarFactory
 
 from vm_manager.models import Instance, Volume, Resize, VMStatus, \
     _create_hostname_id
@@ -61,9 +61,9 @@ class VolumeModelTests(VMManagerModelTestBase):
         fake_volume = self.make_volume()
         self.do_superclass_method_tests(fake_volume)
 
-    @patch('vm_manager.utils.utils.Nectar', new=FakeNectar)
+    @patch.object(NectarFactory, 'create', return_value=FakeNectar())
     @patch('vm_manager.models._create_hostname_id')
-    def test_volume_save(self, mock_gen):
+    def test_volume_save(self, mock_gen, mock_cn):
         mock_gen.return_value = "fnord"
         id = uuid.uuid4()
         volume = self.make_volume(id=id)
@@ -135,8 +135,8 @@ class InstanceModelTests(VMManagerModelTestBase):
 
         self.do_superclass_method_tests(fake_instance)
 
-    @patch('vm_manager.utils.utils.Nectar', new=FakeNectar)
-    def test_get_ip_addr(self):
+    @patch.object(NectarFactory, 'create', return_value=FakeNectar())
+    def test_get_ip_addr(self, mock_cn):
         fake_volume = self.make_volume()
         fake_instance = InstanceFactory.create(
             id=uuid.uuid4(), user=self.user, boot_volume=fake_volume)
@@ -165,8 +165,8 @@ class InstanceModelTests(VMManagerModelTestBase):
         self.assertEqual(dummy_ip, ip)
         self.assertIsNotNone(fake_instance.ip_address)
 
-    @patch('vm_manager.utils.utils.Nectar', new=FakeNectar)
-    def test_get_status(self):
+    @patch.object(NectarFactory, 'create', return_value=FakeNectar())
+    def test_get_status(self, mock_cn):
         fake = get_nectar()
         fake.nova.servers.get.return_value = Fake(status='testing')
         fake.nova.servers.get.reset_mock()
@@ -180,13 +180,18 @@ class InstanceModelTests(VMManagerModelTestBase):
         fake.nova.servers.get.assert_called_once_with(fake_instance.id)
         self.assertEqual('testing', status)
 
-    def test_create_guac_connection(self):
+    @patch.object(FakeNectar, 'get_console_protocol', return_value="rdp")
+    @patch.object(FakeNectar, 'get_console_connection',
+                  return_value=("192.168.122.20", 5901))
+    @patch.object(NectarFactory, 'create', return_value=FakeNectar())
+    def test_create_guac_connection(self, mock_cn, mock_conn, mock_proto):
         fake_volume = self.make_volume()
         fake_guac_connection = GuacamoleConnectionFactory.create()
         fake_instance = InstanceFactory.create(
             id=uuid.uuid4(), user=self.user, boot_volume=fake_volume,
             guac_connection=fake_guac_connection,
-            ip_address="10.0.0.1")
+            ip_address="10.0.0.1", console_addr="192.168.122.20",
+            console_port=5901)
 
         with self.assertRaises(GuacamoleEntity.DoesNotExist):
             self.assertIsNone(GuacamoleEntity.objects.get(
@@ -200,7 +205,7 @@ class InstanceModelTests(VMManagerModelTestBase):
 
         entity = GuacamoleEntity.objects.get(name=self.user.username)
         self.assertIsNotNone(entity)
-        self.assertEqual(9,
+        self.assertEqual(10,
                          GuacamoleConnectionParameter.objects.filter(
                              connection=fake_guac_connection).count())
         self.assertEqual(1,
@@ -265,8 +270,8 @@ class InstanceModelTests(VMManagerModelTestBase):
                          f"with ip_address={ip_address}",
                          str(cm.exception))
 
-    @patch('vm_manager.utils.utils.Nectar', new=FakeNectar)
-    def test_get_instance_by_ip_with_lookup(self):
+    @patch.object(NectarFactory, 'create', return_value=FakeNectar())
+    def test_get_instance_by_ip_with_lookup(self, mock_cn):
         ip_address = '10.0.0.3'
         ip_address_2 = '10.0.0.4'
 

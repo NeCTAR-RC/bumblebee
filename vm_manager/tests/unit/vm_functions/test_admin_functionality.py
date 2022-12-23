@@ -3,11 +3,13 @@ from unittest.mock import Mock, patch
 
 from django.utils.timezone import utc
 
+from vm_manager.tests.fakes import FakeNectar
 from vm_manager.tests.unit.vm_functions.base import VMFunctionTestBase
 
 from vm_manager.constants import VM_OKAY, VM_DELETED, VM_WAITING, VM_SUPERSIZED
 from vm_manager.models import VMStatus, Volume, Instance
 from vm_manager.tests.factories import ResizeFactory
+from vm_manager.utils.utils import NectarFactory
 from vm_manager.vm_functions.admin_functionality import \
     admin_shelve_instance, admin_delete_instance_and_volume, \
     admin_delete_volume, admin_archive_volume, \
@@ -67,7 +69,9 @@ class AdminVMTests(VMFunctionTestBase):
 
     @patch('vm_manager.vm_functions.admin_functionality.django_rq')
     @patch('vm_manager.vm_functions.admin_functionality.archive_volume_worker')
-    def test_admin_archive_instance_and_volume(self, mock_archive, mock_rq):
+    @patch.object(NectarFactory, 'create', return_value=FakeNectar())
+    def test_admin_archive_instance_and_volume(self, mock_cn, mock_archive,
+                                               mock_rq):
         mock_queue = Mock()
         mock_rq.get_queue.return_value = mock_queue
         fake_volume, fake_instance, fake_vmstatus = \
@@ -90,7 +94,9 @@ class AdminVMTests(VMFunctionTestBase):
 
     @patch('vm_manager.vm_functions.admin_functionality.django_rq')
     @patch('vm_manager.vm_functions.admin_functionality.archive_volume_worker')
-    def test_admin_archive_instance_and_volume_2(self, mock_archive, mock_rq):
+    @patch.object(NectarFactory, 'create', return_value=FakeNectar())
+    def test_admin_archive_instance_and_volume_2(self, mock_cn, mock_archive,
+                                                 mock_rq):
         mock_queue = Mock()
         mock_rq.get_queue.return_value = mock_queue
         fake_volume, fake_instance, fake_vmstatus = \
@@ -112,7 +118,8 @@ class AdminVMTests(VMFunctionTestBase):
 
     @patch('vm_manager.vm_functions.admin_functionality.django_rq')
     @patch('vm_manager.vm_functions.admin_functionality.delete_volume')
-    def test_admin_delete_volume(self, mock_delete, mock_rq):
+    @patch.object(NectarFactory, 'create', return_value=FakeNectar())
+    def test_admin_delete_volume(self, mock_cn, mock_delete, mock_rq):
         mock_queue = Mock()
         mock_rq.get_queue.return_value = mock_queue
         fake_volume, fake_instance, fake_vmstatus = \
@@ -132,7 +139,8 @@ class AdminVMTests(VMFunctionTestBase):
 
     @patch('vm_manager.vm_functions.admin_functionality.django_rq')
     @patch('vm_manager.vm_functions.admin_functionality.archive_volume_worker')
-    def test_admin_archive_volume(self, mock_archive, mock_rq):
+    @patch.object(NectarFactory, 'create', return_value=FakeNectar())
+    def test_admin_archive_volume(self, mock_cn, mock_archive, mock_rq):
         mock_queue = Mock()
         mock_rq.get_queue.return_value = mock_queue
         fake_volume, fake_instance, fake_vmstatus = \
@@ -151,7 +159,8 @@ class AdminVMTests(VMFunctionTestBase):
 
     @patch('vm_manager.vm_functions.admin_functionality.django_rq')
     @patch('vm_manager.vm_functions.admin_functionality.logger')
-    def test_admin_shelve_instance(self, mock_logger, mock_rq):
+    @patch.object(NectarFactory, 'create', return_value=FakeNectar())
+    def test_admin_shelve_instance(self, mock_cn, mock_logger, mock_rq):
         mock_queue = Mock()
         mock_rq.get_queue.return_value = mock_queue
         fake_volume, fake_instance, fake_vmstatus = \
@@ -174,7 +183,8 @@ class AdminVMTests(VMFunctionTestBase):
 
     @patch('vm_manager.vm_functions.admin_functionality.django_rq')
     @patch('vm_manager.vm_functions.admin_functionality.logger')
-    def test_admin_downsize_instance(self, mock_logger, mock_rq):
+    @patch.object(NectarFactory, 'create', return_value=FakeNectar())
+    def test_admin_downsize_instance(self, mock_cn, mock_logger, mock_rq):
         mock_queue = Mock()
         mock_rq.get_queue.return_value = mock_queue
         fake_volume, fake_instance, fake_vmstatus = \

@@ -21,7 +21,7 @@ from vm_manager.models import VMStatus, Volume, Instance
 from vm_manager.vm_functions.create_vm import launch_vm_worker, \
     wait_to_create_instance, _create_volume, _create_instance, \
     wait_for_instance_active, _get_source_volume_id, extend_instance
-from vm_manager.utils.utils import get_nectar
+from vm_manager.utils.utils import get_nectar, NectarFactory
 
 
 class CreateVMTests(VMFunctionTestBase):
@@ -97,8 +97,9 @@ class CreateVMTests(VMFunctionTestBase):
     @patch('vm_manager.vm_functions.create_vm._create_instance')
     @patch('vm_manager.vm_functions.create_vm.django_rq')
     @patch('vm_manager.vm_functions.create_vm.datetime')
+    @patch.object(NectarFactory, 'create', return_value=FakeNectar())
     @patch('vm_manager.vm_functions.create_vm.get_nectar')
-    def test_wait_to_create(self, mock_get, mock_datetime,
+    def test_wait_to_create(self, mock_get, mock_cn, mock_datetime,
                             mock_rq, mock_create_instance):
         now = datetime.now(utc)
         mock_datetime.now.return_value = now
@@ -132,9 +133,10 @@ class CreateVMTests(VMFunctionTestBase):
     @patch('vm_manager.vm_functions.create_vm._create_instance')
     @patch('vm_manager.vm_functions.create_vm.django_rq')
     @patch('vm_manager.vm_functions.create_vm.datetime')
+    @patch.object(NectarFactory, 'create', return_value=FakeNectar())
     @patch('vm_manager.vm_functions.create_vm.get_nectar')
-    def test_wait_to_create_unshelve(self, mock_get, mock_datetime, mock_rq,
-                                     mock_create_instance):
+    def test_wait_to_create_unshelve(self, mock_get, mock_cn, mock_datetime,
+                                     mock_rq, mock_create_instance):
         now = datetime.now(utc)
         mock_datetime.now.return_value = now
         mock_scheduler = Mock()
@@ -167,9 +169,10 @@ class CreateVMTests(VMFunctionTestBase):
 
     @patch('vm_manager.vm_functions.create_vm.django_rq')
     @patch('vm_manager.vm_functions.create_vm._create_instance')
+    @patch.object(NectarFactory, 'create', return_value=FakeNectar())
     @patch('vm_manager.vm_functions.create_vm.get_nectar')
-    def test_wait_to_create_timeout(self, mock_get, mock_create_instance,
-                                    mock_rq):
+    def test_wait_to_create_timeout(self, mock_get, mock_cn,
+                                    mock_create_instance, mock_rq):
         fake = FakeNectar()
         fake_volume, _, fake_status = self.build_fake_vol_inst_status()
         fake.cinder.volumes.get.return_value = FakeVolume(
@@ -198,8 +201,9 @@ class CreateVMTests(VMFunctionTestBase):
 
     @patch('vm_manager.vm_functions.create_vm.django_rq')
     @patch('vm_manager.vm_functions.create_vm._create_instance')
+    @patch.object(NectarFactory, 'create', return_value=FakeNectar())
     @patch('vm_manager.vm_functions.create_vm.get_nectar')
-    def test_wait_to_create_poll(self, mock_get, mock_create_instance,
+    def test_wait_to_create_poll(self, mock_get, mock_cn, mock_create_instance,
                                  mock_rq):
         mock_scheduler = Mock()
         mock_rq.get_scheduler.return_value = mock_scheduler
@@ -223,8 +227,10 @@ class CreateVMTests(VMFunctionTestBase):
 
     @patch('vm_manager.vm_functions.create_vm.generate_server_name')
     @patch('vm_manager.vm_functions.create_vm._get_source_volume_id')
+    @patch.object(NectarFactory, 'create', return_value=FakeNectar())
     @patch('vm_manager.vm_functions.create_vm.get_nectar')
-    def test_create_volume(self, mock_get_nectar, mock_get_id, mock_gen):
+    def test_create_volume(self, mock_get_nectar, mock_cn, mock_get_id,
+                           mock_gen):
         mock_gen.return_value = "abcdef"
         mock_get_id.return_value = self.UBUNTU_source_volume_id
         fake_vm_status = VMStatusFactory.create(
@@ -261,9 +267,10 @@ class CreateVMTests(VMFunctionTestBase):
         self.assertEqual(NO_VM, vm_status.status)
         self.assertEqual(25, vm_status.status_progress)
 
+    @patch.object(NectarFactory, 'create', return_value=FakeNectar())
     @patch('vm_manager.vm_functions.create_vm.get_nectar')
     @patch('vm_manager.vm_functions.create_vm.logger')
-    def test_create_volume_exists(self, mock_logger, mock_get):
+    def test_create_volume_exists(self, mock_logger, mock_get, mock_cn):
         fake_volume, _, _ = self.build_fake_vol_inst_status()
 
         fake = FakeNectar()
@@ -280,8 +287,9 @@ class CreateVMTests(VMFunctionTestBase):
             "_create_volume.  Needs manual cleanup.")
         fake.cinder.volumes.get.assert_called_once_with(fake_volume.id)
 
+    @patch.object(NectarFactory, 'create', return_value=FakeNectar())
     @patch('vm_manager.vm_functions.create_vm.get_nectar')
-    def test_create_volume_shelved(self, mock_get):
+    def test_create_volume_shelved(self, mock_get, mock_cn):
         fake_volume, _, _ = self.build_fake_vol_inst_status(status=VM_SHELVED)
 
         fake = FakeNectar()
@@ -294,9 +302,10 @@ class CreateVMTests(VMFunctionTestBase):
                          _create_volume(self.user, self.UBUNTU, self.zone))
         fake.cinder.volumes.get.assert_called_once_with(fake_volume.id)
 
+    @patch.object(NectarFactory, 'create', return_value=FakeNectar())
     @patch('vm_manager.vm_functions.create_vm.get_nectar')
     @patch('vm_manager.vm_functions.create_vm.logger')
-    def test_create_volume_archived(self, mock_logger, mock_get):
+    def test_create_volume_archived(self, mock_logger, mock_get, mock_cn):
         fake_volume, _, _ = self.build_fake_vol_inst_status(status=VM_SHELVED)
 
         fake = FakeNectar()
@@ -313,8 +322,9 @@ class CreateVMTests(VMFunctionTestBase):
         mock_logger.error.assert_called_once_with(
             f"Cannot launch shelved volume marked as archived: {fake_volume}")
 
+    @patch.object(NectarFactory, 'create', return_value=FakeNectar())
     @patch('vm_manager.vm_functions.create_vm.get_nectar')
-    def test_create_volume_missing(self, mock_get):
+    def test_create_volume_missing(self, mock_get, mock_cn):
         fake_volume, _, _ = self.build_fake_vol_inst_status()
 
         fake = FakeNectar()
@@ -326,9 +336,10 @@ class CreateVMTests(VMFunctionTestBase):
         self.assertEqual(None, result)
         fake.cinder.volumes.get.assert_called_once_with(fake_volume.id)
 
+    @patch.object(NectarFactory, 'create', return_value=FakeNectar())
     @patch('vm_manager.vm_functions.create_vm.get_nectar')
     @patch('vm_manager.vm_functions.create_vm.logger')
-    def test_create_volume_wrong_zone(self, mock_logger, mock_get):
+    def test_create_volume_wrong_zone(self, mock_logger, mock_get, mock_cn):
         fake_volume, _, _ = self.build_fake_vol_inst_status()
         fake = FakeNectar()
         fake.cinder.volumes.get.return_value = FakeVolume(
@@ -347,8 +358,9 @@ class CreateVMTests(VMFunctionTestBase):
             "Needs manual cleanup")
         fake.cinder.volumes.get.assert_called_once_with(fake_volume.id)
 
+    @patch.object(NectarFactory, 'create', return_value=FakeNectar())
     @patch('vm_manager.vm_functions.create_vm.get_nectar')
-    def test_create_volume_deleted(self, mock_get):
+    def test_create_volume_deleted(self, mock_get, mock_cn):
         fake_volume, _, _ = self.build_fake_vol_inst_status(status=NO_VM)
         new_vol_id = str(uuid.uuid4())
 
@@ -368,8 +380,9 @@ class CreateVMTests(VMFunctionTestBase):
         self.assertIsNone(volume.error_message)
         fake.cinder.volumes.create.assert_not_called()
 
+    @patch.object(NectarFactory, 'create', return_value=FakeNectar())
     @patch('vm_manager.vm_functions.create_vm.get_nectar')
-    def test_get_source_volume_id(self, mock_get):
+    def test_get_source_volume_id(self, mock_get, mock_cn):
         id = str(uuid.uuid4())
         fake = get_nectar()
         fake.cinder.volumes.list.reset_mock()
@@ -408,9 +421,12 @@ class CreateVMTests(VMFunctionTestBase):
     @patch('vm_manager.vm_functions.create_vm.generate_server_name')
     @patch('vm_manager.vm_functions.create_vm.generate_password')
     @patch('vm_manager.vm_functions.create_vm.render_to_string')
+    @patch.object(FakeNectar, 'get_console_protocol', return_value="rdp")
+    @patch.object(NectarFactory, 'create', return_value=FakeNectar())
     @patch('vm_manager.vm_functions.create_vm.get_nectar')
-    def test_create_instance(self, mock_get, mock_render, mock_gen_password,
-                             mock_gen_server_name, mock_gen_hostname):
+    def test_create_instance(self, mock_get, mock_cn, mock_proto, mock_render,
+                             mock_gen_password, mock_gen_server_name,
+                             mock_gen_hostname):
         mock_gen_hostname.return_value = "mullion"
         mock_gen_server_name.return_value = "foobar"
         mock_gen_password.return_value = "secret"
@@ -456,9 +472,11 @@ class CreateVMTests(VMFunctionTestBase):
         )
 
     @patch('vm_manager.vm_functions.create_vm.django_rq')
+    @patch.object(NectarFactory, 'create', return_value=FakeNectar())
     @patch('vm_manager.vm_functions.create_vm.get_nectar')
     @patch('vm_manager.models.get_nectar')
-    def test_wait_for_active_timeout(self, mock_get, mock_get_2, mock_rq):
+    def test_wait_for_active_timeout(self, mock_get, mock_get_2, mock_cn,
+                                     mock_rq):
         fake = FakeNectar()
         _, fake_instance, fake_status = self.build_fake_vol_inst_status()
         fake.nova.servers.get.return_value = FakeServer(
@@ -481,9 +499,10 @@ class CreateVMTests(VMFunctionTestBase):
         mock_rq.get_scheduler.assert_not_called()
 
     @patch('vm_manager.vm_functions.create_vm.django_rq')
+    @patch.object(NectarFactory, 'create', return_value=FakeNectar())
     @patch('vm_manager.vm_functions.create_vm.get_nectar')
     @patch('vm_manager.models.get_nectar')
-    def test_wait_for_active_poll(self, mock_get, mock_get_2, mock_rq):
+    def test_wait_for_active_poll(self, mock_get, mock_get_2, mock_cn, mock_rq):
         mock_scheduler = Mock()
         mock_rq.get_scheduler.return_value = mock_scheduler
         fake = FakeNectar()
@@ -503,9 +522,11 @@ class CreateVMTests(VMFunctionTestBase):
             self.user, self.UBUNTU, fake_instance, start)
 
     @patch('vm_manager.vm_functions.create_vm.django_rq')
+    @patch.object(NectarFactory, 'create', return_value=FakeNectar())
     @patch('vm_manager.models.get_nectar')
     @patch('vm_manager.vm_functions.create_vm.get_nectar')
-    def test_wait_for_active_success(self, mock_get, mock_get_2, mock_rq):
+    def test_wait_for_active_success(self, mock_get, mock_get_2, mock_cn,
+                                     mock_rq):
         mock_scheduler = Mock()
         mock_rq.get_scheduler.return_value = mock_scheduler
         fake = FakeNectar()

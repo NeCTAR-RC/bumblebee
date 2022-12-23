@@ -2,6 +2,7 @@ from unittest.mock import Mock
 import uuid
 
 from vm_manager.tests.common import UUID_1, UUID_2
+from vm_manager.utils.utils import Nectar
 
 
 class Fake(object):
@@ -40,7 +41,7 @@ VOLUMES = [
 ]
 
 
-class FakeNectar(object):
+class FakeNectar(Nectar):
     def __init__(self):
         self.nova = Mock()
         self.nova.flavors.list = Mock(return_value=FLAVORS)
@@ -55,3 +56,9 @@ class FakeNectar(object):
         self.cinder.volumes.list = Mock(return_value=VOLUMES)
         self.cinder.volumes.create = Mock(
             return_value=FakeVolume(id=UUID_1))
+
+    def get_console_connection(self, server_id):
+        pass
+
+    def get_console_protocol(self):
+        pass
