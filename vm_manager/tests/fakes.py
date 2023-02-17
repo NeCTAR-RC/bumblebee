@@ -15,6 +15,9 @@ class Fake(object):
     def __eq__(self, other):
         return self.__class__ == other.__class__ and self.id == other.id
 
+    def __str__(self):
+        return self.__repr__()
+
 
 class FakeFlavor(Fake):
     pass

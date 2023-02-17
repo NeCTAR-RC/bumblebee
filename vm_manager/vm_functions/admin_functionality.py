@@ -10,16 +10,23 @@ from django.http import HttpResponse, Http404
 from django.shortcuts import render
 from django.utils.timezone import utc
 
+import cinderclient
 import django_rq
+import novaclient
+
+from django.contrib import messages
 
 from guacamole.models import GuacamoleConnection
 from researcher_desktop.models import DesktopType
 from researcher_workspace.utils import offset_month_and_year
 from vm_manager.constants import VM_DELETED, VM_WAITING, \
-    SHELVE_WAIT_SECONDS, RESIZE_WAIT_SECONDS
+    VM_ERROR, VM_OKAY, VM_MISSING, VM_SUPERSIZED, NO_VM, VM_SHELVED,  \
+    SHELVE_WAIT_SECONDS, RESIZE_WAIT_SECONDS, VOLUME_AVAILABLE, \
+    VOLUME_IN_USE, ACTIVE
 from vm_manager.models import Instance, Resize, Volume, VMStatus
 from vm_manager.utils.Check_ResearchDesktop_Availability import \
     check_availability
+from vm_manager.utils.expiry import VolumeExpiryPolicy
 from vm_manager.utils.utils import after_time, get_nectar
 from vm_manager.vm_functions.delete_vm import \
     delete_vm_worker, delete_volume, archive_volume_worker
@@ -35,6 +42,219 @@ def test_function(request):
         raise Http404()
     return HttpResponse(_generate_weekly_availability_report(),
                         content_type='text/plain')
+
+
+class _Reporter(object):
+
+    def __init__(self, request):
+        self.request = request
+        self.errors = False
+        self.repairs = False
+
+    def error(self, message):
+        logger.error(message)
+        messages.error(self.request, message, extra_tags='error')
+        self.errors = True
+
+    def repair(self, message):
+        logger.info(message)
+        messages.info(self.request, message)
+        self.repairs = True
+
+    def info(self, message):
+        logger.info(message)
+        messages.info(self.request, message)
+
+
+#
+# Note that the 'repair' functions only change the Bumblebee to make
+# it consistent with Cinder and Nova resources.  They don't change things
+# on the Openstack side.  That kind of problem needs to be fixed via
+# the Openstack dashboard or CLI.  The Bumblebee admin UI will tell you
+# that "manual cleanup" is required.
+#
+
+
+def admin_repair_volume_error(
+        request, volume, rep=None,
+        expected_states=[VOLUME_AVAILABLE, VOLUME_IN_USE]):
+    if not rep:
+        rep = _Reporter(request)
+    n = get_nectar()
+    try:
+        status = n.cinder.volumes.get(volume.id).status
+        if status not in expected_states:
+            rep.error(
+                f"Cinder volume {volume.id} is in unexpected "
+                f"state {status}. Manual cleanup required.")
+            return False
+    except cinderclient.exceptions.NotFound:
+        rep.repair(f"Cinder volume {volume.id} is missing. "
+                   "Recording desktop as deleted.")
+        volume.deleted = datetime.now(utc)
+        volume.save()
+
+    if volume.error_flag and not volume.deleted:
+        volume.error_flag = None
+        volume.error_message = None
+        volume.save()
+        rep.repair(f"Cleared error for volume {volume.id}")
+
+    if not rep.errors and not rep.repairs:
+        rep.info(f"Volume {volume.id} has no issues")
+
+    return True
+
+
+def admin_repair_instance_error(request, instance):
+    rep = _Reporter(request)
+    n = get_nectar()
+    volume = instance.boot_volume
+    try:
+        status = n.nova.servers.get(instance.id).status
+        if volume.deleted:
+            rep.error(f"Nova instance {instance.id} still exists for "
+                      f"deleted volume {volume.id}. "
+                      "Manual cleanup required.")
+            return False
+        elif not admin_repair_volume_error(
+                request, volume, rep, expected_states=[VOLUME_IN_USE]):
+            rep.error(f"Volume error for instance {instance.id} "
+                      "must be dealt with first.")
+            return False
+        else:
+            if status not in [ACTIVE]:
+                rep.error(
+                    f"Nova instance {instance.id} is in unexpected "
+                    f"state {status}. Manual cleanup required.")
+                return False
+    except novaclient.exceptions.NotFound:
+        if not admin_repair_volume_error(
+                request, volume, rep, expected_states=[VOLUME_AVAILABLE]):
+            rep.error(f"Volume error for instance {instance.id} "
+                      "must be dealt with first.")
+            return False
+
+        vmstatus = VMStatus.objects.get_vm_status_by_instance(
+            instance, volume.requesting_feature)
+        now = datetime.now(utc)
+        resize = Resize.objects.get_latest_resize(instance)
+        if resize and not resize.reverted:
+            rep.repair(f"Reverting resize for instance {instance.id}.")
+            resize.reverted = now
+            resize.save()
+        if not volume.deleted:
+            rep.repair(f"Nova instance {instance.id} missing. "
+                       "Recording desktop as shelved.")
+            volume.shelved_at = now
+            volume.set_expires(VolumeExpiryPolicy().initial_expiry())
+            volume.save()
+            vmstatus.status = VM_SHELVED
+        else:
+            rep.repair(f"Recording instance {instance.id} as deleted.")
+            vmstatus.status = NO_VM
+        vmstatus.save()
+        instance.deleted = now
+        instance.save()
+
+    if instance.error_flag and not instance.deleted:
+        instance.error_flag = None
+        instance.error_message = None
+        instance.save()
+        rep.repair(f"Cleared error for instance {instance.id}")
+
+    if not rep.errors and not rep.repairs:
+        rep.info(f"Instance {instance.id} has no issues")
+    return True
+
+
+def admin_check_vmstatus(request, vmstatus):
+    rep = _Reporter(request)
+    instance = vmstatus.instance
+    volume = instance.boot_volume
+    n = get_nectar()
+    latest_vmstatus = VMStatus.objects.filter(instance=instance) \
+                                      .latest("created")
+
+    if vmstatus.id != latest_vmstatus.id:
+        rep.error(f"VMStatus {vmstatus.id} for "
+                  f"volume {vmstatus.instance.boot_volume.id} "
+                  f"instance {vmstatus.instance.id} is not current.")
+        return
+
+    if vmstatus.status in [VM_ERROR, VM_MISSING, NO_VM, VM_DELETED]:
+        rep.error(f"VMStatus {vmstatus.id} in state {vmstatus.status} "
+                  f"for instance {instance.id}")
+        try:
+            server = n.nova.servers.get(instance.id)
+            rep.error(
+                f"Found nova instance {vmstatus.instance.id} "
+                f"in state {server.status}")
+        except novaclient.exceptions.NotFound:
+            rep.error(
+                f"No nova instance {vmstatus.instance.id}")
+        try:
+            vol = n.cinder.volumes.get(volume.id)
+            rep.error(
+                f"Found cinder volume {volume.id} "
+                f"in state {vol.status}")
+        except cinderclient.exceptions.NotFound:
+            rep.error(
+                f"No cinder volume {volume.id}")
+
+    elif vmstatus.status in [VM_OKAY, VM_SUPERSIZED]:
+        try:
+            status = n.nova.servers.get(instance.id).status
+            if status != ACTIVE:
+                rep.error(
+                    f"Found nova instance {instance.id} in "
+                    f"state {status} for a {vmstatus.status} vmstatus")
+            resize = Resize.objects.get_latest_resize(instance)
+            if vmstatus.status == VM_SUPERSIZED:
+                if not resize:
+                    rep.error(
+                        "Missing Resize for supersized "
+                        f"instance {instance.id}")
+                elif resize.reverted:
+                    rep.error(
+                        "Reverted Resize for supersized "
+                        f"instance {instance.id}")
+            else:
+                if resize and not resize.reverted:
+                    rep.error(
+                        "Unreverted Resize for normal sized "
+                        f"instance {instance.id}")
+            # Here we could check that the instance's flavor is correct
+        except novaclient.exceptions.NotFound:
+            rep.error(
+                f"Missing nova instance {instance.id} "
+                f"for a {vmstatus.status} vmstatus")
+    elif vmstatus.status == VM_SHELVED:
+        try:
+            status = n.nova.servers.get(instance.id).status
+            rep.error(
+                f"Found nova instance {instance.id} "
+                f"in state {status} for a {vmstatus.status} vmstatus")
+        except novaclient.exceptions.NotFound:
+            pass
+        try:
+            status = n.cinder.volumes.get(volume.id).status
+            if status != VOLUME_AVAILABLE:
+                rep.error(
+                    f"Cinder volume {volume.id} is "
+                    f"in state {status} for a {VM_SHELVED} vmstatus")
+        except cinderclient.exceptions.NotFound:
+            rep.error(
+                f"Cinder volume {volume.id} is missing "
+                f"for a {VM_SHELVED} vmstatus")
+    else:
+        # This includes VM_SHUTDOWN
+        rep.error(
+            f"VMStatus {vmstatus.id} in unknown state: "
+            f"{vmstatus.status}")
+
+    if not rep.errors:
+        rep.info(f"VMStatus {vmstatus.id} has no issues")
 
 
 def admin_delete_instance_and_volume(request, instance):
@@ -55,8 +275,9 @@ def admin_delete_instance_and_volume(request, instance):
         volume.set_marked_for_deletion()
         queue = django_rq.get_queue('default')
         queue.enqueue(delete_vm_worker, instance)
-        logger.info(f"{request.user} admin deleting instance {instance.id} "
-                    f"and volume {volume.id}")
+        logger.info(
+            f"{request.user} admin deleting instance {instance.id} "
+            f"and volume {volume.id}")
 
 
 def admin_archive_instance_and_volume(request, instance):
@@ -77,8 +298,9 @@ def admin_archive_instance_and_volume(request, instance):
         volume.set_marked_for_deletion()
         queue = django_rq.get_queue('default')
         queue.enqueue(delete_vm_worker, instance, archive=True)
-        logger.info(f"{request.user} admin archiving instance {instance.id} "
-                    f"and volume {volume.id}")
+        logger.info(
+            f"{request.user} admin archiving instance {instance.id} "
+            f"and volume {volume.id}")
 
 
 def admin_delete_volume(request, volume):

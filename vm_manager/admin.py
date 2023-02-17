@@ -6,14 +6,16 @@ from django.utils.formats import localize
 from django.utils.safestring import mark_safe
 from django.utils.timezone import localtime
 
-from vm_manager.constants import VM_OKAY
+from vm_manager.constants import VM_OKAY, VM_ERROR, VM_MISSING
 from vm_manager.models import Instance, Volume, Resize, Expiration, VMStatus
 from vm_manager.utils.expiry import InstanceExpiryPolicy, \
     VolumeExpiryPolicy, BoostExpiryPolicy
 from vm_manager.vm_functions.admin_functionality import \
     admin_delete_instance_and_volume, admin_delete_volume, \
     admin_archive_instance_and_volume, admin_archive_volume, \
-    admin_shelve_instance, admin_downsize_resize
+    admin_shelve_instance, admin_downsize_resize, \
+    admin_repair_volume_error, admin_repair_instance_error, \
+    admin_check_vmstatus
 
 
 def set_expiry(modelAdmin, request, queryset):
@@ -52,6 +54,12 @@ def admin_archive_instances(modelAdmin, request, queryset):
             admin_archive_instance_and_volume(request, instance)
 
 
+def admin_repair_volume_errors(modelAdmin, request, queryset):
+    for volume in queryset:
+        if not volume.marked_for_deletion and not volume.deleted:
+            admin_repair_volume_error(request, volume)
+
+
 def admin_delete_shelved_volumes(modelAdmin, request, queryset):
     for volume in queryset:
         if volume.shelved_at and not volume.deleted:
@@ -74,6 +82,23 @@ def admin_delete_shelved_instances(modelAdmin, request, queryset):
     for instance in queryset:
         if instance.deleted and instance.boot_volume.shelved_at:
             admin_delete_volume(request, instance.boot_volume)
+
+
+def admin_repair_instance_errors(modelAdmin, request, queryset):
+    for instance in queryset:
+        if not instance.marked_for_deletion and not instance.deleted:
+            admin_repair_instance_error(request, instance)
+
+
+def admin_repair_vmstatus_errors(modelAdmin, request, queryset):
+    for vmstatus in queryset:
+        if vmstatus in [VM_ERROR, VM_MISSING]:
+            admin_repair_vmstatus_error(request, vmstatus)
+
+
+def admin_check_vmstatuses(modelAdmin, request, queryset):
+    for vmstatus in queryset:
+        admin_check_vmstatus(request, vmstatus)
 
 
 class ExpirationAdmin(admin.ModelAdmin):
@@ -132,7 +157,8 @@ class InstanceAdmin(ResourceAdmin):
         'boot_volume__requesting_feature']
     actions = ResourceAdmin.actions + [
         admin_delete_instances, admin_shelve_instances,
-        admin_archive_instances, admin_delete_shelved_instances]
+        admin_archive_instances, admin_delete_shelved_instances,
+        admin_repair_instance_errors]
     readonly_fields = ResourceAdmin.readonly_fields + [
         "boot_volume_fields"]
 
@@ -146,6 +172,7 @@ class InstanceAdmin(ResourceAdmin):
         "admin/vm_manager/instance/task/delete_confirmation.html"
 
     admin_shelve_instances.short_description = "Shelve instances"
+    admin_repair_instance_errors.short_description = "Repair instance errors"
     admin_delete_instances.short_description = \
         "Delete instances and associated volumes"
     admin_archive_instances.short_description = \
@@ -181,7 +208,8 @@ class VolumeAdmin(ResourceAdmin):
         'image', 'operating_system', 'flavor', 'requesting_feature',
         'ready', 'checked_in']
     actions = ResourceAdmin.actions + [
-        admin_archive_shelved_volumes, admin_delete_shelved_volumes]
+        admin_archive_shelved_volumes, admin_delete_shelved_volumes,
+        admin_repair_volume_errors]
     inlines = (InstanceInline, )
 
     list_display = ResourceAdmin.list_display + (
@@ -195,6 +223,7 @@ class VolumeAdmin(ResourceAdmin):
         "Delete volumes for shelved instances"
     admin_archive_shelved_volumes.short_description = \
         "Archive volumes for shelved instances"
+    admin_repair_volume_errors.short_description = "Repair volume errors"
 
     def has_delete_permission(self, request, obj=None):
         return settings.DEBUG
@@ -225,11 +254,13 @@ class VMStatusAdmin(admin.ModelAdmin):
     list_filter = [
         'created', 'requesting_feature', 'operating_system',
         'status', 'instance__deleted', 'user']
-    readonly_fields = ('created',)
+    readonly_fields = ('created', 'id')
     ordering = ('-created',)
+    actions = ResourceAdmin.actions + [admin_check_vmstatuses]
 
     list_display = (
         '__str__',
+        'id',
         'user',
         'status',
         'created',
@@ -240,6 +271,7 @@ class VMStatusAdmin(admin.ModelAdmin):
     )
 
     change_form_template = 'admin/vm_manager/vm_status/change_form.html'
+    admin_check_vmstatuses.short_description = "Check"
 
     def response_change(self, request, obj):
         if "_set_vm_okay" in request.POST:

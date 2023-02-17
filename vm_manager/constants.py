@@ -25,6 +25,7 @@ MISSING = "MISSING"
 VOLUME_AVAILABLE = "available"
 VOLUME_IN_USE = "in-use"
 VOLUME_CREATING = "creating"
+VOLUME_MAINTENANCE = "maintenance"
 
 BACKUP_AVAILABLE = "available"
 BACKUP_CREATING = "creating"
