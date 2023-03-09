@@ -1,5 +1,5 @@
 var beenClicked = false;
-function reboot_{{ app_name }}_{{ desktop_type.id.capitalize }}(tag) {
+function reboot_{{ app_name }}_{{ desktop_type.id }}(tag) {
     if (!beenClicked) {
         beenClicked = true;
         tag.disabled = true;

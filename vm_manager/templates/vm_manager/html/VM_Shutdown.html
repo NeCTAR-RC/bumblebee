@@ -2,9 +2,9 @@
     <p class="h5 text-warning pb-3"><i class="fas fa-exclamation-triangle"></i> Your {{ requesting_feature }} has been shutdown, please start it to continue using it.</p>
     <p><em><strong>NOTE:</strong> You don't need to shut down your {{ requesting_feature }} to exit your session, just close the tab/window.</em></p>
     <p>
-        <a class="btn btn-success" data-modal-target="{{ app_name }}-{{ desktop_type.id }}-reboot-modal" href="#">
+        <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#{{ app_name }}-{{ desktop_type.id }}-reboot-modal">
             Start Desktop
-        </a>
+        </button>
     </p>
     <div class="modal fade" id="{{ app_name }}-{{ desktop_type.id }}-reboot-modal" tabindex="-1" aria-labelledby="{{ app_name }}-{{ desktop_type.id }}-reboot-modal-label" aria-hidden="true">
         <div class="modal-dialog modal-lg">
