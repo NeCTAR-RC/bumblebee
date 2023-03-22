@@ -1,7 +1,7 @@
 from unittest.mock import Mock
 import uuid
 
-from vm_manager.tests.common import UUID_1, UUID_2
+from vm_manager.tests.common import UUID_1
 
 
 class Fake(object):

@@ -1,15 +1,9 @@
-import pdb
-
-from datetime import datetime, timedelta
-from uuid import uuid4
+from datetime import timedelta
 from unittest.mock import Mock, patch, call
 
 import novaclient
 
-from django.utils.timezone import utc
-
-from guacamole.tests.factories import GuacamoleConnectionFactory
-from vm_manager.tests.fakes import Fake, FakeServer, FakeNectar
+from vm_manager.tests.fakes import FakeServer, FakeNectar
 from vm_manager.tests.unit.vm_functions.base import VMFunctionTestBase
 
 from vm_manager.constants import ACTIVE, SHUTDOWN, RESCUE, REBOOT, \

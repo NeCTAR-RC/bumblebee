@@ -1,5 +1,3 @@
-import pdb
-
 from datetime import datetime
 from unittest.mock import call, Mock, patch
 
@@ -11,7 +9,7 @@ import novaclient
 from vm_manager.tests.unit.vm_functions.base import VMFunctionTestBase
 
 from vm_manager.constants import VM_OKAY, VM_DELETED, VM_WAITING, \
-    VM_MISSING, VM_ERROR, NO_VM, VM_SUPERSIZED, VM_SHELVED, \
+    VM_ERROR, NO_VM, VM_SUPERSIZED, VM_SHELVED, \
     ACTIVE, SHUTDOWN, VOLUME_IN_USE, VOLUME_AVAILABLE, VOLUME_MAINTENANCE
 from vm_manager.models import VMStatus, Volume, Instance, Resize
 from vm_manager.tests.factories import ResizeFactory, VMStatusFactory
@@ -22,8 +20,7 @@ from vm_manager.vm_functions.admin_functionality import \
     admin_archive_instance_and_volume, admin_downsize_resize, \
     admin_check_vmstatus, admin_repair_volume_error, \
     admin_repair_instance_error
-from vm_manager.vm_functions.delete_vm import \
-    archive_volume_worker, delete_vm_worker
+from vm_manager.vm_functions.delete_vm import delete_vm_worker
 from vm_manager.vm_functions.resize_vm import downsize_vm_worker
 from vm_manager.vm_functions.shelve_vm import shelve_vm_worker
 

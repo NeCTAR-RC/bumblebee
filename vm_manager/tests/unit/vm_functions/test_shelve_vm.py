@@ -7,7 +7,7 @@ from django.utils.timezone import utc
 
 from guacamole.tests.factories import GuacamoleConnectionFactory
 from vm_manager.constants import ACTIVE, SHUTDOWN, RESCUE, \
-    VM_OKAY, VM_WAITING, VM_ERROR, VM_SHELVED, VM_SUPERSIZED, \
+    VM_OKAY, VM_WAITING, VM_ERROR, VM_SHELVED, \
     FORCED_SHELVE_WAIT_SECONDS, INSTANCE_CHECK_SHUTOFF_RETRY_COUNT, \
     INSTANCE_DELETION_RETRY_COUNT, INSTANCE_CHECK_SHUTOFF_RETRY_WAIT_TIME, \
     INSTANCE_DELETION_RETRY_WAIT_TIME, \

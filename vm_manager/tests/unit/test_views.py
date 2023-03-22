@@ -7,7 +7,7 @@ from django.http import Http404
 from django.test import TestCase
 from django.utils.timezone import utc
 
-from researcher_workspace.tests.factories import FeatureFactory, UserFactory
+from researcher_workspace.tests.factories import UserFactory
 from researcher_desktop.tests.factories import DesktopTypeFactory, \
     AvailabilityZoneFactory
 from researcher_desktop.utils.utils import get_desktop_type, desktops_feature

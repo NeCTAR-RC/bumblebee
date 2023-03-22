@@ -1,7 +1,6 @@
 from django.db.models import Count, EmailField, ExpressionWrapper, F, Func, Value
 
-from prometheus_client import Counter, Histogram, Gauge
-from prometheus_client.core import GaugeMetricFamily, CounterMetricFamily, REGISTRY
+from prometheus_client.core import GaugeMetricFamily
 
 from vm_manager import models as vm_manager_models
 

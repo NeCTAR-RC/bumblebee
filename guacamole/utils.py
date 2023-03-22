@@ -6,8 +6,6 @@ import urllib
 from .models import GuacamoleUser, GuacamoleEntity, GuacamoleConnection
 from .models import GuacamoleConnectionParameter, GuacamoleConnectionPermission
 
-from django.conf import settings
-
 
 def get_connection_path(conn):
     # Guacamole uses a special format for generating direct URLs to connections

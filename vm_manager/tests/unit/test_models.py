@@ -2,7 +2,6 @@ from datetime import datetime
 from unittest.mock import patch
 import uuid
 
-from django.conf import settings
 from django.http import Http404
 from django.test import TestCase
 from django.utils.timezone import utc
@@ -15,7 +14,7 @@ from guacamole.tests.factories import GuacamoleConnectionFactory
 from vm_manager.tests.factories import InstanceFactory, VolumeFactory, \
     ResizeFactory, VMStatusFactory
 from vm_manager.tests.fakes import Fake, FakeNectar
-from vm_manager.constants import ERROR, VM_DELETED
+from vm_manager.constants import ERROR
 from vm_manager.utils.utils import get_nectar
 
 from vm_manager.models import Instance, Volume, Resize, VMStatus, \

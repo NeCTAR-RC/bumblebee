@@ -13,7 +13,6 @@ from django.utils.html import format_html
 from django.utils.timezone import utc
 from django.views.decorators.csrf import csrf_exempt
 import django_rq
-import novaclient
 
 from researcher_desktop.models import AvailabilityZone
 from researcher_desktop.utils.utils import get_desktop_type
@@ -29,7 +28,7 @@ from vm_manager.constants import VM_ERROR, VM_OKAY, VM_WAITING, \
 from vm_manager.models import VMStatus, Instance, Resize, Volume, EXP_EXPIRING
 from vm_manager.utils.expiry import BoostExpiryPolicy, InstanceExpiryPolicy, \
     VolumeExpiryPolicy
-from vm_manager.utils.utils import after_time, generate_hostname, get_nectar
+from vm_manager.utils.utils import after_time, generate_hostname
 
 # These are needed, as they're consumed by researcher_workspace/views.py
 from vm_manager.vm_functions.admin_functionality import \

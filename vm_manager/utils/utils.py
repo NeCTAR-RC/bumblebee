@@ -1,5 +1,4 @@
 from datetime import datetime, timedelta
-import logging
 
 from cinderclient import client as cinder_client
 from glanceclient import client as glance_client

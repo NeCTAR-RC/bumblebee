@@ -13,9 +13,8 @@ from django.utils.timezone import utc
 from novaclient import exceptions as nova_exceptions
 
 from researcher_workspace.models import Feature, User
-from researcher_desktop.models import DesktopType
 from vm_manager.constants import ERROR, ACTIVE, SHUTDOWN, VERIFY_RESIZE, \
-    RESIZE, MISSING, VM_ERROR, VM_DELETED
+    RESIZE, MISSING, VM_ERROR
 
 from vm_manager.utils.utils import get_nectar
 

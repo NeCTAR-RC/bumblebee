@@ -12,7 +12,7 @@ from vm_manager.tests.common import UUID_3, UUID_4
 from vm_manager.tests.factories import InstanceFactory, VMStatusFactory, \
     VolumeFactory
 
-from vm_manager.constants import VM_OKAY, VOLUME_IN_USE
+from vm_manager.constants import VM_OKAY
 
 
 class VMFunctionTestBase(TestCase):

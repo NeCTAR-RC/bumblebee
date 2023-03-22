@@ -19,7 +19,7 @@ from vm_manager.constants import ACTIVE, SHUTDOWN, RESCUE, \
     BACKUP_DELETION_RETRY_COUNT, \
     ARCHIVE_POLL_SECONDS, ARCHIVE_WAIT_SECONDS, \
     BACKUP_CREATING, BACKUP_AVAILABLE, \
-    WF_RETRY, WF_SUCCESS, WF_CONTINUE, WF_FAIL
+    WF_RETRY, WF_SUCCESS, WF_CONTINUE
 from guacamole.models import GuacamoleConnection
 from vm_manager.models import VMStatus, Volume, Instance, \
     EXP_INITIAL, EXP_EXPIRING, EXP_EXPIRY_COMPLETED, \

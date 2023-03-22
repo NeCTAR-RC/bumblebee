@@ -39,7 +39,6 @@ from .utils.freshdesk import create_ticket
 import researcher_desktop.views as rdesk_views
 
 from vm_manager.constants import NO_VM
-from vm_manager.models import VMStatus
 from vm_manager.utils.utils import get_nectar
 from vm_manager.views import desktop_limit_check
 

@@ -1,4 +1,3 @@
-import copy
 import crypt
 from datetime import datetime, timedelta
 import logging

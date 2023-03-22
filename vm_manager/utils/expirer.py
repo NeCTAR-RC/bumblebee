@@ -2,7 +2,6 @@ import logging
 from datetime import datetime, timedelta
 
 from django.conf import settings
-from django.db.models import Q
 from django.utils.timezone import utc
 
 from researcher_workspace.utils import send_notification, format_notification
