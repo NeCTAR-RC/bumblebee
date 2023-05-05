@@ -594,7 +594,7 @@ def project_edit(request, project_id):
             messages.success(request, format_html(
                 f'Your project <strong>{project.title}</strong> '
                 'has been edited successfully.'))
-            return HttpResponseRedirect(reverse('projects'))
+            return HttpResponseRedirect(reverse('home'))
     else:
         project = Project.objects.get_project_by_untrusted_project_id(
             project_id, request.user)

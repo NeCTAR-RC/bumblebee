@@ -10,7 +10,10 @@
         <div class="desktop-container container">
           <div class="row py-5">
             <div class="workspace-info col-md-12 col-lg-4">
-              <h6 class="text-white mb-3">WORKSPACE</h6>
+              <h6 class="text-white mb-3">
+                WORKSPACE
+                <a href="{% url 'project_edit' project_id=selected_project.id %}" class="btn btn-xs btn-link"><i class="fas fa-pen"></i> Edit</a>
+              </h6>
               <h1 class="workspace-title h2 text-white mb-3">{{ selected_project.title }}</h1>
               <p class="workspace-description text-white mb-3">{{ selected_project.description }}</p>
             </div>

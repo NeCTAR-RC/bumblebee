@@ -3,7 +3,7 @@
 {% block breadcrumb %}
 {{ block.super }}
 <li itemprop="itemListElement" itemscope="" itemtype="http://schema.org/ListItem">
-    <a href="{% url 'project_edit' form.instance.id %}" itemprop="item" title="Edit Project">
+    <a href="{% url 'project_edit' form.instance.id %}" itemprop="item" title="Edit Workspace">
         <span itemprop="name">Edit Workspace</span>
     </a>
     <meta content="3" itemprop="position" />
@@ -11,7 +11,7 @@
 {% endblock breadcrumb %}
 
 <div class="container py-5">
-{% block form_title %}Edit Your Workspace{% endblock%}
+{% block form_title %}Edit your Workspace details{% endblock%}
 
 {% block form_submit_url %}{% url 'project_edit' form.instance.id %}{% endblock %}
 </div>

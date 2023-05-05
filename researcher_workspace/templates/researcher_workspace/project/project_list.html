@@ -12,7 +12,8 @@
 {% block content %}
 <div class="container py-5">
     {% if allow_new_projects %}<div><a class="btn btn-primary btn-small" style="float:right" href="{% url 'new_project' %}">New Workspace</a></div>{% endif %}
-    <h2 class="display-5 mb-4">You have these current workspace:</h2>
+    <h2 class="display-5 mb-4">
+      Details of your {% if allow_new_projects %}Workspaces{% else %}Workspace{% endif %}:</h2>
     {% for project in user_projects %}
         <div>
             <h3>{{ project.title }}</h3>
@@ -40,16 +41,16 @@
                 </tr>
             </table>
         {% if not project.ARO_approval is False %}
-            <a href="{% url 'project_edit' project.id %}" class="button-small">Edit Workspace</a>
+            <a href="{% url 'project_edit' project.id %}" class="btn btn-default btn-sm"><i class="fas fa-pen"></i> Edit Workspace details</a>
         {% else %}
-            <p>This Workspace cannot be edited, as it has been rejected by the Administrator. Please contact our support team for more information.</p>
+            <p>The details of this Workspace cannot be edited, as it has been rejected by the Administrator. Please contact Nectar Support for more information.</p>
         {% endif %}
         </div>
         {% if not forloop.last %}
         <hr>
         {% endif %}
     {% empty %}
-        <div>You don't have any proposed workspaces yet</div>
+        <div>You don't have any Workspaces yet</div>
     {% endfor %}
 </div>
 {% endblock %}
