@@ -1,5 +1,5 @@
+from health_check.plugins import plugin_dir
 from django.apps import AppConfig
-
 from django.db.models.signals import post_migrate
 from django.db.backends.signals import connection_created
 from prometheus_client import REGISTRY
@@ -40,3 +40,6 @@ class ResearcherWorkspaceConfig(AppConfig):
 
         if not migration_executed:
             connection_created.connect(connection_callback)
+
+        from researcher_workspace.health import DesktopStatus
+        plugin_dir.register(DesktopStatus)
