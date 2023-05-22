@@ -54,3 +54,47 @@ used for that purpose. Any valid realm may be created and its details put
 in the ``.env`` file afterwards with a final run of docker-compose to get
 Bumblebee working with it. Both Bumblebee and Guacamole need their own
 clients set up in Keycloak to work with it.
+
+## Selenium tests
+
+The selenium tests are intended to be run in a fully configured bumblebee
+development environment with the redis service, rqscheduler and rqworker
+already running.  You will need to install Firefox and some additional
+dependencies:
+
+```
+sudo apt-get install firefox
+# On a headless machine
+sudo apt-get install xvfb libxi6 libgconf-2-4
+```
+
+On a headless machine, run the following to start a virtual framebuffer:
+
+```
+sudo Xvfb :5 -ac
+export DISPLAY=:5
+```
+
+(NB: The X11 ports 6000-6063 should not be open for security reasons.  The
+"-ac" option is disabling host access control; see the Xserver(1) manual
+entry.)
+
+Create a writeable directory where the automated Firefox can create
+user profiles:
+
+
+```
+mkdir /home/ubuntu/bumblebee/tmp
+export TMPDIR=/home/ubuntu/bumblebee/tmp
+```
+
+And to run the tests:
+
+```
+tox -e selenium
+```
+
+The tests will use a selenium driver manager to download a compatible
+chromedriver for your installed Firefox.
+
+When you are done, you can kill the Xvfb process.
