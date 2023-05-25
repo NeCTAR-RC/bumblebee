@@ -277,13 +277,17 @@ class VMStatusAdmin(admin.ModelAdmin):
         if "_set_vm_okay" in request.POST:
             obj.status = VM_OKAY
             obj.save()
-            obj.instance.error_flag = None
-            obj.instance.error_message = None
-            obj.instance.save()
-            obj.instance.boot_volume.error_flag = None
-            obj.instance.boot_volume.error_message = None
-            obj.instance.boot_volume.ready = True
-            obj.instance.boot_volume.save()
+            if obj.instance:
+                obj.instance.error_flag = None
+                obj.instance.error_message = None
+                obj.instance.save()
+                obj.instance.boot_volume.error_flag = None
+                obj.instance.boot_volume.error_message = None
+                obj.instance.boot_volume.ready = True
+                obj.instance.boot_volume.save()
+            else:
+                self.message_user(request,
+                                  "VM Status is orphaned: no instance to fix")
             self.message_user(request, "VM Status set to VM_Okay")
             return HttpResponseRedirect(".")
         return super().response_change(request, obj)
