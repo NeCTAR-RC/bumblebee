@@ -176,6 +176,15 @@ def admin_check_vmstatus(request, vmstatus):
     latest_vmstatus = VMStatus.objects.filter(instance=instance) \
                                       .latest("created")
 
+    if not vmstatus.instance:
+        rep.error(f"VMStatus {vmstatus.id} has no instance")
+        return
+
+    if not vmstatus.instance.boot_volume:
+        rep.error(f"VMStatus {vmstatus.id} has has an instance "
+                  f"({vmstatus.instance.id}) with no boot volume")
+        return
+
     if vmstatus.id != latest_vmstatus.id:
         rep.error(f"VMStatus {vmstatus.id} for "
                   f"volume {vmstatus.instance.boot_volume.id} "
