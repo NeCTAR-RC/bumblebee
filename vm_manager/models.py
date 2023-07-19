@@ -87,7 +87,7 @@ class CloudResource(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     expiration = models.OneToOneField(ResourceExpiration,
                                       on_delete=models.CASCADE,
-                                      null=True,
+                                      null=True, blank=True,
                                       related_name='expiration_for')
     marked_for_deletion = models.DateTimeField(null=True, blank=True)
     deleted = models.DateTimeField(null=True, blank=True)
@@ -147,7 +147,7 @@ class Volume(CloudResource):
     backup_id = models.UUIDField(null=True, blank=True)
     backup_expiration = models.OneToOneField(BackupExpiration,
                                              on_delete=models.CASCADE,
-                                             null=True,
+                                             null=True, blank=True,
                                              related_name='expiration_for')
     rebooted_at = models.DateTimeField(null=True, blank=True)
 
@@ -426,7 +426,7 @@ class Resize(models.Model):
     requested = models.DateTimeField(auto_now_add=True)
     expiration = models.OneToOneField(ResizeExpiration,
                                       on_delete=models.CASCADE,
-                                      null=True,
+                                      null=True, blank=True,
                                       related_name='expiration_for')
     reverted = models.DateTimeField(null=True, blank=True)
 
