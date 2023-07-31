@@ -1,7 +1,7 @@
-// Use ARDC Proxima Nova
-@import url("https://use.typekit.net/nlr0joz.css");
-// $font-family-sans-serif: "Proxima Nova", -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !default;
-$font-family-base: proxima-nova, sans-serif;
+// Use Figtree Google Font
+@import url('https://fonts.googleapis.com/css2?family=Figtree:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
+$font-family-sans-serif: 'Figtree', sans-serif;
+$font-family-base: 'Figtree', sans-serif;
 $font-size-base: 0.875rem;
 $form-label-font-weight: 600;
 
@@ -83,7 +83,7 @@ footer {
 
 .h1, .h2, .h3, .h4, .h5, .h6, 
 h1, h2, h3, h4, h5, h6 {
-  font-family: proxima-nova, sans-serif;
+  font-family: $font-family-base;
   font-style: normal;
   font-weight: 600;
 }
