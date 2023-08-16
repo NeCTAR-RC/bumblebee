@@ -358,7 +358,7 @@ def get_vm_state(vm_status, user, desktop_type):
             time = str(ceil((vm_status.wait_time - curr_time).seconds))
             return VM_WAITING, time, None
         else:  # Time up waiting
-            if vm_status.instance:
+            if instance:
                 # If this was an expiry-triggered downsize, mark it as failed
                 resize = Resize.objects.get_latest_resize(instance.id)
                 if resize and resize.expiration \
@@ -374,6 +374,16 @@ def get_vm_state(vm_status, user, desktop_type):
                 logger.error(f"Instance is missing at timeout {vm_status.id}, "
                              f"{user}, {desktop_type}")
                 return VM_MISSING, "VM has Errored", None
+
+    if not instance:
+        # This is probably due to someone clearing a VMStatus error
+        # inappropriately.  Either way, we can only clean it up.
+        logger.error(f"Instance was unexpectedly missing {vm_status.id}, "
+                     f"{user}, {desktop_type}: changing status from "
+                     f"{vm_status.status} to {NO_VM}")
+        vm_status.status = NO_VM
+        vm_status.save()
+        return NO_VM, "No VM", None
 
     if vm_status.status == VM_SHELVED:
         policy = VolumeExpiryPolicy()
