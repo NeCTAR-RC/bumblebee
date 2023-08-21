@@ -6,7 +6,7 @@ from django.utils.formats import localize
 from django.utils.safestring import mark_safe
 from django.utils.timezone import localtime
 
-from vm_manager.constants import VM_OKAY, VM_ERROR, VM_MISSING
+from vm_manager.constants import VM_OKAY, VM_ERROR, VM_MISSING, NO_VM
 from vm_manager.models import Instance, Volume, Resize, Expiration, VMStatus
 from vm_manager.utils.expiry import InstanceExpiryPolicy, \
     VolumeExpiryPolicy, BoostExpiryPolicy
@@ -275,9 +275,13 @@ class VMStatusAdmin(admin.ModelAdmin):
 
     def response_change(self, request, obj):
         if "_set_vm_okay" in request.POST:
-            obj.status = VM_OKAY
-            obj.save()
             if obj.instance:
+                # TODO - reassess this.  Just resetting all of the error
+                # flags is not going to fix any underlying problems.
+                # We should (at least) do some sanity checks on the
+                # instance and volume first.
+                obj.status = VM_OKAY
+                obj.save()
                 obj.instance.error_flag = None
                 obj.instance.error_message = None
                 obj.instance.save()
@@ -286,9 +290,13 @@ class VMStatusAdmin(admin.ModelAdmin):
                 obj.instance.boot_volume.ready = True
                 obj.instance.boot_volume.save()
             else:
-                self.message_user(request,
-                                  "VM Status is orphaned: no instance to fix")
-            self.message_user(request, "VM Status set to VM_Okay")
+                # If the 'instance' link wasn't set (or has been broken)
+                # the best we can do is mark the VMStatus record as no
+                # longer relevant.  (If we mark it as OK, it makes problems
+                # elsewhere.
+                obj.status = NO_VM
+                obj.save()
+            self.message_user(request, "VM Status set to {obj.status}")
             return HttpResponseRedirect(".")
         return super().response_change(request, obj)
 
