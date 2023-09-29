@@ -71,7 +71,7 @@ sudo apt-get install xvfb libxi6 libgconf-2-4
 On a headless machine, run the following to start a virtual framebuffer:
 
 ```
-sudo Xvfb :5 -ac
+sudo Xvfb :5 -ac &
 export DISPLAY=:5
 ```
 
