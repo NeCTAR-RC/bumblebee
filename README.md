@@ -88,13 +88,23 @@ mkdir /home/ubuntu/bumblebee/tmp
 export TMPDIR=/home/ubuntu/bumblebee/tmp
 ```
 
-And to run the tests:
+If you have a Github API token, export it as an environment variable.
+This will avoid problems with Github API rate limiting if you run the
+selenium tests repeatedly from the same machine.
+
+
+```
+export GH_TOKEN=...    # This is optional ...
+```
+
+Finally, to run the tests:
 
 ```
 tox -e selenium
 ```
 
 The tests will use a selenium driver manager to download a compatible
-chromedriver for your installed Firefox.
+chromedriver for your installed Firefox.  The driver will be cached
+for a day.
 
 When you are done, you can kill the Xvfb process.
