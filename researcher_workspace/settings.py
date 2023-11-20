@@ -179,6 +179,14 @@ OIDC_USERNAME_ALGO = 'researcher_workspace.auth.generate_username'
 # in the ID token, with an array of user's roles.
 OIDC_RP_SCOPES = get_setting('OIDC_RP_SCOPES', 'openid email')
 
+# OpenID Connect groups claim. This should match the claim returned from your
+# OIDC provider that represents groups for a user.
+OIDC_CLAIM_GROUPS_KEY = get_setting('OIDC_CLAIM_GROUPS_KEY', 'groups')
+
+# OpenID Connect allow groups. No group restriction by default
+OIDC_ALLOW_GROUPS = get_setting('OIDC_ALLOW_GROUPS').split(',') \
+                        if get_setting('OIDC_ALLOW_GROUPS') else None
+
 # Internationalization
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'Australia/Melbourne'
@@ -370,7 +378,7 @@ VOLUME_WARNING_2 = int(get_setting('SHELVED_VOLUME_WARNING_2', '1'))
 BACKUP_LIFETIME = int(get_setting('BACKUP_LIFETIME', '90'))
 
 # OpenID Connect settings
-OIDC_OP_AUTHORIZATION_ENDPOINT = f'{OIDC_SERVER_URL}/auth?kc_idp_hint=aaf'
+OIDC_OP_AUTHORIZATION_ENDPOINT = f'{OIDC_SERVER_URL}/auth'
 OIDC_OP_TOKEN_ENDPOINT = f'{OIDC_SERVER_URL}/token'
 OIDC_OP_USER_ENDPOINT = f'{OIDC_SERVER_URL}/userinfo'
 OIDC_OP_JWKS_ENDPOINT = f'{OIDC_SERVER_URL}/certs'
@@ -380,5 +388,3 @@ if DEBUG:
     MESSAGE_LEVEL = message_constants.DEBUG
     EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
-# Whether to require authN with AAF (Australian Access Federation).
-REQUIRE_AAF = strtobool(get_setting('REQUIRE_AAF', 'True'))

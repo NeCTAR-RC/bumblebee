@@ -1,7 +1,8 @@
 ### Bumblebee instance config
 
-# Whether to require authN with AAF (Australian Access Federation).
-REQUIRE_AAF=False
+# Restrict access based on OIDC claims
+OIDC_CLAIM_GROUPS_KEY=
+OIDC_ALLOW_GROUPS=
 
 # Friendly name for the current environment.
 ENVIRONMENT_NAME=

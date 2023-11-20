@@ -57,6 +57,7 @@ class NectarAuthBackendTestCase(TestCase):
             'given_name': fake.first_name(),
             'family_name': fake.last_name(),
             'sub': fake.uuid4(),
+            'groups': ['allow'],
         }
         self.assertEqual(
             User.objects.filter(sub=user_data['sub']).exists(), False)
@@ -165,7 +166,7 @@ class NectarAuthBackendTestCase(TestCase):
             'given_name': fake.first_name(),
             'family_name': fake.last_name(),
             'sub': fake.uuid4(),
-            'federation': 'aaf',
+            'groups': ['allow'],
         }
         get_json_mock = Mock()
         get_json_mock.json.return_value = user_data
@@ -173,9 +174,10 @@ class NectarAuthBackendTestCase(TestCase):
         auth_user = self.backend.authenticate(request=auth_request)
         self.assertIsNotNone(auth_user)
 
+    @override_settings(OIDC_ALLOW_GROUPS=['allow'])
     @patch('mozilla_django_oidc.auth.requests')
     @patch('mozilla_django_oidc.auth.OIDCAuthenticationBackend.verify_token')
-    def test_auth_fails_without_aaf(
+    def test_auth_fails_without_group(
         self, token_mock, request_mock):
         """Test authentication fails without federation"""
         auth_request = RequestFactory().get('/foo', {'code': 'foo',
@@ -186,7 +188,7 @@ class NectarAuthBackendTestCase(TestCase):
             'given_name': fake.first_name(),
             'family_name': fake.last_name(),
             'sub': fake.uuid4(),
-            'federation': 'not_given',
+            'groups': ['wrong_group'],
         }
         get_json_mock = Mock()
         get_json_mock.json.return_value = user_data
@@ -196,7 +198,7 @@ class NectarAuthBackendTestCase(TestCase):
 
     @patch('mozilla_django_oidc.auth.requests')
     @patch('mozilla_django_oidc.auth.OIDCAuthenticationBackend.verify_token')
-    def test_user_admin_permissions_granted_from_roles(
+    def test_user_admin_permissions_granted_from_groups(
         self, token_mock, request_mock):
         """Test admin is granted if admin role is given in claim"""
         auth_request = RequestFactory().get('/foo', {'code': 'foo',
@@ -207,8 +209,7 @@ class NectarAuthBackendTestCase(TestCase):
             'given_name': fake.first_name(),
             'family_name': fake.last_name(),
             'sub': fake.uuid4(),
-            'federation': 'aaf',
-            'roles': ['admin'],
+            'groups': ['admin'],
         }
         get_json_mock = Mock()
         get_json_mock.json.return_value = user_data
@@ -219,7 +220,7 @@ class NectarAuthBackendTestCase(TestCase):
 
     @patch('mozilla_django_oidc.auth.requests')
     @patch('mozilla_django_oidc.auth.OIDCAuthenticationBackend.verify_token')
-    def test_user_staff_permissions_granted_from_roles(
+    def test_user_staff_permissions_granted_from_groups(
         self, token_mock, request_mock):
         """Test staff is granted if staff role is given in claim"""
         auth_request = RequestFactory().get('/foo', {'code': 'foo',
@@ -230,8 +231,7 @@ class NectarAuthBackendTestCase(TestCase):
             'given_name': fake.first_name(),
             'family_name': fake.last_name(),
             'sub': fake.uuid4(),
-            'federation': 'aaf',
-            'roles': ['staff'],
+            'groups': ['staff'],
         }
         get_json_mock = Mock()
         get_json_mock.json.return_value = user_data
@@ -257,7 +257,7 @@ class NectarAuthBackendTestCase(TestCase):
             'given_name': fake.first_name(),
             'family_name': fake.last_name(),
             'sub': fake.uuid4(),
-            'roles': [],  # demote unprivileged
+            'groups': [],  # demote unprivileged
         }
         get_json_mock = Mock()
         get_json_mock.json.return_value = user_data

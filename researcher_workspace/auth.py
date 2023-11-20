@@ -10,7 +10,7 @@ from guacamole import models as guac_models
 logger = logging.getLogger(__name__)
 
 # Roles to determine user level
-ADMIN_ROLES = ['admin', 'coreservices']
+ADMIN_ROLES = ['admin']
 STAFF_ROLES = ADMIN_ROLES + ['staff']
 
 
@@ -36,9 +36,9 @@ class NectarAuthBackend(OIDCAuthenticationBackend):
             first_name=first_name, last_name=last_name)
 
         # Automatically assign staff/admin from Keycloak
-        roles = claims.get('roles', [])
-        user.is_staff = any(i in STAFF_ROLES for i in roles)
-        user.is_superuser = any(i in ADMIN_ROLES for i in roles)
+        groups = claims.get(settings.OIDC_CLAIM_GROUPS_KEY, [])
+        user.is_staff = any(i in STAFF_ROLES for i in groups)
+        user.is_superuser = any(i in ADMIN_ROLES for i in groups)
 
         # Create Guacamole user objects
         gentity = guac_models.GuacamoleEntity.objects.create(
@@ -78,9 +78,9 @@ class NectarAuthBackend(OIDCAuthenticationBackend):
         user.username = generate_username(user.email)
 
         # Automatically assign staff/admin from Keycloak
-        roles = claims.get('roles', [])
-        user.is_staff = any(i in STAFF_ROLES for i in roles)
-        user.is_superuser = any(i in ADMIN_ROLES for i in roles)
+        groups = claims.get(settings.OIDC_CLAIM_GROUPS_KEY, [])
+        user.is_staff = any(i in STAFF_ROLES for i in groups)
+        user.is_superuser = any(i in ADMIN_ROLES for i in groups)
 
         if gentity:
             gentity.name = user.email
@@ -125,15 +125,18 @@ class NectarAuthBackend(OIDCAuthenticationBackend):
     def verify_claims(self, claims):
         verified = super(NectarAuthBackend, self).verify_claims(claims)
 
-        # Currently we only allow Australian users via AAF
-        federation = claims.get('federation', 'not found')
-
-        if federation != 'aaf' and settings.REQUIRE_AAF:
+        if settings.OIDC_ALLOW_GROUPS and settings.OIDC_CLAIM_GROUPS_KEY:
+            groups = claims.get(settings.OIDC_CLAIM_GROUPS_KEY, [])
+            matches = set(settings.OIDC_ALLOW_GROUPS) & set(groups)
             email = claims.get('email')
-            logger.warning(
-                f"Login for {email} is denied due to federation "
-                f"({federation}) not being set to aaf")
-            return
+            if matches:
+                logger.info(f"Login for {email} granted with matched groups: "
+                            f"{matches}.")
+            else:
+                logger.warning(
+                    f"Login for {email} is denied due to missing OIDC roles. "
+                    f"Require {settings.OIDC_ALLOW_GROUPS}, found {groups}")
+                return
 
         return verified
 

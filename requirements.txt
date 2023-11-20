@@ -11,7 +11,7 @@ python-novaclient
 python-neutronclient
 django-mathfilters
 django-currentuser
-git+https://github.com/NeCTAR-RC/mozilla-django-oidc@5a5eec0#egg=mozilla-django-oidc
+mozilla-django-oidc
 nanoid
 django-rq
 rq-scheduler

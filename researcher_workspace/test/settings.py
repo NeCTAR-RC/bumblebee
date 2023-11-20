@@ -123,6 +123,8 @@ OIDC_OP_TOKEN_ENDPOINT = f'{OIDC_SERVER_URL}/token'
 OIDC_OP_USER_ENDPOINT = f'{OIDC_SERVER_URL}/userinfo'
 OIDC_OP_JWKS_ENDPOINT = f'{OIDC_SERVER_URL}/certs'
 
+OIDC_CLAIM_GROUPS_KEY = 'groups'
+OIDC_ALLOW_GROUPS = []
 
 OIDC_USERNAME_ALGO = 'researcher_workspace.auth.generate_username'
 
@@ -380,5 +382,3 @@ ZONES = [
         'network_id': '44444444-4444-4444-4444-444444444444',
     },
 ]
-
-REQUIRE_AAF=True
