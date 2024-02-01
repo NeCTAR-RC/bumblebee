@@ -1,13 +1,13 @@
 import logging
 from datetime import datetime, timedelta
 
+from django.conf import settings
 from django.utils.timezone import utc
 import django_rq
 import novaclient
 
 from vm_manager.constants import \
     RESIZE, VERIFY_RESIZE, ACTIVE, \
-    RESIZE_CONFIRM_WAIT_SECONDS, FORCED_DOWNSIZE_WAIT_SECONDS, \
     VM_SUPERSIZED, VM_RESIZING, VM_OKAY, \
     WF_SUCCESS, WF_FAIL, WF_RETRY, WF_CONTINUE
 from vm_manager.utils.utils import after_time, get_nectar
@@ -105,7 +105,7 @@ def _resize_vm(instance, flavor, target_status, requesting_feature):
     scheduler.enqueue_in(timedelta(seconds=5),
                          _wait_to_confirm_resize,
                          instance, flavor, target_status,
-                         after_time(RESIZE_CONFIRM_WAIT_SECONDS),
+                         after_time(settings.RESIZE_CONFIRM_WAIT),
                          requesting_feature)
     return WF_CONTINUE
 
@@ -229,8 +229,7 @@ def downsize_expired_vm(resize, requesting_feature):
                         # Simulate vm_status behavior of a normal downsize
                         # (with # longer timeout) in case user does a
                         # browser refresh while auto-downsize is happening.
-                        vm_status.wait_time = after_time(
-                            FORCED_DOWNSIZE_WAIT_SECONDS)
+                        vm_status.wait_time = after_time(settings.RESIZE_WAIT)
                         vm_status.status_progress = 0
                         vm_status.status_message = "Forced downsize starting"
                         vm_status.status = VM_RESIZING

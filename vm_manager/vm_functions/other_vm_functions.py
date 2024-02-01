@@ -4,10 +4,10 @@ import logging
 import django_rq
 import novaclient
 
+from django.conf import settings
 from django.utils.timezone import utc
 
-from vm_manager.constants import ACTIVE, SHUTDOWN, REBOOT_HARD, \
-    REBOOT_CONFIRM_WAIT_SECONDS, REBOOT_CONFIRM_RETRIES
+from vm_manager.constants import ACTIVE, SHUTDOWN, REBOOT_HARD
 from vm_manager.models import Instance, VMStatus
 from vm_manager.utils.utils import get_nectar
 
@@ -52,8 +52,8 @@ def reboot_vm_worker(user, vm_id, reboot_level,
 
     scheduler = django_rq.get_scheduler('default')
     scheduler.enqueue_in(
-        timedelta(seconds=REBOOT_CONFIRM_WAIT_SECONDS),
-        _check_power_state, REBOOT_CONFIRM_RETRIES,
+        timedelta(seconds=settings.REBOOT_CONFIRM_WAIT),
+        _check_power_state, settings.REBOOT_CONFIRM_RETRIES,
         instance, target_status, requesting_feature)
 
     return reboot_result
@@ -72,7 +72,7 @@ def _check_power_state(retries, instance, target_status, requesting_feature):
     elif retries > 0:
         scheduler = django_rq.get_scheduler('default')
         scheduler.enqueue_in(
-            timedelta(seconds=REBOOT_CONFIRM_WAIT_SECONDS),
+            timedelta(seconds=settings.REBOOT_CONFIRM_WAIT),
             _check_power_state, retries - 1, instance, target_status,
             requesting_feature)
     else:

@@ -14,7 +14,6 @@ from vm_manager.tests.unit.vm_functions.base import VMFunctionTestBase
 
 from vm_manager.constants import ACTIVE, SHUTDOWN, RESIZE, VERIFY_RESIZE, \
     RESCUE, VM_ERROR, VM_RESIZING, VM_OKAY, VM_WAITING, VM_SUPERSIZED, \
-    RESIZE_CONFIRM_WAIT_SECONDS, FORCED_DOWNSIZE_WAIT_SECONDS, \
     WF_SUCCESS, WF_FAIL, WF_CONTINUE
 from vm_manager.models import VMStatus, Resize, Instance
 from vm_manager.vm_functions.resize_vm import supersize_vm_worker, \
@@ -218,7 +217,7 @@ class ResizeVMTests(VMFunctionTestBase):
         self.assertEqual(VM_OKAY, vm_status.status)
 
         fake_nectar.nova.servers.get.reset_mock()
-        after = datetime.now(utc) + timedelta(RESIZE_CONFIRM_WAIT_SECONDS)
+        after = datetime.now(utc) + timedelta(settings.RESIZE_CONFIRM_WAIT)
         mock_after_time.return_value = after
         fake_vm_status.status = VM_RESIZING
         fake_vm_status.save()
@@ -579,7 +578,7 @@ class ResizeVMTests(VMFunctionTestBase):
         self.assertEqual(VM_RESIZING, vm_status.status)
         self.assertEqual(0, vm_status.status_progress)
         self.assertTrue(vm_status.wait_time >= now + timedelta(
-            seconds=FORCED_DOWNSIZE_WAIT_SECONDS))
+            seconds=settings.RESIZE_WAIT))
 
     @patch('vm_manager.vm_functions.resize_vm.logger')
     @patch('vm_manager.vm_functions.resize_vm._resize_vm')

@@ -377,6 +377,44 @@ VOLUME_WARNING_2 = int(get_setting('SHELVED_VOLUME_WARNING_2', '1'))
 # Backups (archived desktops) are kept this number of days.
 BACKUP_LIFETIME = int(get_setting('BACKUP_LIFETIME', '90'))
 
+# Wait times and retry counts for the workflows in vm_manager.  The
+# wait times are all in seconds.
+LAUNCH_WAIT = int(get_setting('LAUNCH_WAIT', '300'))
+REBOOT_WAIT = int(get_setting('REBOOT_WAIT', '300'))
+REBOOT_CONFIRM_WAIT = int(get_setting('REBOOT_CONFIRM_WAIT', '10'))
+REBOOT_CONFIRM_RETRIES = int(get_setting('REBOOT_CONFIRM_RETRIES', '5'))
+
+RESIZE_WAIT = int(get_setting('RESIZE_WAIT', '300'))
+RESIZE_CONFIRM_WAIT = int(get_setting('RESIZE_CONFIRM_WAIT', '240'))
+
+SHELVE_WAIT = int(get_setting('SHELVE_WAIT', '300'))
+
+ARCHIVE_WAIT = int(get_setting('ARCHIVE_WAIT', '18000'))
+ARCHIVE_POLL_WAIT = int(get_setting('ARCHIVE_POLL_WAIT', '60'))
+
+# These are used both when shelving and outright deleting a desktop
+# The former is synchronous, so we can't make the WAIT * RETRIES too long.
+INSTANCE_POLL_DELETED_WAIT = \
+    int(get_setting('INSTANCE_POLL_DELETED_WAIT', '10'))
+INSTANCE_POLL_DELETED_RETRIES = \
+    int(get_setting('INSTANCE_POLL_DELETED_RETRIES', '20'))
+
+INSTANCE_POLL_SHUTOFF_WAIT = \
+    int(get_setting('INSTANCE_POLL_SHUTOFF_WAIT', '10'))
+INSTANCE_POLL_SHUTOFF_RETRIES = \
+    int(get_setting('INSTANCE_POLL_SHUTOFF_RETRIES', '5'))
+BACKUP_POLL_DELETED_WAIT = \
+    int(get_setting('BACKUP_POLL_DELETED_WAIT', '30'))
+BACKUP_POLL_DELETED_RETRIES = \
+    int(get_setting('BACKUP_POLL_DELETED_RETRIES', '5'))
+VOLUME_POLL_DELETED_WAIT = \
+    int(get_setting('VOLUME_POLL_DELETED_WAIT', '30'))
+VOLUME_POLL_DELETED_RETRIES = \
+    int(get_setting('VOLUME_POLL_DELETED_RETRIES', '5'))
+
+VOLUME_CREATION_WAIT = int(get_setting('VOLUME_CREATION_WAIT', '180'))
+INSTANCE_LAUNCH_WAIT = int(get_setting('INSTANCE_LAUNCH_WAIT', '180'))
+
 # OpenID Connect settings
 OIDC_OP_AUTHORIZATION_ENDPOINT = f'{OIDC_SERVER_URL}/auth'
 OIDC_OP_TOKEN_ENDPOINT = f'{OIDC_SERVER_URL}/token'

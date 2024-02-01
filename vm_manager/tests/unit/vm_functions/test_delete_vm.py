@@ -3,8 +3,10 @@ from uuid import uuid4
 from unittest.mock import Mock, patch, call
 
 import cinderclient
-from django.utils.timezone import utc
 import novaclient
+
+from django.conf import settings
+from django.utils.timezone import utc
 
 from guacamole.tests.factories import GuacamoleConnectionFactory
 from vm_manager.tests.fakes import Fake, FakeServer, FakeNectar
@@ -12,12 +14,6 @@ from vm_manager.tests.unit.vm_functions.base import VMFunctionTestBase
 
 from vm_manager.constants import ACTIVE, SHUTDOWN, RESCUE, \
     VOLUME_AVAILABLE, VM_WAITING, VM_SHELVED, NO_VM, \
-    INSTANCE_CHECK_SHUTOFF_RETRY_WAIT_TIME, \
-    VOLUME_DELETION_RETRY_WAIT_TIME, VOLUME_DELETION_RETRY_COUNT, \
-    INSTANCE_DELETION_RETRY_WAIT_TIME, BACKUP_DELETION_RETRY_WAIT_TIME, \
-    INSTANCE_CHECK_SHUTOFF_RETRY_COUNT, INSTANCE_DELETION_RETRY_COUNT, \
-    BACKUP_DELETION_RETRY_COUNT, \
-    ARCHIVE_POLL_SECONDS, ARCHIVE_WAIT_SECONDS, \
     BACKUP_CREATING, BACKUP_AVAILABLE, \
     WF_RETRY, WF_SUCCESS, WF_CONTINUE
 from guacamole.models import GuacamoleConnection
@@ -58,12 +54,12 @@ class DeleteVMTests(VMFunctionTestBase):
         fake_nectar.nova.servers.stop.assert_called_once_with(fake_instance.id)
         mock_rq.get_scheduler.assert_called_once_with('default')
         mock_scheduler.enqueue_in.assert_called_once_with(
-            timedelta(seconds=INSTANCE_CHECK_SHUTOFF_RETRY_WAIT_TIME),
+            timedelta(seconds=settings.INSTANCE_POLL_SHUTOFF_WAIT),
             _check_instance_is_shutoff_and_delete,
             fake_instance,
-            INSTANCE_CHECK_SHUTOFF_RETRY_COUNT,
+            settings.INSTANCE_POLL_SHUTOFF_RETRIES,
             _dispose_volume_once_instance_is_deleted,
-            (fake_instance, False, INSTANCE_DELETION_RETRY_COUNT))
+            (fake_instance, False, settings.INSTANCE_POLL_DELETED_RETRIES))
 
         mock_logger.info.assert_called_once_with(
             f"About to delete {fake_instance}")
@@ -95,12 +91,12 @@ class DeleteVMTests(VMFunctionTestBase):
         fake_nectar.nova.servers.stop.assert_not_called()
         mock_rq.get_scheduler.assert_called_once_with('default')
         mock_scheduler.enqueue_in.assert_called_once_with(
-            timedelta(seconds=INSTANCE_CHECK_SHUTOFF_RETRY_WAIT_TIME),
+            timedelta(seconds=settings.INSTANCE_POLL_SHUTOFF_WAIT),
             _check_instance_is_shutoff_and_delete,
             fake_instance,
-            INSTANCE_CHECK_SHUTOFF_RETRY_COUNT,
+            settings.INSTANCE_POLL_SHUTOFF_RETRIES,
             _dispose_volume_once_instance_is_deleted,
-            (fake_instance, False, INSTANCE_DELETION_RETRY_COUNT))
+            (fake_instance, False, settings.INSTANCE_POLL_DELETED_RETRIES))
 
         mock_logger.error.assert_called_once_with(
             f"Trying to delete {fake_instance} but it is not found in Nova.")
@@ -136,12 +132,12 @@ class DeleteVMTests(VMFunctionTestBase):
         fake_nectar.nova.servers.stop.assert_not_called()
         mock_rq.get_scheduler.assert_called_once_with('default')
         mock_scheduler.enqueue_in.assert_called_once_with(
-            timedelta(seconds=INSTANCE_CHECK_SHUTOFF_RETRY_WAIT_TIME),
+            timedelta(seconds=settings.INSTANCE_POLL_SHUTOFF_WAIT),
             _check_instance_is_shutoff_and_delete,
             fake_instance,
-            INSTANCE_CHECK_SHUTOFF_RETRY_COUNT,
+            settings.INSTANCE_POLL_SHUTOFF_RETRIES,
             _dispose_volume_once_instance_is_deleted,
-            (fake_instance, False, INSTANCE_DELETION_RETRY_COUNT))
+            (fake_instance, False, settings.INSTANCE_POLL_DELETED_RETRIES))
 
         mock_logger.info.assert_has_calls([
             call(f"About to delete {fake_instance}"),
@@ -202,11 +198,11 @@ class DeleteVMTests(VMFunctionTestBase):
 
         mock_logger.info.assert_called_with(
             f"{fake_instance} is not yet SHUTOFF! Will check again in "
-            f"{INSTANCE_CHECK_SHUTOFF_RETRY_WAIT_TIME} seconds "
+            f"{settings.INSTANCE_POLL_SHUTOFF_WAIT} seconds "
             f"with {retries} retries remaining.")
         mock_rq.get_scheduler.assert_called_once_with("default")
         mock_scheduler.enqueue_in.assert_called_once_with(
-            timedelta(seconds=INSTANCE_CHECK_SHUTOFF_RETRY_WAIT_TIME),
+            timedelta(seconds=settings.INSTANCE_POLL_SHUTOFF_WAIT),
             _check_instance_is_shutoff_and_delete, fake_instance,
             0, funky, funky_args)
 
@@ -238,7 +234,7 @@ class DeleteVMTests(VMFunctionTestBase):
             "Proceeding to delete Nova instance anyway!")
         mock_worker.assert_called_once_with(fake_instance)
         mock_scheduler.enqueue_in.assert_called_once_with(
-            timedelta(seconds=INSTANCE_DELETION_RETRY_WAIT_TIME),
+            timedelta(seconds=settings.INSTANCE_POLL_DELETED_WAIT),
             funky, *funky_args)
         updated_status = VMStatus.objects.get(pk=fake_status.pk)
         self.assertEqual(66, updated_status.status_progress)
@@ -272,7 +268,7 @@ class DeleteVMTests(VMFunctionTestBase):
             "Proceeding to delete Nova instance anyway!")
         mock_worker.assert_called_once_with(fake_instance)
         mock_scheduler.enqueue_in.assert_called_once_with(
-            timedelta(seconds=INSTANCE_DELETION_RETRY_WAIT_TIME),
+            timedelta(seconds=settings.INSTANCE_POLL_DELETED_WAIT),
             funky, *funky_args)
 
     @patch('vm_manager.vm_functions.delete_vm.get_nectar')
@@ -352,9 +348,9 @@ class DeleteVMTests(VMFunctionTestBase):
         self.assertIsNotNone(instance.deleted)
         mock_rq.get_scheduler.assert_called_once_with("default")
         mock_scheduler.enqueue_in.assert_called_once_with(
-            timedelta(seconds=VOLUME_DELETION_RETRY_WAIT_TIME),
+            timedelta(seconds=settings.VOLUME_POLL_DELETED_WAIT),
             _wait_until_volume_is_deleted, fake_volume,
-            VOLUME_DELETION_RETRY_COUNT)
+            settings.VOLUME_POLL_DELETED_RETRIES)
 
     @patch('vm_manager.vm_functions.delete_vm.get_nectar')
     @patch('vm_manager.vm_functions.delete_vm.logger')
@@ -409,7 +405,7 @@ class DeleteVMTests(VMFunctionTestBase):
         mock_delete_instance.assert_not_called()
         mock_rq.get_scheduler.assert_called_once_with("default")
         mock_scheduler.enqueue_in.assert_called_once_with(
-            timedelta(minutes=INSTANCE_DELETION_RETRY_WAIT_TIME),
+            timedelta(seconds=settings.INSTANCE_POLL_DELETED_WAIT),
             _dispose_volume_once_instance_is_deleted,
             fake_instance, False, 0)
 
@@ -560,7 +556,7 @@ class ArchiveVMTests(VMFunctionTestBase):
         mock_rq.get_scheduler.assert_called_once_with("default")
         mock_scheduler.enqueue_in.assert_called_once_with(
             timedelta(seconds=5), wait_for_backup, fake_volume, backup_id,
-            now + timedelta(seconds=ARCHIVE_WAIT_SECONDS))
+            now + timedelta(seconds=settings.ARCHIVE_WAIT))
 
     @patch('vm_manager.vm_functions.delete_vm.django_rq')
     @patch('vm_manager.vm_functions.delete_vm.get_nectar')
@@ -693,7 +689,7 @@ class ArchiveVMTests(VMFunctionTestBase):
         mock_logger.error.assert_not_called()
         mock_rq.get_scheduler.assert_called_once_with('default')
         mock_scheduler.enqueue_in.assert_called_once_with(
-            timedelta(seconds=ARCHIVE_POLL_SECONDS), wait_for_backup,
+            timedelta(seconds=settings.ARCHIVE_POLL_WAIT), wait_for_backup,
             fake_volume, backup_id, deadline)
 
         mock_logger.info.reset_mock()
@@ -747,9 +743,9 @@ class ArchiveVMTests(VMFunctionTestBase):
         self.assertIsNotNone(volume.backup_id)
         mock_rq.get_scheduler.assert_called_once_with("default")
         mock_scheduler.enqueue_in.assert_called_once_with(
-            timedelta(seconds=BACKUP_DELETION_RETRY_WAIT_TIME),
+            timedelta(seconds=settings.BACKUP_POLL_DELETED_WAIT),
             _wait_until_backup_is_deleted,
-            fake_volume, BACKUP_DELETION_RETRY_COUNT)
+            fake_volume, settings.BACKUP_POLL_DELETED_RETRIES)
 
     @patch('vm_manager.vm_functions.delete_vm.django_rq')
     @patch('vm_manager.vm_functions.delete_vm.get_nectar')
@@ -838,7 +834,7 @@ class ArchiveVMTests(VMFunctionTestBase):
         self.assertEqual(EXP_EXPIRING, volume.backup_expiration.stage)
         mock_rq.get_scheduler.assert_called_once_with("default")
         mock_scheduler.enqueue_in.assert_called_once_with(
-            timedelta(seconds=BACKUP_DELETION_RETRY_WAIT_TIME),
+            timedelta(seconds=settings.BACKUP_POLL_DELETED_WAIT),
             _wait_until_backup_is_deleted,
             fake_volume, 4)
 
@@ -938,7 +934,7 @@ class ArchiveVMTests(VMFunctionTestBase):
         self.assertEqual(EXP_EXPIRING, volume.expiration.stage)
         mock_rq.get_scheduler.assert_called_once_with("default")
         mock_scheduler.enqueue_in.assert_called_once_with(
-            timedelta(seconds=BACKUP_DELETION_RETRY_WAIT_TIME),
+            timedelta(seconds=settings.BACKUP_POLL_DELETED_WAIT),
             _wait_until_volume_is_deleted,
             fake_volume, 4)
 

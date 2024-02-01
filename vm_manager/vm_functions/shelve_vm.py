@@ -4,13 +4,11 @@ import logging
 import django_rq
 import novaclient
 
+from django.conf import settings
 from django.utils.timezone import utc
 
 from vm_manager.constants import ACTIVE, SHUTDOWN, \
     VM_MISSING, VM_SHELVED, VM_WAITING, VM_OKAY, VM_ERROR, VM_SUPERSIZED, \
-    INSTANCE_DELETION_RETRY_WAIT_TIME, INSTANCE_DELETION_RETRY_COUNT, \
-    INSTANCE_CHECK_SHUTOFF_RETRY_WAIT_TIME, \
-    INSTANCE_CHECK_SHUTOFF_RETRY_COUNT, FORCED_SHELVE_WAIT_SECONDS, \
     WF_SUCCESS, WF_FAIL, WF_RETRY, WF_CONTINUE
 from vm_manager.models import VMStatus, Expiration, EXP_EXPIRING, \
     EXP_EXPIRY_FAILED, EXP_EXPIRY_FAILED_RETRYABLE, EXP_EXPIRY_COMPLETED
@@ -71,7 +69,7 @@ def shelve_vm_worker(instance):
 
     if vm_status:
         vm_status.status = VM_WAITING
-        vm_status.wait_time = after_time(FORCED_SHELVE_WAIT_SECONDS)
+        vm_status.wait_time = after_time(settings.SHELVE_WAIT)
         vm_status.status_progress = 33
         vm_status.status_message = 'Instance stopping'
         vm_status.save()
@@ -79,11 +77,11 @@ def shelve_vm_worker(instance):
     # Confirm instance is ShutOff and then Delete it
     scheduler = django_rq.get_scheduler('default')
     scheduler.enqueue_in(
-        timedelta(seconds=INSTANCE_CHECK_SHUTOFF_RETRY_WAIT_TIME),
+        timedelta(seconds=settings.INSTANCE_POLL_SHUTOFF_WAIT),
         _check_instance_is_shutoff_and_delete, instance,
-        INSTANCE_CHECK_SHUTOFF_RETRY_COUNT,
+        settings.INSTANCE_POLL_SHUTOFF_RETRIES,
         _confirm_instance_deleted,
-        (instance, INSTANCE_DELETION_RETRY_COUNT))
+        (instance, settings.INSTANCE_POLL_DELETED_RETRIES))
     return WF_CONTINUE
 
 
@@ -124,7 +122,7 @@ def _confirm_instance_deleted(instance, retries):
     else:
         scheduler = django_rq.get_scheduler('default')
         scheduler.enqueue_in(
-            timedelta(seconds=INSTANCE_DELETION_RETRY_WAIT_TIME),
+            timedelta(seconds=settings.INSTANCE_POLL_DELETED_WAIT),
             _confirm_instance_deleted, instance, retries - 1)
         return WF_CONTINUE
 

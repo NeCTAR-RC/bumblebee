@@ -18,7 +18,7 @@ from vm_manager.tests.fakes import Fake, FakeNectar
 from vm_manager.constants import ACTIVE, SHUTDOWN, BUILD, REBUILD, \
     REBOOT, RESCUE, REBOOT_SOFT, VM_OKAY, VM_DELETED, VM_WAITING, \
     VM_CREATING, VM_RESIZING, NO_VM, VM_SHELVED, VM_MISSING, VM_ERROR, \
-    VM_SHUTDOWN, VM_SUPERSIZED, ALL_VM_STATES, LAUNCH_WAIT_SECONDS, \
+    VM_SHUTDOWN, VM_SUPERSIZED, ALL_VM_STATES, \
     CLOUD_INIT_STARTED, CLOUD_INIT_FINISHED, SCRIPT_OKAY, \
     EXTEND_BUTTON, EXTEND_BOOST_BUTTON, BOOST_BUTTON
 
@@ -114,7 +114,7 @@ class VMManagerViewTests(TestCase):
         self.assertEqual(self.UBUNTU.id, vm_status.operating_system)
         self.assertEqual(self.FEATURE, vm_status.requesting_feature)
         self.assertTrue(now <= vm_status.created)
-        self.assertTrue(after_time(LAUNCH_WAIT_SECONDS)
+        self.assertTrue(after_time(settings.LAUNCH_WAIT)
                         >= vm_status.wait_time)
 
         mock_rq.get_queue.assert_called_once_with("default")

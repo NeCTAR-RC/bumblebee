@@ -3,6 +3,7 @@ import logging
 from math import ceil
 from operator import itemgetter
 
+from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.contrib import messages
@@ -19,9 +20,8 @@ from researcher_desktop.utils.utils import get_desktop_type
 
 from vm_manager.constants import VM_ERROR, VM_OKAY, VM_WAITING, \
     VM_SHELVED, NO_VM, VM_SHUTDOWN, VM_SUPERSIZED, VM_DELETED, \
-    VM_CREATING, VM_MISSING, VM_RESIZING, LAUNCH_WAIT_SECONDS, \
-    CLOUD_INIT_FINISHED, CLOUD_INIT_STARTED, REBOOT_WAIT_SECONDS, \
-    RESIZE_WAIT_SECONDS, SHELVE_WAIT_SECONDS, \
+    VM_CREATING, VM_MISSING, VM_RESIZING, \
+    CLOUD_INIT_FINISHED, CLOUD_INIT_STARTED, \
     REBOOT_SOFT, REBOOT_HARD, SCRIPT_OKAY, \
     BOOST_BUTTON, EXTEND_BUTTON, EXTEND_BOOST_BUTTON, \
     WF_SUCCESS, WF_RETRY
@@ -88,7 +88,7 @@ def launch_vm(user, desktop_type, zone) -> str:
     vm_status = VMStatus(
         user=user, requesting_feature=desktop_type.feature,
         operating_system=desktop_type.id, status=VM_CREATING,
-        wait_time=after_time(LAUNCH_WAIT_SECONDS),
+        wait_time=after_time(settings.LAUNCH_WAIT),
         status_progress=0, status_message="Starting desktop creation",
         status_done="has been created"
     )
@@ -156,7 +156,7 @@ def shelve_vm(user, vm_id, requesting_feature) -> str:
     logger.info(f"Changing the VMStatus of {vm_id} "
                 f"from {vm_status.status} to {VM_WAITING} "
                 "and Mark for Deletion is set on the Instance")
-    vm_status.wait_time = after_time(SHELVE_WAIT_SECONDS)
+    vm_status.wait_time = after_time(settings.SHELVE_WAIT)
     vm_status.status = VM_WAITING
     vm_status.status_progress = 0
     vm_status.status_message = "Starting desktop shelve"
@@ -185,7 +185,7 @@ def unshelve_vm(user, desktop_type) -> str:
                          requesting_feature=desktop_type.feature,
                          operating_system=desktop_type.id,
                          status=VM_CREATING,
-                         wait_time=after_time(LAUNCH_WAIT_SECONDS),
+                         wait_time=after_time(settings.LAUNCH_WAIT),
                          status_progress=0,
                          status_message="Starting desktop unshelve",
                          status_done="has been unshelved")
@@ -235,7 +235,7 @@ def reboot_vm(user, vm_id, reboot_level, requesting_feature) -> str:
             vm_id=vm_id)
     target_status = vm_status.status
     vm_status.status = VM_WAITING
-    vm_status.wait_time = after_time(REBOOT_WAIT_SECONDS)
+    vm_status.wait_time = after_time(settings.REBOOT_WAIT)
     vm_status.status_progress = 0
     vm_status.status_message = "Starting desktop reboot"
     vm_status.status_done = "has been rebooted"
@@ -263,7 +263,7 @@ def supersize_vm(user, vm_id, requesting_feature) -> str:
     desktop_type = get_desktop_type(vm_status.operating_system)
 
     vm_status.status = VM_RESIZING
-    vm_status.wait_time = after_time(RESIZE_WAIT_SECONDS)
+    vm_status.wait_time = after_time(settings.RESIZE_WAIT)
     vm_status.status_progress = 0
     vm_status.status_message = "Starting desktop boost"
     vm_status.status_done = "has been boosted"
@@ -291,7 +291,7 @@ def downsize_vm(user, vm_id, requesting_feature) -> str:
     desktop_type = get_desktop_type(vm_status.operating_system)
 
     vm_status.status = VM_RESIZING
-    vm_status.wait_time = after_time(RESIZE_WAIT_SECONDS)
+    vm_status.wait_time = after_time(settings.RESIZE_WAIT)
     vm_status.status_progress = 0
     vm_status.status_message = "Starting desktop downsize"
     vm_status.status_done = "has been downsized"

@@ -3,6 +3,8 @@ import logging
 from operator import itemgetter
 from uuid import UUID
 
+from django.conf import settings
+from django.contrib import messages
 from django.core.mail import mail_managers
 from django.db.models import Count
 from django.db.models.functions import TruncDay
@@ -14,15 +16,12 @@ import cinderclient
 import django_rq
 import novaclient
 
-from django.contrib import messages
-
 from guacamole.models import GuacamoleConnection
 from researcher_desktop.models import DesktopType
 from researcher_workspace.utils import offset_month_and_year
 from vm_manager.constants import VM_DELETED, VM_WAITING, \
     VM_ERROR, VM_OKAY, VM_MISSING, VM_SUPERSIZED, NO_VM, VM_SHELVED,  \
-    SHELVE_WAIT_SECONDS, RESIZE_WAIT_SECONDS, VOLUME_AVAILABLE, \
-    VOLUME_IN_USE, ACTIVE
+    VOLUME_AVAILABLE, VOLUME_IN_USE, ACTIVE
 from vm_manager.models import Instance, Resize, Volume, VMStatus
 from vm_manager.utils.Check_ResearchDesktop_Availability import \
     check_availability
@@ -342,7 +341,7 @@ def admin_shelve_instance(request, instance):
         instance, None, allow_missing=True)
 
     if vm_status:
-        vm_status.wait_time = after_time(SHELVE_WAIT_SECONDS)
+        vm_status.wait_time = after_time(settings.SHELVE_WAIT)
         vm_status.status = VM_WAITING
         vm_status.status_progress = 0
         vm_status.status_message = "Starting desktop shelve"
@@ -361,7 +360,7 @@ def admin_downsize_resize(request, resize):
         instance, None, allow_missing=True)
 
     if vm_status:
-        vm_status.wait_time = after_time(RESIZE_WAIT_SECONDS)
+        vm_status.wait_time = after_time(settings.RESIZE_WAIT)
         vm_status.status = VM_WAITING
         vm_status.status_progress = 0
         vm_status.status_message = "Starting desktop downsize"
