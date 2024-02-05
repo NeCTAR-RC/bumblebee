@@ -16,6 +16,7 @@ nanoid
 django-rq
 rq-scheduler
 pandas
+Pyarrow
 xlsxwriter
 django_compressor
 django-libsass
