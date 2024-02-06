@@ -1,4 +1,4 @@
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, MagicMock, patch
 
 from django.contrib.auth import get_user_model
 from django.test import RequestFactory, TestCase, override_settings
@@ -44,6 +44,18 @@ class NectarAuthBackendTestCase(TestCase):
         """Test authentication returns `None` when `request` is not provided."""
         self.assertIsNone(self.backend.authenticate(request=None))
 
+    def _setup_request_mock(self, request_mock, user_data):
+        """Common setup for the request mock.  The 'get' method is mocked
+        to deliver a 'Response' with a given JSON payload.  The 'post'
+        method is mocked to minimally simulate the post request that
+        returns a OIDC session token."""
+        get_json_mock = Mock()
+        get_json_mock.json.return_value = user_data
+        request_mock.get.return_value = get_json_mock
+        post_mock = MagicMock(status_code=200)
+        post_mock.json = MagicMock(return_value={})
+        request_mock.post.return_value = post_mock
+
     @patch('mozilla_django_oidc.auth.requests')
     @patch('mozilla_django_oidc.auth.OIDCAuthenticationBackend.verify_token')
     @patch('researcher_workspace.auth.NectarAuthBackend.verify_claims')
@@ -62,9 +74,7 @@ class NectarAuthBackendTestCase(TestCase):
         self.assertEqual(
             User.objects.filter(sub=user_data['sub']).exists(), False)
 
-        get_json_mock = Mock()
-        get_json_mock.json.return_value = user_data
-        request_mock.get.return_value = get_json_mock
+        self._setup_request_mock(request_mock, user_data)
         auth_user = self.backend.authenticate(request=auth_request)
         self.assertEqual(auth_user, User.objects.get(sub=user_data['sub']))
         self.assertFalse(auth_user.is_staff)
@@ -85,9 +95,7 @@ class NectarAuthBackendTestCase(TestCase):
             'family_name': fake.last_name(),
             'sub': fake.uuid4(),
         }
-        get_json_mock = Mock()
-        get_json_mock.json.return_value = user_data
-        request_mock.get.return_value = get_json_mock
+        self._setup_request_mock(request_mock, user_data)
         test_user = UserFactory(
             email=user_data['email'],
             first_name=user_data['given_name'],
@@ -114,9 +122,7 @@ class NectarAuthBackendTestCase(TestCase):
             'family_name': fake.last_name(),
             'sub': fake.uuid4(),
         }
-        get_json_mock = Mock()
-        get_json_mock.json.return_value = user_data
-        request_mock.get.return_value = get_json_mock
+        self._setup_request_mock(request_mock, user_data)
         test_user = UserFactory(
             email=user_data['email'],
             first_name=user_data['given_name'],
@@ -141,9 +147,7 @@ class NectarAuthBackendTestCase(TestCase):
             'family_name': fake.last_name(),
             'sub': fake.uuid4(),
         }
-        get_json_mock = Mock()
-        get_json_mock.json.return_value = user_data
-        request_mock.get.return_value = get_json_mock
+        self._setup_request_mock(request_mock, user_data)
         user = UserFactory(
             email=user_data['email'],
             first_name=user_data['given_name'],
@@ -168,9 +172,7 @@ class NectarAuthBackendTestCase(TestCase):
             'sub': fake.uuid4(),
             'groups': ['allow'],
         }
-        get_json_mock = Mock()
-        get_json_mock.json.return_value = user_data
-        request_mock.get.return_value = get_json_mock
+        self._setup_request_mock(request_mock, user_data)
         auth_user = self.backend.authenticate(request=auth_request)
         self.assertIsNotNone(auth_user)
 
@@ -190,6 +192,7 @@ class NectarAuthBackendTestCase(TestCase):
             'sub': fake.uuid4(),
             'groups': ['wrong_group'],
         }
+        self._setup_request_mock(request_mock, user_data)
         get_json_mock = Mock()
         get_json_mock.json.return_value = user_data
         request_mock.get.return_value = get_json_mock
@@ -211,9 +214,7 @@ class NectarAuthBackendTestCase(TestCase):
             'sub': fake.uuid4(),
             'groups': ['admin'],
         }
-        get_json_mock = Mock()
-        get_json_mock.json.return_value = user_data
-        request_mock.get.return_value = get_json_mock
+        self._setup_request_mock(request_mock, user_data)
         auth_user = self.backend.authenticate(request=auth_request)
         self.assertTrue(auth_user.is_staff)
         self.assertTrue(auth_user.is_superuser)
@@ -233,9 +234,7 @@ class NectarAuthBackendTestCase(TestCase):
             'sub': fake.uuid4(),
             'groups': ['staff'],
         }
-        get_json_mock = Mock()
-        get_json_mock.json.return_value = user_data
-        request_mock.get.return_value = get_json_mock
+        self._setup_request_mock(request_mock, user_data)
         auth_user = self.backend.authenticate(request=auth_request)
         self.assertTrue(auth_user.is_staff)
         self.assertFalse(auth_user.is_superuser)
@@ -259,9 +258,7 @@ class NectarAuthBackendTestCase(TestCase):
             'sub': fake.uuid4(),
             'groups': [],  # demote unprivileged
         }
-        get_json_mock = Mock()
-        get_json_mock.json.return_value = user_data
-        request_mock.get.return_value = get_json_mock
+        self._setup_request_mock(request_mock, user_data)
         test_user = UserFactory(
             email=test_old_email,
             first_name=user_data['given_name'],
