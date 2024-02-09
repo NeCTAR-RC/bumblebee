@@ -30,3 +30,8 @@ static/CACHE
 *.swp
 .vscode/
 *~
+
+### Stuff injected by bumblebee-dev ansible playbook ###
+Procfile
+dev
+researcher_workspace/initial_data.yaml
