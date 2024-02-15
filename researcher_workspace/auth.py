@@ -2,6 +2,7 @@ import logging
 import unicodedata
 
 from django.conf import settings
+from django.contrib.auth.backends import ModelBackend
 from mozilla_django_oidc.auth import OIDCAuthenticationBackend
 
 from guacamole import models as guac_models
@@ -14,7 +15,52 @@ ADMIN_ROLES = ['admin']
 STAFF_ROLES = ADMIN_ROLES + ['staff']
 
 
-class NectarAuthBackend(OIDCAuthenticationBackend):
+def get_or_create_guac_objects(user):
+    """Create or update Guacamole entity and user objects for the
+    Django user object.  If the email address changes, we will end
+    up creating new Guacamole objects.
+    """
+
+    gentity, created = guac_models.GuacamoleEntity.objects.get_or_create(
+        name=user.email, type='USER',)
+
+    guser = None
+    if not created:
+        try:
+            guser = guac_models.GuacamoleUser.objects.get(
+                email_address=user.email)
+        except guac_models.GuacamoleUser.DoesNotExist:
+            pass
+
+    if not guser:
+        guser = guac_models.GuacamoleUser.objects.create(
+            entity=gentity,
+            email_address=user.email,
+            full_name=user.get_full_name(),
+            password_hash='x',
+            disabled=False,
+            expired=False)
+    else:
+        guser.email_address = user.email
+        guser.full_name = user.get_full_name()
+        guser.password_hash = 'x'
+        guser.disabled = False
+        guser.expired = False
+        guser.save()
+
+    return (gentity, guser)
+
+
+class ClassicAuthBackend(ModelBackend):
+    def authenticate(self, request, username=None, password=None, **kwargs):
+        user = super().authenticate(request, username=username,
+                                    password=password, **kwargs)
+        if user:
+            get_or_create_guac_objects(user)
+        return user
+
+
+class OIDCAuthBackend(OIDCAuthenticationBackend):
 
     def create_user(self, claims):
         email = claims.get('email')
@@ -35,78 +81,45 @@ class NectarAuthBackend(OIDCAuthenticationBackend):
             username, email=email, sub=sub,
             first_name=first_name, last_name=last_name)
 
-        # Automatically assign staff/admin from Keycloak
+        # Assign Django staff/admin settings per the claims from OIDC
         groups = claims.get(settings.OIDC_CLAIM_GROUPS_KEY, [])
         user.is_staff = any(i in STAFF_ROLES for i in groups)
         user.is_superuser = any(i in ADMIN_ROLES for i in groups)
+        user.save()
 
         # Create Guacamole user objects
-        gentity = guac_models.GuacamoleEntity.objects.create(
-            name=user.email, type='USER',)
+        get_or_create_guac_objects(user)
 
-        guser = guac_models.GuacamoleUser.objects.create(
-            entity=gentity,
-            email_address=user.email,
-            full_name=user.get_full_name(),
-            password_hash='x',
-            disabled=False,
-            expired=False,)
-
-        user.save()
         return user
 
     def update_user(self, user, claims):
-        # Before attempting to update user fields, get guac user object
-        # based on the pre-updated values from our db
-        try:
-            gentity = guac_models.GuacamoleEntity.objects.get(
-                name=user.email)
-        except guac_models.GuacamoleEntity.DoesNotExist:
-            gentity = None
+        # Fetch Guac objects based on the previous user details.
+        gentity, guser = get_or_create_guac_objects(user)
 
-        try:
-            guser = guac_models.GuacamoleUser.objects.get(
-                email_address=user.email)
-        except guac_models.GuacamoleUser.DoesNotExist:
-            guser = None
-
-        # Update user values
+        # Update Django user values per claims from OIDC
         user.first_name = claims.get('given_name')
         user.last_name = claims.get('family_name')
         user.email = claims.get('email')
         user.sub = claims.get('sub')
         user.username = generate_username(user.email)
 
-        # Automatically assign staff/admin from Keycloak
+        # Update Django staff/admin settings per claims from OIDC
         groups = claims.get(settings.OIDC_CLAIM_GROUPS_KEY, [])
         user.is_staff = any(i in STAFF_ROLES for i in groups)
         user.is_superuser = any(i in ADMIN_ROLES for i in groups)
-
-        if gentity:
-            gentity.name = user.email
-            gentity.save()
-        else:
-            gentity = guac_models.GuacamoleEntity.objects.create(
-                name=user.email,
-                type='USER',)
-
-        if guser:
-            guser.email_address = user.email
-            guser.full_name = user.get_full_name()
-            guser.password_hash = 'x'
-            guser.disabled = False
-            guser.expired = False
-            guser.save()
-        else:
-            guser = guac_models.GuacamoleUser.objects.create(
-                entity=gentity,
-                email_address=user.email,
-                full_name=user.get_full_name(),
-                password_hash='x',
-                disabled=False,
-                expired=False,)
-
         user.save()
+
+        # Update Guac objects with updated details from OIDC
+        gentity.name = user.email
+        gentity.save()
+
+        guser.email_address = user.email
+        guser.full_name = user.get_full_name()
+        guser.password_hash = 'x'
+        guser.disabled = False
+        guser.expired = False
+        guser.save()
+
         return user
 
     def filter_users_by_claims(self, claims):
@@ -123,7 +136,7 @@ class NectarAuthBackend(OIDCAuthenticationBackend):
         return users
 
     def verify_claims(self, claims):
-        verified = super(NectarAuthBackend, self).verify_claims(claims)
+        verified = super().verify_claims(claims)
 
         if settings.OIDC_ALLOW_GROUPS and settings.OIDC_CLAIM_GROUPS_KEY:
             groups = claims.get(settings.OIDC_CLAIM_GROUPS_KEY, [])

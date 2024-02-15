@@ -347,6 +347,9 @@ class Instance(CloudResource):
             ('create-drive-path', 'true'),
         ]
 
+        # This object will be created by the auth backend.
+        gentity = GuacamoleEntity.objects.get(name=self.user.email)
+
         for k, v in params:
             gcp, created = GuacamoleConnectionParameter.objects.get_or_create(
                 connection=self.guac_connection,
@@ -355,11 +358,8 @@ class Instance(CloudResource):
             if not created:
                 gcp.parameter_value = v
 
-        entity, _ = GuacamoleEntity.objects.get_or_create(
-            name=self.user.username)
-
         gmodel = GuacamoleConnectionPermission.objects.get_or_create(
-            entity=entity,
+            entity=gentity,
             connection=self.guac_connection,
             permission='READ')
 

@@ -1,5 +1,7 @@
+from django.conf import settings
 from django.contrib import admin
 from django.urls import path, include
+from django.views.generic.base import RedirectView
 
 from mozilla_django_oidc import views as oidc_views
 
@@ -37,16 +39,31 @@ urlpatterns = [
     path('learn/', views.learn, name='learn'),
     path('login/fail/', views.login_fail, name='login_fail'),
     path('healthcheck/status', include('health_check.urls')),
-    path('healthcheck/', views.healthcheck, name='healthcheck'),
-    # OIDC auth
-    path('oidc/', include('mozilla_django_oidc.urls')),
-    path('login/',
-         oidc_views.OIDCAuthenticationRequestView.as_view(), name='login'),
-    # Bumblebee admin site uses regular login view
-    path('rcsadmin/login/',
-         oidc_views.OIDCAuthenticationRequestView.as_view()),
-    path('rcsadmin/', admin.site.urls),
+    path('healthcheck/', views.healthcheck, name='healthcheck')
 ]
+
+if settings.USE_OIDC:
+    # OIDC auth
+    urlpatterns += [
+        path('oidc/', include('mozilla_django_oidc.urls')),
+        path('login/',
+             oidc_views.OIDCAuthenticationRequestView.as_view(), name='login'),
+        path('rcsadmin/login/',
+             oidc_views.OIDCAuthenticationRequestView.as_view()),
+        path('rcsadmin/', admin.site.urls),
+        path('logout/',
+             RedirectView.as_view(pattern_name='oidc_logout', permanent=False),
+             name='logout'),
+    ]
+else:
+    # Classic user name / password login.  This is only meant for testing
+    urlpatterns += [
+        path('login/',
+              RedirectView.as_view(url='/rcsadmin/login', permanent=False),
+             name='login'),
+        path('logout/', views.logout, name='logout'),
+        path('rcsadmin/', admin.site.urls),
+    ]
 
 handler404 = views.custom_page_not_found
 handler500 = views.custom_page_error

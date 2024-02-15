@@ -163,11 +163,15 @@ OS_KEYNAME = get_setting('OS_KEYNAME')
 OS_PROJECT_ID = get_setting('OS_PROJECT_ID', '')
 
 AUTHENTICATION_BACKENDS = [
-    'django.contrib.auth.backends.ModelBackend',
-    'researcher_workspace.auth.NectarAuthBackend',
+    'researcher_workspace.auth.ClassicAuthBackend',
+    'researcher_workspace.auth.OIDCAuthBackend',
 ]
 
 AUTH_USER_MODEL = 'researcher_workspace.User'
+
+# This is used to switch between OIDC and classic authentication.  It
+# affects what the main 'urls.py' does with login URLs.
+USE_OIDC = get_setting('USE_OIDC', 'True').lower() in ['true', '1', 'yes']
 
 # OpenID Connect Auth settings
 OIDC_SERVER_URL = get_setting('OIDC_SERVER_URL')

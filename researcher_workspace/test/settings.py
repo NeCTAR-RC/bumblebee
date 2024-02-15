@@ -108,9 +108,11 @@ DATABASES = {
 }
 
 AUTHENTICATION_BACKENDS = [
-    'django.contrib.auth.backends.ModelBackend',
-    'researcher_workspace.auth.NectarAuthBackend',
+    'researcher_workspace.auth.ClassicAuthBackend',
+    'researcher_workspace.auth.OIDCAuthBackend',
 ]
+
+USE_OIDC = True
 
 AUTH_USER_MODEL = 'researcher_workspace.User'
 
