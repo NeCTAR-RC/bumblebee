@@ -48,7 +48,7 @@ class DesktopType(models.Model):
     image_name = models.CharField(max_length=256)
     default_flavor_name = models.CharField(max_length=32)
     big_flavor_name = models.CharField(max_length=32)
-    volume_size = models.IntegerField(default=20, help_text="Size in GB")
+    volume_size = models.IntegerField(default=30, help_text="Size in GB")
     feature = models.ForeignKey(workspace_models.Feature,
                                 on_delete=models.PROTECT)
     enabled = models.BooleanField(default=True)

@@ -24,3 +24,4 @@ Pillow
 python-freshdesk
 django-health-check
 django-prometheus
+PyYAML

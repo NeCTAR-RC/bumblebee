@@ -35,3 +35,6 @@ static/CACHE
 Procfile
 dev
 researcher_workspace/initial_data.yaml
+
+### Docker
+docker-init/mariadb_data

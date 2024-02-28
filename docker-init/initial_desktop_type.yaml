@@ -1,0 +1,26 @@
+- model: researcher_desktop.desktoptype
+  pk: jammy
+  fields:
+    enabled: true
+    name: Ubuntu 22.04 (Jammy)
+    description: Ubuntu comes with everything you need like an office suite, browsers, email and media apps come pre-installed and thousands more games and applications are available in the Ubuntu Software Centre. Enjoy the simplicity of Ubuntu’s intuitive interface. Fast, secure and with thousands of apps to choose from — for everything you want to do, Ubuntu has what you need.
+    logo: https://object-store.rc.nectar.org.au/v1/AUTH_7235235757f84bf4b748be08a1e8eed5/bumblebee-static/desktop-logos/ubuntu.png
+    image_name: Ubuntu 22.04 LTS (Jammy) Virtual Desktop
+    default_flavor_name: m1.small
+    big_flavor_name: m1.medium
+    volume_size: 30
+    feature: 1
+    details:
+      features:
+      - Ubuntu 22.04 LTS (Jammy)
+      - XFCE4 desktop environment
+      - Massive library of applications
+      - Popular platform with broad community of information and support
+      highlights:
+      - development with a huge range of available libraries and tools to install
+      - great support being the most popular Linux distribution
+      screenshots:
+      - url: https://object-store.rc.nectar.org.au/v1/AUTH_7235235757f84bf4b748be08a1e8eed5/bumblebee-static/desktop-screenshots/ubuntu-01.png
+        description: Firefox and terminal
+      - url: https://object-store.rc.nectar.org.au/v1/AUTH_7235235757f84bf4b748be08a1e8eed5/bumblebee-static/desktop-screenshots/ubuntu-02.png
+        description: Menu and file manager

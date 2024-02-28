@@ -1,18 +1,26 @@
 ### Bumblebee instance config
 
-# Restrict access based on OIDC claims
-OIDC_CLAIM_GROUPS_KEY=
+# Hostname of the service. For docker-compose, leave as bumblebee
+SERVER_NAME=bumblebee
+
+# Enable the use of OIDC with Keycloak
+USE_OIDC=True
+
+# OIDC claim that represents a users groups
+OIDC_CLAIM_GROUPS_KEY=groups
+
+# Restrict access based on OIDC claims. Empty implies no group restriction.
 OIDC_ALLOW_GROUPS=
 
 # Friendly name for the current environment.
-ENVIRONMENT_NAME=
+ENVIRONMENT_NAME=development
 
 # Names/addresses under which Bumblebee is accessible. Comma-separated.
-ALLOWED_HOSTS=
+ALLOWED_HOSTS="*"
 
 # Full URL to the entry point to Bumblebee.
 # https SITE_URL assumes there is a proxy in front
-SITE_URL=
+SITE_URL="http://$SERVER_NAME:8080"
 
 ### Bumblebee Guacamole integration config
 
@@ -21,34 +29,45 @@ SITE_URL=
 #   zone=self.boot_volume.zone.lower()
 #   path=guac_utils.get_connection_path(self.guac_connection)
 # e.g. GUACAMOLE_URL_TEMPLATE=http://{env}-guacamole-{zone}.example.com/{path}
-GUACAMOLE_URL_TEMPLATE=
+GUACAMOLE_URL_TEMPLATE="http://guacamole:9000"
+
 
 ### Bumblebee OpenID Connect integration config
 
-OIDC_SERVER_URL=
+OIDC_SERVER_URL="http://keycloak:8090/realms/bumblebee/protocol/openid-connect"
 
-OIDC_RP_CLIENT_ID=bumblebee
-OIDC_RP_CLIENT_SECRET=
+OIDC_RP_CLIENT_ID="bumblebee"
+OIDC_RP_CLIENT_SECRET="00000000-0000-0000-0000-000000000000"
 
 # OIDC_RP_SCOPES should include a scope that serves the ``roles`` claim
 # in the ID token, with an array of user's roles.
-OIDC_RP_SCOPES=openid email roles
+OIDC_RP_SCOPES="openid email roles"
 
-### Bumblebee OpenStack integration config
+OIDC_OP_AUTHORIZATION_ENDPOINT="${OIDC_SERVER_URL}/auth"
+OIDC_OP_TOKEN_ENDPOINT="${OIDC_SERVER_URL}/token"
+OIDC_OP_USER_ENDPOINT="${OIDC_SERVER_URL}/userinfo"
+OIDC_OP_JWKS_ENDPOINT="${OIDC_SERVER_URL}/certs"
 
-OS_AUTH_URL=
-
-OS_APPLICATION_CREDENTIAL_ID=
-OS_APPLICATION_CREDENTIAL_SECRET=
-
-OS_SECGROUPS=bumblebee
-OS_KEYNAME=bumblebee
 
 ### Guacamole OpenID Connect integration config
 
 # Guacamole requires a non-confidential OIDC client with implicit flow enabled.
-OPENID_AUTHORIZATION_ENDPOINT=
-OPENID_JWKS_ENDPOINT=
-OPENID_ISSUER=
+OPENID_AUTHORIZATION_ENDPOINT="${OIDC_SERVER_URL}/auth"
+OPENID_JWKS_ENDPOINT="${OIDC_SERVER_URL}/certs"
+OPENID_ISSUER="http://keycloak:8090/realms/bumblebee"
 OPENID_CLIENT_ID=guacamole
-OPENID_REDIRECT_URI=
+OPENID_REDIRECT_URI="http://guacamole:9000"
+
+### Keycloak config
+
+KEYCLOAK_FRONTEND_URL="http://keycloak:8090/"
+
+
+### Bumblebee OpenStack integration config
+
+# You'll need to provide these for your cloud
+OS_AUTH_URL=""
+OS_APPLICATION_CREDENTIAL_ID=""
+OS_APPLICATION_CREDENTIAL_SECRET=""
+OS_KEYNAME=""
+OS_SECGROUPS=""
