@@ -64,7 +64,7 @@
             <li class="nav-item {% active_link 'help' %}">
               <a class="nav-link" href="{% url 'help' %}"><i class="fas fa-question-circle"></i> Help</a>
             </li>
-            <div class="dropdown">
+            <li class="dropdown">
               <a href="#" class="d-block text-decoration-none dropdown-toggle nav-link" id="dropdownUser1" data-bs-toggle="dropdown" aria-expanded="false">
                 <span class="navbar-text ps-2">{{ user.email }}</span>
               </a>
@@ -79,12 +79,14 @@
                 {% endif %}
                 <li><a class="dropdown-item" href="{% url 'profile' %}">Profile</a></li>
                 <li><hr class="dropdown-divider"></li>
-                <form class="form-inline my-2 my-lg-0" action="{% url 'logout' %}" method="post">
-                  {% csrf_token %}
-                  <button type="submit" class="btn btn-link dropdown-item">Log out</button>
-                </form>
+                <li>
+                  <form class="form-inline my-2 my-lg-0" action="{% url 'logout' %}" method="post">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-link dropdown-item">Log out</button>
+                  </form>
+                </li>
               </ul>
-            </div>
+            </li>
           </ul>
         </div>
         

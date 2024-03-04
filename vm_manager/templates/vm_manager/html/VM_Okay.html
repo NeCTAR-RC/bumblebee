@@ -34,52 +34,46 @@
   </div>
 
   {% block expiry_message %}
-    {% if what_to_show.expires %}
-      <p class="desktop-message text-center d-none d-sm-block"><small>Your {{ desktop_type.name }} {{ requesting_feature }} is set to be shelved on or after {{ what_to_show.expires }}.</small></p>
-    {% endif %}
+  {% if what_to_show.expires %}
+  <p class="desktop-message text-center d-none d-sm-block">
+    <small>Your {{ desktop_type.name }} {{ requesting_feature }} is set to be shelved on or after {{ what_to_show.expires }}.</small>
+  </p>
+  {% endif %}
   {% endblock expiry_message %}
 
   {% if buttons_to_display %}
-      <div class="desktop-buttons text-center">
-        <a class="btn btn-success" href="{{ what_to_show.url }}" target="_blank">
-          Open Desktop <i class="fas fa-arrow-right"></i>
-        </a>
-        <div class="mt-2">
-          {% block buttons %}
-          {% endblock buttons %}
-          
-          {% if "REBOOT_BUTTON" in buttons_to_display %}
-          <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#{{ app_name }}-{{ desktop_type.id }}-reboot-modal">
-            Reboot
-          </button>
-          {% endif %}
-
-          {% if "SHELVE_BUTTON" in buttons_to_display %}
-          <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#{{ app_name }}-{{ desktop_type.id }}-shelve-modal">
-            Shelve
-          </button>
-          {% endif %}
-
-          {% if "EXTEND_BUTTON" in buttons_to_display %}
-          <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#{{ app_name }}-{{ desktop_type.id }}-extend-modal">
-            Extend
-          </button>
-          {% endif %}
-
-          {% if "BOOST_BUTTON" in buttons_to_display %}
-          <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#{{ app_name }}-{{ desktop_type.id }}-supersize-modal">
-            Boost
-          </button>
-          {% endif %}
-
-          {% if "DELETE_BUTTON" in buttons_to_display %}
-          <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#{{ app_name }}-{{ desktop_type.id }}-delete-modal">
-            Delete
-          </button>
-          {% endif %}
-
-        </div>
-      </div>
+  <div class="desktop-buttons text-center">
+    <a class="btn btn-success" href="{{ what_to_show.url }}" target="_blank">
+      Open Desktop <i class="fas fa-arrow-right"></i>
+    </a>
+    <div class="mt-2">
+      {% block buttons %}
+      {% endblock buttons %}
+      {% if "REBOOT_BUTTON" in buttons_to_display %}
+      <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#{{ app_name }}-{{ desktop_type.id }}-reboot-modal">
+        Reboot
+      </button>
+      {% endif %}
+      {% if "SHELVE_BUTTON" in buttons_to_display %}
+      <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#{{ app_name }}-{{ desktop_type.id }}-shelve-modal">
+        Shelve
+      </button>
+      {% endif %}
+      {% if "EXTEND_BUTTON" in buttons_to_display %}
+      <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#{{ app_name }}-{{ desktop_type.id }}-extend-modal">
+        Extend
+      </button>
+      {% endif %}
+      {% if "BOOST_BUTTON" in buttons_to_display %}
+      <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#{{ app_name }}-{{ desktop_type.id }}-supersize-modal">
+        Boost
+      </button>
+      {% endif %}
+      {% if "DELETE_BUTTON" in buttons_to_display %}
+      <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#{{ app_name }}-{{ desktop_type.id }}-delete-modal">
+        Delete
+      </button>
+      {% endif %}
     </div>
   </div>
   {% endif %}
@@ -179,7 +173,7 @@
   <div class="modal-dialog modal-lg">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="{{ app_name }}-{{ desktop_type.id }}-delete-modal" tabindex="-1" aria-labelledby="{{ app_name }}-{{ desktop_type.id }}-delete-modal-label">Confirm Delete</h5>
+        <h5 class="modal-title" id="{{ app_name }}-{{ desktop_type.id }}-delete-modal-label">Confirm Delete</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body text-center">
