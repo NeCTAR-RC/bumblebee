@@ -10,8 +10,7 @@ from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.timezone import utc
 
-from vm_manager.constants import VOLUME_CREATION_TIMEOUT, \
-    INSTANCE_LAUNCH_TIMEOUT, NO_VM, VM_SHELVED, VOLUME_AVAILABLE, ACTIVE
+from vm_manager.constants import NO_VM, VM_SHELVED, VOLUME_AVAILABLE, ACTIVE
 from vm_manager.utils.expiry import InstanceExpiryPolicy
 from vm_manager.utils.utils import get_nectar, generate_server_name, \
     generate_hostname, generate_password
@@ -194,7 +193,7 @@ def wait_to_create_instance(user, desktop_type, volume, start_time):
                              user, desktop_type, instance,
                              datetime.now(utc))
 
-    elif (now - start_time > timedelta(seconds=VOLUME_CREATION_TIMEOUT)):
+    elif (now - start_time > timedelta(seconds=settings.VOLUME_CREATION_WAIT)):
         logger.error(f"Volume took too long to create: user:{user} "
                      f"desktop_id:{desktop_type.id} volume:{volume} "
                      f"volume.status:{openstack_volume.status} "
@@ -306,7 +305,7 @@ def wait_for_instance_active(user, desktop_type, instance, start_time):
         vm_status.save()
         instance.set_expires(
             InstanceExpiryPolicy().initial_expiry(now=instance.created))
-    elif (now - start_time > timedelta(seconds=INSTANCE_LAUNCH_TIMEOUT)):
+    elif (now - start_time > timedelta(seconds=settings.INSTANCE_LAUNCH_WAIT)):
         logger.error(f"Instance took too long to launch: user:{user} "
                      f"desktop:{desktop_type.id} instance:{instance} "
                      f"instance.status:{instance.get_status()} "

@@ -3,12 +3,13 @@ from unittest.mock import Mock, patch, call
 
 import novaclient
 
+from django.conf import settings
+
 from vm_manager.tests.fakes import FakeServer, FakeNectar
 from vm_manager.tests.unit.vm_functions.base import VMFunctionTestBase
 
 from vm_manager.constants import ACTIVE, SHUTDOWN, RESCUE, REBOOT, \
-    REBOOT_SOFT, REBOOT_HARD, VM_OKAY, VM_ERROR, \
-    REBOOT_CONFIRM_WAIT_SECONDS, REBOOT_CONFIRM_RETRIES
+    REBOOT_SOFT, REBOOT_HARD, VM_OKAY, VM_ERROR
 from vm_manager.models import VMStatus, Volume, Instance
 from vm_manager.vm_functions.other_vm_functions import reboot_vm_worker, \
     _check_power_state
@@ -39,8 +40,8 @@ class RebootVMTests(VMFunctionTestBase):
         mock_server.reboot.assert_called_once_with(REBOOT_SOFT)
         mock_rq.get_scheduler.assert_called_once_with('default')
         mock_scheduler.enqueue_in.assert_called_once_with(
-            timedelta(seconds=REBOOT_CONFIRM_WAIT_SECONDS),
-            _check_power_state, REBOOT_CONFIRM_RETRIES,
+            timedelta(seconds=settings.REBOOT_CONFIRM_WAIT),
+            _check_power_state, settings.REBOOT_CONFIRM_RETRIES,
             fake_instance, VM_OKAY, self.UBUNTU.feature)
 
         mock_logger.info.assert_called_once_with(
@@ -74,8 +75,8 @@ class RebootVMTests(VMFunctionTestBase):
         mock_server.reboot.assert_called_once_with(REBOOT_HARD)
         mock_rq.get_scheduler.assert_called_once_with('default')
         mock_scheduler.enqueue_in.assert_called_once_with(
-            timedelta(seconds=REBOOT_CONFIRM_WAIT_SECONDS),
-            _check_power_state, REBOOT_CONFIRM_RETRIES,
+            timedelta(seconds=settings.REBOOT_CONFIRM_WAIT),
+            _check_power_state, settings.REBOOT_CONFIRM_RETRIES,
             fake_instance, VM_OKAY, self.UBUNTU.feature)
 
         mock_logger.info.assert_has_calls([
@@ -202,7 +203,7 @@ class RebootVMTests(VMFunctionTestBase):
 
         mock_rq.get_scheduler.assert_called_once_with('default')
         mock_scheduler.enqueue_in.assert_called_once_with(
-            timedelta(seconds=REBOOT_CONFIRM_WAIT_SECONDS),
+            timedelta(seconds=settings.REBOOT_CONFIRM_WAIT),
             _check_power_state, 0, fake_instance, VM_OKAY, self.UBUNTU.feature)
 
         mock_logger.info.assert_not_called()

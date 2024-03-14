@@ -16,7 +16,7 @@ from vm_manager.tests.factories import VMStatusFactory
 from vm_manager.tests.unit.vm_functions.base import VMFunctionTestBase
 
 from vm_manager.constants import VM_OKAY, VM_SHELVED, NO_VM, \
-    VM_WAITING, VOLUME_CREATION_TIMEOUT, VOLUME_AVAILABLE, VOLUME_IN_USE
+    VM_WAITING, VOLUME_AVAILABLE, VOLUME_IN_USE
 from vm_manager.models import VMStatus, Volume, Instance
 from vm_manager.vm_functions.create_vm import launch_vm_worker, \
     wait_to_create_instance, _create_volume, _create_instance, \
@@ -179,7 +179,7 @@ class CreateVMTests(VMFunctionTestBase):
 
         with self.assertRaises(TimeoutError) as cm:
             time = (datetime.now(utc)
-                    - timedelta(seconds=VOLUME_CREATION_TIMEOUT + 1))
+                    - timedelta(seconds=settings.VOLUME_CREATION_WAIT + 1))
             wait_to_create_instance(self.user, self.UBUNTU, fake_volume, time)
         self.assertEqual("Volume took too long to create", str(cm.exception))
 
@@ -467,7 +467,7 @@ class CreateVMTests(VMFunctionTestBase):
         mock_get_2.return_value = fake
 
         time = (datetime.now(utc)
-                - timedelta(seconds=VOLUME_CREATION_TIMEOUT + 1))
+                - timedelta(seconds=settings.VOLUME_CREATION_WAIT + 1))
         wait_for_instance_active(
             self.user, self.UBUNTU, fake_instance, time)
 

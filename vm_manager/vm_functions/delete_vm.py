@@ -10,12 +10,6 @@ from django.utils.timezone import utc
 
 from vm_manager.constants import ACTIVE, SHUTDOWN, NO_VM, VM_SHELVED, \
     VOLUME_AVAILABLE, BACKUP_CREATING, BACKUP_AVAILABLE, VM_WAITING, \
-    INSTANCE_DELETION_RETRY_WAIT_TIME, INSTANCE_DELETION_RETRY_COUNT, \
-    VOLUME_DELETION_RETRY_WAIT_TIME, VOLUME_DELETION_RETRY_COUNT, \
-    BACKUP_DELETION_RETRY_WAIT_TIME, BACKUP_DELETION_RETRY_COUNT, \
-    INSTANCE_CHECK_SHUTOFF_RETRY_WAIT_TIME, \
-    INSTANCE_CHECK_SHUTOFF_RETRY_COUNT, \
-    ARCHIVE_POLL_SECONDS, ARCHIVE_WAIT_SECONDS, \
     WF_RETRY, WF_SUCCESS, WF_FAIL, WF_CONTINUE
 from vm_manager.models import VMStatus, Expiration, \
     EXP_EXPIRING, EXP_EXPIRY_COMPLETED, \
@@ -66,11 +60,11 @@ def delete_vm_worker(instance, archive=False):
     # telling Nova to delete it
     scheduler = django_rq.get_scheduler('default')
     scheduler.enqueue_in(
-        timedelta(seconds=INSTANCE_CHECK_SHUTOFF_RETRY_WAIT_TIME),
+        timedelta(seconds=settings.INSTANCE_POLL_SHUTOFF_WAIT),
         _check_instance_is_shutoff_and_delete, instance,
-        INSTANCE_CHECK_SHUTOFF_RETRY_COUNT,
+        settings.INSTANCE_POLL_SHUTOFF_RETRIES,
         _dispose_volume_once_instance_is_deleted,
-        (instance, archive, INSTANCE_DELETION_RETRY_COUNT))
+        (instance, archive, settings.INSTANCE_POLL_DELETED_RETRIES))
     return WF_CONTINUE
 
 
@@ -81,10 +75,10 @@ def _check_instance_is_shutoff_and_delete(
     if not instance.check_shutdown_status() and retries > 0:
         # If the instance is not Shutoff, schedule the recheck
         logger.info(f"{instance} is not yet SHUTOFF! Will check again "
-                    f"in {INSTANCE_CHECK_SHUTOFF_RETRY_WAIT_TIME} seconds with "
+                    f"in {settings.INSTANCE_POLL_SHUTOFF_WAIT} seconds with "
                     f"{retries} retries remaining.")
         scheduler.enqueue_in(
-            timedelta(seconds=INSTANCE_CHECK_SHUTOFF_RETRY_WAIT_TIME),
+            timedelta(seconds=settings.INSTANCE_POLL_SHUTOFF_WAIT),
             _check_instance_is_shutoff_and_delete, instance,
             retries - 1, func, func_args)
         return WF_CONTINUE
@@ -107,7 +101,7 @@ def _check_instance_is_shutoff_and_delete(
     # The 'func' will do the next step; e.g. delete the volume
     # or mark the volume as shelved.
     scheduler.enqueue_in(
-        timedelta(seconds=INSTANCE_DELETION_RETRY_WAIT_TIME),
+        timedelta(seconds=settings.INSTANCE_POLL_DELETED_WAIT),
         func, *func_args)
     return WF_CONTINUE
 
@@ -148,9 +142,9 @@ def _dispose_volume_once_instance_is_deleted(instance, archive, retries):
             if delete_volume(volume):
                 scheduler = django_rq.get_scheduler('default')
                 scheduler.enqueue_in(
-                    timedelta(seconds=VOLUME_DELETION_RETRY_WAIT_TIME),
+                    timedelta(seconds=settings.VOLUME_POLL_DELETED_WAIT),
                     _wait_until_volume_is_deleted, volume,
-                    VOLUME_DELETION_RETRY_COUNT)
+                    settings.VOLUME_POLL_DELETED_RETRIES)
                 return WF_CONTINUE
             else:
                 return _end_delete(volume, WF_RETRY)
@@ -161,10 +155,8 @@ def _dispose_volume_once_instance_is_deleted(instance, archive, retries):
     # Nova still has the instance
     if retries > 0:
         scheduler = django_rq.get_scheduler('default')
-        # Note in this case I'm using `minutes=` not `seconds=` to give
-        # a long wait time that should be sufficient
         scheduler.enqueue_in(
-            timedelta(minutes=INSTANCE_DELETION_RETRY_WAIT_TIME),
+            timedelta(seconds=settings.INSTANCE_POLL_DELETED_WAIT),
             _dispose_volume_once_instance_is_deleted, instance, archive,
             retries - 1)
         return WF_CONTINUE
@@ -178,7 +170,7 @@ def _dispose_volume_once_instance_is_deleted(instance, archive, retries):
 def delete_volume_worker(volume):
     if delete_volume(volume):
         return _wait_until_volume_is_deleted(
-            volume, VOLUME_DELETION_RETRY_COUNT)
+            volume, settings.VOLUME_POLL_DELETED_RETRIES)
     else:
         return WF_FAIL
 
@@ -219,7 +211,7 @@ def _wait_until_volume_is_deleted(volume, retries):
     if retries > 0:
         scheduler = django_rq.get_scheduler('default')
         scheduler.enqueue_in(
-            timedelta(seconds=VOLUME_DELETION_RETRY_WAIT_TIME),
+            timedelta(seconds=settings.VOLUME_POLL_DELETED_WAIT),
             _wait_until_volume_is_deleted, volume, retries - 1)
         return WF_CONTINUE
     else:
@@ -251,9 +243,9 @@ def delete_backup_worker(volume):
 
     scheduler = django_rq.get_scheduler('default')
     scheduler.enqueue_in(
-        timedelta(seconds=BACKUP_DELETION_RETRY_WAIT_TIME),
+        timedelta(seconds=settings.BACKUP_POLL_DELETED_WAIT),
         _wait_until_backup_is_deleted, volume,
-        BACKUP_DELETION_RETRY_COUNT)
+        settings.BACKUP_POLL_DELETED_RETRIES)
     return WF_CONTINUE
 
 
@@ -275,7 +267,7 @@ def _wait_until_backup_is_deleted(volume, retries):
     if retries > 0:
         scheduler = django_rq.get_scheduler('default')
         scheduler.enqueue_in(
-            timedelta(seconds=BACKUP_DELETION_RETRY_WAIT_TIME),
+            timedelta(seconds=settings.BACKUP_POLL_DELETED_WAIT),
             _wait_until_backup_is_deleted, volume,
             retries - 1)
         return WF_CONTINUE
@@ -340,7 +332,7 @@ def archive_volume_worker(volume, requesting_feature):
     scheduler = django_rq.get_scheduler('default')
     scheduler.enqueue_in(timedelta(seconds=5), wait_for_backup,
                          volume, backup.id,
-                         after_time(ARCHIVE_WAIT_SECONDS))
+                         after_time(settings.ARCHIVE_WAIT))
 
     # This allows the user to launch a new desktop immediately.
     vm_status = VMStatus.objects.get_vm_status_by_volume(
@@ -368,7 +360,7 @@ def wait_for_backup(volume, backup_id, deadline):
                          f"volume {volume}")
             return _end_delete(volume, WF_RETRY)
         scheduler = django_rq.get_scheduler('default')
-        scheduler.enqueue_in(timedelta(seconds=ARCHIVE_POLL_SECONDS),
+        scheduler.enqueue_in(timedelta(seconds=settings.ARCHIVE_POLL_WAIT),
                              wait_for_backup, volume, backup_id, deadline)
         return WF_CONTINUE
     elif details.status == BACKUP_AVAILABLE:

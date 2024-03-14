@@ -3,14 +3,12 @@ from unittest.mock import Mock, patch
 
 import novaclient
 
+from django.conf import settings
 from django.utils.timezone import utc
 
 from guacamole.tests.factories import GuacamoleConnectionFactory
 from vm_manager.constants import ACTIVE, SHUTDOWN, RESCUE, \
     VM_OKAY, VM_WAITING, VM_ERROR, VM_SHELVED, \
-    FORCED_SHELVE_WAIT_SECONDS, INSTANCE_CHECK_SHUTOFF_RETRY_COUNT, \
-    INSTANCE_DELETION_RETRY_COUNT, INSTANCE_CHECK_SHUTOFF_RETRY_WAIT_TIME, \
-    INSTANCE_DELETION_RETRY_WAIT_TIME, \
     WF_RETRY, WF_SUCCESS, WF_CONTINUE
 from vm_manager.models import VMStatus, Instance, Volume
 from vm_manager.tests.common import UUID_4
@@ -93,14 +91,14 @@ class ShelveVMTests(VMFunctionTestBase):
         self.assertEqual(VM_WAITING, vm_status.status)
         self.assertEqual(33, vm_status.status_progress)
         self.assertTrue(vm_status.wait_time >= now + timedelta(
-            seconds=FORCED_SHELVE_WAIT_SECONDS))
+            seconds=settings.SHELVE_WAIT))
         mock_rq.get_scheduler.assert_called_once_with('default')
         mock_scheduler.enqueue_in.assert_called_once_with(
-            timedelta(seconds=INSTANCE_CHECK_SHUTOFF_RETRY_WAIT_TIME),
+            timedelta(seconds=settings.INSTANCE_POLL_SHUTOFF_WAIT),
             _check_instance_is_shutoff_and_delete, fake_instance,
-            INSTANCE_CHECK_SHUTOFF_RETRY_COUNT,
+            settings.INSTANCE_POLL_SHUTOFF_RETRIES,
             _confirm_instance_deleted,
-            (fake_instance, INSTANCE_DELETION_RETRY_COUNT))
+            (fake_instance, settings.INSTANCE_POLL_DELETED_RETRIES))
 
     @patch('vm_manager.utils.utils.Nectar', new=FakeNectar)
     @patch('vm_manager.vm_functions.shelve_vm.django_rq')
@@ -127,14 +125,14 @@ class ShelveVMTests(VMFunctionTestBase):
         self.assertEqual(VM_WAITING, vm_status.status)
         self.assertEqual(33, vm_status.status_progress)
         self.assertTrue(vm_status.wait_time >= now + timedelta(
-            seconds=FORCED_SHELVE_WAIT_SECONDS))
+            seconds=settings.SHELVE_WAIT))
         mock_rq.get_scheduler.assert_called_once_with('default')
         mock_scheduler.enqueue_in.assert_called_once_with(
-            timedelta(seconds=INSTANCE_CHECK_SHUTOFF_RETRY_WAIT_TIME),
+            timedelta(seconds=settings.INSTANCE_POLL_SHUTOFF_WAIT),
             _check_instance_is_shutoff_and_delete, fake_instance,
-            INSTANCE_CHECK_SHUTOFF_RETRY_COUNT,
+            settings.INSTANCE_POLL_SHUTOFF_RETRIES,
             _confirm_instance_deleted,
-            (fake_instance, INSTANCE_DELETION_RETRY_COUNT))
+            (fake_instance, settings.INSTANCE_POLL_DELETED_RETRIES))
 
     @patch('vm_manager.utils.utils.Nectar', new=FakeNectar)
     @patch('vm_manager.vm_functions.shelve_vm.django_rq')
@@ -183,7 +181,7 @@ class ShelveVMTests(VMFunctionTestBase):
 
         mock_rq.get_scheduler.assert_called_once_with('default')
         mock_scheduler.enqueue_in.assert_called_once_with(
-            timedelta(seconds=INSTANCE_DELETION_RETRY_WAIT_TIME),
+            timedelta(seconds=settings.INSTANCE_POLL_DELETED_WAIT),
             _confirm_instance_deleted, fake_instance, 2)
 
         instance = Instance.objects.get(pk=fake_instance.pk)
