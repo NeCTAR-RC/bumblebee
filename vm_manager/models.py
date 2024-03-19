@@ -547,8 +547,11 @@ class VMStatus(models.Model):
     def error(self, message):
         self.status = VM_ERROR
         self.save()
-        self.instance.error(message)
-        self.instance.boot_volume.error(message)
+        # Propagate the error to the instance and its volume
+        if self.instance:
+            self.instance.error(message)
+            if self.instance.boot_volume:
+                self.instance.boot_volume.error(message)
 
     class Meta:
         verbose_name = 'VM Status'
