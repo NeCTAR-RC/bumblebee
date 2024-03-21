@@ -187,9 +187,8 @@ class InstanceModelTests(VMManagerModelTestBase):
             guac_connection=fake_guac_connection,
             ip_address="10.0.0.1")
 
-        with self.assertRaises(GuacamoleEntity.DoesNotExist):
-            self.assertIsNone(GuacamoleEntity.objects.get(
-                name=self.user.username))
+        fake_entity = GuacamoleEntity.objects.create(
+                name=self.user.username, type='USER')
 
         self.assertEqual(0,
                          GuacamoleConnectionParameter.objects.filter(

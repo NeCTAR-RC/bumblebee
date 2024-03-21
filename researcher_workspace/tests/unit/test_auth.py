@@ -4,7 +4,7 @@ from django.contrib.auth import get_user_model
 from django.test import RequestFactory, TestCase, override_settings
 
 from researcher_workspace.auth import generate_username
-from researcher_workspace.auth import NectarAuthBackend
+from researcher_workspace.auth import OIDCAuthBackend, ClassicAuthBackend
 
 from researcher_workspace.tests.factories import UserFactory
 
@@ -34,11 +34,74 @@ class GenerateUsernameTestCase(TestCase):
         self.run_test(email, email[:150])
 
 
-class NectarAuthBackendTestCase(TestCase):
+class ClassicAuthBackendTestCase(TestCase):
 
     @override_settings(OIDC_RP_CLIENT_SECRET='client_secret')
     def setUp(self):
-        self.backend = NectarAuthBackend()
+        self.backend = ClassicAuthBackend()
+        self.rf = RequestFactory()
+        self.user = User.objects.create_user(
+            username="jacob", email="jacob@nowhere.com",
+            password="top_secret")
+
+    def test_authenticate_unknown(self):
+        """The user does not exist."""
+        request = self.rf.get("/home/")
+        user = self.backend.authenticate(request, username='fred',
+                                         password='nonce')
+        self.assertIsNone(user)
+
+    def test_authenticate_new(self):
+        """The user exists but has no Guacamole objects yet.  Check
+        that they are created."""
+        self.assertRaises(
+            guac_models.GuacamoleEntity.DoesNotExist,
+            lambda: guac_models.GuacamoleEntity.objects.get(
+                name=self.user.email))
+
+        request = self.rf.get("/home/")
+        user = self.backend.authenticate(request, username='jacob',
+                                         password='top_secret')
+        self.assertEqual(user, self.user)
+        gentity = guac_models.GuacamoleEntity.objects.get(name=self.user.email)
+        self.assertEqual(gentity.type, 'USER')
+        guser = guac_models.GuacamoleUser.objects.get(
+            email_address=self.user.email)
+        self.assertEqual(guser.entity, gentity)
+        self.assertEqual(guser.email_address, self.user.email)
+        self.assertEqual(guser.full_name, self.user.get_full_name())
+        self.assertEqual(guser.password_hash, 'x')
+
+    def test_authenticate_existing(self):
+        """The user exists and has existing Guacamole objects.  Check
+        that they are updated."""
+
+        gentity = guac_models.GuacamoleEntity.objects.create(
+            name=self.user.email, type='USER')
+        guser = guac_models.GuacamoleUser.objects.create(
+            entity=gentity, email_address=self.user.email,
+            full_name="Nonsense", password_hash="y",
+            disabled=False, expired=False)
+
+        request = self.rf.get("/home/")
+        user = self.backend.authenticate(request, username='jacob',
+                                         password='top_secret')
+        self.assertEqual(user, self.user)
+        gentity = guac_models.GuacamoleEntity.objects.get(name=self.user.email)
+        self.assertEqual(gentity.type, 'USER')
+        guser = guac_models.GuacamoleUser.objects.get(
+            email_address=self.user.email)
+        self.assertEqual(guser.entity, gentity)
+        self.assertEqual(guser.email_address, self.user.email)
+        self.assertEqual(guser.full_name, self.user.get_full_name())
+        self.assertEqual(guser.password_hash, 'x')
+
+
+class OIDCAuthBackendTestCase(TestCase):
+
+    @override_settings(OIDC_RP_CLIENT_SECRET='client_secret')
+    def setUp(self):
+        self.backend = OIDCAuthBackend()
 
     def test_missing_request_arg(self):
         """Test authentication returns `None` when `request` is not provided."""
@@ -58,7 +121,7 @@ class NectarAuthBackendTestCase(TestCase):
 
     @patch('mozilla_django_oidc.auth.requests')
     @patch('mozilla_django_oidc.auth.OIDCAuthenticationBackend.verify_token')
-    @patch('researcher_workspace.auth.NectarAuthBackend.verify_claims')
+    @patch('researcher_workspace.auth.OIDCAuthBackend.verify_claims')
     def test_create_new_user(self, claims_mock, token_mock, request_mock):
         """Test successful creation of new user."""
         auth_request = RequestFactory().get('/foo', {'code': 'foo',
@@ -82,7 +145,7 @@ class NectarAuthBackendTestCase(TestCase):
 
     @patch('mozilla_django_oidc.auth.requests')
     @patch('mozilla_django_oidc.auth.OIDCAuthenticationBackend.verify_token')
-    @patch('researcher_workspace.auth.NectarAuthBackend.verify_claims')
+    @patch('researcher_workspace.auth.OIDCAuthBackend.verify_claims')
     def test_successful_authentication_existing_user(
         self, claims_mock, token_mock, request_mock):
         """Test successful authentication for existing user."""
@@ -109,7 +172,7 @@ class NectarAuthBackendTestCase(TestCase):
 
     @patch('mozilla_django_oidc.auth.requests')
     @patch('mozilla_django_oidc.auth.OIDCAuthenticationBackend.verify_token')
-    @patch('researcher_workspace.auth.NectarAuthBackend.verify_claims')
+    @patch('researcher_workspace.auth.OIDCAuthBackend.verify_claims')
     def test_successful_authentication_existing_user_without_sub(
         self, claims_mock, token_mock, request_mock):
         """Test successful authentication for existing user."""
@@ -134,7 +197,7 @@ class NectarAuthBackendTestCase(TestCase):
 
     @patch('mozilla_django_oidc.auth.requests')
     @patch('mozilla_django_oidc.auth.OIDCAuthenticationBackend.verify_token')
-    @patch('researcher_workspace.auth.NectarAuthBackend.verify_claims')
+    @patch('researcher_workspace.auth.OIDCAuthBackend.verify_claims')
     def test_auth_failure_with_mismatch_sub(
         self, claims_mock, token_mock, request_mock):
         """Test an existing user with a sub mismatch isn't authenticated."""
@@ -241,7 +304,7 @@ class NectarAuthBackendTestCase(TestCase):
 
     @patch('mozilla_django_oidc.auth.requests')
     @patch('mozilla_django_oidc.auth.OIDCAuthenticationBackend.verify_token')
-    @patch('researcher_workspace.auth.NectarAuthBackend.verify_claims')
+    @patch('researcher_workspace.auth.OIDCAuthBackend.verify_claims')
     def test_update_values_existing_user(
         self, claims_mock, token_mock, request_mock):
         """Test user values are updated when claims change, especially

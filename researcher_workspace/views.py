@@ -11,6 +11,7 @@ from django.apps import apps
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import user_logged_in, user_logged_out
+from django.contrib.auth import logout as auth_logout
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.core.files.uploadhandler import TemporaryFileUploadHandler
 from django.core.mail import mail_managers
@@ -257,6 +258,11 @@ def on_login(sender, user, request, **kwargs):
         logger.info('User %s has logged in', request.user.get_full_name())
         messages.info(request, format_html(
             f'Welcome <strong>{request.user.first_name}</strong>'))
+
+
+def logout(request):
+    auth_logout(request)
+    return render(request, 'researcher_workspace/index.html')
 
 
 @receiver(user_logged_out)
