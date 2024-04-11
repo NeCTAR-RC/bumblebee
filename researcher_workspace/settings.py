@@ -78,6 +78,8 @@ INSTALLED_APPS = [
     'health_check.contrib.migrations',
     'health_check.contrib.redis',
     'django_prometheus',
+    'django_admin_listfilter_dropdown',
+    'admin_searchable_dropdown',
 ]
 
 MIDDLEWARE = [

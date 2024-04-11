@@ -4,6 +4,7 @@ from django.contrib.auth.admin import UserAdmin
 from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.translation import gettext as _
+from admin_searchable_dropdown.filters import AutocompleteFilterFactory
 
 from researcher_workspace.models import PermissionRequest, Project, \
     Profile, AROWhitelist, add_username_to_whitelist, \
@@ -63,7 +64,7 @@ class PermissionInline(admin.StackedInline):
 @admin.register(Project)
 class ProjectAdmin(admin.ModelAdmin):
     list_filter = ('created', 'ARO_approval', 'ARO_responded_on',
-                   'permissions', 'sensitive_data', 'project_admin', 'ARO')
+                   'permissions', 'sensitive_data', AutocompleteFilterFactory('User', 'project_admin'))
     readonly_fields = ('created',)
     ordering = ('-created',)
     list_display = ('__str__', 'title', 'project_admin', 'created', 'ARO',

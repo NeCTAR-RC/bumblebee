@@ -25,3 +25,5 @@ python-freshdesk
 django-health-check
 django-prometheus
 PyYAML
+django-admin-list-filter-dropdown
+django-admin-searchable-dropdown

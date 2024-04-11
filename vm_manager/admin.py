@@ -5,6 +5,9 @@ from django.urls import reverse
 from django.utils.formats import localize
 from django.utils.safestring import mark_safe
 from django.utils.timezone import localtime
+from admin_searchable_dropdown.filters import AutocompleteFilterFactory
+from django_admin_listfilter_dropdown.filters import DropdownFilter
+
 
 from vm_manager.constants import VM_OKAY, VM_ERROR, VM_MISSING, NO_VM
 from vm_manager.models import Instance, Volume, Resize, Expiration, VMStatus
@@ -101,21 +104,21 @@ def admin_check_vmstatuses(modelAdmin, request, queryset):
         admin_check_vmstatus(request, vmstatus)
 
 
+@admin.register(Expiration)
 class ExpirationAdmin(admin.ModelAdmin):
-    list_filter = ['id', 'stage', 'stage_date']
+    list_filter = [('id', DropdownFilter), ('stage', DropdownFilter), 'stage_date']
     fields = ['expires', 'stage', 'stage_date']
     readonly_fields = ['id']
-    ordering = ('-id', )
-    list_display = ('__str__',)
+    ordering = ('-id',)
+    list_display = ('id', 'expires', 'stage', 'stage_date')
 
     def has_delete_permission(self, request, obj=None):
         return settings.DEBUG
 
 
 class Expirable(object):
-    '''Mixin class that provides a more useful rendering of the
-    expiration field.
-    '''
+    """ Mixin class that provides a more useful rendering of the
+    expiration field. """
 
     def expiration_link(self, obj):
         if obj.expiration:
@@ -125,7 +128,7 @@ class Expirable(object):
                     localize(localtime(obj.expiration.expires)),
                     reverse("admin:vm_manager_expiration_change",
                             args=(obj.expiration.pk,))
-            ))
+                ))
         else:
             return 'None'
 
@@ -133,15 +136,14 @@ class Expirable(object):
 
 
 class ResourceAdmin(admin.ModelAdmin, Expirable):
-    list_filter = [
-        'created', 'deleted', 'error_flag', 'error_message',
-        'user', 'marked_for_deletion']
+    list_filter = ['created', 'deleted', 'error_flag', ('error_message', DropdownFilter),
+                   AutocompleteFilterFactory('User', 'user'), 'marked_for_deletion']
     readonly_fields = ['id', 'created', 'expiration_link']
-    ordering = ('-created', )
+    ordering = ('-created',)
     actions = [set_expiry, clear_expiry]
 
     list_display = (
-        '__str__',
+        'id',
         'user',
         'created',
         'deleted',
@@ -151,9 +153,10 @@ class ResourceAdmin(admin.ModelAdmin, Expirable):
     )
 
 
+@admin.register(Instance)
 class InstanceAdmin(ResourceAdmin):
     list_filter = ResourceAdmin.list_filter + [
-        'boot_volume__image', 'boot_volume__operating_system',
+        ('boot_volume__image', DropdownFilter), ('boot_volume__operating_system', DropdownFilter),
         'boot_volume__requesting_feature']
     actions = ResourceAdmin.actions + [
         admin_delete_instances, admin_shelve_instances,
@@ -200,17 +203,18 @@ class InstanceInline(admin.StackedInline):
     readonly_fields.remove("boot_volume_fields")
     readonly_fields.remove("expiration_link")
     max_num = 0
-    ordering = ("created", )
+    ordering = ("created",)
 
 
+@admin.register(Volume)
 class VolumeAdmin(ResourceAdmin):
     list_filter = ResourceAdmin.list_filter + [
-        'image', 'operating_system', 'flavor', 'requesting_feature',
+        ('image', DropdownFilter), ('operating_system', DropdownFilter), 'flavor', 'requesting_feature',
         'ready', 'checked_in']
     actions = ResourceAdmin.actions + [
         admin_archive_shelved_volumes, admin_delete_shelved_volumes,
         admin_repair_volume_errors]
-    inlines = (InstanceInline, )
+    inlines = (InstanceInline,)
 
     list_display = ResourceAdmin.list_display + (
         'operating_system',
@@ -229,10 +233,12 @@ class VolumeAdmin(ResourceAdmin):
         return settings.DEBUG
 
 
+@admin.register(Resize)
 class ResizeAdmin(admin.ModelAdmin, Expirable):
     list_filter = [
-        'instance__boot_volume__operating_system', 'reverted',
-        'instance__deleted', 'requested', 'instance__user']
+        ('instance__boot_volume__operating_system', DropdownFilter), 'reverted',
+        'instance__deleted', 'requested', AutocompleteFilterFactory('User', 'instance__user')]
+
     readonly_fields = ('requested', 'expiration_link')
     ordering = ('-requested',)
     actions = [set_expiry, clear_expiry, admin_downsize_resizes]
@@ -250,21 +256,20 @@ class ResizeAdmin(admin.ModelAdmin, Expirable):
         return settings.DEBUG
 
 
+@admin.register(VMStatus)
 class VMStatusAdmin(admin.ModelAdmin):
     list_filter = [
         'created', 'requesting_feature', 'operating_system',
-        'status', 'instance__deleted', 'user']
+        'status', 'instance__deleted', AutocompleteFilterFactory('User', 'user')]
     readonly_fields = ('created', 'id')
     ordering = ('-created',)
     actions = ResourceAdmin.actions + [admin_check_vmstatuses]
 
     list_display = (
         '__str__',
-        'id',
         'user',
         'status',
         'created',
-        'requesting_feature',
         'operating_system',
         'wait_time',
         'instance',
@@ -292,7 +297,7 @@ class VMStatusAdmin(admin.ModelAdmin):
             else:
                 # If the 'instance' link wasn't set (or has been broken)
                 # the best we can do is mark the VMStatus record as no
-                # longer relevant.  (If we mark it as OK, it makes problems
+                # longer relevant.  If we mark it as OK, it makes problems
                 # elsewhere.
                 obj.status = NO_VM
                 obj.save()
@@ -304,9 +309,4 @@ class VMStatusAdmin(admin.ModelAdmin):
         return settings.DEBUG
 
 
-admin.site.register(Instance, InstanceAdmin)
-admin.site.register(Volume, VolumeAdmin)
-admin.site.register(Resize, ResizeAdmin)
-admin.site.register(VMStatus, VMStatusAdmin)
-admin.site.register(Expiration, ExpirationAdmin)
 admin.site.disable_action('delete_selected')
