@@ -115,9 +115,10 @@
       </div>
       <div class="modal-body text-center">
         {% if applicable_zones|length == 1 %}
-          {% with applicable_zones|first as first_zone %} 
-          <p>Your desktop will be launched in the
-            {{ first_zone.name }} availability zone.</p>
+          {% with applicable_zones|first as zone %} 
+            <p id="{{ app_name }}-{{ desktop_type.id }}-{{ zone.name }}">
+               Your desktop will be launched in the {{ zone.name }} availability zone.
+            </p>
           {% endwith %}
         {% elif applicable_zones|length > 1 %}
         <p class="py-3"><strong>Please select your preferred availability zone...</strong></p>
@@ -130,7 +131,9 @@
         <p class="py-3">Select "Default zone" to let the system choose.</p>
         <p class="h5 py-4">Are you ready to create a {{ desktop_type.name }} Desktop?</p>
         {% else %}
-          <p>No availability zones currently support this desktop type.</p>
+          <p id="{{ app_name }}-{{ desktop_type.id }}-no-zones">
+            No availability zones currently support this desktop type.
+          </p>
         {% endif %}
       </div>
       <div class="modal-footer">
