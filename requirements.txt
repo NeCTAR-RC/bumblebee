@@ -1,6 +1,6 @@
 pbr
 wheel
-Django<4
+Django ~= 5.0
 oslo.concurrency
 keystoneauth1
 python-cinderclient

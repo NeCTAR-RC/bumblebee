@@ -92,6 +92,16 @@ the Bumblebee web app on Kubernetes.
 
 ## Requirements
 
+Python and Django versions:  While we try to support at or near the latest
+Django version, we may fall behind.  (Our main priority is support something
+that is compatible with Nectar's production environment.)
+
+* Python 3.10 or later and Django 5.0.x are recommended (on Ubuntu Jammy).
+  Python 3.10 + Django 5.0.x is our dev and CI test target.
+* If you are using Python 3.8, Django 4.2.x should work but we don't support
+  them anymore.
+* Earlier versions of Django are end-of-life.
+
 Bumblebee relies on OpenStack Keystone, Nova, Cinder and Neutron to carry out its
 VM-related activites. Setting up of an OpenStack environment is beyond the
 scope of this humble README but we invite users to evaluate one of the
