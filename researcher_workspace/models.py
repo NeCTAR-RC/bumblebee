@@ -1,17 +1,18 @@
-from datetime import datetime
+from datetime import datetime, timezone
 import logging
 
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.http import Http404
-from django.utils.timezone import utc
 
 from researcher_workspace.utils.FoR_codes import FOR_CODE_CHOICES
 from researcher_workspace.utils import send_notification
 
 
 logger = logging.getLogger(__name__)
+
+utc = timezone.utc
 
 
 class User(AbstractUser):

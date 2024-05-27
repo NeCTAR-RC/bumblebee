@@ -1,10 +1,9 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from unittest.mock import patch
 import uuid
 
 from django.http import Http404
 from django.test import TestCase
-from django.utils.timezone import utc
 
 from researcher_workspace.tests.factories import FeatureFactory, UserFactory
 from researcher_desktop.tests.factories import DesktopTypeFactory
@@ -19,6 +18,8 @@ from vm_manager.utils.utils import get_nectar
 
 from vm_manager.models import Instance, Volume, Resize, VMStatus, \
     _create_hostname_id
+
+utc = timezone.utc
 
 
 class VMManagerModelTestBase(TestCase):

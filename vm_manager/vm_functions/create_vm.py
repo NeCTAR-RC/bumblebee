@@ -1,5 +1,5 @@
 import crypt
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import logging
 
 import cinderclient
@@ -8,7 +8,6 @@ import django_rq
 from django.conf import settings
 from django.template.loader import render_to_string
 from django.urls import reverse
-from django.utils.timezone import utc
 
 from vm_manager.constants import NO_VM, VM_SHELVED, VOLUME_AVAILABLE, ACTIVE
 from vm_manager.utils.expiry import InstanceExpiryPolicy
@@ -21,6 +20,8 @@ from researcher_desktop.models import AvailabilityZone
 from guacamole.models import GuacamoleConnection
 
 logger = logging.getLogger(__name__)
+
+utc = timezone.utc
 
 
 def launch_vm_worker(user, desktop_type, zone):

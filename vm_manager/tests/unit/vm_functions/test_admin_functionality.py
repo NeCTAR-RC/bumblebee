@@ -1,7 +1,5 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from unittest.mock import call, Mock, patch
-
-from django.utils.timezone import utc
 
 import cinderclient
 import novaclient
@@ -23,6 +21,8 @@ from vm_manager.vm_functions.admin_functionality import \
 from vm_manager.vm_functions.delete_vm import delete_vm_worker
 from vm_manager.vm_functions.resize_vm import downsize_vm_worker
 from vm_manager.vm_functions.shelve_vm import shelve_vm_worker
+
+utc = timezone.utc
 
 
 class FakeReporter(Mock):

@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import logging
 
 import cinderclient
@@ -6,7 +6,6 @@ import django_rq
 import novaclient
 
 from django.conf import settings
-from django.utils.timezone import utc
 
 from vm_manager.constants import ACTIVE, SHUTDOWN, NO_VM, VM_SHELVED, \
     VOLUME_AVAILABLE, BACKUP_CREATING, BACKUP_AVAILABLE, VM_WAITING, \
@@ -20,6 +19,8 @@ from guacamole.models import GuacamoleConnection
 
 
 logger = logging.getLogger(__name__)
+
+utc = timezone.utc
 
 # Combine the delete and archive workflows into one module because they
 # are too difficult to separate.  (I tried a dynamic import, but it made

@@ -1,10 +1,9 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import re
 from unittest.mock import Mock, patch
 import uuid
 
 from django.test import TestCase
-from django.utils.timezone import utc
 
 from researcher_desktop.utils.utils import get_desktop_type, desktops_feature
 
@@ -15,6 +14,8 @@ from vm_manager.utils.expirer import Expirer, \
     EXP_NOTIFY, EXP_SUCCESS, EXP_FAIL, EXP_RETRY, EXP_SKIP, EXP_STARTED
 
 from researcher_workspace.tests.factories import UserFactory
+
+utc = timezone.utc
 
 
 class DummyExpirer(Expirer):

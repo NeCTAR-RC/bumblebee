@@ -1,11 +1,9 @@
-from datetime import datetime, timedelta
-import uuid
-
+from datetime import datetime, timedelta, timezone
 from unittest.mock import Mock, patch, call
+import uuid
 
 from django.conf import settings
 from django.http import Http404
-from django.utils.timezone import utc
 from novaclient.exceptions import NotFound, ClientException
 
 from vm_manager.tests.factories import ResizeFactory
@@ -21,6 +19,8 @@ from vm_manager.vm_functions.resize_vm import supersize_vm_worker, \
     downsize_expired_vm
 from vm_manager.utils.utils import get_nectar, after_time
 from vm_manager.utils.expiry import BoostExpiryPolicy
+
+utc = timezone.utc
 
 
 class ResizeVMTests(VMFunctionTestBase):

@@ -1,11 +1,10 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from unittest.mock import Mock, patch, call
 import uuid
 
 from django.conf import settings
 from django.http import Http404
 from django.test import TestCase
-from django.utils.timezone import utc
 
 from researcher_workspace.tests.factories import UserFactory
 from researcher_desktop.tests.factories import DesktopTypeFactory, \
@@ -33,6 +32,8 @@ from vm_manager.views import launch_vm_worker, delete_vm_worker, \
 from vm_manager.views import launch_vm, delete_vm, shelve_vm, unshelve_vm, \
     reboot_vm, supersize_vm, downsize_vm, get_vm_state, render_vm, notify_vm, \
     phone_home, rd_report_for_user, delete_shelved_vm
+
+utc = timezone.utc
 
 
 class VMManagerViewTests(TestCase):

@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import uuid
 
 from unittest.mock import Mock, patch
@@ -6,7 +6,6 @@ from unittest.mock import Mock, patch
 import cinderclient
 from django.conf import settings
 from django.http import Http404
-from django.utils.timezone import utc
 
 from researcher_desktop.tests.factories import AvailabilityZoneFactory
 
@@ -22,6 +21,8 @@ from vm_manager.vm_functions.create_vm import launch_vm_worker, \
     wait_to_create_instance, _create_volume, _create_instance, \
     wait_for_instance_active, _get_source_volume_id, extend_instance
 from vm_manager.utils.utils import get_nectar
+
+utc = timezone.utc
 
 
 class CreateVMTests(VMFunctionTestBase):

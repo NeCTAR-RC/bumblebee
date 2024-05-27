@@ -1,6 +1,9 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
+
 from django.conf import settings
-from django.utils.timezone import utc
+
+
+utc = timezone.utc
 
 
 class ExpiryPolicy(object):

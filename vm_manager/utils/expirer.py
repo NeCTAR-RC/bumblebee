@@ -1,8 +1,7 @@
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from django.conf import settings
-from django.utils.timezone import utc
 
 from researcher_workspace.utils import send_notification, format_notification
 from researcher_desktop.models import DesktopType
@@ -78,7 +77,7 @@ class Expirer(object):
                  dry_run=False, verbose=False):
         self.dry_run = dry_run
         self.verbose = verbose
-        self.now = datetime.now(utc)
+        self.now = datetime.now(timezone.utc)
         self.template = template
         if first_warning and not final_warning:
             raise Exception("Config error: first warning w/o final warning")

@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 from unittest.mock import Mock, patch, call
 
@@ -6,7 +6,6 @@ import cinderclient
 import novaclient
 
 from django.conf import settings
-from django.utils.timezone import utc
 
 from guacamole.tests.factories import GuacamoleConnectionFactory
 from vm_manager.tests.fakes import Fake, FakeServer, FakeNectar
@@ -26,6 +25,8 @@ from vm_manager.vm_functions.delete_vm import delete_vm_worker, \
     archive_volume_worker, wait_for_backup, delete_backup_worker, \
     _wait_until_backup_is_deleted, _wait_until_volume_is_deleted
 from vm_manager.utils.utils import get_nectar
+
+utc = timezone.utc
 
 
 class DeleteVMTests(VMFunctionTestBase):

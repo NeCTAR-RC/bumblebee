@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 import logging
 from math import ceil
 from operator import itemgetter
@@ -11,7 +11,6 @@ from django.forms.models import model_to_dict
 from django.http import Http404
 from django.template import loader
 from django.utils.html import format_html
-from django.utils.timezone import utc
 from django.views.decorators.csrf import csrf_exempt
 import django_rq
 
@@ -45,6 +44,8 @@ from vm_manager.vm_functions.resize_vm import supersize_vm_worker, \
     downsize_vm_worker, extend_boost, end_resize
 
 logger = logging.getLogger(__name__)
+
+utc = timezone.utc
 
 
 def _wrong_state_message(action, user, feature=None, desktop_type=None,

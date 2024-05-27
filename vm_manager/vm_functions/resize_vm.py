@@ -1,8 +1,7 @@
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from django.conf import settings
-from django.utils.timezone import utc
 import django_rq
 import novaclient
 
@@ -17,6 +16,8 @@ from vm_manager.models import VMStatus, Instance, Resize, \
     EXP_EXPIRY_FAILED_RETRYABLE
 
 logger = logging.getLogger(__name__)
+
+utc = timezone.utc
 
 
 def supersize_vm_worker(instance, desktop_type) -> str:

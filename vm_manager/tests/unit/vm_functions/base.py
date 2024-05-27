@@ -1,8 +1,7 @@
-from datetime import datetime
+from datetime import datetime, timezone
 import uuid
 
 from django.test import TestCase
-from django.utils.timezone import utc
 
 from researcher_workspace.tests.factories import UserFactory
 from researcher_desktop.utils.utils import get_desktop_type, desktops_feature
@@ -13,6 +12,8 @@ from vm_manager.tests.factories import InstanceFactory, VMStatusFactory, \
     VolumeFactory
 
 from vm_manager.constants import VM_OKAY
+
+utc = timezone.utc
 
 
 class VMFunctionTestBase(TestCase):

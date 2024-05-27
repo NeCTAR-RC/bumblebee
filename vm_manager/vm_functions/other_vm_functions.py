@@ -1,11 +1,10 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import logging
 
 import django_rq
 import novaclient
 
 from django.conf import settings
-from django.utils.timezone import utc
 
 from vm_manager.constants import ACTIVE, SHUTDOWN, REBOOT_HARD
 from vm_manager.models import Instance, VMStatus
@@ -38,7 +37,7 @@ def reboot_vm_worker(user, vm_id, reboot_level,
         return
 
     volume = instance.boot_volume
-    volume.rebooted_at = datetime.now(utc)
+    volume.rebooted_at = datetime.now(timezone.utc)
     volume.save()
 
     logger.info(f"Performing {reboot_level} reboot on {instance}")

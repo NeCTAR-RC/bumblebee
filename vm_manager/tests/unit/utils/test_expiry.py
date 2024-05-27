@@ -1,11 +1,10 @@
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from unittest.mock import patch
 
 from django.conf import settings
 from django.test import TestCase
-from django.utils.timezone import utc
 
 from researcher_desktop.utils.utils import get_desktop_type, desktops_feature
 
@@ -13,6 +12,8 @@ from vm_manager.utils.expiry import ExpiryPolicy, \
     BoostExpiryPolicy, InstanceExpiryPolicy
 from vm_manager.tests.factories import VolumeFactory, InstanceFactory
 from researcher_workspace.tests.factories import UserFactory
+
+utc = timezone.utc
 
 
 class DummyResource(object):

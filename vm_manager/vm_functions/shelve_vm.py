@@ -1,11 +1,10 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import logging
 
 import django_rq
 import novaclient
 
 from django.conf import settings
-from django.utils.timezone import utc
 
 from vm_manager.constants import ACTIVE, SHUTDOWN, \
     VM_MISSING, VM_SHELVED, VM_WAITING, VM_OKAY, VM_ERROR, VM_SUPERSIZED, \
@@ -22,6 +21,8 @@ from guacamole.models import GuacamoleConnection
 
 
 logger = logging.getLogger(__name__)
+
+utc = timezone.utc
 
 
 def shelve_vm_worker(instance):

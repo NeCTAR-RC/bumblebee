@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 import logging
 import nanoid
 import string
@@ -8,7 +8,6 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.http import Http404
 from django.template.defaultfilters import safe
-from django.utils.timezone import utc
 
 from novaclient import exceptions as nova_exceptions
 
@@ -24,6 +23,8 @@ from guacamole.models import GuacamoleConnection, \
 from guacamole import utils as guac_utils
 
 logger = logging.getLogger(__name__)
+
+utc = timezone.utc
 
 EXP_INITIAL = 0
 EXP_FIRST_WARNING = 1

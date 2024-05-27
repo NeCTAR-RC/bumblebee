@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 import logging
 from operator import itemgetter
 from uuid import UUID
@@ -10,7 +10,6 @@ from django.db.models import Count
 from django.db.models.functions import TruncDay
 from django.http import HttpResponse, Http404
 from django.shortcuts import render
-from django.utils.timezone import utc
 
 import cinderclient
 import django_rq
@@ -33,6 +32,8 @@ from vm_manager.vm_functions.resize_vm import downsize_vm_worker
 from vm_manager.vm_functions.shelve_vm import shelve_vm_worker
 
 logger = logging.getLogger(__name__)
+
+utc = timezone.utc
 
 
 # Not currently wired ...

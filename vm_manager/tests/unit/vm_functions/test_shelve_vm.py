@@ -1,10 +1,9 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from unittest.mock import Mock, patch
 
 import novaclient
 
 from django.conf import settings
-from django.utils.timezone import utc
 
 from guacamole.tests.factories import GuacamoleConnectionFactory
 from vm_manager.constants import ACTIVE, SHUTDOWN, RESCUE, \
@@ -18,6 +17,8 @@ from vm_manager.utils.utils import get_nectar
 from vm_manager.vm_functions.shelve_vm import shelve_vm_worker, \
     shelve_expired_vm, _confirm_instance_deleted, \
     _check_instance_is_shutoff_and_delete
+
+utc = timezone.utc
 
 
 class ShelveVMTests(VMFunctionTestBase):

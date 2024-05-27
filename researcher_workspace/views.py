@@ -1,5 +1,5 @@
 import csv
-from datetime import datetime
+from datetime import datetime, timezone
 from dateutil.relativedelta import relativedelta
 from io import BytesIO
 import logging
@@ -20,7 +20,6 @@ from django.http import HttpResponse, HttpResponseRedirect, Http404, StreamingHt
 from django.shortcuts import render
 from django.urls import reverse
 from django.utils.html import format_html
-from django.utils.timezone import utc
 from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
 
 from researcher_desktop.utils.utils import get_desktop_type, get_applicable_zones
@@ -44,6 +43,8 @@ from vm_manager.utils.utils import get_nectar
 from vm_manager.views import desktop_limit_check
 
 logger = logging.getLogger(__name__)
+
+utc = timezone.utc
 
 
 def _get_users_for_report():

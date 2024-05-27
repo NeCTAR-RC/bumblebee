@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from cinderclient import client as cinder_client
 from glanceclient import client as glance_client
@@ -10,7 +10,8 @@ from novaclient import client as nova_client
 
 from django.conf import settings
 from django.utils.crypto import get_random_string
-from django.utils.timezone import utc
+
+utc = timezone.utc
 
 
 class Nectar(object):
