@@ -50,10 +50,8 @@ if settings.USE_OIDC:
              oidc_views.OIDCAuthenticationRequestView.as_view(), name='login'),
         path('rcsadmin/login/',
              oidc_views.OIDCAuthenticationRequestView.as_view()),
+        path("logout/", oidc_views.OIDCLogoutView.as_view(), name="logout"),
         path('rcsadmin/', admin.site.urls),
-        path('logout/',
-             RedirectView.as_view(pattern_name='oidc_logout', permanent=False),
-             name='logout'),
     ]
 else:
     # Classic user name / password login.  This is only meant for testing
