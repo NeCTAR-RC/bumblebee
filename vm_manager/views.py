@@ -560,10 +560,14 @@ def phone_home(request, requesting_feature):
     vm_status = VMStatus.objects.get_vm_status_by_instance(
         instance, requesting_feature)
     if vm_status.status != VM_WAITING:
-        result = (f"Unexpected phone home for {instance}. "
-                  f"VM_status is {vm_status}")
-        logger.error(result)
-        return result
+        if vm_status.status == VM_ERROR \
+           and instance.check_active_status():
+            logger.info(f"Handling a late phone_home event for {instance}")
+        else:
+            result = (f"Unexpected phone home for {instance}. "
+                      f"VM_status is {vm_status}")
+            logger.error(result)
+            return result
 
     volume = instance.boot_volume
     volume.ready = True

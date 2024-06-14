@@ -960,6 +960,13 @@ class VMManagerViewTests(TestCase):
         self.assertEqual(EXP_EXPIRY_COMPLETED, expiration.stage)
         self.assertTrue(now < expiration.stage_date)
 
+        # Late phone home
+        self.build_existing_vm(VM_ERROR)
+        fake_request = Fake(POST={'instance_id': self.instance.id})
+        self.assertEqual(
+            f"Phone home for {self.instance} - success!",
+            phone_home(fake_request, self.FEATURE))
+
     @patch('vm_manager.views.datetime')
     def test_rd_report_for_user(self, mock_datetime):
         # Freeze time ...
