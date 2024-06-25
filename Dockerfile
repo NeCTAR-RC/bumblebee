@@ -1,4 +1,4 @@
-FROM debian:bullseye
+FROM debian:bookworm
 
 ADD requirements.txt /app/requirements.txt
 
