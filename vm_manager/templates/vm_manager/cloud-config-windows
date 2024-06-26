@@ -1,10 +1,25 @@
-## template: jinja
 #cloud-config
 
-# Cloud config for VDS Windows desktops
-
-fqdn: {{ hostname }}
 hostname: {{ hostname }}
 timezone: {{ timezone }}
 
-# and the rest ...
+users:
+- name: {{ username }}
+  passwd: {{ password }}
+  gecos: VDI User
+  groups:
+  - Administrators
+
+write_files:
+- path: C:\NectarScripts\phone_home.ps1
+  content: |
+    #ps1_sysnative
+    $now = date
+    Write-Output "[$now] Starting Nectar Phone Home"
+    $metadata = Invoke-WebRequest -Uri http://169.254.169.254/openstack/latest/meta_data.json -UseBasicParsing | ConvertFrom-Json
+    $result = Invoke-WebRequest -Uri {{ phone_home_url }} -Method POST -Body @{instance_id=$metadata.uuid} -UseBasicParsing
+    $now = date
+    Write-Output "[$now] $result"
+
+runcmd:
+  - schtasks /Create /TN "NectarPhoneHome" /SC ONSTART /RL highest /RU SYSTEM /TR "powershell.exe -windowstyle hidden -command C:\NectarScripts\phone_home.ps1 >> C:\NectarScripts\phone_home.log 2>&1"
