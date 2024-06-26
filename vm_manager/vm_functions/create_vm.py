@@ -259,7 +259,8 @@ def _create_instance(user, desktop_type, volume):
         'password': crypt.crypt(password, crypt.mksalt(crypt.METHOD_SHA512)),
         'timezone': desktop_timezone,
     }
-    user_data = render_to_string('vm_manager/cloud-config',
+    family = desktop_type.family
+    user_data = render_to_string(f'vm_manager/cloud-config-{family}',
                                  user_data_context)
 
     # Create instance in OpenStack
