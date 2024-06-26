@@ -340,12 +340,14 @@ class Instance(CloudResource):
             ('hostname', self.get_ip_addr()),
             ('username', self.username),
             ('password', self.password),
-            ('security', 'tls'),
+            ('security', 'any'),
             ('ignore-cert', 'true'),
             ('resize-method', 'display-update'),
             ('enable-drive', 'true'),
             ('drive-path', f'/var/lib/guacd/shared-drive/{self.id}'),
             ('create-drive-path', 'true'),
+            ('enable-font-smoothing', 'true'),
+            ('enable-wallpaper', 'true'),
         ]
 
         # This object will be created by the auth backend.

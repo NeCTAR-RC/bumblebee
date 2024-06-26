@@ -1,6 +1,8 @@
 ## template: jinja
 #cloud-config
 
+# Cloud config for VDS Linux desktops
+
 fqdn: {{ hostname }}
 hostname: {{ hostname }}
 timezone: {{ timezone }}

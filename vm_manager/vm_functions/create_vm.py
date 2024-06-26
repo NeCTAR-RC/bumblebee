@@ -247,6 +247,13 @@ def _create_instance(user, desktop_type, volume):
     zone = volume.zone
     network_id = AvailabilityZone.objects.get(name=zone).network_id
     nics = [{'net-id': network_id}]
+    family = desktop_type.family
+
+    # Linux needs a hashed password, whereas Windows requires plain text
+    if family == 'windows':
+        hash_password = password
+    else:
+        hash_password = crypt.crypt(password, crypt.mksalt(crypt.METHOD_SHA512))
 
     desktop_timezone = user.profile.timezone or settings.TIME_ZONE
     user_data_context = {
@@ -256,10 +263,10 @@ def _create_instance(user, desktop_type, volume):
         'phone_home_url': (settings.SITE_URL
                            + reverse('researcher_desktop:phone_home')),
         'username': username,
-        'password': crypt.crypt(password, crypt.mksalt(crypt.METHOD_SHA512)),
+        'password': hash_password,
         'timezone': desktop_timezone,
     }
-    user_data = render_to_string('vm_manager/cloud-config',
+    user_data = render_to_string(f'vm_manager/cloud-config-{family}',
                                  user_data_context)
 
     # Create instance in OpenStack

@@ -199,7 +199,7 @@ class InstanceModelTests(VMManagerModelTestBase):
 
         entity = GuacamoleEntity.objects.get(name=self.user.username)
         self.assertIsNotNone(entity)
-        self.assertEqual(9,
+        self.assertEqual(11,
                          GuacamoleConnectionParameter.objects.filter(
                              connection=fake_guac_connection).count())
         self.assertEqual(1,

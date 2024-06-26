@@ -54,6 +54,9 @@ class DesktopType(models.Model):
     enabled = models.BooleanField(default=True)
     restrict_to_zones = models.ManyToManyField(AvailabilityZone, blank=True)
     details = models.JSONField(blank=True, null=True)
+    family = models.CharField(default="linux", max_length=32,
+                              help_text="Selects a cloud-config template;"
+                              "e.g. 'linux' or 'windows'")
 
     objects = DesktopTypeManager()
 
