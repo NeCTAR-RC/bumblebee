@@ -1,4 +1,4 @@
-pbr
+pbr>=6.0
 wheel
 Django ~= 5.0
 oslo.concurrency
