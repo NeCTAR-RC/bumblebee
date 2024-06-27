@@ -513,8 +513,7 @@ class VMManagerViewTests(TestCase):
                           {'url': url,
                            'extension': timedelta(days=2),
                            'expiration': self.instance.expiration,
-                           'extended_expiration': date2
-                          },
+                           'extended_expiration': date2},
                           self.instance.id),
                          get_vm_state(self.vm_status,
                                       self.user, self.UBUNTU))
@@ -562,8 +561,7 @@ class VMManagerViewTests(TestCase):
              {'url': url,
               'extension': timedelta(days=2),
               'expiration': resize.expiration,
-              'extended_expiration': date2
-             },
+              'extended_expiration': date2},
              self.instance.id),
             get_vm_state(self.vm_status, self.user, self.UBUNTU))
 
@@ -587,8 +585,7 @@ class VMManagerViewTests(TestCase):
                           {'url': None,
                            'extension': timedelta(days=2),
                            'expiration': self.volume.expiration,
-                           'extended_expiration': date2
-                          },
+                           'extended_expiration': date2},
                           self.instance.id),
                          get_vm_state(self.vm_status,
                                       self.user, self.UBUNTU))
@@ -988,8 +985,8 @@ class VMManagerViewTests(TestCase):
         self.assertEqual(
             {
                 'user_vm_info': {
-                'dt1': [{'count': 0, 'date': now}],
-                'dt2': [{'count': 0, 'date': now}]
+                    'dt1': [{'count': 0, 'date': now}],
+                    'dt2': [{'count': 0, 'date': now}]
                 }
             },
             rd_report_for_user(self.user, dt_ids, self.FEATURE)

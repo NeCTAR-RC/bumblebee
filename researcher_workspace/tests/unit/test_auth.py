@@ -147,7 +147,7 @@ class OIDCAuthBackendTestCase(TestCase):
     @patch('mozilla_django_oidc.auth.OIDCAuthenticationBackend.verify_token')
     @patch('researcher_workspace.auth.OIDCAuthBackend.verify_claims')
     def test_successful_authentication_existing_user(
-        self, claims_mock, token_mock, request_mock):
+            self, claims_mock, token_mock, request_mock):
         """Test successful authentication for existing user."""
         auth_request = RequestFactory().get('/foo', {'code': 'foo',
                                                      'state': 'bar'})
@@ -174,7 +174,7 @@ class OIDCAuthBackendTestCase(TestCase):
     @patch('mozilla_django_oidc.auth.OIDCAuthenticationBackend.verify_token')
     @patch('researcher_workspace.auth.OIDCAuthBackend.verify_claims')
     def test_successful_authentication_existing_user_without_sub(
-        self, claims_mock, token_mock, request_mock):
+            self, claims_mock, token_mock, request_mock):
         """Test successful authentication for existing user."""
         auth_request = RequestFactory().get('/foo', {'code': 'foo',
                                                      'state': 'bar'})
@@ -199,7 +199,7 @@ class OIDCAuthBackendTestCase(TestCase):
     @patch('mozilla_django_oidc.auth.OIDCAuthenticationBackend.verify_token')
     @patch('researcher_workspace.auth.OIDCAuthBackend.verify_claims')
     def test_auth_failure_with_mismatch_sub(
-        self, claims_mock, token_mock, request_mock):
+            self, claims_mock, token_mock, request_mock):
         """Test an existing user with a sub mismatch isn't authenticated."""
         auth_request = RequestFactory().get('/foo', {'code': 'foo',
                                                      'state': 'bar'})
@@ -222,8 +222,7 @@ class OIDCAuthBackendTestCase(TestCase):
 
     @patch('mozilla_django_oidc.auth.requests')
     @patch('mozilla_django_oidc.auth.OIDCAuthenticationBackend.verify_token')
-    def test_auth_succeeds_with_aaf(
-        self, token_mock, request_mock):
+    def test_auth_succeeds_with_aaf(self, token_mock, request_mock):
         """Test authentication succeeds if federation is AAF"""
         auth_request = RequestFactory().get('/foo', {'code': 'foo',
                                                      'state': 'bar'})
@@ -242,8 +241,7 @@ class OIDCAuthBackendTestCase(TestCase):
     @override_settings(OIDC_ALLOW_GROUPS=['allow'])
     @patch('mozilla_django_oidc.auth.requests')
     @patch('mozilla_django_oidc.auth.OIDCAuthenticationBackend.verify_token')
-    def test_auth_fails_without_group(
-        self, token_mock, request_mock):
+    def test_auth_fails_without_group(self, token_mock, request_mock):
         """Test authentication fails without federation"""
         auth_request = RequestFactory().get('/foo', {'code': 'foo',
                                                      'state': 'bar'})
@@ -265,7 +263,7 @@ class OIDCAuthBackendTestCase(TestCase):
     @patch('mozilla_django_oidc.auth.requests')
     @patch('mozilla_django_oidc.auth.OIDCAuthenticationBackend.verify_token')
     def test_user_admin_permissions_granted_from_groups(
-        self, token_mock, request_mock):
+            self, token_mock, request_mock):
         """Test admin is granted if admin role is given in claim"""
         auth_request = RequestFactory().get('/foo', {'code': 'foo',
                                                      'state': 'bar'})
@@ -285,7 +283,7 @@ class OIDCAuthBackendTestCase(TestCase):
     @patch('mozilla_django_oidc.auth.requests')
     @patch('mozilla_django_oidc.auth.OIDCAuthenticationBackend.verify_token')
     def test_user_staff_permissions_granted_from_groups(
-        self, token_mock, request_mock):
+            self, token_mock, request_mock):
         """Test staff is granted if staff role is given in claim"""
         auth_request = RequestFactory().get('/foo', {'code': 'foo',
                                                      'state': 'bar'})
@@ -306,7 +304,7 @@ class OIDCAuthBackendTestCase(TestCase):
     @patch('mozilla_django_oidc.auth.OIDCAuthenticationBackend.verify_token')
     @patch('researcher_workspace.auth.OIDCAuthBackend.verify_claims')
     def test_update_values_existing_user(
-        self, claims_mock, token_mock, request_mock):
+            self, claims_mock, token_mock, request_mock):
         """Test user values are updated when claims change, especially
         for permissions"""
         auth_request = RequestFactory().get('/foo', {'code': 'foo',

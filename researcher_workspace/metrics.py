@@ -47,7 +47,7 @@ class BumblebeeMetricsCollector(object):
                 domain=ExpressionWrapper(
                     Func(F('user__email'), Value('@'),
                          Value(-1), function='substring_index'),
-                output_field=EmailField())).annotate(Count('domain'))
+                    output_field=EmailField())).annotate(Count('domain'))
             for t in new_qs:
                 g.add_metric([t['domain']], t['domain__count'])
             yield g
