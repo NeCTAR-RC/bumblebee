@@ -89,8 +89,8 @@ class VMManagerViewTests(TestCase):
         self.assertEqual(
             f"User {self.user} already has 1 live desktops",
             launch_vm(self.user, self.UBUNTU, self.zone))
-        vm_status = VMStatus.objects.get_latest_vm_status(
-            self.user, self.UBUNTU)
+        self.assertIsNotNone(
+            VMStatus.objects.get_latest_vm_status(self.user, self.UBUNTU))
 
     @patch('vm_manager.views.django_rq')
     def test_launch_vm(self, mock_rq):
@@ -554,8 +554,6 @@ class VMManagerViewTests(TestCase):
         resize = ResizeFactory.create(instance=self.instance)
         resize.set_expires(date1)
 
-        res = get_vm_state(self.vm_status, self.user, self.UBUNTU)
-
         self.assertEqual(
             (VM_SUPERSIZED,
              {'url': url,
@@ -978,7 +976,7 @@ class VMManagerViewTests(TestCase):
         volume_1 = VolumeFactory.create(
             operating_system=dt_1.id, requesting_feature=self.FEATURE,
             id=uuid.uuid4(), user=self.user)
-        volume_2 = VolumeFactory.create(
+        VolumeFactory.create(
             operating_system=dt_2.id, requesting_feature=self.FEATURE,
             id=uuid.uuid4(), user=self.user)
 
@@ -993,7 +991,7 @@ class VMManagerViewTests(TestCase):
         )
 
         yesterday = now - timedelta(days=1)
-        instance_1 = InstanceFactory.create(
+        InstanceFactory.create(
             id=uuid.uuid4(), created=yesterday, boot_volume=volume_1,
             user=self.user)
 
@@ -1010,7 +1008,7 @@ class VMManagerViewTests(TestCase):
 
         yesterday_plus_one_hour = yesterday + timedelta(hours=1)
         yesterday_plus_two_hours = yesterday + timedelta(hours=2)
-        instance_2 = InstanceFactory.create(
+        InstanceFactory.create(
             id=uuid.uuid4(),
             created=yesterday_plus_one_hour,
             marked_for_deletion=yesterday_plus_two_hours,

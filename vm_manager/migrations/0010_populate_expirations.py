@@ -28,8 +28,6 @@ class Migration(migrations.Migration):
     def repopulate_expiry_dates(apps, schema_editor):
         CloudResource = apps.get_model("vm_manager", "CloudResource")
         Resize = apps.get_model("vm_manager", "Resize")
-        ResourceExpiration = apps.get_model("vm_manager", "ResourceExpiration")
-        ResizeExpiration = apps.get_model("vm_manager", "ResizeExpiration")
         for r in CloudResource.objects.exclude(expiration=None):
             r.expires = r.expiration.expires
             r.save()

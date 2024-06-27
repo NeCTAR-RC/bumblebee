@@ -96,7 +96,7 @@ def _resize_vm(instance, flavor, target_status, requesting_feature):
         vm_status.save()
         return WF_SUCCESS
 
-    resize_result = n.nova.servers.resize(instance.id, flavor)
+    n.nova.servers.resize(instance.id, flavor)
     vm_status = VMStatus.objects.get_vm_status_by_instance(
         instance, requesting_feature)
     vm_status.status_progress = 33

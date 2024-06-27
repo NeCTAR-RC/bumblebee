@@ -361,7 +361,7 @@ class Instance(CloudResource):
             if not created:
                 gcp.parameter_value = v
 
-        gmodel = GuacamoleConnectionPermission.objects.get_or_create(
+        GuacamoleConnectionPermission.objects.get_or_create(
             entity=gentity,
             connection=self.guac_connection,
             permission='READ')

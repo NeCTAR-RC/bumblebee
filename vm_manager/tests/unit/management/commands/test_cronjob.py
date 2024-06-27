@@ -10,4 +10,4 @@ class CronjobTests(TestCase):
 
     def test_instantiate(self):
         # Just make sure there are no compilation errors ... for now
-        command = Command()
+        _ = Command()

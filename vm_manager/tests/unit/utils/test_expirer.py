@@ -1,7 +1,6 @@
 from datetime import datetime, timedelta, timezone
 import re
 from unittest.mock import Mock, patch
-import uuid
 
 from django.test import TestCase
 
@@ -36,22 +35,6 @@ class ExpirerTests(TestCase):
         self.FEATURE = desktops_feature()
         self.UBUNTU = get_desktop_type('ubuntu')
         self.user = UserFactory.create()
-
-    def build_instance(self, expires=None):
-        fake_volume = VolumeFactory.create(
-            id=uuid.uuid4(),
-            user=self.user,
-            image=uuid.uuid4(),
-            operating_system=self.UBUNTU.id,
-            requesting_feature=self.UBUNTU.feature,
-            zone="a_zone",
-            flavor=uuid.uuid4())
-        fake_instance = InstanceFactory.create(
-            id=uuid.uuid4(),
-            boot_volume=fake_volume,
-            user=self.user,
-            expires=expires)
-        return fake_instance
 
     @patch('vm_manager.utils.expirer.send_notification')
     @patch('builtins.print')

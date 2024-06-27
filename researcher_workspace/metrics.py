@@ -7,7 +7,6 @@ from vm_manager import models as vm_manager_models
 
 class BumblebeeMetricsCollector(object):
     def collect(self):
-        metrics = {}
         volumes = vm_manager_models.Volume.objects.all()
 
         for dimension in ['created', 'running', 'shelved']:

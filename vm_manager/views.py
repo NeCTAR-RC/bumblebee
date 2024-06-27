@@ -316,7 +316,7 @@ def extend_vm(user, vm_id, requesting_feature) -> str:
         return _wrong_state_message(
             "extend", user, feature=requesting_feature, vm_status=vm_status,
             vm_id=vm_id)
-    expiry = extend_instance(user, vm_id, requesting_feature)
+    extend_instance(user, vm_id, requesting_feature)
     vm_status.status_done = "has been extended"
     vm_status.save()
     return str(vm_status)
@@ -333,10 +333,10 @@ def extend_boost_vm(user, vm_id, requesting_feature) -> str:
         return _wrong_state_message(
             "extend_boost", user, feature=requesting_feature,
             vm_status=vm_status, vm_id=vm_id)
-    expiry = extend_boost(user, vm_id, requesting_feature)
+    extend_boost(user, vm_id, requesting_feature)
 
     # Also extend the instance expiry
-    instance_expiry = extend_instance(user, vm_id, requesting_feature)
+    extend_instance(user, vm_id, requesting_feature)
     vm_status.status_done = "has been extended"
     vm_status.save()
     return str(vm_status)
@@ -555,7 +555,7 @@ def phone_home(request, requesting_feature):
 
     instance_id = request.POST['instance_id']
     instance = Instance.objects.get_instance_by_untrusted_vm_id_2(
-        request.POST['instance_id'], requesting_feature)
+        instance_id, requesting_feature)
 
     vm_status = VMStatus.objects.get_vm_status_by_instance(
         instance, requesting_feature)
@@ -596,8 +596,8 @@ def rd_report_for_user(user, desktop_type_ids, requesting_feature):
         vms = Instance.objects.filter(
             user=user,
             boot_volume__operating_system=id,
-            boot_volume__requesting_feature=requesting_feature) \
-                              .order_by('created')
+            boot_volume__requesting_feature=requesting_feature
+        ).order_by('created')
         deleted = [{'date': vm.marked_for_deletion, 'count': -1}
                    for vm in vms.order_by('marked_for_deletion')
                    if vm.marked_for_deletion]

@@ -211,7 +211,7 @@ class OIDCAuthBackendTestCase(TestCase):
             'sub': fake.uuid4(),
         }
         self._setup_request_mock(request_mock, user_data)
-        user = UserFactory(
+        UserFactory(
             email=user_data['email'],
             first_name=user_data['given_name'],
             last_name=user_data['family_name'],

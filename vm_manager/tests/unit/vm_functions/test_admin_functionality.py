@@ -336,7 +336,7 @@ class AdminVMTests(VMFunctionTestBase):
         fake_volume, fake_instance, fake_vmstatus = \
             self.build_fake_vol_inst_status(
                 ip_address='10.0.0.99', status=VM_OKAY)
-        fake_resize = ResizeFactory.create(instance=fake_instance)
+        _ = ResizeFactory.create(instance=fake_instance)
         fake = FakeNectar()
         fake.nova.servers.get.return_value = FakeServer(
             id=fake_instance.id, status=ACTIVE)
@@ -357,7 +357,7 @@ class AdminVMTests(VMFunctionTestBase):
         fake_volume, fake_instance, fake_vmstatus = \
             self.build_fake_vol_inst_status(
                 ip_address='10.0.0.99', status=VM_SUPERSIZED)
-        fake_resize = ResizeFactory.create(instance=fake_instance)
+        _ = ResizeFactory.create(instance=fake_instance)
         fake = FakeNectar()
         fake.nova.servers.get.return_value = FakeServer(
             id=fake_instance.id, status=ACTIVE)
@@ -373,7 +373,7 @@ class AdminVMTests(VMFunctionTestBase):
 
     @patch('vm_manager.vm_functions.admin_functionality._Reporter')
     @patch('vm_manager.vm_functions.admin_functionality.get_nectar')
-    def test_admins_check_vmstatus_supersized_no_resize(
+    def test_admins_check_vmstatus_supersized_missing_resize(
             self, mock_get, mock_reporter_class):
         fake_volume, fake_instance, fake_vmstatus = \
             self.build_fake_vol_inst_status(
@@ -398,8 +398,8 @@ class AdminVMTests(VMFunctionTestBase):
         fake_volume, fake_instance, fake_vmstatus = \
             self.build_fake_vol_inst_status(
                 ip_address='10.0.0.99', status=VM_SUPERSIZED)
-        fake_resize = ResizeFactory.create(
-            instance=fake_instance, reverted=datetime.now(utc))
+        _ = ResizeFactory.create(instance=fake_instance,
+                                 reverted=datetime.now(utc))
         fake = FakeNectar()
         fake.nova.servers.get.return_value = FakeServer(
             id=fake_instance.id, status=ACTIVE)
@@ -421,7 +421,7 @@ class AdminVMTests(VMFunctionTestBase):
             self.build_fake_vol_inst_status(
                 ip_address='10.0.0.99', status=VM_OKAY)
         fake = FakeNectar()
-        extra_vmstatus = VMStatusFactory.create(
+        _ = VMStatusFactory.create(
             instance=fake_instance,
             status=VM_ERROR,
             requesting_feature_id=fake_vmstatus.requesting_feature_id,
@@ -449,7 +449,7 @@ class AdminVMTests(VMFunctionTestBase):
         fake_volume, fake_instance, fake_vmstatus = \
             self.build_fake_vol_inst_status(
                 ip_address='10.0.0.99', status=VM_SHELVED)
-        fake_resize = ResizeFactory.create(instance=fake_instance)
+        _ = ResizeFactory.create(instance=fake_instance)
         fake = FakeNectar()
         fake.nova.servers.get.side_effect = \
             novaclient.exceptions.NotFound(404)
@@ -473,7 +473,7 @@ class AdminVMTests(VMFunctionTestBase):
         fake_volume, fake_instance, fake_vmstatus = \
             self.build_fake_vol_inst_status(
                 ip_address='10.0.0.99', status=VM_SHELVED)
-        fake_resize = ResizeFactory.create(instance=fake_instance)
+        _ = ResizeFactory.create(instance=fake_instance)
         fake = FakeNectar()
         fake.nova.servers.get.return_value = FakeServer(
             id=fake_instance.id, status=ACTIVE)
@@ -500,7 +500,7 @@ class AdminVMTests(VMFunctionTestBase):
         fake_volume, fake_instance, fake_vmstatus = \
             self.build_fake_vol_inst_status(
                 ip_address='10.0.0.99', status=VM_SHELVED)
-        fake_resize = ResizeFactory.create(instance=fake_instance)
+        _ = ResizeFactory.create(instance=fake_instance)
         fake = FakeNectar()
         fake.nova.servers.get.side_effect = \
             novaclient.exceptions.NotFound(404)
@@ -525,7 +525,7 @@ class AdminVMTests(VMFunctionTestBase):
         fake_volume, fake_instance, fake_vmstatus = \
             self.build_fake_vol_inst_status(
                 ip_address='10.0.0.99', status=VM_SHELVED)
-        fake_resize = ResizeFactory.create(instance=fake_instance)
+        _ = ResizeFactory.create(instance=fake_instance)
         fake = FakeNectar()
         fake.nova.servers.get.side_effect = \
             novaclient.exceptions.NotFound(404)

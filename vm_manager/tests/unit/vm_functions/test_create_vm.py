@@ -70,7 +70,7 @@ class CreateVMTests(VMFunctionTestBase):
     def test_launch_vm_worker_volume_bad(self, mock_rq, mock_create):
         mock_scheduler = Mock()
         mock_rq.get_scheduler.return_value = mock_scheduler
-        fake_volume = self.build_fake_volume()
+        self.build_fake_volume()
         mock_create.return_value = None
 
         launch_vm_worker(self.user, self.UBUNTU, self.zone)
@@ -228,7 +228,7 @@ class CreateVMTests(VMFunctionTestBase):
     def test_create_volume(self, mock_get_nectar, mock_get_id, mock_gen):
         mock_gen.return_value = "abcdef"
         mock_get_id.return_value = self.UBUNTU_source_volume_id
-        fake_vm_status = VMStatusFactory.create(
+        VMStatusFactory.create(
             requesting_feature=self.FEATURE,
             operating_system=self.UBUNTU.id,
             user=self.user, status=NO_VM)

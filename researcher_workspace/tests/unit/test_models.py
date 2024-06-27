@@ -21,12 +21,12 @@ class WorkspaceModelTests(TestCase):
         self.assertEqual('researcher_desktop',
                          project.permissions.first().app_name)
         self.assertEqual(1, len(mail.outbox))
-        self.assertTrue("approved" in mail.outbox[0].subject)
+        self.assertIn("approved", mail.outbox[0].subject)
         self.assertEqual(["test@test.test"],
                          mail.outbox[0].recipients())
         self.assertEqual(settings.DEFAULT_FROM_EMAIL,
                          mail.outbox[0].from_email)
-        self.assertTrue(project.title in mail.outbox[0].body)
+        self.assertIn(project.title, mail.outbox[0].body)
 
         project = ProjectFactory.create(project_admin=user)
         project.accept(enable_default_features=False)

@@ -29,8 +29,6 @@ class ResizeVMTests(VMFunctionTestBase):
     @patch('vm_manager.vm_functions.resize_vm._resize_vm')
     @patch('vm_manager.vm_functions.resize_vm.logger')
     def test_supersize_vm_worker(self, mock_logger, mock_resize):
-        fake_nectar = get_nectar()
-
         _, fake_instance = self.build_fake_vol_instance(ip_address='10.0.0.99')
         mock_resize.return_value = WF_CONTINUE
 
@@ -64,7 +62,6 @@ class ResizeVMTests(VMFunctionTestBase):
     @patch('vm_manager.vm_functions.resize_vm.logger')
     def test_supersize_vm_worker_failed(self, mock_logger, mock_resize):
         # Covers all cases where _resize_vm returns False
-        fake_nectar = get_nectar()
 
         _, fake_instance = self.build_fake_vol_instance(ip_address='10.0.0.99')
         mock_resize.return_value = WF_FAIL
@@ -89,8 +86,6 @@ class ResizeVMTests(VMFunctionTestBase):
     @patch('vm_manager.vm_functions.resize_vm.logger')
     def test_downsize_vm_worker_no_resize_record(
             self, mock_logger, mock_resize):
-        fake_nectar = get_nectar()
-
         _, fake_instance = self.build_fake_vol_instance(ip_address='10.0.0.99')
         mock_resize.return_value = "x"
 
@@ -110,8 +105,6 @@ class ResizeVMTests(VMFunctionTestBase):
     @patch('vm_manager.vm_functions.resize_vm._resize_vm')
     @patch('vm_manager.vm_functions.resize_vm.logger')
     def test_downsize_vm_worker(self, mock_logger, mock_resize):
-        fake_nectar = get_nectar()
-
         _, fake_instance = self.build_fake_vol_instance(ip_address='10.0.0.99')
         mock_resize.return_value = WF_CONTINUE
         fake_resize = ResizeFactory.create(instance=fake_instance)
@@ -136,8 +129,6 @@ class ResizeVMTests(VMFunctionTestBase):
     @patch('vm_manager.vm_functions.resize_vm.logger')
     def test_downsize_vm_worker_failed(self, mock_logger, mock_resize):
         # Covers all cases where _resize_vm returns False
-        fake_nectar = get_nectar()
-
         _, fake_instance = self.build_fake_vol_instance(ip_address='10.0.0.99')
         mock_resize.return_value = WF_FAIL
 
@@ -245,8 +236,6 @@ class ResizeVMTests(VMFunctionTestBase):
         # The Nova instance is missing when we try to check its status.
         _, fake_instance, fake_vm_status = self.build_fake_vol_inst_status(
             status=VM_RESIZING, status_progress=0)
-        default_flavor_id = self.UBUNTU.default_flavor.id
-        big_flavor_id = self.UBUNTU.big_flavor.id
         mock_scheduler = Mock()
         mock_rq.get_scheduler.return_value = mock_scheduler
 
@@ -254,7 +243,7 @@ class ResizeVMTests(VMFunctionTestBase):
         fake_nectar.nova.servers.get.side_effect = NotFound(code=42)
 
         self.assertEqual(WF_SUCCESS,
-            _resize_vm(fake_instance, default_flavor_id,
+            _resize_vm(fake_instance, self.UBUNTU.default_flavor.id,
                        VM_OKAY, self.FEATURE))
         fake_nectar.nova.servers.get.assert_called_with(fake_instance.id)
         mock_rq.get_scheduler.assert_not_called()

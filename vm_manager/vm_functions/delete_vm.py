@@ -253,7 +253,7 @@ def delete_backup_worker(volume):
 def _wait_until_backup_is_deleted(volume, retries):
     n = get_nectar()
     try:
-        backup = n.cinder.backups.get(volume.backup_id)
+        n.cinder.backups.get(volume.backup_id)
     except cinderclient.exceptions.NotFound:
         logger.info(f"Cinder backup for {volume} has been deleted, "
                     f"backup {volume.backup_id}")
@@ -385,9 +385,9 @@ def archive_expired_volume(volume, requesting_feature):
         vm_status = VMStatus.objects.get_vm_status_by_volume(
             volume, requesting_feature)
         if vm_status.status != VM_SHELVED:
-            logger.info(f"Skipping archiving of {volume} "
-                        f"in unexpected state: {vm_status}")
-            return WF_SKIP
+            logger.error(f"Declined to archive {volume} with "
+                         f"unexpected vmstatus state: {vm_status.status}")
+            return WF_FAIL
         else:
             return archive_volume_worker(volume, requesting_feature)
     except Exception:

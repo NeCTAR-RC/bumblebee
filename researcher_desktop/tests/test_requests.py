@@ -202,7 +202,6 @@ class DesktopRequestTests(TestCase):
 
     @patch("researcher_desktop.views.vm_man_views.unshelve_vm")
     def test_unshelve_vm(self, mock_unshelve_vm):
-        vm_id = uuid.uuid4()
         # with the AnonymousUser
         url = reverse("researcher_desktop:unshelve_vm",
                       kwargs={'desktop': self.desktop_type.id})

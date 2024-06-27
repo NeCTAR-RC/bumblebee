@@ -19,7 +19,7 @@ class Migration(migrations.Migration):
                 (zone, _) = AvailabilityZone.objects.get_or_create(
                     name=z['name'], zone_weight=int(z['zone_weight']))
                 for d in z.get('domains', []):
-                    domain = Domain.objects.create(name=d, zone=zone)
+                    Domain.objects.create(name=d, zone=zone)
 
         Feature = apps.get_model('researcher_workspace', 'Feature')
         app_feature = Feature.objects.get(app_name=APP_NAME)

@@ -9,7 +9,7 @@ from admin_searchable_dropdown.filters import AutocompleteFilterFactory
 from django_admin_listfilter_dropdown.filters import DropdownFilter
 
 
-from vm_manager.constants import VM_OKAY, VM_ERROR, VM_MISSING, NO_VM
+from vm_manager.constants import VM_OKAY, NO_VM
 from vm_manager.models import Instance, Volume, Resize, Expiration, VMStatus
 from vm_manager.utils.expiry import InstanceExpiryPolicy, \
     VolumeExpiryPolicy, BoostExpiryPolicy
@@ -91,12 +91,6 @@ def admin_repair_instance_errors(modelAdmin, request, queryset):
     for instance in queryset:
         if not instance.marked_for_deletion and not instance.deleted:
             admin_repair_instance_error(request, instance)
-
-
-def admin_repair_vmstatus_errors(modelAdmin, request, queryset):
-    for vmstatus in queryset:
-        if vmstatus in [VM_ERROR, VM_MISSING]:
-            admin_repair_vmstatus_error(request, vmstatus)
 
 
 def admin_check_vmstatuses(modelAdmin, request, queryset):

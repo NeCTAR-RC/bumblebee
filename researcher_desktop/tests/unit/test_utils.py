@@ -37,10 +37,10 @@ class UtilsTests(TestCase):
             name="az2", zone_weight=3, network_id=uuid4())
         zone_3 = AvailabilityZoneFactory.create(
             name="azd", zone_weight=2, network_id=uuid4(), enabled=False)
-        domain_1 = DomainFactory.create(name="dom1.com", zone=zone_1)
-        domain_2 = DomainFactory.create(name="dom2.com", zone=zone_1)
-        domain_3 = DomainFactory.create(name="dom3.com", zone=zone_2)
-        domain_4 = DomainFactory.create(name="dom4.com", zone=zone_3)
+        DomainFactory.create(name="dom1.com", zone=zone_1)
+        DomainFactory.create(name="dom2.com", zone=zone_1)
+        DomainFactory.create(name="dom3.com", zone=zone_2)
+        DomainFactory.create(name="dom4.com", zone=zone_3)
 
     def test_get_best_zone(self):
         self._populate_zones()

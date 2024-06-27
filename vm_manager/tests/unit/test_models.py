@@ -82,7 +82,7 @@ class VolumeModelTests(VMManagerModelTestBase):
     @patch('vm_manager.models.nanoid')
     def test_create_hostname_id(self, mock_nanoid):
         mock_nanoid.generate.return_value = "xxxxxx"
-        volume = self.make_volume()
+        self.make_volume()
         mock_nanoid.generate.assert_called_once()
 
         self.assertEqual(ERROR, _create_hostname_id())
@@ -188,8 +188,8 @@ class InstanceModelTests(VMManagerModelTestBase):
             guac_connection=fake_guac_connection,
             ip_address="10.0.0.1")
 
-        fake_entity = GuacamoleEntity.objects.create(
-                name=self.user.username, type='USER')
+        GuacamoleEntity.objects.create(
+            name=self.user.username, type='USER')
 
         self.assertEqual(0,
                          GuacamoleConnectionParameter.objects.filter(
@@ -226,7 +226,7 @@ class InstanceModelTests(VMManagerModelTestBase):
             Instance.objects.get_instance(self.user, self.desktop_type))
 
         # This is badness for testing
-        fake_instance_2 = InstanceFactory.create(
+        InstanceFactory.create(
             id=uuid.uuid4(), user=self.user, boot_volume=fake_volume)
 
         with self.assertRaises(Instance.MultipleObjectsReturned) as cm:
@@ -253,7 +253,7 @@ class InstanceModelTests(VMManagerModelTestBase):
                 ip_address, self.desktop_type.feature))
 
         # This is badness for testing
-        fake_instance_2 = InstanceFactory.create(
+        InstanceFactory.create(
             id=uuid.uuid4(), user=self.user, boot_volume=fake_volume,
             ip_address=ip_address)
 
@@ -489,7 +489,7 @@ class ResizeModelTests(VMManagerModelTestBase):
         fake_instance2 = InstanceFactory.create(
             id=uuid.uuid4(), user=self.user, boot_volume=fake_volume)
 
-        resize3 = ResizeFactory.create(instance=fake_instance2)
+        ResizeFactory.create(instance=fake_instance2)
 
         self.assertEqual(resize2,
                          Resize.objects.get_latest_resize(fake_instance))
@@ -568,7 +568,7 @@ class VMStatusModelTests(VMManagerModelTestBase):
                          VMStatus.objects.get_vm_status_by_volume(
                              self.volume, self.feature))
 
-        vmstatus2 = self.make_vmstatus()
+        self.make_vmstatus()
         with self.assertRaises(VMStatus.MultipleObjectsReturned) as cm:
             VMStatus.objects.get_vm_status_by_volume(
                 self.volume, self.feature)
@@ -590,7 +590,7 @@ class VMStatusModelTests(VMManagerModelTestBase):
                          VMStatus.objects.get_vm_status_by_instance(
                              self.instance, self.feature))
 
-        vmstatus2 = self.make_vmstatus()
+        self.make_vmstatus()
         with self.assertRaises(VMStatus.MultipleObjectsReturned) as cm:
             VMStatus.objects.get_vm_status_by_instance(
                 self.instance, self.feature)

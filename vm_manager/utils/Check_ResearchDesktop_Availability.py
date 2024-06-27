@@ -49,7 +49,6 @@ def check_availability():
 
         num_nodes = len(nodes_df)
         num_rd = nodes_df['possible_rd'].sum()
-        nodes_df_host = nodes_df['Host'].array
 
         availability += (
             f"{num_rd} desktops available across {num_nodes} nodes \n"

@@ -140,7 +140,6 @@ class ShelveVMTests(VMFunctionTestBase):
     def test_confirm_instance_deleted(self, mock_rq):
         mock_scheduler = Mock()
         mock_rq.get_scheduler.return_value = mock_scheduler
-        now = datetime.now(utc)
         fake_nectar = get_nectar()
         fake_nectar.nova.servers.get = Mock()
         fake_nectar.nova.servers.get.side_effect = \
@@ -168,7 +167,6 @@ class ShelveVMTests(VMFunctionTestBase):
     def test_confirm_instance_deleted_2(self, mock_rq):
         mock_scheduler = Mock()
         mock_rq.get_scheduler.return_value = mock_scheduler
-        now = datetime.now(utc)
         fake_nectar = get_nectar()
         fake_nectar.nova.servers.get = Mock()
 
@@ -193,7 +191,6 @@ class ShelveVMTests(VMFunctionTestBase):
     def test_confirm_instance_deleted_3(self, mock_rq):
         mock_scheduler = Mock()
         mock_rq.get_scheduler.return_value = mock_scheduler
-        now = datetime.now(utc)
         fake_nectar = get_nectar()
         fake_nectar.nova.servers.get = Mock()
 
