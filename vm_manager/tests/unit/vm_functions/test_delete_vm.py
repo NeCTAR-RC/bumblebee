@@ -707,8 +707,8 @@ class ArchiveVMTests(VMFunctionTestBase):
     @patch('vm_manager.vm_functions.delete_vm.django_rq')
     @patch('vm_manager.vm_functions.delete_vm.get_nectar')
     def test_delete_backup(self, mock_get_nectar, mock_rq):
-        '''Backup deletion starts successfully
-        '''
+        "Backup deletion starts successfully"
+
         fake_volume, backup_id = self.build_fake_volume_with_backup()
         fake_nectar = FakeNectar()
         mock_get_nectar.return_value = fake_nectar
@@ -729,8 +729,7 @@ class ArchiveVMTests(VMFunctionTestBase):
     @patch('vm_manager.vm_functions.delete_vm.django_rq')
     @patch('vm_manager.vm_functions.delete_vm.get_nectar')
     def test_delete_backup_missing(self, mock_get_nectar, mock_rq):
-        '''Backup has already been deleted
-        '''
+        "Backup has already been deleted"
 
         fake_volume, backup_id = self.build_fake_volume_with_backup()
         fake_nectar = FakeNectar()
@@ -748,8 +747,7 @@ class ArchiveVMTests(VMFunctionTestBase):
     @patch('vm_manager.vm_functions.delete_vm.django_rq')
     @patch('vm_manager.vm_functions.delete_vm.get_nectar')
     def test_delete_backup_failed(self, mock_get_nectar, mock_rq):
-        '''Backup deletion request failed
-        '''
+        "Backup deletion request failed"
 
         fake_volume, backup_id = self.build_fake_volume_with_backup()
         fake_nectar = FakeNectar()
@@ -767,8 +765,7 @@ class ArchiveVMTests(VMFunctionTestBase):
     @patch('vm_manager.vm_functions.delete_vm.django_rq')
     @patch('vm_manager.vm_functions.delete_vm.get_nectar')
     def test_wait_until_backup_deleted(self, mock_get_nectar, mock_rq):
-        '''Backup deletion still progressing
-        '''
+        "Backup deletion still progressing"
 
         fake_volume, backup_id = self.build_fake_volume_with_backup(
             stage=EXP_EXPIRING)
@@ -793,8 +790,7 @@ class ArchiveVMTests(VMFunctionTestBase):
     @patch('vm_manager.vm_functions.delete_vm.django_rq')
     @patch('vm_manager.vm_functions.delete_vm.get_nectar')
     def test_wait_until_backup_deleted_2(self, mock_get_nectar, mock_rq):
-        '''Backup deletion still progressing
-        '''
+        "Backup deletion still progressing"
 
         fake_volume, backup_id = self.build_fake_volume_with_backup(
             stage=EXP_EXPIRING)
@@ -820,8 +816,7 @@ class ArchiveVMTests(VMFunctionTestBase):
     @patch('vm_manager.vm_functions.delete_vm.django_rq')
     @patch('vm_manager.vm_functions.delete_vm.get_nectar')
     def test_wait_until_backup_deleted_3(self, mock_get_nectar, mock_rq):
-        '''Backup deletion did not complete in time
-        '''
+        "Backup deletion did not complete in time"
 
         fake_volume, backup_id = self.build_fake_volume_with_backup(
             stage=EXP_EXPIRING)
@@ -844,8 +839,7 @@ class ArchiveVMTests(VMFunctionTestBase):
     @patch('vm_manager.vm_functions.delete_vm.logger')
     def test_wait_until_backup_deleted_4(self, mock_logger,
                                          mock_get_nectar, mock_rq):
-        '''Backup get call failed
-        '''
+        "Backup get call failed"
 
         fake_volume, backup_id = self.build_fake_volume_with_backup(
             stage=EXP_EXPIRING)
@@ -869,8 +863,7 @@ class ArchiveVMTests(VMFunctionTestBase):
     @patch('vm_manager.vm_functions.delete_vm.django_rq')
     @patch('vm_manager.vm_functions.delete_vm.get_nectar')
     def test_wait_until_volume_deleted(self, mock_get_nectar, mock_rq):
-        '''Volume deletion still progressing
-        '''
+        "Volume deletion still progressing"
 
         fake_volume = self.build_fake_volume(stage=EXP_EXPIRING)
         fake_nectar = FakeNectar()
@@ -893,8 +886,7 @@ class ArchiveVMTests(VMFunctionTestBase):
     @patch('vm_manager.vm_functions.delete_vm.django_rq')
     @patch('vm_manager.vm_functions.delete_vm.get_nectar')
     def test_wait_until_volume_deleted_2(self, mock_get_nectar, mock_rq):
-        '''Volume deletion still progressing
-        '''
+        "Volume deletion still progressing"
 
         fake_volume = self.build_fake_volume(stage=EXP_EXPIRING)
         fake_nectar = FakeNectar()
@@ -920,8 +912,7 @@ class ArchiveVMTests(VMFunctionTestBase):
     @patch('vm_manager.vm_functions.delete_vm.django_rq')
     @patch('vm_manager.vm_functions.delete_vm.get_nectar')
     def test_wait_until_volume_deleted_3(self, mock_get_nectar, mock_rq):
-        '''Volume deletion did not complete in time
-        '''
+        "Volume deletion did not complete in time"
 
         fake_volume = self.build_fake_volume(stage=EXP_EXPIRING)
         fake_nectar = FakeNectar()
@@ -942,8 +933,7 @@ class ArchiveVMTests(VMFunctionTestBase):
     @patch('vm_manager.vm_functions.delete_vm.logger')
     def test_wait_until_volume_deleted_4(self, mock_logger,
                                          mock_get_nectar, mock_rq):
-        '''Volume get call failed
-        '''
+        "Volume get call failed"
 
         fake_volume = self.build_fake_volume(stage=EXP_EXPIRING)
         fake_nectar = FakeNectar()
@@ -965,8 +955,7 @@ class ArchiveVMTests(VMFunctionTestBase):
     @patch('vm_manager.vm_functions.delete_vm.django_rq')
     @patch('vm_manager.vm_functions.delete_vm.get_nectar')
     def test_wait_until_volume_deleted_5(self, mock_get_nectar, mock_rq):
-        '''Volume delete goes to bad state
-        '''
+        "Volume delete goes to bad state"
 
         fake_volume = self.build_fake_volume(stage=EXP_EXPIRING)
         fake_nectar = FakeNectar()

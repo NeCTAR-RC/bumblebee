@@ -27,10 +27,12 @@ def offset_month_and_year(month_offset, month, year):
 
 
 def send_notification(user, template_name, context):
-    ''' Format and send an email notification to the user.  The template
-    should render as a string that consists of the subject text followed by
-    a blank line and then multiple lines comprising an HTML message body.
-    '''
+    """Format and send an email notification to the user.
+
+    The template should render as a string that consists of the subject
+    text followed by a blank line and then multiple lines comprising an
+    HTML message body.
+    """
 
     # Note: Strip any whitespace before separating the subject.
     # Otherwise we get problems due to leading whitespace added by

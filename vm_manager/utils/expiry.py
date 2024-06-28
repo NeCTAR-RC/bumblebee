@@ -9,9 +9,11 @@ utc = timezone.utc
 class ExpiryPolicy(object):
 
     def __init__(self, expiry_period, extend_period, max_lifetime=-1):
-        '''Construct an expiry policy.  The arguments are the number
-        of days to for the initial expiry, for extensions, and an (optional)
-        lifetime limit in days for the resource.
+        '''Construct an expiry policy.
+
+        The arguments are the number of days to for the initial expiry,
+        for extensions, and an (optional) lifetime limit in days for
+        the resource.
         '''
 
         self.expiry_period = expiry_period
@@ -25,8 +27,7 @@ class ExpiryPolicy(object):
         return resource.created
 
     def permitted_extension(self, resource, now=None) -> timedelta:
-        '''Compute how much extra time to add to the resource's expiry when
-        the 'extend' button is pressed.
+        '''Compute how time to allow when 'extend' button is pressed.
 
         The default amount to add is 'expiry_period', but that should not
         take the resource beyond the 'max_lifetime'.  If no expiry
@@ -56,15 +57,15 @@ class ExpiryPolicy(object):
         return timedelta(seconds=max(0, seconds))
 
     def initial_expiry(self, now=None) -> datetime:
-        '''Compute the initial expiry datetime for the resource.
-        '''
+        "Compute the initial expiry datetime for the resource."
+
         if not now:
             now = datetime.now(utc)
         return now + timedelta(days=self.expiry_period)
 
     def new_expiry(self, resource, now=None) -> datetime:
-        '''Compute the new expiry datetime for the resource after extending.
-        '''
+        "Compute the new expiry datetime for the resource after extending."
+
         if not now:
             now = datetime.now(utc)
         permitted_extension = self.permitted_extension(resource, now=now)

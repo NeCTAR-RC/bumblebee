@@ -65,9 +65,7 @@ class ExpirerTests(TestCase):
         self.assertEqual({'fee': 2, 'fi': 1}, expirer.counts)
 
     def test_do_expire_first_time(self):
-        '''
-        Tests simulating first attempt at expiring
-        '''
+        "Tests simulating first attempt at expiring"
 
         now = datetime.now(utc)
         target = object()
@@ -136,9 +134,7 @@ class ExpirerTests(TestCase):
         expirer.do_expire.assert_called_once_with(target)
 
     def test_do_expire_retry(self):
-        '''
-        Test simulating a retry
-        '''
+        "Test simulating a retry"
 
         now = datetime.now(utc)
         target = object()
@@ -156,9 +152,7 @@ class ExpirerTests(TestCase):
 
     @patch("vm_manager.utils.expirer.logger")
     def test_do_expire_long_running(self, mock_logger):
-        '''
-        Test simulating a long running expiry action
-        '''
+        "Test simulating a long running expiry action"
 
         now = datetime.now(utc)
         target = object()
@@ -178,9 +172,7 @@ class ExpirerTests(TestCase):
 
     @patch("vm_manager.utils.expirer.logger")
     def test_do_expire_wrong_state(self, mock_logger):
-        '''
-        Test calls to do_stage in the wrong state
-        '''
+        "Test calls to do_stage in the wrong state"
 
         now = datetime.now(utc)
         target = object()
@@ -216,12 +208,12 @@ class ExpirerTests(TestCase):
             f"{expirer}, {target}, {fake_expiration}, {self.user}: skip")
 
     def test_stages_1(self):
-        '''
-        Test the staging behavior of an expirer with final warning only.
+        """Test the staging behavior of an expirer with final warning only.
+
         Caveat: we simulate the behavior of running the expirer running
         once a day at a precise time.  In practice they will be run more
         frequently, and the interval between runs won't be a precise value.
-        '''
+        """
 
         now = datetime.now(utc)
         expiration = Expiration(expires=now + timedelta(days=7),
@@ -278,10 +270,7 @@ class ExpirerTests(TestCase):
                 self.assertEqual(old_stage_date, updated.stage_date)
 
     def test_stages_2(self):
-        '''
-        Test the staging behavior of an expirer with first and final
-        warnings.
-        '''
+        "Test staging behavior of an expirer with first and final warnings."
 
         now = datetime.now(utc)
         expiration = Expiration(expires=now + timedelta(days=14),

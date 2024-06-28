@@ -251,9 +251,8 @@ def index(request):
 
 @receiver(user_logged_in)
 def on_login(sender, user, request, **kwargs):
-    """
-    The handler for the user_logged_in signal
-    """
+    "The handler for the user_logged_in signal"
+
     if (getattr(request, 'user', None)
             and hasattr(request.user, 'get_full_name')):
         logger.info('User %s has logged in', request.user.get_full_name())
@@ -268,9 +267,8 @@ def logout(request):
 
 @receiver(user_logged_out)
 def on_logout(sender, user, request, **kwargs):
-    """
-    The handler for the user_logged_out signal
-    """
+    "The handler for the user_logged_out signal"
+
     if (getattr(request, 'user', None)
             and hasattr(request.user, 'get_full_name')):
         messages.info(request, format_html(

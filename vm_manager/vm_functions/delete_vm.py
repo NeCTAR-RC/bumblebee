@@ -296,9 +296,7 @@ def _end_delete(volume, wf_status):
 
 
 def archive_volume_worker(volume, requesting_feature):
-    '''Archive a volume by creating a Cinder backup then deleting the Cinder
-    volume.
-    '''
+    "Archive a volume by creating a Cinder backup then deleting the volume."
 
     # This "hides" the volume from the get_volume method allowing
     # another one to be created / launched without errors.

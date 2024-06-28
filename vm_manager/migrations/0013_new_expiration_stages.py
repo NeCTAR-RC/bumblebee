@@ -12,8 +12,9 @@ EXP_EXPIRY_FAILED_RETRYABLE = 6
 
 
 class Migration(migrations.Migration):
-    """This migration adds two new expiry 'stage' values.  The final stage
-    used to be 3 (EXP_EXPIRED).  This is replaced by 4 stages:
+    """This migration adds two new expiry 'stage' values.
+
+    The final stage used to be 3 (EXP_EXPIRED).  This is replaced by 4 stages:
       - 3 (EXP_EXPIRING) an expiry workflow is (should be) running
       - 4 (EXP_EXPIRY_COMPLETED) expiry succeeded
       - 5 (EXP_EXPIRY_FAILED) expiry failed

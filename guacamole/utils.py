@@ -28,10 +28,7 @@ def get_connection_path(conn):
 
 
 def quick_rdp_conn(username, password, hostname):
-    """
-    Make a GuacamoleConnection with the passed parameters; return said
-    Connection.
-    """
+    "Make a GuacamoleConnection for the supplied paramneters."
 
     conn = GuacamoleConnection.objects.create(
         connection_name=hostname + ':' + username,
@@ -57,9 +54,9 @@ def quick_rdp_conn(username, password, hostname):
 
 
 def quick_guac_user(username, password):
-    """
-    Make a GuacamoleUser with the passed parameters; return said GuacamoleUser.
-    Hash password, and salt with random data.
+    """Make a GuacamoleUser from parameters.
+
+    We hash the password salted with some random data.
     """
     # MMmm, salt.  Must be 32 bytes.  We must hash with the uppercase,
     # hexadecimal, string representation of the binary.
@@ -82,9 +79,10 @@ def quick_guac_user(username, password):
 
 
 def quick_rdp(guac_username, guac_password, username, password, hostname):
-    """
-    Make a GuacamoleUser and a GuacamoleConnection (RDP) and put them together
-    in a GuacamoleConnectionPermission.  Return said
+    """Setup Guacamole RDP connection objects.
+
+    Make a GuacamoleUser and a GuacamoleConnection (RDP) and put them
+    together in a GuacamoleConnectionPermission.  Return said
     GuacamoleConnectionPermission.
     """
 
@@ -104,10 +102,10 @@ def quick_rdp(guac_username, guac_password, username, password, hostname):
 
 def quick_rdp_destroy(guac_username, username, hostname, cleanup_user=True,
                       cleanup_connection=True):
-    """
-    Remove permissions for this guac user to the guac Connection(s) matching
-    these parameters.  May be multiple settings on the same Connection, and/or
-    mulitple Connections.  By default, clean up users and Connections that are
+    """Remove Guac connection permissions for this user and host.
+
+    There may be multiple settings on the same Connection, and/or
+    multiple Connections.  By default, clean up users and Connections that are
     no longer referenced in the Permissions table.
     """
 

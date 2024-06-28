@@ -11,9 +11,8 @@ TIMEZONE_CHOICES = [(tz, tz) for tz in common_timezones]
 
 class SpanForm(forms.Form):
     def as_span(self):
-        """
-        Return this form rendered as HTML <span>s.
-        """
+        "Return this form rendered as HTML <span>s."
+
         return self._html_output(
             normal_row='<span%(html_class_attr)s>%(label)s %(field)s%(help_text)s</span>',
             error_row='%s',
@@ -25,9 +24,8 @@ class SpanForm(forms.Form):
 
 class DivModelForm(forms.ModelForm):
     def as_div(self):
-        """
-        Return this form rendered as HTML <div>s.
-        """
+        "Return this form rendered as HTML <div>s."
+
         return self._html_output(
             normal_row='<div%(html_class_attr)s>%(label)s %(help_text)s%(field)s</div>',
             error_row='%s',

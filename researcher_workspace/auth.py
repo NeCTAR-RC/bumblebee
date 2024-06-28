@@ -16,8 +16,10 @@ STAFF_ROLES = ADMIN_ROLES + ['staff']
 
 
 def get_or_create_guac_objects(user):
-    """Create or update Guacamole entity and user objects for the
-    Django user object.  If the email address changes, we will end
+    """Create or update user's Guacamole objects.
+
+    This create the Guacamole entity and user objects for the provided
+    Django user object.  If the associated email address changes, we will end
     up creating new Guacamole objects.
     """
 
@@ -123,7 +125,8 @@ class OIDCAuthBackend(OIDCAuthenticationBackend):
         return user
 
     def filter_users_by_claims(self, claims):
-        """Return all users matching the specified sub."""
+        "Return all users matching the specified sub."
+
         email = claims.get('email')
         sub = claims.get('sub')
         if not sub or not email:

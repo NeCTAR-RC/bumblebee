@@ -19,8 +19,8 @@ def time_of_day():
 
 @register.simple_tag
 def period(delta: timedelta):
-    """
-    Renders a timedelta as days, hours and minutes.
+    """Renders a timedelta as days, hours and minutes.
+
     :param delta: The timedelta to render.
     """
 

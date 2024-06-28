@@ -22,9 +22,9 @@ class FreshdeskEmailBackend(BaseEmailBackend):
         self.api = None
 
     def send_messages(self, email_messages):
-        """
-        Send one or more EmailMessage objects and return the number of email
-        messages sent.
+        """Send one or more EmailMessage objects via Freshdesk.
+
+        Returns the number of messages sent.
         """
         if not email_messages:
             return 0
@@ -40,7 +40,8 @@ class FreshdeskEmailBackend(BaseEmailBackend):
         return num_sent
 
     def _send(self, message):
-        """A helper method that does the actual sending."""
+        "A helper method that does the actual sending."
+
         if not message.recipients():
             return False
 

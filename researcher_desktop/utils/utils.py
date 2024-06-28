@@ -32,6 +32,7 @@ def desktop_types():
 
 def get_best_zone(email, desktop_type, chosen_zone) -> AvailabilityZone:
     """Pick the best AZ for launching a desktop of the given type.
+
     The chosen_zone is the user's choice.  If None, then choose on
     the user's behalf.  The email is the user's email address.  If no
     AZ is suitable, raise Http404.  (The UI shouldn't offer the user
@@ -86,9 +87,8 @@ def do_get_best_zone(email, desktop_type, chosen_zone) -> AvailabilityZone:
 
 
 def get_applicable_zones(desktop_type):
-    """Get a list of AZ for launching a desktop to populate the zone
-    selector in the UI.
-    """
+    "Get a list of AZ for launching a desktop."
+
     zones = desktop_type.restrict_to_zones.all()
     if not zones:
         zones = AvailabilityZone.objects.all()

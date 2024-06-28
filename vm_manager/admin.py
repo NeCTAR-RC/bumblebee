@@ -111,8 +111,7 @@ class ExpirationAdmin(admin.ModelAdmin):
 
 
 class Expirable(object):
-    """ Mixin class that provides a more useful rendering of the
-    expiration field. """
+    "Mixin class that provides rendering of an expiration field."
 
     def expiration_link(self, obj):
         if obj.expiration:
@@ -130,8 +129,10 @@ class Expirable(object):
 
 
 class ResourceAdmin(admin.ModelAdmin, Expirable):
-    list_filter = ['created', 'deleted', 'error_flag', ('error_message', DropdownFilter),
-                   AutocompleteFilterFactory('User', 'user'), 'marked_for_deletion']
+    list_filter = ['created', 'deleted', 'error_flag',
+                   ('error_message', DropdownFilter),
+                   AutocompleteFilterFactory('User', 'user'),
+                   'marked_for_deletion']
     readonly_fields = ['id', 'created', 'expiration_link']
     ordering = ('-created',)
     actions = [set_expiry, clear_expiry]
@@ -150,7 +151,8 @@ class ResourceAdmin(admin.ModelAdmin, Expirable):
 @admin.register(Instance)
 class InstanceAdmin(ResourceAdmin):
     list_filter = ResourceAdmin.list_filter + [
-        ('boot_volume__image', DropdownFilter), ('boot_volume__operating_system', DropdownFilter),
+        ('boot_volume__image', DropdownFilter),
+        ('boot_volume__operating_system', DropdownFilter),
         'boot_volume__requesting_feature']
     actions = ResourceAdmin.actions + [
         admin_delete_instances, admin_shelve_instances,
@@ -203,8 +205,9 @@ class InstanceInline(admin.StackedInline):
 @admin.register(Volume)
 class VolumeAdmin(ResourceAdmin):
     list_filter = ResourceAdmin.list_filter + [
-        ('image', DropdownFilter), ('operating_system', DropdownFilter), 'flavor', 'requesting_feature',
-        'ready', 'checked_in']
+        ('image', DropdownFilter),
+        ('operating_system', DropdownFilter),
+        'flavor', 'requesting_feature', 'ready', 'checked_in']
     actions = ResourceAdmin.actions + [
         admin_archive_shelved_volumes, admin_delete_shelved_volumes,
         admin_repair_volume_errors]
@@ -230,8 +233,10 @@ class VolumeAdmin(ResourceAdmin):
 @admin.register(Resize)
 class ResizeAdmin(admin.ModelAdmin, Expirable):
     list_filter = [
-        ('instance__boot_volume__operating_system', DropdownFilter), 'reverted',
-        'instance__deleted', 'requested', AutocompleteFilterFactory('User', 'instance__user')]
+        ('instance__boot_volume__operating_system', DropdownFilter),
+        'reverted',
+        'instance__deleted', 'requested',
+        AutocompleteFilterFactory('User', 'instance__user')]
 
     readonly_fields = ('requested', 'expiration_link')
     ordering = ('-requested',)
@@ -254,7 +259,8 @@ class ResizeAdmin(admin.ModelAdmin, Expirable):
 class VMStatusAdmin(admin.ModelAdmin):
     list_filter = [
         'created', 'requesting_feature', 'operating_system',
-        'status', 'instance__deleted', AutocompleteFilterFactory('User', 'user')]
+        'status', 'instance__deleted',
+        AutocompleteFilterFactory('User', 'user')]
     readonly_fields = ('created', 'id')
     ordering = ('-created',)
     actions = ResourceAdmin.actions + [admin_check_vmstatuses]

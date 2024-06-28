@@ -46,7 +46,9 @@ def days(days):
 
 
 class Expirer(object):
-    '''An Expirer is designed to be called periodically to send expiry
+    '''The Expirer class handles Bumblebee resource expiry lifecycles.
+
+    An Expirer is designed to be called periodically to send expiry
     warnings, and finally to perform the expiration action.  This class
     is implements a 4-stage state machine:
      - In stage EXP_INITIAL, we are waiting for the time to send the first
@@ -99,7 +101,9 @@ class Expirer(object):
             print(f"email: {user.email}\nsubject: {text}")
 
     def do_stage(self, target, expiration, user) -> str:
-        """Returns one of EXP_SUCCESS, EXP_STARTED, EXP_RETRY, EXP_FAIL
+        """Perform the next expiry stage for the 'target' resource.
+
+        Returns one of EXP_SUCCESS, EXP_STARTED, EXP_RETRY, EXP_FAIL
         or EXP_SKIP to indicate the outcome.
         """
 
@@ -186,8 +190,7 @@ class Expirer(object):
 
 
 class VolumeExpirer(Expirer):
-    '''This expirer archives shelved instances
-    '''
+    "This expirer archives shelved instances."
 
     def __init__(self, **kwargs):
         super().__init__('email/volume_expiry.html',
@@ -213,10 +216,11 @@ class VolumeExpirer(Expirer):
 
 
 class ArchiveExpirer(Expirer):
-    '''This expirer deletes archives (backups) for archived volumes.
+    """This expirer deletes archives (backups) for archived volumes.
+
     Note that this doesn't need to do notification and staging, and
     doesn't have an associated Expiration record.
-    '''
+    """
 
     def __init__(self, **kwargs):
         super().__init__(None, **kwargs)
@@ -238,8 +242,7 @@ class ArchiveExpirer(Expirer):
 
 
 class InstanceExpirer(Expirer):
-    '''This expirer shelves instances
-    '''
+    "This expirer shelves instances."
 
     def __init__(self, **kwargs):
         super().__init__('email/instance_expiry.html',
@@ -267,8 +270,7 @@ class InstanceExpirer(Expirer):
 
 
 class ResizeExpirer(Expirer):
-    '''This expirer downsizes boosted instances.
-    '''
+    "This expirer downsizes boosted instances."
 
     def __init__(self, **kwargs):
         super().__init__('email/resize_expiry.html',

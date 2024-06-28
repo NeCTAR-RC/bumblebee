@@ -9,9 +9,7 @@ from guacamole.tests.factories import GuacamoleConnectionFactory
 
 
 class SimpleTestCase(TestCase):
-    """
-    Simple test cases that verifies basic model functionality.
-    """
+    "Simple test cases that verifies basic model functionality."
 
     def test_get_connection_path(self):
         conn = GuacamoleConnectionFactory.create(connection_id=1)
@@ -27,10 +25,11 @@ class SimpleTestCase(TestCase):
         self.assertEqual(get_connection_path(conn), '#/client/MTIzNABjAG15c3Fs')
 
     def test_quick_rdp(self):
-        """
-        Test utility method quick_rdp; will exercise models: User, Connection,
-        ConnectionParameter, ConnectionPermission, as well other utility
-        methods quick_rdp_conn and quick_guac_user.
+        """Test utility method quick_rdp.
+
+        This will exercise models: User, Connection, ConnectionParameter,
+        ConnectionPermission, as well other utility methods quick_rdp_conn
+        and quick_guac_user.
         """
 
         # Get a GuacamoleConnectionPermission back.  We can then inspect the

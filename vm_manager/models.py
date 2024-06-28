@@ -191,10 +191,13 @@ def _create_hostname_id():
 
 class InstanceManager(models.Manager):
     def get_live_instances(self, user, desktop_type):
-        """Get the live instances for a user, where 'live' means not
-        deleted / marked for deletion, and not missing on the OpenStack
-        side.  If 'desktop_type' is not None, also filter by that.
+        """Get the live instances for a user.
+
+        In this context, 'live' means not deleted / marked for deletion,
+        and not missing on the OpenStack side.  If 'desktop_type' is not
+        None, also filter by that.
         """
+
         qs = self.filter(user=user, deleted=None, marked_for_deletion=None)
         if desktop_type:
             qs = qs.filter(
@@ -221,9 +224,12 @@ class InstanceManager(models.Manager):
             raise error
 
     def get_latest_instance_for_volume(self, volume):
-        '''Return the latest created Instance for a Volume, irrespective of
+        """Get the latest instance.
+
+        Returns the latest created Instance for a Volume, irrespective of
         deletion status.
-        '''
+        """
+
         try:
             return self.filter(boot_volume=volume).order_by('-created').first()
         except Instance.DoesNotExist:
@@ -456,8 +462,10 @@ class Resize(models.Model):
 
 class VMStatusManager(models.Manager):
     def get_latest_vm_status(self, user, desktop_type):
-        """Get the latest VMStatus for this User and DesktopType in
-        any state.  Returns None if there are none.
+        """Get the latest VMStatus for this User and DesktopType.
+
+        Returns the latest irrespective of the state, and None if
+        there are none.
         """
         try:
             vm_status = self.filter(
