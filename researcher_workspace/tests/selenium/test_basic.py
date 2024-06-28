@@ -1,7 +1,7 @@
 from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 from django.test import tag
-from selenium.webdriver import Firefox
 from selenium.webdriver.common.by import By
+from selenium.webdriver import Firefox
 from selenium.webdriver.firefox.service import Service
 from webdriver_manager.firefox import GeckoDriverManager
 

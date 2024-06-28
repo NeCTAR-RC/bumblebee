@@ -1,8 +1,8 @@
 from health_check.backends import BaseHealthCheckBackend
 from health_check.exceptions import ServiceWarning
 
-from vm_manager import models as vm_models
 from vm_manager.constants import VM_ERROR
+from vm_manager import models as vm_models
 
 
 class DesktopStatus(BaseHealthCheckBackend):

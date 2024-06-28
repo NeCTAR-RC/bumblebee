@@ -1,7 +1,7 @@
-from health_check.plugins import plugin_dir
 from django.apps import AppConfig
-from django.db.models.signals import post_migrate
 from django.db.backends.signals import connection_created
+from django.db.models.signals import post_migrate
+from health_check.plugins import plugin_dir
 from prometheus_client import REGISTRY
 
 

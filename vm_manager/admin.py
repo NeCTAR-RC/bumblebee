@@ -1,3 +1,4 @@
+from admin_searchable_dropdown.filters import AutocompleteFilterFactory
 from django.conf import settings
 from django.contrib import admin
 from django.http import HttpResponseRedirect
@@ -5,7 +6,6 @@ from django.urls import reverse
 from django.utils.formats import localize
 from django.utils.safestring import mark_safe
 from django.utils.timezone import localtime
-from admin_searchable_dropdown.filters import AutocompleteFilterFactory
 from django_admin_listfilter_dropdown.filters import DropdownFilter
 
 

@@ -1,3 +1,4 @@
+from admin_searchable_dropdown.filters import AutocompleteFilterFactory
 from django.conf import settings
 from django.contrib import admin, messages
 from django.contrib.auth.admin import UserAdmin
@@ -5,7 +6,6 @@ from django.http import HttpResponseRedirect
 from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.translation import gettext as _
-from admin_searchable_dropdown.filters import AutocompleteFilterFactory
 
 from researcher_workspace.models import PermissionRequest, Project, \
     Profile, AROWhitelist, add_username_to_whitelist, \
