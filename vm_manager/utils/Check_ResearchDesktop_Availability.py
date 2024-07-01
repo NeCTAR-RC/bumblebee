@@ -5,9 +5,12 @@ import requests
 
 CORES_LIST = [4.0, 8.0]
 RAM_GB_LIST = [16.0, 32.0]
-HYPERVISOR_LOG = 'https://swift.rc.nectar.org.au:8888/v1/AUTH_42/hypervisor_capacity/hypervisor_capacity.log'
+HYPERVISOR_LOG = 'https://swift.rc.nectar.org.au:8888/v1/AUTH_42/' \
+    'hypervisor_capacity/hypervisor_capacity.log'
 AGG = 'qh2-uom_production'
 
+
+# This code is not currently used.
 
 def check_availability():
     availability = ""

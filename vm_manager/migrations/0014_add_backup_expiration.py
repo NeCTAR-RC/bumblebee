@@ -14,13 +14,21 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='BackupExpiration',
             fields=[
-                ('expiration_ptr', models.OneToOneField(auto_created=True, on_delete=django.db.models.deletion.CASCADE, parent_link=True, primary_key=True, serialize=False, to='vm_manager.expiration')),
+                ('expiration_ptr', models.OneToOneField(
+                    auto_created=True,
+                    on_delete=django.db.models.deletion.CASCADE,
+                    parent_link=True, primary_key=True, serialize=False,
+                    to='vm_manager.expiration')),
             ],
             bases=('vm_manager.expiration',),
         ),
         migrations.AddField(
             model_name='volume',
             name='backup_expiration',
-            field=models.OneToOneField(null=True, on_delete=django.db.models.deletion.CASCADE, related_name='expiration_for', to='vm_manager.backupexpiration'),
+            field=models.OneToOneField(
+                null=True,
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name='expiration_for',
+                to='vm_manager.backupexpiration'),
         ),
     ]

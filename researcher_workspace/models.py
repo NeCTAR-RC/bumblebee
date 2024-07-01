@@ -29,16 +29,19 @@ class FeatureOptions(models.Model):
 
 
 class FeatureManager(models.Manager):
-    # feature_name is untrusted because it comes from the user, so should be handled with care
+    # feature_name is untrusted because it comes from the user, so
+    # should be handled with care
     def get_feature_by_untrusted_feature_name(self, feature_app_name, user):
         # Get vm, and catch any errors
         try:
             feature = self.get(app_name=feature_app_name)
         except ValueError:
-            logger.error(f"Value error trying to get a Feature with feature_name: {feature_app_name}, called by {user}")
+            logger.error(f"Value error trying to get a Feature with "
+                         f"feature_name: {feature_app_name}, called by {user}")
             raise Http404
         except Feature.DoesNotExist:
-            logger.error(f"Trying to get a Feature that doesn't exist with feature_name: {feature_app_name}, called by {user}")
+            logger.error(f"Trying to get a Feature that doesn't exist with "
+                         f"feature_name: {feature_app_name}, called by {user}")
             raise Http404
         return feature
 
@@ -47,7 +50,8 @@ class Feature(models.Model):
     name = models.CharField(max_length=50)
     options = models.ManyToManyField(FeatureOptions, blank=True)
     description = models.TextField()
-    app_name = models.CharField(max_length=50, unique=True, blank=True, null=True)
+    app_name = models.CharField(max_length=50, unique=True,
+                                blank=True, null=True)
     currently_available = models.BooleanField(default=False)
     feature_or_service = models.BooleanField(default=True)
     auto_approved = models.BooleanField(default=False)
@@ -61,19 +65,23 @@ class Feature(models.Model):
 
 
 class ProjectManager(models.Manager):
-    # project_id is untrusted because it comes from the user, so should be handled with care
+    # project_id is untrusted because it comes from the user, so
+    # should be handled with care
     def get_project_by_untrusted_project_id(self, project_id, user):
         # Get vm, and catch any errors
         try:
             project = self.get(id=project_id)
         except ValueError:
-            logger.error(f"Value error trying to get a Project with project_id: {project_id}, called by {user}")
+            logger.error(f"Value error trying to get a Project with "
+                         f"project_id: {project_id}, called by {user}")
             raise Http404
         except Project.DoesNotExist:
-            logger.error(f"Trying to get a Project that doesn't exist with project_id: {project_id}, called by {user}")
+            logger.error(f"Trying to get a Project that doesn't exist "
+                         f"with project_id: {project_id}, called by {user}")
             raise Http404
         if project.project_admin != user:
-            logger.error(f"Trying to get a Project that doesn't belong to {user} with project_id: {project_id}, "
+            logger.error(f"Trying to get a Project that doesn't belong "
+                         f"to {user} with project_id: {project_id}, "
                          f"this Project belongs to {project.project_admin}")
             raise Http404
         return project
@@ -144,7 +152,8 @@ class Permission(models.Model):
 
 def get_permission_feature_options_for_latest_project(user, feature):
     current_project = user.profile.get_last_selected_project()
-    return Permission.objects.get(project=current_project, feature=feature).feature_options.values_list('name', 'name')
+    return Permission.objects.get(project=current_project, feature=feature) \
+                             .feature_options.values_list('name', 'name')
 
 
 class PermissionRequest(models.Model):
@@ -158,12 +167,14 @@ class PermissionRequest(models.Model):
 
     def accept(self, auto_approved=False):
         if self.requested_feature in self.project.permissions.all():
-            permission_feature_options = Permission.objects.get(project=self.project, feature=self.requested_feature)\
-                .feature_options
+            permission_feature_options = Permission.objects.get(
+                project=self.project,
+                feature=self.requested_feature).feature_options
             for feature_option in self.feature_options.all():
                 permission_feature_options.add(feature_option)
         else:
-            permission = Permission(project=self.project, feature=self.requested_feature)
+            permission = Permission(project=self.project,
+                                    feature=self.requested_feature)
             permission.save()
             permission.feature_options.set(self.feature_options.all())
         self.accepted = True
@@ -191,15 +202,19 @@ class PermissionRequest(models.Model):
 
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-    last_selected_project = models.ForeignKey(Project, on_delete=models.SET_NULL, null=True, blank=True)
+    last_selected_project = models.ForeignKey(
+        Project, on_delete=models.SET_NULL, null=True, blank=True)
     timezone = models.CharField(max_length=100, blank=True)
 
     def get_last_selected_project(self):
         last_selected = self.last_selected_project
-        if last_selected and last_selected.project_admin == self.user and last_selected.ARO_approval:
+        if last_selected and last_selected.project_admin == self.user \
+           and last_selected.ARO_approval:
             return last_selected
         try:
-            last_project = Project.objects.filter(project_admin=self.user, ARO_approval=True).latest('created')
+            last_project = Project.objects.filter(project_admin=self.user,
+                                                  ARO_approval=True) \
+                                          .latest('created')
         except Project.DoesNotExist:
             return None
         self.set_last_selected_project(last_project)
@@ -223,7 +238,8 @@ class AROWhitelistManager(models.Manager):
 
 
 def add_username_to_whitelist(username, comment, permission_granted_by):
-    whitelist = AROWhitelist(username=username, comment=comment, permission_granted_by=permission_granted_by)
+    whitelist = AROWhitelist(username=username, comment=comment,
+                             permission_granted_by=permission_granted_by)
     whitelist.save()
 
 

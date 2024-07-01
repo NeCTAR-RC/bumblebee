@@ -14,7 +14,8 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Expiration',
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('id', models.AutoField(auto_created=True, primary_key=True,
+                                        serialize=False, verbose_name='ID')),
                 ('expires', models.DateTimeField()),
                 ('stage', models.IntegerField(default=0)),
                 ('stage_date', models.DateTimeField()),
@@ -23,25 +24,39 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='ResizeExpiration',
             fields=[
-                ('expiration_ptr', models.OneToOneField(auto_created=True, on_delete=django.db.models.deletion.CASCADE, parent_link=True, primary_key=True, serialize=False, to='vm_manager.expiration')),
+                ('expiration_ptr', models.OneToOneField(
+                    auto_created=True,
+                    on_delete=django.db.models.deletion.CASCADE,
+                    parent_link=True, primary_key=True, serialize=False,
+                    to='vm_manager.expiration')),
             ],
             bases=('vm_manager.expiration',),
         ),
         migrations.CreateModel(
             name='ResourceExpiration',
             fields=[
-                ('expiration_ptr', models.OneToOneField(auto_created=True, on_delete=django.db.models.deletion.CASCADE, parent_link=True, primary_key=True, serialize=False, to='vm_manager.expiration')),
+                ('expiration_ptr', models.OneToOneField(
+                    auto_created=True,
+                    on_delete=django.db.models.deletion.CASCADE,
+                    parent_link=True, primary_key=True, serialize=False,
+                    to='vm_manager.expiration')),
             ],
             bases=('vm_manager.expiration',),
         ),
         migrations.AddField(
             model_name='cloudresource',
             name='expiration',
-            field=models.OneToOneField(null=True, on_delete=django.db.models.deletion.CASCADE, to='vm_manager.resourceexpiration'),
+            field=models.OneToOneField(
+                null=True,
+                on_delete=django.db.models.deletion.CASCADE,
+                to='vm_manager.resourceexpiration'),
         ),
         migrations.AddField(
             model_name='resize',
             name='expiration',
-            field=models.OneToOneField(null=True, on_delete=django.db.models.deletion.CASCADE, to='vm_manager.resizeexpiration'),
+            field=models.OneToOneField(
+                null=True,
+                on_delete=django.db.models.deletion.CASCADE,
+                to='vm_manager.resizeexpiration'),
         ),
     ]

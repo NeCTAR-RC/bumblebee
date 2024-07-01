@@ -16,13 +16,15 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.core.files.uploadhandler import TemporaryFileUploadHandler
 from django.core.mail import mail_managers
 from django.dispatch import receiver
-from django.http import HttpResponse, HttpResponseRedirect, Http404, StreamingHttpResponse
+from django.http import HttpResponse, HttpResponseRedirect, Http404, \
+    StreamingHttpResponse
 from django.shortcuts import render
 from django.urls import reverse
 from django.utils.html import format_html
 from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
 
-from researcher_desktop.utils.utils import get_desktop_type, get_applicable_zones
+from researcher_desktop.utils.utils import get_desktop_type, \
+    get_applicable_zones
 
 from .constants import USAGE
 from .forms import UserSearchForm, ProjectForm, \
@@ -53,8 +55,11 @@ def _get_users_for_report():
     users = []
     num = 1
     for django_user in django_users:
-        user = {'id': django_user.id, 'name': django_user.get_full_name(), 'username': django_user.username,
-                'email': django_user.email, 'date_joined': django_user.date_joined, 'num': num}
+        user = {'id': django_user.id,
+                'name': django_user.get_full_name(),
+                'username': django_user.username,
+                'email': django_user.email,
+                'date_joined': django_user.date_joined, 'num': num}
         # ldap_user = backend.get_user(django_user.id).ldap_user.attrs
         # if ldap_user:
         #     user['department'] = ldap_user['department']
@@ -76,7 +81,8 @@ def user_search(request):
     if request.method == 'POST':
         users = _get_users_for_report()
         response = HttpResponse(content_type='text/csv')
-        response['Content-Disposition'] = 'attachment; filename="Orion_User_Report.csv"'
+        response['Content-Disposition'] = \
+            'attachment; filename="Orion_User_Report.csv"'
         writer = csv.writer(response)
         columns = [key for key in users[0].keys()]
         writer.writerow(columns)
@@ -88,22 +94,16 @@ def user_search(request):
     if request.GET:
         form = UserSearchForm(request.GET)
         users = []
-        # if form.is_valid():
-        #    search = {k: v for k, v in form.cleaned_data.items() if v}
-        #    # LDAP search
-        #    if search:
-        #        users = LDAP().list(**search)
-        #        # For mail searches, also attempt to search for UID based on alias
-        #        if 'mail' in search and 'uid' not in search:
-        #            extra_results = LDAP().list(uid=search['mail'].split('@')[0])
-        #            users += [u for u in extra_results if u not in users]
-        return render(request, 'researcher_workspace/staff/user_search.html', {'users': users, 'form': form})
+        return render(request, 'researcher_workspace/staff/user_search.html',
+                      {'users': users, 'form': form})
 
     # Show user reporting page
     form = UserSearchForm()
     users = _get_users_for_report()
-    return render(request, 'researcher_workspace/staff/user_reporting.html', {'users': users, 'form': form,
-                  'first_date': users[0]['date_joined'], 'last_date': users[-1]['date_joined']})
+    return render(request, 'researcher_workspace/staff/user_reporting.html',
+                  {'users': users, 'form': form,
+                   'first_date': users[0]['date_joined'],
+                   'last_date': users[-1]['date_joined']})
 
 
 @login_required(login_url='login')
@@ -114,7 +114,8 @@ def user_search_details(request, username):
         add_or_delete = request.POST.get('add_or_delete', 'add')
         comment = request.POST.get('aro_whitelist_comment')
         if add_or_delete == 'add':
-            add_username_to_whitelist(username=username, comment=comment, permission_granted_by=request.user)
+            add_username_to_whitelist(username=username, comment=comment,
+                                      permission_granted_by=request.user)
         elif add_or_delete == 'delete':
             remove_username_from_whitelist(username=username)
     try:
@@ -122,44 +123,11 @@ def user_search_details(request, username):
     except User.DoesNotExist:
         is_user = False
     aro_whitelisted = AROWhitelist.objects.is_username_whitelisted(username)
-    # ldap = LDAP()
-    # try:
-    #    user = ldap.get(uid=username)
-    # except LDAPDoesNotExist:
-    return render(request, 'researcher_workspace/staff/user_search_details.html', {'user_does_not_exist': True,
-                  'is_user': is_user, 'aro_whitelisted': aro_whitelisted, 'user_details': {'uid': username}})
-#    try:
-#        api_return = call_boomi.api_call(username=username)
-#        is_student = api_return.pop('is_student_api')
-#        api_user = api_return if not is_student else api_return['student'][0]
-#    except requests.exceptions.HTTPError:
-#        api_user = {}
-#    if 'supervisor_staff_id' in api_user:
-#        supervisor_staff_id = api_user.pop('supervisor_staff_id').strip()
-#        if supervisor_staff_id:
-#            try:
-#                supervisor_username = call_boomi.api_call(uom_id=supervisor_staff_id).pop('user_name')
-#                api_user['supervisor'] = f"<a href='{ reverse('user_search_details', args=[supervisor_username]) }?{ request.GET.urlencode() }'>{ supervisor_username }</a>"
-#            except requests.exceptions.HTTPError:
-#                api_user['supervisor'] = f"BOOMI error in looking up the supervisor. Supervisor's id is: {supervisor_staff_id}"
-#
-#    try:
-#        if len(api_user['enrolment']['Supervisors']['Supervisor']) > 0:
-#            for supervisor in api_user['enrolment']['Supervisors']['Supervisor']:
-#                supervisor_staff_id = supervisor.pop('supervisor_staff_id').strip()
-#                try:
-#                    supervisor_details = call_boomi.api_call(uom_id=supervisor_staff_id)
-#                    supervisor_username = supervisor_details['user_name'] if not supervisor_details['is_student_api'] else supervisor_details['student'][0]['username']
-#                    supervisor['supervisor'] = f"<a href='{reverse('user_search_details', args=[supervisor_username])}?{request.GET.urlencode()}'>{supervisor_username}</a>"
-#                except requests.exceptions.HTTPError:
-#                    api_user['supervisor'] = f"BOOMI error in looking up the supervisor. Supervisor's id is: {supervisor_staff_id}"
-#    except KeyError:
-#        pass
-#
-#    return render(request, 'researcher_workspace/staff/user_search_details.html',
-#                  {'user_details': user, 'user_fields': LDAP.fields, 'api_user': api_user,
-#                   'is_user': is_user, 'aro_whitelisted': aro_whitelisted})
-#
+    return render(request,
+                  'researcher_workspace/staff/user_search_details.html',
+                  {'user_does_not_exist': True,
+                   'is_user': is_user, 'aro_whitelisted': aro_whitelisted,
+                   'user_details': {'uid': username}})
 
 
 @login_required(login_url='login')
@@ -172,16 +140,20 @@ def orion_report(request):
                       rdesk_views.rd_report_page())
     reporting_months = int(request.POST.get("reporting_months", "6"))
     if reporting_months < 1:
-        raise ValueError(f"{request.user} requested Orion reporting for reporting_months < 1")
+        raise ValueError(f"{request.user} requested Orion reporting "
+                         "for reporting_months < 1")
     output = BytesIO()
     writer = pandas.ExcelWriter(output, engine='xlsxwriter')
     vm_report = rdesk_views.rd_report(reporting_months)
     users = _get_users_for_report()
     now = datetime.now(utc)
-    user_count = dict([(offset_month_and_year(month_offset, now.month, now.year), FACULTIES.copy())
+    user_count = dict([(offset_month_and_year(month_offset, now.month,
+                                              now.year),
+                        FACULTIES.copy())
                        for month_offset in range(reporting_months, 0, -1)])
     for user in users:
-        user["simple_date"] = (user["date_joined"].month, user["date_joined"].year)
+        user["simple_date"] = (user["date_joined"].month,
+                               user["date_joined"].year)
     for date in user_count:
         for user in [user for user in users
                      if user["simple_date"][1] < date[1]
@@ -194,15 +166,18 @@ def orion_report(request):
             user_count[date]['Total'] += 1
 
     user_count_report = [
-        [f"01/{month[0]}/{month[1]}"] + [user_count[month][faculty] for faculty in FACULTIES.keys()]
+        [f"01/{month[0]}/{month[1]}"] + [user_count[month][faculty]
+                                         for faculty in FACULTIES.keys()]
         for month in user_count.keys()]
-    user_count_report_data_frame = pandas.DataFrame(user_count_report, columns=['Month'] + list(FACULTIES.keys()))
+    user_count_report_data_frame = pandas.DataFrame(
+        user_count_report, columns=['Month'] + list(FACULTIES.keys()))
     user_count_report_data_frame.to_excel(writer, sheet_name="User growth")
     for report in vm_report:
         report_data_frame = pandas.DataFrame(
-            [[f"01/{month[0]}/{month[1]}"] + [value[1][month] for value in report["values"]]
+            [[f"01/{month[0]}/{month[1]}"] + [value[1][month]
+                                              for value in report["values"]]
              for month in report["values"][0][1].keys()],
-            columns=['Month'] + [operating_system for operating_system, values in report["values"]])
+            columns=['Month'] + [os for os, values in report["values"]])
         report_data_frame.to_excel(writer, sheet_name=report["name"])
 
     # Project Usage Count
@@ -220,8 +195,10 @@ def orion_report(request):
             usage = n.nova.usage.get(settings.OS_PROJECT_ID,
                                      start_date, end_date)
             usage_count[date]['CPU Hours'] = round(usage.total_vcpus_usage, 2)
-            usage_count[date]['Disk GB-Hours'] = round(usage.total_local_gb_usage, 2)
-            usage_count[date]['RAM MB-Hours'] = round(usage.total_memory_mb_usage, 2)
+            usage_count[date]['Disk GB-Hours'] = \
+                round(usage.total_local_gb_usage, 2)
+            usage_count[date]['RAM MB-Hours'] = \
+                round(usage.total_memory_mb_usage, 2)
             usage_count[date]['Servers Activity'] = len(usage.server_usages)
 
             usage_report = [
@@ -237,7 +214,8 @@ def orion_report(request):
     output.seek(0)
     response = StreamingHttpResponse(
         output,
-        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        content_type=('application/vnd.openxmlformats-officedocument'
+                      '.spreadsheetml.sheet'))
     response['Content-Disposition'] = 'attachment; filename=Orion_Report.xlsx'
     return response
 
@@ -290,9 +268,13 @@ def home(request):
 
     # Get user's Project(s)
     project_id = request.POST.get('project', None)
-    current_projects = Project.objects.filter(project_admin=request.user).exclude(ARO_approval=False).order_by('-created')
+    current_projects = Project.objects.filter(project_admin=request.user) \
+                                      .exclude(ARO_approval=False) \
+                                      .order_by('-created')
     if project_id:
-        selected_project = Project.objects.get_project_by_untrusted_project_id(project_id, request.user)
+        selected_project = \
+            Project.objects.get_project_by_untrusted_project_id(
+                project_id, request.user)
         if selected_project.ARO_approval:
             request.user.profile.set_last_selected_project(selected_project)
         else:
@@ -325,61 +307,16 @@ def home(request):
                 active_module = module
             scripts.append(script)
 
-#    # Render the features to display on the Discover tab
-#    discover_features = []
-#    # Get the features the user has already requested for this project
-#    requested_features = [request.requested_feature for request in PermissionRequest.objects.filter(project=selected_project, accepted=None)]
-#    # Render all the features
-#    for feature in Feature.objects.filter(feature_or_service=True):
-#        # Create the variables necessary for rendering
-#        previously_requested = feature in requested_features
-#        project_already_has_feature = feature in selected_project_features
-#        # If the feature is available, create the form for requesting it
-#        if feature.currently_available:
-#            try:
-#                permission_feature_options = Permission.objects.get(project=selected_project, feature=feature).feature_options.all()
-#            except Permission.DoesNotExist:
-#                permission_feature_options = FeatureOptions.objects.none()
-#            # The options you can request are the options on the feature, minus the options you already have access to
-#            # request_form_options = [(option.id, option.name) for option in feature.options.difference(permission_feature_options)]
-#            request_form_options = [(option.id, option.name) for option in permission_feature_options]
-#            request_form = PermissionRequestForm(choices=request_form_options) if request_form_options else ""
-#            if request_form:
-#                try:
-#                    # If you've already requested access, then pre-tick the options you requested
-#                    requested_feature_options = PermissionRequest.objects.get(project=selected_project, requested_feature=feature, accepted=None).feature_options.values_list('id', flat=True)
-#                    request_form.fields["feature_options"].initial = list(requested_feature_options)
-#                except PermissionRequest.DoesNotExist:
-#                    pass
-#        else:
-#            request_form = ""
-#        # User can request access if there's a valid request form, or if the feature has not been granted access and there is not an already active request
-#        requestable = request_form or (not project_already_has_feature and not previously_requested)
-#        feature_html = loader.render_to_string('researcher_workspace/home/discover/feature.html',
-#            {'feature': feature, 'previously_requested': previously_requested,
-#             'project_already_has_feature': project_already_has_feature,
-#             'request_form': request_form, 'requestable': requestable}, request)
-#        discover_features.append(feature_html)
-#
-    # Get the services to display on the Discover tab
-    # discover_services = [loader.render_to_string('researcher_workspace/home/discover/service.html',
-    #        {'service': service}, request) for service in Feature.objects.filter(feature_or_service=False)]
     context = {
         'active_module': active_module,
         'modules': modules,
         'scripts': scripts,
         'projects': current_projects,
         'selected_project': selected_project,
-        # 'discover_features': discover_features,  # unused
-        # 'discover_services': discover_services   # unused
     }
 
     # Render
     return render(request, 'researcher_workspace/home/home.html', context)
-
-
-# def login(request):
-#     return render(request, 'registration/login.html')
 
 
 def about(request):
@@ -502,36 +439,45 @@ def desktop_details(request, desktop_name):
                   redirect_field_name=None)
 def request_feature_access(request, feature_app_name):
     if request.method == 'POST':
-        feature = Feature.objects.get_feature_by_untrusted_feature_name(feature_app_name, request.user)
-        request_form_options = [(option.id, option.name) for option in feature.options.all()]
-        form = PermissionRequestForm(request.POST, choices=request_form_options)
+        feature = Feature.objects.get_feature_by_untrusted_feature_name(
+            feature_app_name, request.user)
+        request_form_options = [(option.id, option.name)
+                                for option in feature.options.all()]
+        form = PermissionRequestForm(request.POST,
+                                     choices=request_form_options)
         if form.is_valid() or not request_form_options:
             if request_form_options:
                 feature_options = form.cleaned_data['feature_options']
             else:
                 feature_options = []
             current_project = request.user.profile.get_last_selected_project()
-            previous_permission_request = PermissionRequest.objects.filter(project=current_project, requested_feature=feature, accepted=None).first()
+            previous_permission_request = PermissionRequest.objects.filter(
+                project=current_project, requested_feature=feature,
+                accepted=None).first()
             if not previous_permission_request:
-                permission_request = PermissionRequest(requesting_user=request.user,
-                                   project=current_project, requested_feature=feature)
+                permission_request = PermissionRequest(
+                    requesting_user=request.user,
+                    project=current_project, requested_feature=feature)
                 permission_request.save()
                 permission_request.feature_options.set(feature_options)
                 if feature.auto_approved:
                     permission_request.accept()
             else:
-                previous_permission_request.feature_options.set(feature_options)
+                previous_permission_request.feature_options.set(
+                    feature_options)
                 previous_permission_request.save()
     return HttpResponseRedirect(reverse('home') + '#Discover')
 
 
 def _notify_managers_to_review_project(project, action):
+    url = reverse('admin:researcher_workspace_project_change',
+                  args=(project.id,))
     mail_managers("Project Request",
-                  f"{project.project_admin.username} has {action} \"{project.title}\".\n"
+                  f"{project.project_admin.username} "
+                  f"has {action} \"{project.title}\".\n"
                   f"ARO - {project.ARO} \n"
                   f"Project Description - {project.description} \n"
-                  f"Kindly review the project here {settings.SITE_URL}"
-                  f"{reverse('admin:researcher_workspace_project_change', args=(project.id,))}")
+                  f"Kindly review the project here {settings.SITE_URL}{url}")
 
 
 @login_required(login_url='login')
@@ -631,14 +577,16 @@ def staff_home(request):
     if not_support_staff(request.user):
         raise Http404()
     form = UserSearchForm()
-    return render(request, 'researcher_workspace/staff/staff_home.html', {'form': form})
+    return render(request, 'researcher_workspace/staff/staff_home.html',
+                  {'form': form})
 
 
 @login_required(login_url='login')
 @user_passes_test(test_func=agreed_to_terms, login_url='terms',
                   redirect_field_name=None)
 def report(request):
-    return render(request, 'researcher_workspace/report.html', rdesk_views.rd_report_for_user(request.user))
+    return render(request, 'researcher_workspace/report.html',
+                  rdesk_views.rd_report_for_user(request.user))
 
 
 @login_required(login_url='login')

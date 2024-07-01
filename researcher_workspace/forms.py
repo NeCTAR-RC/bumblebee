@@ -14,7 +14,8 @@ class SpanForm(forms.Form):
         "Return this form rendered as HTML <span>s."
 
         return self._html_output(
-            normal_row='<span%(html_class_attr)s>%(label)s %(field)s%(help_text)s</span>',
+            normal_row='<span%(html_class_attr)s>%(label)s '
+            '%(field)s%(help_text)s</span>',
             error_row='%s',
             row_ender='</span>',
             help_text_html='<span class="helptext">%s</span>',
@@ -27,7 +28,8 @@ class DivModelForm(forms.ModelForm):
         "Return this form rendered as HTML <div>s."
 
         return self._html_output(
-            normal_row='<div%(html_class_attr)s>%(label)s %(help_text)s%(field)s</div>',
+            normal_row='<div%(html_class_attr)s>%(label)s '
+            '%(help_text)s%(field)s</div>',
             error_row='%s',
             row_ender='</div>',
             help_text_html='<div class="small">%s</div>',
@@ -98,7 +100,8 @@ class ProfileForm(forms.ModelForm):
 
 
 class PermissionRequestForm(forms.Form):
-    feature_options = forms.MultipleChoiceField(label='Options', choices=(), widget=forms.CheckboxSelectMultiple)
+    feature_options = forms.MultipleChoiceField(
+        label='Options', choices=(), widget=forms.CheckboxSelectMultiple)
 
     def __init__(self, *args, choices=None, **kwargs):
         super(PermissionRequestForm, self).__init__(*args, **kwargs)

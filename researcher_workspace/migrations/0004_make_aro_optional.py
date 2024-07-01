@@ -18,6 +18,8 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='project',
             name='admin_comments',
-            field=models.TextField(blank=True, null=True, verbose_name='Admin comments (not visible to users)'),
+            field=models.TextField(
+                blank=True, null=True,
+                verbose_name='Admin comments (not visible to users)'),
         ),
     ]

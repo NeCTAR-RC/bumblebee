@@ -1,4 +1,5 @@
-from django.db.models import Count, EmailField, ExpressionWrapper, F, Func, Value
+from django.db.models import Count, EmailField, ExpressionWrapper, \
+    F, Func, Value
 
 from prometheus_client.core import GaugeMetricFamily
 
@@ -26,9 +27,11 @@ class BumblebeeMetricsCollector(object):
             # bumblebee_desktops_*_by_type
             g = GaugeMetricFamily(
                 f"{name}_by_type", f"{desc} by_type", labels=['type'])
-            new_qs = qs.values('operating_system').annotate(Count('operating_system'))
+            new_qs = qs.values('operating_system') \
+                       .annotate(Count('operating_system'))
             for t in new_qs:
-                g.add_metric([t['operating_system']], t['operating_system__count'])
+                g.add_metric([t['operating_system']],
+                             t['operating_system__count'])
             yield g
 
             # bumblebee_desktops_*_by_zone

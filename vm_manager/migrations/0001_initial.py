@@ -18,20 +18,30 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='CloudResource',
             fields=[
-                ('id', models.UUIDField(editable=False, primary_key=True, serialize=False)),
+                ('id', models.UUIDField(editable=False, primary_key=True,
+                                        serialize=False)),
                 ('created', models.DateTimeField(auto_now_add=True)),
-                ('marked_for_deletion', models.DateTimeField(blank=True, null=True)),
+                ('marked_for_deletion', models.DateTimeField(blank=True,
+                                                             null=True)),
                 ('deleted', models.DateTimeField(blank=True, null=True)),
                 ('error_flag', models.DateTimeField(blank=True, null=True)),
-                ('error_message', models.CharField(blank=True, max_length=200, null=True)),
-                ('user', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, to=settings.AUTH_USER_MODEL)),
+                ('error_message', models.CharField(blank=True, max_length=200,
+                                                   null=True)),
+                ('user', models.ForeignKey(
+                    on_delete=django.db.models.deletion.PROTECT,
+                    to=settings.AUTH_USER_MODEL)),
             ],
         ),
         migrations.CreateModel(
             name='Instance',
             fields=[
-                ('cloudresource_ptr', models.OneToOneField(auto_created=True, on_delete=django.db.models.deletion.CASCADE, parent_link=True, primary_key=True, serialize=False, to='vm_manager.cloudresource')),
-                ('ip_address', models.GenericIPAddressField(blank=True, null=True)),
+                ('cloudresource_ptr', models.OneToOneField(
+                    auto_created=True,
+                    on_delete=django.db.models.deletion.CASCADE,
+                    parent_link=True, primary_key=True, serialize=False,
+                    to='vm_manager.cloudresource')),
+                ('ip_address', models.GenericIPAddressField(blank=True,
+                                                            null=True)),
                 ('username', models.CharField(max_length=20)),
                 ('password', models.CharField(max_length=32)),
             ],
@@ -40,30 +50,45 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Volume',
             fields=[
-                ('cloudresource_ptr', models.OneToOneField(auto_created=True, on_delete=django.db.models.deletion.CASCADE, parent_link=True, primary_key=True, serialize=False, to='vm_manager.cloudresource')),
+                ('cloudresource_ptr', models.OneToOneField(
+                    auto_created=True,
+                    on_delete=django.db.models.deletion.CASCADE,
+                    parent_link=True, primary_key=True, serialize=False,
+                    to='vm_manager.cloudresource')),
                 ('image', models.CharField(max_length=100)),
                 ('operating_system', models.CharField(max_length=20)),
                 ('flavor', models.UUIDField()),
                 ('checked_in', models.BooleanField(default=False)),
                 ('ready', models.BooleanField(default=False)),
-                ('hostname_id', models.CharField(max_length=6, null=True, unique=True)),
+                ('hostname_id', models.CharField(max_length=6, null=True,
+                                                 unique=True)),
                 ('shelved', models.BooleanField(default=False)),
                 ('rebooted', models.DateTimeField(blank=True, null=True)),
-                ('requesting_feature', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, to='researcher_workspace.feature')),
+                ('requesting_feature', models.ForeignKey(
+                    on_delete=django.db.models.deletion.PROTECT,
+                    to='researcher_workspace.feature')),
             ],
             bases=('vm_manager.cloudresource',),
         ),
         migrations.CreateModel(
             name='VMStatus',
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('id', models.AutoField(auto_created=True, primary_key=True,
+                                        serialize=False, verbose_name='ID')),
                 ('created', models.DateTimeField(auto_now_add=True)),
                 ('operating_system', models.CharField(max_length=20)),
                 ('status', models.CharField(max_length=20)),
                 ('wait_time', models.DateTimeField(blank=True, null=True)),
-                ('requesting_feature', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, to='researcher_workspace.feature')),
-                ('user', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, to=settings.AUTH_USER_MODEL)),
-                ('instance', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.PROTECT, to='vm_manager.instance')),
+                ('requesting_feature', models.ForeignKey(
+                    on_delete=django.db.models.deletion.PROTECT,
+                    to='researcher_workspace.feature')),
+                ('user', models.ForeignKey(
+                    on_delete=django.db.models.deletion.PROTECT,
+                    to=settings.AUTH_USER_MODEL)),
+                ('instance', models.ForeignKey(
+                    blank=True, null=True,
+                    on_delete=django.db.models.deletion.PROTECT,
+                    to='vm_manager.instance')),
             ],
             options={
                 'verbose_name': 'VM Status',
@@ -73,21 +98,29 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Resize',
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('id', models.AutoField(auto_created=True, primary_key=True,
+                                        serialize=False, verbose_name='ID')),
                 ('requested', models.DateTimeField(auto_now_add=True)),
                 ('expires', models.DateField(blank=True, null=True)),
                 ('reverted', models.DateTimeField(blank=True, null=True)),
-                ('instance', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, to='vm_manager.instance')),
+                ('instance', models.ForeignKey(
+                    on_delete=django.db.models.deletion.PROTECT,
+                    to='vm_manager.instance')),
             ],
         ),
         migrations.AddField(
             model_name='instance',
             name='boot_volume',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, to='vm_manager.volume'),
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.PROTECT,
+                to='vm_manager.volume'),
         ),
         migrations.AddField(
             model_name='instance',
             name='guac_connection',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, to='guacamole.guacamoleconnection'),
+            field=models.ForeignKey(
+                blank=True, null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                to='guacamole.guacamoleconnection'),
         ),
     ]

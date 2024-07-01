@@ -22,11 +22,19 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='cloudresource',
             name='expiration',
-            field=models.OneToOneField(null=True, on_delete=django.db.models.deletion.CASCADE, related_name='expiration_for', to='vm_manager.resourceexpiration'),
+            field=models.OneToOneField(
+                null=True,
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name='expiration_for',
+                to='vm_manager.resourceexpiration'),
         ),
         migrations.AlterField(
             model_name='resize',
             name='expiration',
-            field=models.OneToOneField(null=True, on_delete=django.db.models.deletion.CASCADE, related_name='expiration_for', to='vm_manager.resizeexpiration'),
+            field=models.OneToOneField(
+                null=True,
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name='expiration_for',
+                to='vm_manager.resizeexpiration'),
         ),
     ]

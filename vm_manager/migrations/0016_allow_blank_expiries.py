@@ -14,16 +14,28 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='cloudresource',
             name='expiration',
-            field=models.OneToOneField(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='expiration_for', to='vm_manager.resourceexpiration'),
+            field=models.OneToOneField(
+                blank=True, null=True,
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name='expiration_for',
+                to='vm_manager.resourceexpiration'),
         ),
         migrations.AlterField(
             model_name='resize',
             name='expiration',
-            field=models.OneToOneField(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='expiration_for', to='vm_manager.resizeexpiration'),
+            field=models.OneToOneField(
+                blank=True, null=True,
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name='expiration_for',
+                to='vm_manager.resizeexpiration'),
         ),
         migrations.AlterField(
             model_name='volume',
             name='backup_expiration',
-            field=models.OneToOneField(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='expiration_for', to='vm_manager.backupexpiration'),
+            field=models.OneToOneField(
+                blank=True, null=True,
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name='expiration_for',
+                to='vm_manager.backupexpiration'),
         ),
     ]

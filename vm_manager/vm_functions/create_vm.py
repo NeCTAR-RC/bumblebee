@@ -253,7 +253,8 @@ def _create_instance(user, desktop_type, volume):
     if family == 'windows':
         hash_password = password
     else:
-        hash_password = crypt.crypt(password, crypt.mksalt(crypt.METHOD_SHA512))
+        hash_password = crypt.crypt(password,
+                                    crypt.mksalt(crypt.METHOD_SHA512))
 
     desktop_timezone = user.profile.timezone or settings.TIME_ZONE
     user_data_context = {

@@ -65,7 +65,8 @@ class PermissionInline(admin.StackedInline):
 @admin.register(Project)
 class ProjectAdmin(admin.ModelAdmin):
     list_filter = ('created', 'ARO_approval', 'ARO_responded_on',
-                   'permissions', 'sensitive_data', AutocompleteFilterFactory('User', 'project_admin'))
+                   'permissions', 'sensitive_data',
+                   AutocompleteFilterFactory('User', 'project_admin'))
     readonly_fields = ('created',)
     ordering = ('-created',)
     list_display = ('__str__', 'title', 'project_admin', 'created', 'ARO',

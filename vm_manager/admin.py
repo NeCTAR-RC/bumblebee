@@ -100,7 +100,8 @@ def admin_check_vmstatuses(modelAdmin, request, queryset):
 
 @admin.register(Expiration)
 class ExpirationAdmin(admin.ModelAdmin):
-    list_filter = [('id', DropdownFilter), ('stage', DropdownFilter), 'stage_date']
+    list_filter = [('id', DropdownFilter),
+                   ('stage', DropdownFilter), 'stage_date']
     fields = ['expires', 'stage', 'stage_date']
     readonly_fields = ['id']
     ordering = ('-id',)

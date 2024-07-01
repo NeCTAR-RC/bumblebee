@@ -11,11 +11,14 @@ def active_link(context, viewnames, css_class=None, inactive_class='',
                 strict=None, *args, **kwargs):
     """Renders a CSS class if the request path matches the path of the view.
 
-    :param context: The context where the tag was called. Used to access the request object.
-    :param viewnames: The name of the view or views separated by || (include namespaces if any).
+    :param context: The context where the tag was called. Used to access
+        the request object.
+    :param viewnames: The name of the view or views separated by ||
+        (include namespaces if any).
     :param css_class: The CSS class to render.
     :param inactive_class: The CSS class to render if the views is not active.
-    :param strict: If True, the tag will perform an exact match with the request path.
+    :param strict: If True, the tag will perform an exact match with
+        the request path.
     :return:
     """
     if css_class is None:

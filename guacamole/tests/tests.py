@@ -22,7 +22,8 @@ class SimpleTestCase(TestCase):
         self.assertEqual(get_connection_path(conn), '#/client/MTU2AGMAbXlzcWw')
 
         conn = GuacamoleConnectionFactory.create(connection_id=1234)
-        self.assertEqual(get_connection_path(conn), '#/client/MTIzNABjAG15c3Fs')
+        self.assertEqual(get_connection_path(conn),
+                         '#/client/MTIzNABjAG15c3Fs')
 
     def test_quick_rdp(self):
         """Test utility method quick_rdp.

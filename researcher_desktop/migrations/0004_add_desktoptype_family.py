@@ -13,7 +13,11 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='desktoptype',
             name='family',
-            field=models.CharField(default='linux', help_text="Selects a cloud-config template;e.g. 'linux' or 'windows'", max_length=32),
+            field=models.CharField(
+                default='linux',
+                help_text="Selects a cloud-config template;"
+                "e.g. 'linux' or 'windows'",
+                max_length=32),
         ),
         migrations.AlterField(
             model_name='desktoptype',

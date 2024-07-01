@@ -14,7 +14,8 @@ def from_settings(request):
             'ENVIRONMENT_COLOR') else None
         if settings.DEBUG:
             if not from_settings.env_name:
-                from_settings.env_name = f"Developing on {socket.gethostname()}"
+                from_settings.env_name = \
+                    f"Developing on {socket.gethostname()}"
             if not from_settings.env_colour:
                 from_settings.env_colour = "green"
         else:

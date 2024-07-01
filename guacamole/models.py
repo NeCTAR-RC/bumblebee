@@ -316,7 +316,8 @@ class GuacamoleUserGroup(models.Model):
 
 
 class GuacamoleUserGroupAttribute(models.Model):
-    user_group = models.OneToOneField(GuacamoleUserGroup, on_delete=models.CASCADE, primary_key=True)
+    user_group = models.OneToOneField(
+        GuacamoleUserGroup, on_delete=models.CASCADE, primary_key=True)
     attribute_name = models.CharField(max_length=128)
     attribute_value = models.CharField(max_length=4096)
 

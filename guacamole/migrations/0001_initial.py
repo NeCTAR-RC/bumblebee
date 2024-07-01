@@ -17,16 +17,22 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='GuacamoleConnection',
             fields=[
-                ('connection_id', models.AutoField(primary_key=True, serialize=False)),
+                ('connection_id', models.AutoField(
+                    primary_key=True, serialize=False)),
                 ('connection_name', models.CharField(max_length=128)),
                 ('parent_id', models.IntegerField(blank=True, null=True)),
                 ('protocol', models.CharField(default='rdp', max_length=32)),
                 ('proxy_port', models.IntegerField(blank=True, null=True)),
-                ('proxy_hostname', models.CharField(blank=True, max_length=512, null=True)),
-                ('proxy_encryption_method', models.CharField(blank=True, max_length=4, null=True)),
-                ('max_connections', models.IntegerField(blank=True, null=True)),
-                ('max_connections_per_user', models.IntegerField(blank=True, null=True)),
-                ('connection_weight', models.IntegerField(blank=True, null=True)),
+                ('proxy_hostname', models.CharField(
+                    blank=True, max_length=512, null=True)),
+                ('proxy_encryption_method', models.CharField(
+                    blank=True, max_length=4, null=True)),
+                ('max_connections', models.IntegerField(
+                    blank=True, null=True)),
+                ('max_connections_per_user', models.IntegerField(
+                    blank=True, null=True)),
+                ('connection_weight', models.IntegerField(
+                    blank=True, null=True)),
                 ('failover_only', models.BooleanField(default=False)),
             ],
             options={
@@ -37,13 +43,20 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='GuacamoleConnectionGroup',
             fields=[
-                ('connection_group_id', models.AutoField(primary_key=True, serialize=False)),
+                ('connection_group_id', models.AutoField(
+                    primary_key=True, serialize=False)),
                 ('connection_group_name', models.CharField(max_length=128)),
                 ('parent_id', models.IntegerField(blank=True, null=True)),
-                ('type', guacamole.fields.GuacamoleConnectionGroupTypeField(choices=[('ORGANIZATIONAL', 'ORGANIZATIONAL'), ('BALANCING', 'BALANCING')], default='ORGANIZATIONAL')),
-                ('max_connections', models.IntegerField(blank=True, null=True)),
-                ('max_connections_per_user', models.IntegerField(blank=True, null=True)),
-                ('enable_session_affinity', models.BooleanField(default=False)),
+                ('type', guacamole.fields.GuacamoleConnectionGroupTypeField(
+                    choices=[('ORGANIZATIONAL', 'ORGANIZATIONAL'),
+                             ('BALANCING', 'BALANCING')],
+                    default='ORGANIZATIONAL')),
+                ('max_connections', models.IntegerField(
+                    blank=True, null=True)),
+                ('max_connections_per_user', models.IntegerField(
+                    blank=True, null=True)),
+                ('enable_session_affinity', models.BooleanField(
+                    default=False)),
             ],
             options={
                 'db_table': 'guacamole_connection_group',
@@ -53,11 +66,14 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='GuacamoleConnectionHistory',
             fields=[
-                ('history_id', models.AutoField(primary_key=True, serialize=False)),
+                ('history_id', models.AutoField(
+                    primary_key=True, serialize=False)),
                 ('username', models.CharField(max_length=128)),
-                ('remote_host', models.CharField(blank=True, max_length=256, null=True)),
+                ('remote_host', models.CharField(
+                    blank=True, max_length=256, null=True)),
                 ('connection_name', models.CharField(max_length=128)),
-                ('sharing_profile_name', models.CharField(blank=True, max_length=128, null=True)),
+                ('sharing_profile_name', models.CharField(
+                    blank=True, max_length=128, null=True)),
                 ('start_date', models.DateTimeField()),
                 ('end_date', models.DateTimeField(blank=True, null=True)),
             ],
@@ -69,7 +85,8 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='GuacamoleEntity',
             fields=[
-                ('entity_id', models.AutoField(primary_key=True, serialize=False)),
+                ('entity_id', models.AutoField(
+                    primary_key=True, serialize=False)),
                 ('name', models.CharField(max_length=128)),
                 ('type', models.CharField(max_length=10)),
             ],
@@ -81,7 +98,8 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='GuacamoleSharingProfile',
             fields=[
-                ('sharing_profile_id', models.AutoField(primary_key=True, serialize=False)),
+                ('sharing_profile_id', models.AutoField(
+                    primary_key=True, serialize=False)),
                 ('sharing_profile_name', models.CharField(max_length=128)),
             ],
             options={
@@ -92,21 +110,29 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='GuacamoleUser',
             fields=[
-                ('user_id', models.AutoField(primary_key=True, serialize=False)),
+                ('user_id', models.AutoField(
+                    primary_key=True, serialize=False)),
                 ('password_hash', models.CharField(max_length=32)),
-                ('password_salt', models.CharField(blank=True, max_length=32, null=True)),
+                ('password_salt', models.CharField(
+                    blank=True, max_length=32, null=True)),
                 ('password_date', models.DateTimeField(auto_now_add=True)),
                 ('disabled', models.BooleanField(default=False)),
                 ('expired', models.BooleanField(default=False)),
-                ('access_window_start', models.TimeField(blank=True, null=True)),
+                ('access_window_start', models.TimeField(
+                    blank=True, null=True)),
                 ('access_window_end', models.TimeField(blank=True, null=True)),
                 ('valid_from', models.DateField(blank=True, null=True)),
                 ('valid_until', models.DateField(blank=True, null=True)),
-                ('timezone', models.CharField(blank=True, max_length=64, null=True)),
-                ('full_name', models.CharField(blank=True, max_length=256, null=True)),
-                ('email_address', models.CharField(blank=True, max_length=256, null=True)),
-                ('organization', models.CharField(blank=True, max_length=256, null=True)),
-                ('organizational_role', models.CharField(blank=True, max_length=256, null=True)),
+                ('timezone', models.CharField(
+                    blank=True, max_length=64, null=True)),
+                ('full_name', models.CharField(
+                    blank=True, max_length=256, null=True)),
+                ('email_address', models.CharField(
+                    blank=True, max_length=256, null=True)),
+                ('organization', models.CharField(
+                    blank=True, max_length=256, null=True)),
+                ('organizational_role', models.CharField(
+                    blank=True, max_length=256, null=True)),
             ],
             options={
                 'db_table': 'guacamole_user',
@@ -116,7 +142,8 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='GuacamoleUserGroup',
             fields=[
-                ('user_group_id', models.AutoField(primary_key=True, serialize=False)),
+                ('user_group_id', models.AutoField(
+                    primary_key=True, serialize=False)),
                 ('disabled', models.BooleanField(default=False)),
             ],
             options={
@@ -127,9 +154,11 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='GuacamoleUserHistory',
             fields=[
-                ('history_id', models.AutoField(primary_key=True, serialize=False)),
+                ('history_id', models.AutoField(
+                    primary_key=True, serialize=False)),
                 ('username', models.CharField(max_length=128)),
-                ('remote_host', models.CharField(blank=True, max_length=256, null=True)),
+                ('remote_host', models.CharField(
+                    blank=True, max_length=256, null=True)),
                 ('start_date', models.DateTimeField()),
                 ('end_date', models.DateTimeField(blank=True, null=True)),
             ],
@@ -141,9 +170,11 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='GuacamoleUserPasswordHistory',
             fields=[
-                ('password_history_id', models.AutoField(primary_key=True, serialize=False)),
+                ('password_history_id', models.AutoField(
+                    primary_key=True, serialize=False)),
                 ('password_hash', models.CharField(max_length=32)),
-                ('password_salt', models.CharField(blank=True, max_length=32, null=True)),
+                ('password_salt', models.CharField(
+                    blank=True, max_length=32, null=True)),
                 ('password_date', models.DateTimeField()),
             ],
             options={
@@ -154,7 +185,10 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='GuacamoleConnectionAttribute',
             fields=[
-                ('connection', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, primary_key=True, serialize=False, to='guacamole.guacamoleconnection')),
+                ('connection', models.OneToOneField(
+                    on_delete=django.db.models.deletion.CASCADE,
+                    primary_key=True, serialize=False,
+                    to='guacamole.guacamoleconnection')),
                 ('attribute_name', models.CharField(max_length=128)),
                 ('attribute_value', models.CharField(max_length=4096)),
             ],
@@ -166,7 +200,10 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='GuacamoleConnectionGroupAttribute',
             fields=[
-                ('connection_group', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, primary_key=True, serialize=False, to='guacamole.guacamoleconnectiongroup')),
+                ('connection_group', models.OneToOneField(
+                    on_delete=django.db.models.deletion.CASCADE,
+                    primary_key=True, serialize=False,
+                    to='guacamole.guacamoleconnectiongroup')),
                 ('attribute_name', models.CharField(max_length=128)),
                 ('attribute_value', models.CharField(max_length=4096)),
             ],
@@ -178,8 +215,16 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='GuacamoleConnectionGroupPermission',
             fields=[
-                ('entity', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, primary_key=True, serialize=False, to='guacamole.guacamoleentity')),
-                ('permission', guacamole.fields.GuacamoleObjectPermissionTypeField(choices=[('READ', 'READ'), ('UPDATE', 'UPDATE'), ('DELETE', 'DELETE'), ('ADMINISTER', 'ADMINISTER')], default='READ')),
+                ('entity', models.OneToOneField(
+                    on_delete=django.db.models.deletion.CASCADE,
+                    primary_key=True, serialize=False,
+                    to='guacamole.guacamoleentity')),
+                ('permission',
+                 guacamole.fields.GuacamoleObjectPermissionTypeField(
+                     choices=[('READ', 'READ'), ('UPDATE', 'UPDATE'),
+                              ('DELETE', 'DELETE'),
+                              ('ADMINISTER', 'ADMINISTER')],
+                     default='READ')),
             ],
             options={
                 'db_table': 'guacamole_connection_group_permission',
@@ -189,7 +234,10 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='GuacamoleConnectionParameter',
             fields=[
-                ('connection', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, primary_key=True, serialize=False, to='guacamole.guacamoleconnection')),
+                ('connection', models.OneToOneField(
+                    on_delete=django.db.models.deletion.CASCADE,
+                    primary_key=True, serialize=False,
+                    to='guacamole.guacamoleconnection')),
                 ('parameter_name', models.CharField(max_length=128)),
                 ('parameter_value', models.CharField(max_length=4096)),
             ],
@@ -201,8 +249,16 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='GuacamoleConnectionPermission',
             fields=[
-                ('entity', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, primary_key=True, serialize=False, to='guacamole.guacamoleentity')),
-                ('permission', guacamole.fields.GuacamoleObjectPermissionTypeField(choices=[('READ', 'READ'), ('UPDATE', 'UPDATE'), ('DELETE', 'DELETE'), ('ADMINISTER', 'ADMINISTER')], default='READ')),
+                ('entity', models.OneToOneField(
+                    on_delete=django.db.models.deletion.CASCADE,
+                    primary_key=True, serialize=False,
+                    to='guacamole.guacamoleentity')),
+                ('permission',
+                 guacamole.fields.GuacamoleObjectPermissionTypeField(
+                     choices=[('READ', 'READ'), ('UPDATE', 'UPDATE'),
+                              ('DELETE', 'DELETE'),
+                              ('ADMINISTER', 'ADMINISTER')],
+                     default='READ')),
             ],
             options={
                 'db_table': 'guacamole_connection_permission',
@@ -212,7 +268,10 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='GuacamoleSharingProfileAttribute',
             fields=[
-                ('sharing_profile', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, primary_key=True, serialize=False, to='guacamole.guacamolesharingprofile')),
+                ('sharing_profile', models.OneToOneField(
+                    on_delete=django.db.models.deletion.CASCADE,
+                    primary_key=True, serialize=False,
+                    to='guacamole.guacamolesharingprofile')),
                 ('attribute_name', models.CharField(max_length=128)),
                 ('attribute_value', models.CharField(max_length=4096)),
             ],
@@ -224,7 +283,10 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='GuacamoleSharingProfileParameter',
             fields=[
-                ('sharing_profile', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, primary_key=True, serialize=False, to='guacamole.guacamolesharingprofile')),
+                ('sharing_profile', models.OneToOneField(
+                    on_delete=django.db.models.deletion.CASCADE,
+                    primary_key=True, serialize=False,
+                    to='guacamole.guacamolesharingprofile')),
                 ('parameter_name', models.CharField(max_length=128)),
                 ('parameter_value', models.CharField(max_length=4096)),
             ],
@@ -236,8 +298,16 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='GuacamoleSharingProfilePermission',
             fields=[
-                ('entity', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, primary_key=True, serialize=False, to='guacamole.guacamoleentity')),
-                ('permission', guacamole.fields.GuacamoleObjectPermissionTypeField(choices=[('READ', 'READ'), ('UPDATE', 'UPDATE'), ('DELETE', 'DELETE'), ('ADMINISTER', 'ADMINISTER')], default='READ')),
+                ('entity', models.OneToOneField(
+                    on_delete=django.db.models.deletion.CASCADE,
+                    primary_key=True, serialize=False,
+                    to='guacamole.guacamoleentity')),
+                ('permission',
+                 guacamole.fields.GuacamoleObjectPermissionTypeField(
+                     choices=[('READ', 'READ'), ('UPDATE', 'UPDATE'),
+                              ('DELETE', 'DELETE'),
+                              ('ADMINISTER', 'ADMINISTER')],
+                     default='READ')),
             ],
             options={
                 'db_table': 'guacamole_sharing_profile_permission',
@@ -247,8 +317,18 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='GuacamoleSystemPermission',
             fields=[
-                ('entity', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, primary_key=True, serialize=False, to='guacamole.guacamoleentity')),
-                ('permission', guacamole.fields.GuacamoleSystemPermissionTypeField(choices=[('CREATE_CONNECTION', 'CREATE_CONNECTION'), ('CREATE_CONNECTION_GROUP', 'CREATE_CONNECTION_GROUP'), ('CREATE_USER', 'CREATE_USER'), ('ADMINISTER', 'ADMINISTER')])),
+                ('entity', models.OneToOneField(
+                    on_delete=django.db.models.deletion.CASCADE,
+                    primary_key=True, serialize=False,
+                    to='guacamole.guacamoleentity')),
+                ('permission',
+                 guacamole.fields.GuacamoleSystemPermissionTypeField(
+                     choices=[
+                         ('CREATE_CONNECTION', 'CREATE_CONNECTION'),
+                         ('CREATE_CONNECTION_GROUP',
+                          'CREATE_CONNECTION_GROUP'),
+                         ('CREATE_USER', 'CREATE_USER'),
+                         ('ADMINISTER', 'ADMINISTER')])),
             ],
             options={
                 'db_table': 'guacamole_system_permission',
@@ -258,7 +338,10 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='GuacamoleUserAttribute',
             fields=[
-                ('user', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, primary_key=True, serialize=False, to='guacamole.guacamoleuser')),
+                ('user', models.OneToOneField(
+                    on_delete=django.db.models.deletion.CASCADE,
+                    primary_key=True, serialize=False,
+                    to='guacamole.guacamoleuser')),
                 ('attribute_name', models.CharField(max_length=128)),
                 ('attribute_value', models.CharField(max_length=4096)),
             ],
@@ -270,7 +353,10 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='GuacamoleUserGroupAttribute',
             fields=[
-                ('user_group', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, primary_key=True, serialize=False, to='guacamole.guacamoleusergroup')),
+                ('user_group', models.OneToOneField(
+                    on_delete=django.db.models.deletion.CASCADE,
+                    primary_key=True, serialize=False,
+                    to='guacamole.guacamoleusergroup')),
                 ('attribute_name', models.CharField(max_length=128)),
                 ('attribute_value', models.CharField(max_length=4096)),
             ],
@@ -282,7 +368,10 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='GuacamoleUserGroupMember',
             fields=[
-                ('user_group', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, primary_key=True, serialize=False, to='guacamole.guacamoleusergroup')),
+                ('user_group', models.OneToOneField(
+                    on_delete=django.db.models.deletion.CASCADE,
+                    primary_key=True, serialize=False,
+                    to='guacamole.guacamoleusergroup')),
             ],
             options={
                 'db_table': 'guacamole_user_group_member',
@@ -292,8 +381,16 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='GuacamoleUserGroupPermission',
             fields=[
-                ('entity', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, primary_key=True, serialize=False, to='guacamole.guacamoleentity')),
-                ('permission', guacamole.fields.GuacamoleObjectPermissionTypeField(choices=[('READ', 'READ'), ('UPDATE', 'UPDATE'), ('DELETE', 'DELETE'), ('ADMINISTER', 'ADMINISTER')], default='READ')),
+                ('entity', models.OneToOneField(
+                    on_delete=django.db.models.deletion.CASCADE,
+                    primary_key=True, serialize=False,
+                    to='guacamole.guacamoleentity')),
+                ('permission',
+                 guacamole.fields.GuacamoleObjectPermissionTypeField(
+                     choices=[('READ', 'READ'), ('UPDATE', 'UPDATE'),
+                              ('DELETE', 'DELETE'),
+                              ('ADMINISTER', 'ADMINISTER')],
+                     default='READ')),
             ],
             options={
                 'db_table': 'guacamole_user_group_permission',
@@ -303,8 +400,16 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='GuacamoleUserPermission',
             fields=[
-                ('entity', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, primary_key=True, serialize=False, to='guacamole.guacamoleentity')),
-                ('permission', guacamole.fields.GuacamoleObjectPermissionTypeField(choices=[('READ', 'READ'), ('UPDATE', 'UPDATE'), ('DELETE', 'DELETE'), ('ADMINISTER', 'ADMINISTER')], default='READ')),
+                ('entity', models.OneToOneField(
+                    on_delete=django.db.models.deletion.CASCADE,
+                    primary_key=True, serialize=False,
+                    to='guacamole.guacamoleentity')),
+                ('permission',
+                 guacamole.fields.GuacamoleObjectPermissionTypeField(
+                     choices=[('READ', 'READ'), ('UPDATE', 'UPDATE'),
+                              ('DELETE', 'DELETE'),
+                              ('ADMINISTER', 'ADMINISTER')],
+                     default='READ')),
             ],
             options={
                 'db_table': 'guacamole_user_permission',
@@ -503,11 +608,13 @@ CREATE TABLE `guacamole_connection_group` (
   `enable_session_affinity`  boolean NOT NULL DEFAULT 0,
 
   PRIMARY KEY (`connection_group_id`),
-  UNIQUE KEY `connection_group_name_parent` (`connection_group_name`, `parent_id`),
+  UNIQUE KEY `connection_group_name_parent` (`connection_group_name`,
+                                             `parent_id`),
 
   CONSTRAINT `guacamole_connection_group_ibfk_1`
     FOREIGN KEY (`parent_id`)
-    REFERENCES `guacamole_connection_group` (`connection_group_id`) ON DELETE CASCADE
+    REFERENCES `guacamole_connection_group` (`connection_group_id`)
+      ON DELETE CASCADE
 
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
@@ -531,7 +638,8 @@ CREATE TABLE `guacamole_connection` (
 
   CONSTRAINT `guacamole_connection_ibfk_1`
     FOREIGN KEY (`parent_id`)
-    REFERENCES `guacamole_connection_group` (`connection_group_id`) ON DELETE CASCADE
+    REFERENCES `guacamole_connection_group` (`connection_group_id`)
+      ON DELETE CASCADE
 
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
@@ -630,7 +738,8 @@ CREATE TABLE guacamole_sharing_profile (
   `primary_connection_id` int(11)      NOT NULL,
 
   PRIMARY KEY (`sharing_profile_id`),
-  UNIQUE KEY `sharing_profile_name_primary` (sharing_profile_name, primary_connection_id),
+  UNIQUE KEY `sharing_profile_name_primary` (sharing_profile_name,
+                                             primary_connection_id),
 
   CONSTRAINT `guacamole_sharing_profile_ibfk_1`
     FOREIGN KEY (`primary_connection_id`)
@@ -665,7 +774,8 @@ CREATE TABLE guacamole_sharing_profile_parameter (
 
   CONSTRAINT `guacamole_sharing_profile_parameter_ibfk_1`
     FOREIGN KEY (`sharing_profile_id`)
-    REFERENCES `guacamole_sharing_profile` (`sharing_profile_id`) ON DELETE CASCADE
+    REFERENCES `guacamole_sharing_profile` (`sharing_profile_id`)
+      ON DELETE CASCADE
 
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
@@ -729,7 +839,8 @@ CREATE TABLE guacamole_connection_group_attribute (
 
   CONSTRAINT guacamole_connection_group_attribute_ibfk_1
     FOREIGN KEY (connection_group_id)
-    REFERENCES guacamole_connection_group (connection_group_id) ON DELETE CASCADE
+    REFERENCES guacamole_connection_group (connection_group_id)
+      ON DELETE CASCADE
 
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
@@ -785,7 +896,8 @@ CREATE TABLE `guacamole_connection_group_permission` (
 
   CONSTRAINT `guacamole_connection_group_permission_ibfk_1`
     FOREIGN KEY (`connection_group_id`)
-    REFERENCES `guacamole_connection_group` (`connection_group_id`) ON DELETE CASCADE,
+    REFERENCES `guacamole_connection_group` (`connection_group_id`)
+      ON DELETE CASCADE,
 
   CONSTRAINT `guacamole_connection_group_permission_entity`
     FOREIGN KEY (`entity_id`)
@@ -807,7 +919,8 @@ CREATE TABLE guacamole_sharing_profile_permission (
 
   CONSTRAINT `guacamole_sharing_profile_permission_ibfk_1`
     FOREIGN KEY (`sharing_profile_id`)
-    REFERENCES `guacamole_sharing_profile` (`sharing_profile_id`) ON DELETE CASCADE,
+    REFERENCES `guacamole_sharing_profile` (`sharing_profile_id`)
+      ON DELETE CASCADE,
 
   CONSTRAINT `guacamole_sharing_profile_permission_entity`
     FOREIGN KEY (`entity_id`)
@@ -910,7 +1023,8 @@ CREATE TABLE `guacamole_connection_history` (
 
   CONSTRAINT `guacamole_connection_history_ibfk_3`
     FOREIGN KEY (`sharing_profile_id`)
-    REFERENCES `guacamole_sharing_profile` (`sharing_profile_id`) ON DELETE SET NULL
+    REFERENCES `guacamole_sharing_profile` (`sharing_profile_id`)
+      ON DELETE SET NULL
 
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
