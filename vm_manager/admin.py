@@ -281,7 +281,7 @@ class VMStatusAdmin(admin.ModelAdmin):
     def response_change(self, request, obj):
         if "_set_vm_okay" in request.POST:
             if obj.instance:
-                # TODO - reassess this.  Just resetting all of the error
+                # TODO(SC) - reassess this.  Just resetting the error
                 # flags is not going to fix any underlying problems.
                 # We should (at least) do some sanity checks on the
                 # instance and volume first.

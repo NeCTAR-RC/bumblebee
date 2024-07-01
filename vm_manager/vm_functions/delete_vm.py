@@ -84,7 +84,6 @@ def _check_instance_is_shutoff_and_delete(
             retries - 1, func, func_args)
         return WF_CONTINUE
     if retries <= 0:
-        # TODO - not sure we should delete the instance anyway ...
         logger.info(f"Ran out of retries shutting down {instance}. "
                     "Proceeding to delete Nova instance anyway!")
 

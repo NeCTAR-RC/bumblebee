@@ -331,7 +331,7 @@ def wait_for_instance_active(user, desktop_type, instance, start_time):
                              user, desktop_type, instance, start_time)
 
 
-# TODO - Analyse for possible race conditions with create/delete
+# TODO(SC) - Analyse for possible race conditions with create/delete
 def extend_instance(user, vm_id, requesting_feature) -> str:
     instance = Instance.objects.get_instance_by_untrusted_vm_id(
         vm_id, user, requesting_feature)

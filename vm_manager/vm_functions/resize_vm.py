@@ -52,7 +52,7 @@ def downsize_vm_worker(instance, desktop_type) -> str:
     return downsize_result
 
 
-# TODO - Analyse for possible race conditions with supersize/downsize
+# TODO(SC) - Analyse for possible race conditions with supersize/downsize
 # This would be with a expiry downsize ...
 def extend_boost(user, vm_id, requesting_feature) -> str:
     instance = Instance.objects.get_instance_by_untrusted_vm_id(

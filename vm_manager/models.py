@@ -373,9 +373,7 @@ class Instance(CloudResource):
             permission='READ')
 
     def get_url(self):
-        # TODO: Set some sort of error if no guac connection set
         self.create_guac_connection()
-        # e.g. https://bumblebee-guacamole-melbourne-qh2.bumblebee.cloud.edu.au/#/client/MQBjAG15c3Fs
         url = settings.GUACAMOLE_URL_TEMPLATE.format(
             env=settings.ENVIRONMENT_NAME,
             zone=self.boot_volume.zone.lower(),  # lowercase for FQDN
@@ -476,7 +474,7 @@ class VMStatusManager(models.Manager):
         except VMStatus.DoesNotExist:
             return None
 
-    # TODO - The 'requesting_feature' argument is redundant (AFAIK)
+    # TODO(SC) - The 'requesting_feature' argument is redundant (AFAIK)
     # In fact it is probably redundant on the model class too.
     def get_vm_status_by_instance(self, instance, requesting_feature,
                                   allow_missing=False):
