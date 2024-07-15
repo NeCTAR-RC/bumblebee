@@ -1,56 +1,79 @@
 {% extends 'common/base.html' %}
 {% load static settings %}
 {% block content %}
-<div class="container py-5">
-    <div class="row mb-5">
-        <div class="col-12">
-            <h1 class="display-5 mb-4 text-center">What is the Virtual Desktop Service?</h1>
-            <p class="lead text-center">The <em>Virtual Desktop Service</em> is a service of the <a href="https://ardc.edu.au/">Australian Research Data Commons (ARDC)</a> and utilises the ARDC Nectar Research Cloud. This service allows researchers to easily and quickly create a Virtual Desktop - A Personal Computer in the cloud.</p>
+<section class="section">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-6">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'index' %}">Home</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">About</li>
+                    </ol>
+                </nav>
+                <h1 class="page-title">About the Virtual Desktop Service</h1>
+                <h2 class="page-subtitle">The Virtual Desktop Service is a service of the <a href="https://ardc.edu.au/">Australian Research Data Commons (ARDC)</a> and utilises the ARDC Nectar Research Cloud. This service allows researchers to easily and quickly create a Virtual Desktop - A Personal Computer in the cloud.</h2>
+            </div>
+            <div class="col-md-6">
+                <img src="{% static 'img/about-img.jpeg' %}" class="w-100 img-fluid" alt="About the ARDC Virtual Desktop Service" />
+            </div>
         </div>
     </div>
-    <div class="row mb-5">
-        <div class="col-12 col-md-6 my-auto">
-            <h2 class="h1 mb-xl-5">Enhance your research with quick and easy access to extra computational capabilities.</h2>   
-            <p>Need another computer to carry out compute processes for your research? You may find the Virtual Desktop Service useful to free up your laptop/workstation or to have a computer that you can leave running for uninterrupted processing for up to {% get_setting "INSTANCE_EXPIRY" %} days (with the ability to extend). The Virtual Desktop runs on the ARDC Nectar Research Cloud and offers a number of different desktop environments.</p>
+</section>
+<section>
+    <div class="container py-5">
+        <div class="row mb-5">
+            <div class="col-12 col-md-6">
+                <img src="{% static 'img/about-cloud.svg' %}" class="img-fluid" alt="Improving access to the cloud for research." />
+            </div>
+            <div class="col-12 col-md-6 my-auto">
+                <h2 class="h1 mb-xl-5">Enhance your research with quick and easy access to extra computational capabilities.</h2>   
+                <p>Need another computer to carry out compute processes for your research? You may find the Virtual Desktop Service useful to free up your laptop/workstation or to have a computer that you can leave running for uninterrupted processing for up to {% get_setting "INSTANCE_EXPIRY" %} days (with the ability to extend). The Virtual Desktop runs on the ARDC Nectar Research Cloud and offers a number of different desktop environments.</p>
+            </div>
         </div>
-        <div class="col-12 col-md-6">
-            <img src="{% static 'img/about-cloud.svg' %}" class="img-fluid" />
+        <div class="row mb-5">
+            <div class="col-12 col-md-6 order-md-2">
+                <img src="{% static 'img/about-researcher.svg' %}" class="img-fluid" alt="Desktops in the cloud for Australian researchers." />
+            </div>
+            <div class="col-12 col-md-6 my-auto order-md-1">
+                <h2 class="h1 mb-xl-5">Who can use this service?</h2>
+                <p>The Virtual Desktop Service has been developed by ARDC for researchers to support and enhance their research practices. To access this service, anyone with a AAF account can log in and create Virtual Desktop.</p>
+                <p>For a tutorial on how to use the Virtual Desktop Service, <a href="https://tutorials.rc.nectar.org.au/virtual-desktop-service/01-overview">click here</a>.</p>
+            </div>
         </div>
     </div>
-    <div class="row mb-5">
-        <div class="col-12 col-md-6 my-auto order-md-2">
-            <h2 class="h1 mb-xl-5">Who can use this service?</h2>
-            <p>The Virtual Desktop Service has been developed by ARDC for researchers to support and enhance their research practices. To access this service, anyone with a AAF account can log in and create Virtual Desktop.</p>
-            <p>For a tutorial on how to use the Virtual Desktop Service, <a href="https://tutorials.rc.nectar.org.au/virtual-desktop-service/01-overview">click here</a>.</p>
-        </div>
-        <div class="col-12 col-md-6 order-md-1">
-            <img src="{% static 'img/about-researcher.svg' %}" class="img-fluid" />
+</section>
+
+<section class="bg-light py-4">
+    <div class="container">
+        <div class="row">
+            <div class="col-12 col-md-8">
+                <h2 class="h1">What is available?</h2>
+                <dl>
+                    <dt>Desktop</dt>
+                    <dd>Currently there are 5 desktops to choose from: Ubuntu 20.04, Centos 7, Fedora Scientific, Neurodesktop (provided by <a href="https://ardc.edu.au/project/australian-electrophysiology-data-analytics-platform-aedapt/">AEDAPT</a>) and GeoDesktop. More desktops will become available as we work with our users and partnering organisations to determine what's needed.</dd>
+                    <dt>Size</dt>
+                    <dd>The default size of a Virtual Desktop is 4 virtual CPUs and 8GB RAM. Users will have the option to increase resources if the default is not sufficient for their computing needs. This can be done via the boost function, doubling the desktop size to 8 virtual CPUs and 16GB RAM.</dd>
+                    <dt>Storage and Applications</dt>
+                    <dd>A single 50GB volume will be included for the Operating System and Working Storage. Transferring files to your desktop can be done via "drag and drop" to the desktop interface. You can also download and install whatever software you wish onto your Virtual Desktop.</dd>
+                    <dt>Time Frames</dt>
+                    <dd>Once you have created a Virtual Desktop, it will be available for an initial {% get_setting "INSTANCE_EXPIRY" %} days. After the {% get_setting "INSTANCE_EXPIRY" %} days, the desktop will be automatically shelved to free reserved CPU and memory resources.  After a further {% get_setting "VOLUME_EXPIRY" %} days in shelved state, the desktop will be deleted. You will be sent email reminders at each stage of the expiry procedures, and you will have the option of extending the life of your desktop, {% get_setting "INSTANCE_EXTENSION" %} days at a time.  Boosted instances expire after {% get_setting "BOOST_EXPIRY" %} days, and can be extended {% get_setting "BOOST_EXTENSION" %} days at a time.  When a boost expires, the desktop reverts to standard size.  These expiry procedures are designed to reclaim resources used by desktops that are under-utilized or that have been abandoned entirely. </dd>
+                </dl>
+            </div>
         </div>
     </div>
-    <div class="col-12 col-md-8 offset-md-2">
-        <h2 class="h1">What is available?</h2>
-        <dl>
-            <dt>Desktop</dt>
-            <dd>Currently there are 5 desktops to choose from: Ubuntu 20.04, Centos 7, Fedora Scientific, Neurodesktop (provided by <a href="https://ardc.edu.au/project/australian-electrophysiology-data-analytics-platform-aedapt/">AEDAPT</a>) and GeoDesktop. More desktops will become available as we work with our users and partnering organisations to determine what's needed.</dd>
-            <dt>Size</dt>
-            <dd>The default size of a Virtual Desktop is 4 virtual CPUs and 8GB RAM. Users will have the option to increase resources if the default is not sufficient for their computing needs. This can be done via the boost function, doubling the desktop size to 8 virtual CPUs and 16GB RAM.</dd>
-            <dt>Storage and Applications</dt>
-            <dd>A single 50GB volume will be included for the Operating System and Working Storage. Transferring files to your desktop can be done via "drag and drop" to the desktop interface. You can also download and install whatever software you wish onto your Virtual Desktop.</dd>
-            <dt>Time Frames</dt>
-            <dd>Once you have created a Virtual Desktop, it will be available for an initial {% get_setting "INSTANCE_EXPIRY" %} days. After the {% get_setting "INSTANCE_EXPIRY" %} days, the desktop will be automatically shelved to free reserved CPU and memory resources.  After a further {% get_setting "VOLUME_EXPIRY" %} days in shelved state, the desktop will be deleted. You will be sent email reminders at each stage of the expiry procedures, and you will have the option of extending the life of your desktop, {% get_setting "INSTANCE_EXTENSION" %} days at a time.  Boosted instances expire after {% get_setting "BOOST_EXPIRY" %} days, and can be extended {% get_setting "BOOST_EXTENSION" %} days at a time.  When a boost expires, the desktop reverts to standard size.  These expiry procedures are designed to reclaim resources used by desktops that are under-utilized or that have been abandoned entirely. </dd>
-        </dl>
-    </div>
-</div>
-<div class="container-fluid bg-info text-white">
+</section>
+
+<div class="container-fluid">
     <div class="row py-5">
         <div class="col-12 text-center">
           <h3 class="mb-4">Ready to get started?</h3>
           {% if user.is_authenticated %}
-            <a href="{% url 'home' %}" class="btn btn-outline-primary mb-4">
+            <a href="{% url 'home' %}" class="btn btn-primary mb-4">
                 Desktop Home
             </a>
           {% else %}
-            <a href="{% url 'login' %}" class="btn btn-outline-primary mb-4">
+            <a href="{% url 'login' %}" class="btn btn-primary mb-4">
                 Sign In
             </a>
           {% endif %}

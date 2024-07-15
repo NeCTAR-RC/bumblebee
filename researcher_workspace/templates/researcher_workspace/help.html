@@ -1,44 +1,57 @@
 {% extends 'common/base.html' %}
 
 {% block content %}
-<div class="container py-5">
-    <h1 class="display-5 mb-4">Need help with the Virtual Desktop Service?</h1>
-    <div class="row">
-        <div class="col-sm-12 col-md-6">
-            <h3 class="mb-4">Contact Support Team</h3>
-            <p class="lead">If you are experiencing issues with the Virtual Desktop Service, please submit a support ticket to the Nectar Support Team via the form below and we will endeavour to contact you within 24 hours (weekdays).</p>
-            <form class="mb-4" method="post" action="{% url 'help' %}" enctype="multipart/form-data">
-                {% csrf_token %}
-                {{ form.non_field_errors }}
-                {% for hidden in form.hidden_fields %}
-                    {{ hidden }}
-                {% endfor %}
-                {% for field in form.visible_fields %}
-                  <div class="mb-3">
-                    {{ field.label_tag }}
-                    {{ field }}
-                    {% for error in field.errors %}
-                    <div class="alert alert-danger">
-                      <strong>{{ error|escape }}</strong>
-                    </div>
-                    {% endfor %}
-                    {% if field.help_text %}
-                    <small class="form-text text-muted">{{ field.help_text }}</small>
-                    {% endif %}
-                  </div>
-                {% endfor %}
-                <button type="submit" class="btn btn-primary">Submit</button>
-            </form>
-        </div>
-        <div class="col-sm-12 col-md-6">
-            <h3 class="mb-4">Support Team</h3>
-            <p>Alternatively, you can contact the Nectar Support Team by emailing <a href="mailto:support@ehelp.edu.au">support@ehelp.edu.au</a>.</p>
-            <p>The support team operates between 7am to 6pm AEDT, Monday to Friday.</p>
-            <h3 class="mt-5 mb-4">Self Help</h3>
-            <p>This Nectar Virtual Desktop Service enables researchers to easily access a Virtual Machine, with Desktop interface ready to go.</p>
-            <p>For more information on the Virtual Desktop Service, checkout <a href="https://support.ehelp.edu.au/support/solutions/articles/6000253856-nectar-virtual-desktop-service">this article</a> on the ARDC Nectar Research Cloud Support Website. You can also learn how to use the Virtual Desktop Service by following <a href="https://tutorials.rc.nectar.org.au/virtual-desktop-service">this tutorial</a>.</p>
-            <a role="button" class="btn btn-outline-primary" href="https://support.ehelp.edu.au/">Nectar Support Website <i class="fas fa-arrow-right"></i></a>
+<section class="section">
+    <div class="container">
+        <div class="row">
+            <div class="col">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'index' %}">Home</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Help</li>
+                    </ol>
+                </nav>
+                <h1 class="page-title">Request Help with the Virtual Desktop Service</h1>
+                <h2 class="page-subtitle">If you are experiencing issues with the Virtual Desktop Service, please submit a support ticket to the Nectar Support Team via the form below and we will endeavour to contact you within 24 hours (weekdays).</h2>
+            </div>
         </div>
     </div>
+</section>
+<div class="container py-5">
+  <div class="row">
+      <div class="col-sm-12 col-md-6">
+          <form class="mb-4" method="post" action="{% url 'help' %}" enctype="multipart/form-data">
+              {% csrf_token %}
+              {{ form.non_field_errors }}
+              {% for hidden in form.hidden_fields %}
+                  {{ hidden }}
+              {% endfor %}
+              {% for field in form.visible_fields %}
+                <div class="mb-3">
+                  {{ field.label_tag }}
+                  {{ field }}
+                  {% for error in field.errors %}
+                  <div class="alert alert-danger">
+                    <strong>{{ error|escape }}</strong>
+                  </div>
+                  {% endfor %}
+                  {% if field.help_text %}
+                  <small class="form-text text-muted">{{ field.help_text }}</small>
+                  {% endif %}
+                </div>
+              {% endfor %}
+              <button type="submit" class="btn btn-primary">Submit</button>
+          </form>
+      </div>
+      <div class="col-sm-12 col-md-6">
+          <h3 class="text-uppercase">Email Us</h3>
+          <p>Alternatively, you can contact the Nectar Support Team by emailing <a href="mailto:support@ehelp.edu.au">support@ehelp.edu.au</a>.</p>
+          <p>The support team operates between 7am to 6pm AEDT, Monday to Friday.</p>
+          <h3 class="mt-4 text-uppercase">Self Help</h3>
+          <p>This Nectar Virtual Desktop Service enables researchers to easily access a Virtual Machine, with Desktop interface ready to go.</p>
+          <p>For more information on the Virtual Desktop Service, checkout <a href="https://support.ehelp.edu.au/support/solutions/articles/6000253856-nectar-virtual-desktop-service">this article</a> on the ARDC Nectar Research Cloud Support Centre. You can also learn how to use the Virtual Desktop Service by following <a href="https://tutorials.rc.nectar.org.au/virtual-desktop-service">this tutorial</a>.</p>
+          <a role="button" class="btn btn-link" href="https://support.ehelp.edu.au/">Nectar Support Centre</a>
+      </div>
+  </div>
 </div>
 {% endblock %}

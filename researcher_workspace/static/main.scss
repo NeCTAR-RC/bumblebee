@@ -1,69 +1,18 @@
 // Use Figtree Google Font
 @import url('https://fonts.googleapis.com/css2?family=Figtree:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
-$font-family-sans-serif: 'Figtree', sans-serif;
-$font-family-base: 'Figtree', sans-serif;
-$font-size-base: 0.875rem;
-$form-label-font-weight: 600;
-
-// ARDC colours
-$ardc-blue:   #00A2C4;
-$ardc-pink:   #E51875;
-$ardc-orange: #F8B20E;
-$ardc-purple: #8E489B;
-$ardc-grey:   #969696;
-
-// Override bootstrap colours
-$dark: #000000;
-$blue: $ardc-blue;
-$pink: $ardc-pink;
-$orange: $ardc-orange;
-$purple: $ardc-purple;
-$gray: $ardc-grey;
-$green: #62C400;
-
-$gray-100: #fcfcfc;
-$gray-200: #EEEEEE;
-$gray-300: #dddddd;
-$gray-400: #c6c6c6;
-$gray-500: #999999;
-$gray-600: #666666;
-$gray-700: #333333;
-$gray-800: #222222;
-$gray-900: #111111;
-
-$primary:       lighten($orange, 5%);
-$secondary:     $gray;
-$success:       lighten($green, 2%);
-$info:          lighten($blue, 5%);
-$warning:       lighten($orange, 5%);
-$danger:        lighten($pink, 2%);
-
-$body-bg:                   $gray-100;
-$body-color:                $gray-900;
-
-//$min-contrast-ratio: 1.5;
-//$component-active-bg: $ardc-purple;
-$navbar-brand-padding-y: 0;
-$input-btn-padding-y-lg: .75rem;
-$input-btn-padding-x-lg: 1.25rem;
-// Bootstrap shadows
-$enable-shadows: true;
-
-$spacer: 1rem;
-$link-color: darken($info, 15%) !default;
-$btn-link-color: darken($primary, 10%) !default;
-$btn-link-hover-color: darken($btn-link-color, 20%) !default;
-$btn-box-shadow: false;
-$btn-active-box-shadow: false;
-
-// Bootstrap
+// ARDC theme variables
+@import "scss/variables";
+// Bootstrap scss
 @import "scss/bootstrap/bootstrap";
-
 // Font awesome
 $fa-font-path: "fontawesome";
 @import "scss/fontawesome/fontawesome.scss";
 @import "scss/fontawesome/solid.scss";
 @import "scss/fontawesome/brands.scss";
+// ARDC theme styles
+@import "scss/theme";
+
+/*** Portal Custom Styles Below ***/
 
 html,
 body {
@@ -81,33 +30,11 @@ footer {
   margin-top: auto;
 }
 
-.h1, .h2, .h3, .h4, .h5, .h6, 
-h1, h2, h3, h4, h5, h6 {
-  font-family: $font-family-base;
-  font-style: normal;
-  font-weight: 600;
-}
-
-.btn {
-  text-transform: uppercase;
-  font-weight: 600;
-  letter-spacing: 1px;
-  border-width: 2px;
-}
-
-.btn-link {
-  text-decoration: none;
-}
-
 .btn:disabled,
 .btn.disabled,
 fieldset:disabled .btn,
 span.disabled {
   cursor: not-allowed !important;
-}
-
-.navbar-dark .navbar-nav .nav-link:not(#dropdownUser1) {
-  text-transform: uppercase;
 }
 
 .modal-title {
@@ -364,41 +291,6 @@ section.desktop-section {
         }
       }
     
-    }
-  }
-}
-/*
- * Footer
- */
-.footer {
-  padding: 24px 0;
-  .footer-text {
-    a {
-      &:hover,
-      &:focus {
-        color: $ardc-pink;
-        text-decoration: underline;
-      }
-    }
-    ul {
-      list-style: none;
-    }
-  }
-  h4 {
-    text-transform:  uppercase;
-    &:after {
-      content: "";
-      background: #fff;
-      height: 2px;
-      display: block;
-      margin-top: 10px;
-      max-width: 50px;
-    }
-  }
-  .footer-links {
-    a {
-      color: #fff;
-      text-decoration: none;
     }
   }
 }

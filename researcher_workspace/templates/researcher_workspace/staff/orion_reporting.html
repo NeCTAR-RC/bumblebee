@@ -12,8 +12,8 @@
 
 {% block content %}
 <div class="container">
-    <section>
-        <h2>Orion Reporting</h2>
+    <section class="my-4">
+        <h1 class="page-title">Orion Reporting</h1>
         <form method="POST">
             {% csrf_token %}
             <p>
@@ -21,10 +21,10 @@
                 <input type="number" value="6" min="1" name="reporting_months" id="reporting_months"/>
                 <p class="helptext">This is inclusive of the current month so far</p>
             </p>
-            <button type="submit" class="button-small">Download as csv</button>
+            <button type="submit" class="btn btn-secondary btn-sm">Download as csv</button>
         </form>
     </section>
-    <section>
+    <section class="my-4">
         <h2>Number of Researcher Desktops</h2>
         <table class="table">
             <thead>
@@ -44,15 +44,15 @@
         </table>
     </section>
     {% for desktop_type in desktop_types %}
-    <section>
+    <section class="my-4">
         <h2>Graph of number of {{ desktop_type.name }} Researcher Desktops over time</h2>
         <div id="{{ desktop_type.id }}-data" style="height: 400px;"></div>
     </section>
-    <section>
+    <section class="my-4">
         <h2>Graph of number of {{ desktop_type.name }} Researcher Desktop resizes over time</h2>
         <div id="{{ desktop_type.id }}-resizes" style="height: 400px;"></div>
     </section>
-    <section>
+    <section class="my-4">
         <h2>Graph of number of {{ desktop_type.name }} Researcher Desktop errors per day</h2>
         <div id="{{ desktop_type.id }}-errors" style="height: 400px;"></div>
     </section>

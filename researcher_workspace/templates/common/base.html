@@ -23,84 +23,103 @@
     {% endblock style %}
   </head>
 
-  <body class="bg-light">
-
-    <!-- navbar -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark" id="navbar-main">
-      <div class="container">
-        <a class="navbar-brand" href="{% url 'index' %}"><img src="{% static 'img/logo.svg' %}" height="60" class="d-block d-sm-inline-block me-2">
-          Virtual Desktop Service
-        </a>
-        
-        <button class="navbar-toggler ms-auto" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavDropdown" aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
-          <span class="navbar-toggler-icon"></span>
-        </button>
-
-        <div class="collapse navbar-collapse" id="navbarNavDropdown">
-          <ul class="navbar-nav navbar-right mb-2 mb-lg-0 ms-auto">
-            {% if user.is_authenticated %}
-              {% load group_filters %}
-              {% if user.is_staff and user.is_superuser %}
-                <li class="nav-item">
-                  <a class="nav-link" href="{% url 'admin:index' %}">Admin</a>
-                </li>
-              {% endif %}
-              {% if user.is_staff or user|has_group:'Support Staff' %}
-                <li class="nav-item {% active_link 'orion_report' %}">
-                  <a class="nav-link" href="{% url 'orion_report' %}">Orion</a>
-                </li>
-                <li class="nav-item {% active_link 'user_search' %}">
-                  <a class="nav-link" href="{% url 'user_search' %}">Users</a>
-                </li>
-              {% endif %}
-            {% endif %}
-            <li class="nav-item {% active_link 'about' %}">
-              <a class="nav-link" href="{% url 'about' %}">About</a>
-            </li>
-          </ul>
-
-          {% if user.is_authenticated %}
-          <ul class="navbar-nav navbar-right">
-            <li class="nav-item {% active_link 'help' %}">
-              <a class="nav-link" href="{% url 'help' %}"><i class="fas fa-question-circle"></i> Help</a>
-            </li>
-            <li class="dropdown">
-              <a href="#" class="d-block text-decoration-none dropdown-toggle nav-link" id="dropdownUser1" data-bs-toggle="dropdown" aria-expanded="false">
-                <span class="navbar-text ps-2">{{ user.email }}</span>
+  <body>
+    <!-- ARDC header and navigation -->
+    <section id="navbar" class="sticky-top">
+      <nav id="navbar-top" class="navbar navbar-expand-lg navbar-light bg-white">
+          <div class="container-xl">
+              <a href="{% url 'index' %}" class="navbar-brand">
+                  <img src="{% static 'img/ardc-nectar-logo.svg' %}" alt="Virtual Desktop Service" height="40" class="d-inline-block align-text-center me-2">
+                  <span class="d-none d-sm-inline-block">Virtual Desktop Service</span>
+                  <span class="d-inline-block d-sm-none">Virtual<br />Desktop<br />Service</span>
               </a>
-              <ul class="dropdown-menu text-small" aria-labelledby="dropdownUser1">
-                {% if allow_new_projects %}
-                <li><a class="dropdown-item" href="{% url 'new_project' %}">New Workspace...</a></li>
-                <li><a class="dropdown-item" href="{% url 'projects' %}">
-                    Workspaces</a></li>
-                {% else %}
-                <li><a class="dropdown-item" href="{% url 'projects' %}">
-                    Workspace</a></li>
-                {% endif %}
-                <li><a class="dropdown-item" href="{% url 'profile' %}">Profile</a></li>
-                <li><hr class="dropdown-divider"></li>
-                <li>
-                  <form class="form-inline my-2 my-lg-0" action="{% url 'logout' %}" method="post">
-                    {% csrf_token %}
-                    <button type="submit" class="btn btn-link dropdown-item">Log out</button>
-                  </form>
-                </li>
-              </ul>
-            </li>
-          </ul>
-        </div>
-        
-        {% else %}
-          <ul class="navbar-nav navbar-right">
-            <li class="nav-item">
-              <a class="btn btn-outline-light" href="{% url 'login' %}" role="button">Sign In</a>
-            </li>
-          </ul>
-        {% endif %}
-          
-      </div>
-    </nav>
-    <!-- /navbar -->
+              
+              <button class="navbar-toggler ms-auto" type="button" data-bs-toggle="collapse" data-bs-target="#nav-portal" aria-controls="nav-portal" aria-expanded="false" aria-label="Toggle navigation">
+                  <span class="navbar-toggler-icon"></span>
+              </button>
+      
+              <div class="collapse navbar-collapse" id="nav-ardc">
+                  <ul class="navbar-nav ms-auto">
+                      <li class="nav-item">
+                          <a class="nav-link" href="https://ardc.edu.au/news-and-events/subscribe/" target="_blank">ARDC Newsletter Subscribe</a>
+                      </li>
+                      <li class="nav-item">
+                          <a class="nav-link" href="https://ardc.edu.au/contact-us/" target="_blank">Contact Us</a>
+                      </li>
+                      <li class="nav-item d-flex align-items-center">
+                          <a class="nav-icon icon-twitter ms-2" href="https://twitter.com/ARDC_AU" target="_blank"><i class="fab fa-twitter"></i></a>
+                          <a class="nav-icon icon-linkedin ms-2" href="https://www.linkedin.com/company/australian-research-data-commons/" target="_blank"><i class="fab fa-linkedin-in"></i></a>
+                          <a class="nav-icon icon-youtube ms-2" href="https://www.youtube.com/c/ARDC_AU" target="_blank"><i class="fab fa-youtube"></i></a>
+                          <a class="nav-icon icon-contact ms-2" href="https://ardc.edu.au/contact-us" target="_blank"><i class="fa fa-envelope"></i></a>
+                      </li>
+                  </ul>
+              </div>
+          </div>
+      </nav>
+
+      <nav id="navbar-bottom" class="navbar navbar-expand-lg navbar-light bg-light">
+          <div class="container-xl">
+              <!-- <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav-portal" aria-controls="nav-portal" aria-expanded="false" aria-label="Toggle navigation">
+                  <span class="navbar-toggler-icon"></span>
+              </button> -->
+              <div class="collapse navbar-collapse" id="nav-portal">
+                  <ul class="navbar-nav">
+                      <li class="nav-item"><a href="{% url 'index' %}" class="nav-link">Home</a></li>
+                      <li class="nav-item"><a href="{% url 'about' %}" class="nav-link">About</a></li>
+                      {% if user.is_authenticated %}
+                        {% load group_filters %}
+                        {% if user.is_staff and user.is_superuser %}
+                          <li class="nav-item">
+                            <a class="nav-link" href="{% url 'admin:index' %}">Admin</a>
+                          </li>
+                        {% endif %}
+                        {% if user.is_staff or user|has_group:'Support Staff' %}
+                          <li class="nav-item {% active_link 'orion_report' %}">
+                            <a class="nav-link" href="{% url 'orion_report' %}">Orion</a>
+                          </li>
+                          <li class="nav-item {% active_link 'user_search' %}">
+                            <a class="nav-link" href="{% url 'user_search' %}">Users</a>
+                          </li>
+                        {% endif %}
+                      {% endif %}
+                      {% if user.is_authenticated %}
+                        <li class="nav-item {% active_link 'help' %}">
+                          <a class="nav-link" href="{% url 'help' %}">Help</a>
+                        </li>
+                        <li class="nav-item dropdown ms-auto">
+                          <a href="#" class="nav-link nav-cta" id="dropdownUser1" data-bs-toggle="dropdown" aria-expanded="false">
+                            {{ user.email }}
+                          </a>
+                          <ul class="dropdown-menu text-small" aria-labelledby="dropdownUser1">
+                            {% if allow_new_projects %}
+                            <li><a class="dropdown-item" href="{% url 'new_project' %}">New Workspace...</a></li>
+                            <li><a class="dropdown-item" href="{% url 'projects' %}">
+                                Workspaces</a></li>
+                            {% else %}
+                            <li><a class="dropdown-item" href="{% url 'projects' %}">
+                                Workspace</a></li>
+                            {% endif %}
+                            <li><a class="dropdown-item" href="{% url 'profile' %}">Profile</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                              <form class="form-inline my-2 my-lg-0" action="{% url 'logout' %}" method="post">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-secondary dropdown-item">Sign out</button>
+                              </form>
+                            </li>
+                          </ul>
+                        </li>
+                      
+                      {% else %}
+                        <li class="nav-item ms-auto">
+                          <a class="nav-link nav-cta" href="{% url 'login' %}" role="button">Sign In</a>
+                        </li>
+                      {% endif %}
+                  </ul>
+              </div>
+          </div>
+      </nav>
+    </section>
 
     <main role="main" class="main">
       {% if user.is_authenticated %}
@@ -127,69 +146,53 @@
 
     </main>
 
-    <!-- footer -->
-    <footer class="footer bg-black text-white">
-      <div class="container">
-        <div class="row align-items-end mb-5">
-          <div class="col-sm-8 footer-text pe-5">
-            <p>The Virtual Desktop Service is a service of the Australian Research Data Commons (ARDC) and utilises the Nectar Research Cloud.
-              The Australian Research Data Commons (ARDC) is enabled by the National Collaborative Research Infrastructure Strategy Program (NCRIS).
-              <a href="https://ardc.edu.au/about/" target="_blank">Read more about the ARDC...</a>
-            </p>
-          </div>
-          <div class="col-sm-4">
-            <div class="row">
-              <div class="col-7 align-self-end">
-                <a href="https://www.ardc.edu.au/" target="_blank">
-                  <img src="{% static 'img/ardc_logo_rev.svg' %}" class="img-fluid" alt="Australian Research Data Commons (ARDC)">
-                </a>
+    <!-- ARDC footer -->
+    <footer id="ardc-footer" role="contentinfo">
+      <div class="footer-row">
+          <div class="container">
+              <div class="row">
+                  <div class="col-12 col-md-4 footer-logos">
+                      <a href="https://www.education.gov.au/ncris">
+                          <img id="ncris-logo" src="{% static 'img/ncris-logo.png' %}" alt="National Collaborative Research Infrastructure Strategy">
+                      </a>
+                      <p class="footer-image-description">The Australian Research Data Commons is enabled by NCRIS.</p>
+                  </div>
+                  <div class="col-12 col-md-4">
+                      <!-- Include ARDC newsletter sign up form -->
+                      {% include "common/_ardc_subscribe.html" %}
+                  </div>
+                  <div class="col-12 col-md-4 footer-links">
+                      <h4 class="footer-heading">Quick Links</h4>
+                      <ul class="footer-list list-bullet">
+                        <li><a href="{% url 'terms' %}" title="Nectar Cloud Terms and Conditions">Terms of Service</a></li>
+                        <li><a href="https://ardc.edu.au/privacy-policy/" target="_blank" title="Privacy Policy">Privacy Policy</a></li>
+                        <li><a href="https://support.ehelp.edu.au/support/home" title="Nectar Support Centre">Nectar Support Centre</a></li>
+                        <li><a href="https://status.rc.nectar.org.au/" target="_blank" title="Nectar Cloud Status Site">Nectar Status</a></li>
+                        <li><a href="https://tutorials.rc.nectar.org.au/" target="_blank" title="Nectar Cloud Tutorials">Nectar Tutorials</a></li>
+                        <li><a href="https://ardc.edu.au/" target="_blank" title="ARDC Website">ARDC Website</a></li>
+                        <li><a href="https://ardc.edu.au/contact-us/" target="_blank" title="Contact ARDC">Contact ARDC</a></li>
+                    </ul>
+                  </div>
               </div>
-              <div class="col-5 align-self-end">
-                <a href="https://education.gov.au/national-collaborative-research-infrastructure-strategy-ncris" target="_blank">
-                  <img src="{% static 'img/ncris_mono_rev.svg' %}" class="img-fluid" alt="National Collaborative Research Infrastructure Strategy (NCRIS)">
-                </a>
+          </div>
+      </div>
+      <div class="footer-row bg-light">
+          <div class="container">
+              <div class="row footer-acknowledgement">
+                  <p>We acknowledge and celebrate the First Australians on whose traditional lands we live and work, and we pay our respects to Elders past, present and emerging.</p>
               </div>
-            </div>
           </div>
-        </div> <!-- row -->
-        <div class="row h-100 footer-links">
-          <div class="col-sm-3 col-xs-6">
-            <h4>Quicklinks</h4>
-            <ul class="list-unstyled">
-              <li><a href="{% url "home" %}">Home</a></li>
-              <li><a href="{% url "terms" %}">Terms of Service</a></li>
-              <li><a href="https://ardc.edu.au/privacy-policy/">Privacy Policy</a></li>
-            </ul>
+      </div>
+      <div class="footer-row">
+          <div class="container">
+              <div class="footer-copyright d-flex flex-wrap align-items-center">
+                  <span class="copyright">Copyright © <script type="text/javascript">document.write( new Date().getFullYear() );</script> ARDC. <a href="https://www.acnc.gov.au/charity/charities/eca273f3-f5be-e911-a98a-000d3ad02a61/profile" target="_blank" rel="noopener noreferrer">ACN 633 798 857 <i class="fa fa-external-link-alt" aria-hidden="true"></i></a></span>
+                  <a href="https://ardc.edu.au/terms-and-conditions/" target="_blank" class="footer-link" rel="noopener noreferrer"><span class="disclaimer">Terms and Conditions</span></a>
+                  <a href="https://ardc.edu.au/privacy-policy/" target="_blank" class="footer-link" rel="noopener noreferrer"><span class="privacy">Privacy Policy</span></a>
+                  <a href="https://ardc.edu.au/accessibility-statement-for-ardc/" target="_blank" class="footer-link" rel="noopener noreferrer"><span class="accessibility">Accessibility Statement</span></a>
+              </div>
           </div>
-          <div class="col-sm-3 col-xs-6">
-            <h4>Explore</h4>
-            <ul class="list-unstyled">
-              <li><a href="http://support.nectar.org.au/support/solutions/folders/6000190150">Cloud Basics</a></li>
-              <li><a href="http://support.nectar.org.au/support/solutions/folders/6000232361">Cloud Services</a></li>
-              <li><a href="http://support.nectar.org.au/support/solutions/folders/6000230414">Cloud Applications</a></li>
-              <li><a href="http://support.nectar.org.au/support/solutions/folders/6000190155">Cloud Fundamentals</a></li>
-            </ul>
-          </div>
-          <div class="col-sm-3 col-xs-6">
-            <h4>Help</h4>
-            <ul class="list-unstyled">
-              <li><a href="http://support.nectar.org.au/support/tickets/new" target="_blank">Request Support</a></li>
-              <li><a href="https://support.ehelp.edu.au/support/home#chat">Online Chat</a></li>
-              <li><a href="https://tutorials.rc.nectar.org.au">Tutorials</a></li>
-            </ul>
-          </div>
-          <div class="col-sm-3 col-xs-6">
-            <h4>External Resources</h4>
-            <ul class="list-unstyled">
-              <li><a href="https://ardc.edu.au/">ARDC Home</a></li>
-              <li><a href="https://dashboard.rc.nectar.org.au/">Nectar Dashboard</a></li>
-              <li><a href="https://desktop.rc.nectar.org.au/">Virtual Desktop Service</a></li>
-              <li><a href="https://jupyterhub.rc.nectar.org.au/">Jupyter Notebook Service</a></li>
-              <li><a href="https://ardc.edu.au/services/">ARDC Online Services</a></li>
-            </ul>
-          </div>
-        </div>
-      </div> 
+      </div>
     </footer>
 
     <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
