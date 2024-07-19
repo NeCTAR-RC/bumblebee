@@ -4,6 +4,8 @@ from django.conf import settings
 from django.db import migrations, models
 import django.db.models.deletion
 
+from researcher_workspace import models as workspace_models
+
 
 class Migration(migrations.Migration):
 
@@ -18,8 +20,8 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='CloudResource',
             fields=[
-                ('id', models.UUIDField(editable=False, primary_key=True,
-                                        serialize=False)),
+                ('id', workspace_models.Char32UUIDField(
+                    editable=False, primary_key=True, serialize=False)),
                 ('created', models.DateTimeField(auto_now_add=True)),
                 ('marked_for_deletion', models.DateTimeField(blank=True,
                                                              null=True)),
@@ -57,7 +59,7 @@ class Migration(migrations.Migration):
                     to='vm_manager.cloudresource')),
                 ('image', models.CharField(max_length=100)),
                 ('operating_system', models.CharField(max_length=20)),
-                ('flavor', models.UUIDField()),
+                ('flavor', workspace_models.Char32UUIDField()),
                 ('checked_in', models.BooleanField(default=False)),
                 ('ready', models.BooleanField(default=False)),
                 ('hostname_id', models.CharField(max_length=6, null=True,

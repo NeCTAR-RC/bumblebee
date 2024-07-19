@@ -11,7 +11,7 @@ from django.template.defaultfilters import safe
 
 from novaclient import exceptions as nova_exceptions
 
-from researcher_workspace.models import Feature, User
+from researcher_workspace.models import Feature, User, Char32UUIDField
 from vm_manager.constants import ERROR, ACTIVE, SHUTDOWN, VERIFY_RESIZE, \
     RESIZE, MISSING, VM_ERROR
 
@@ -83,7 +83,7 @@ class BackupExpiration(Expiration):
 
 
 class CloudResource(models.Model):
-    id = models.UUIDField(primary_key=True, editable=False)
+    id = Char32UUIDField(primary_key=True, editable=False)
     user = models.ForeignKey(User, on_delete=models.PROTECT, )
     created = models.DateTimeField(auto_now_add=True)
     expiration = models.OneToOneField(ResourceExpiration,
@@ -136,7 +136,7 @@ class VolumeManager(models.Manager):
 class Volume(CloudResource):
     image = models.CharField(max_length=100)
     operating_system = models.CharField(max_length=20)
-    flavor = models.UUIDField()
+    flavor = Char32UUIDField()
     zone = models.CharField(max_length=32, null=True)
     requesting_feature = models.ForeignKey(Feature,
                                            on_delete=models.PROTECT)
@@ -145,7 +145,7 @@ class Volume(CloudResource):
     hostname_id = models.CharField(max_length=6, unique=True, null=True)
     shelved_at = models.DateTimeField(null=True, blank=True)
     archived_at = models.DateTimeField(null=True, blank=True)
-    backup_id = models.UUIDField(null=True, blank=True)
+    backup_id = Char32UUIDField(null=True, blank=True)
     backup_expiration = models.OneToOneField(BackupExpiration,
                                              on_delete=models.CASCADE,
                                              null=True, blank=True,

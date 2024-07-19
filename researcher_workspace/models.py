@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
 import logging
+import uuid
 
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser
@@ -15,8 +16,38 @@ logger = logging.getLogger(__name__)
 utc = timezone.utc
 
 
+class Char32UUIDField(models.UUIDField):
+    """A UUIDField variant that use char(32) to hold the UUID.
+
+    This is a compatibility hack for MySQL / MariaDB.  Prior to
+    MariaDB 10.7, Django uses a char(32) column to hold UUIDs.
+    In 10.7+, there is a native uuid column type.  In Django 5,
+    the UUIDField class uses the uuid column type when available.
+
+    This hack forces 'char(32)' to be used.  It allows UUID fields
+    created and populated in the database prior to Django 5 to
+    still work after switching to Django 5.  See 'Migrating existing
+    UUIDField on MariaDB 10.7+' in the Django 5 release notes.
+
+    Caveat: __iexact doesn't work with this field variant.  We haven't
+    investigated why, but shouldn't be necessary anyway.
+    """
+
+    def db_type(self, connection):
+        return "char(32)"
+
+    def get_db_prep_value(self, value, connection, prepared=False):
+        value = super().get_db_prep_value(value, connection, prepared)
+        if value is not None:
+            # Convert to 32 hex digit (no '-') format
+            if type(value) is str:
+                value = uuid.UUID(value)
+            value = value.hex
+        return value
+
+
 class User(AbstractUser):
-    sub = models.UUIDField(null=True, unique=True)
+    sub = Char32UUIDField(null=True, unique=True)
     date_agreed_terms = models.DateTimeField(null=True)
     terms_version = models.IntegerField(default=0)
 

@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 class AvailabilityZone(models.Model):
     name = models.CharField(primary_key=True, max_length=32)
     zone_weight = models.IntegerField()
-    network_id = models.UUIDField(null=True)
+    network_id = workspace_models.Char32UUIDField(null=True)
     enabled = models.BooleanField(default=True)
 
     def __str__(self):

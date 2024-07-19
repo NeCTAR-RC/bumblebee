@@ -132,7 +132,7 @@ class OIDCAuthBackend(OIDCAuthenticationBackend):
         if not sub or not email:
             return self.UserModel.objects.none()
 
-        users = self.UserModel.objects.filter(sub__iexact=sub)
+        users = self.UserModel.objects.filter(sub=sub)
         if not users:
             users = self.UserModel.objects.filter(
                 email__iexact=email).filter(sub__isnull=True)

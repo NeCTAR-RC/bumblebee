@@ -2,6 +2,8 @@
 
 from django.db import migrations, models
 
+from researcher_workspace import models as workspace_models
+
 
 class Migration(migrations.Migration):
 
@@ -23,7 +25,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='volume',
             name='backup_id',
-            field=models.UUIDField(blank=True, null=True),
+            field=workspace_models.Char32UUIDField(blank=True, null=True),
         ),
         migrations.AddField(
             model_name='volume',
