@@ -237,28 +237,34 @@ to `VM_Okay`, and Bumblebee will think it's fine.
 The selenium tests are intended to be run in a fully configured bumblebee
 development environment with the redis service, rqscheduler and rqworker
 already running.  You will need to install Firefox and some additional
-dependencies:
+dependencies.
+
+-  On a machine with a graphics, just install regular firefox.
 
 ```
 sudo apt-get install firefox
-# On a headless machine
+```
+
+- On a headless machine, you need the non-Snap version of firefox.  See
+https://www.omgubuntu.co.uk/2022/04/how-to-install-firefox-deb-apt-ubuntu-22-04 for instructions on how to install it.  Then you need to install
+the following.
+
+```
 sudo apt-get install xvfb libxi6 libgconf-2-4
 ```
 
-On a headless machine, run the following to start a virtual framebuffer:
+Before running tests, you will need to start a virtual framebuffer as
+follows.  (NB: The X11 ports 6000-6063 should not be open for security
+reasons.  The "-ac" option is disabling host access control; see the
+Xserver(1) manual entry.)
 
 ```
 sudo Xvfb :5 -ac &
 export DISPLAY=:5
 ```
 
-(NB: The X11 ports 6000-6063 should not be open for security reasons.  The
-"-ac" option is disabling host access control; see the Xserver(1) manual
-entry.)
-
-Create a writeable directory where the automated Firefox can create
-user profiles:
-
+If necessary, create a writeable directory where the automated Firefox
+can create user profiles; e.g.
 
 ```
 mkdir /home/ubuntu/bumblebee/tmp
@@ -268,7 +274,6 @@ export TMPDIR=/home/ubuntu/bumblebee/tmp
 If you have a Github API token, export it as an environment variable.
 This will avoid problems with Github API rate limiting if you run the
 selenium tests repeatedly from the same machine.
-
 
 ```
 export GH_TOKEN=...    # This is optional ...
