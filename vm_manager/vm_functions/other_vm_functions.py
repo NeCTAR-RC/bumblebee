@@ -45,7 +45,7 @@ def reboot_vm_worker(user, vm_id, reboot_level,
 
     vm_status = VMStatus.objects.get_vm_status_by_instance(
         instance, requesting_feature)
-    vm_status.status_progress = 33
+    vm_status.status_progress = 30
     vm_status.status_message = "Reboot request sent; waiting for restart"
     vm_status.save()
 
@@ -64,7 +64,7 @@ def _check_power_state(retries, instance, target_status, requesting_feature):
     active = instance.check_active_status()
     if active:
         logger.info(f"Instance {instance.id} is {ACTIVE}")
-        vm_status.status_progress = 66
+        vm_status.status_progress = 45
         vm_status.status_message = "Instance restarted; waiting for reboot"
         vm_status.save()
         # The final stage is done in response to a phone_home request

@@ -128,7 +128,7 @@ class CreateVMTests(VMFunctionTestBase):
 
         updated_status = VMStatus.objects.get(pk=fake_status.pk)
         self.assertEqual(VM_OKAY, updated_status.status)
-        self.assertEqual(50, updated_status.status_progress)
+        self.assertEqual(30, updated_status.status_progress)
 
     @patch('vm_manager.vm_functions.create_vm._create_instance')
     @patch('vm_manager.vm_functions.create_vm.django_rq')
@@ -164,7 +164,7 @@ class CreateVMTests(VMFunctionTestBase):
             self.user, self.UBUNTU, fake_instance, now)
         updated_status = VMStatus.objects.get(pk=fake_status.pk)
         self.assertEqual(VM_SHELVED, updated_status.status)
-        self.assertEqual(50, updated_status.status_progress)
+        self.assertEqual(30, updated_status.status_progress)
 
     @patch('vm_manager.vm_functions.create_vm.django_rq')
     @patch('vm_manager.vm_functions.create_vm._create_instance')
@@ -260,7 +260,7 @@ class CreateVMTests(VMFunctionTestBase):
         vm_status = VMStatus.objects.get_latest_vm_status(
             self.user, self.UBUNTU)
         self.assertEqual(NO_VM, vm_status.status)
-        self.assertEqual(25, vm_status.status_progress)
+        self.assertEqual(15, vm_status.status_progress)
 
     @patch('vm_manager.vm_functions.create_vm.get_nectar')
     @patch('vm_manager.vm_functions.create_vm.logger')
@@ -526,7 +526,7 @@ class CreateVMTests(VMFunctionTestBase):
         updated_status = VMStatus.objects.get(pk=fake_status.pk)
         # (Still waiting for the boot callback ...)
         self.assertEqual(VM_WAITING, updated_status.status)
-        self.assertEqual(75, updated_status.status_progress)
+        self.assertEqual(45, updated_status.status_progress)
 
     @patch('vm_manager.models.logger')
     @patch('vm_manager.vm_functions.create_vm.InstanceExpiryPolicy')

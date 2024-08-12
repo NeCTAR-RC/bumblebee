@@ -91,7 +91,7 @@ def _check_instance_is_shutoff_and_delete(
     vm_status = VMStatus.objects.get_vm_status_by_instance(
         instance, instance.boot_volume.requesting_feature, allow_missing=True)
     if vm_status and vm_status.status == VM_WAITING:
-        vm_status.status_progress = 66
+        vm_status.status_progress = 45
         vm_status.status_message = 'Instance shelving'
         vm_status.save()
 

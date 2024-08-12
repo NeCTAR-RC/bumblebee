@@ -238,7 +238,7 @@ class DeleteVMTests(VMFunctionTestBase):
             timedelta(seconds=settings.INSTANCE_POLL_DELETED_WAIT),
             funky, *funky_args)
         updated_status = VMStatus.objects.get(pk=fake_status.pk)
-        self.assertEqual(66, updated_status.status_progress)
+        self.assertEqual(45, updated_status.status_progress)
         self.assertIsNotNone(updated_status.status_message)
 
     @patch('vm_manager.models.get_nectar')

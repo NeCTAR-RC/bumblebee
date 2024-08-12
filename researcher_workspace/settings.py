@@ -385,15 +385,15 @@ BACKUP_LIFETIME = int(get_setting('BACKUP_LIFETIME', '90'))
 
 # Wait times and retry counts for the workflows in vm_manager.  The
 # wait times are all in seconds.
-LAUNCH_WAIT = int(get_setting('LAUNCH_WAIT', '300'))
-REBOOT_WAIT = int(get_setting('REBOOT_WAIT', '300'))
+LAUNCH_WAIT = int(get_setting('LAUNCH_WAIT', '600'))
+REBOOT_WAIT = int(get_setting('REBOOT_WAIT', '600'))
 REBOOT_CONFIRM_WAIT = int(get_setting('REBOOT_CONFIRM_WAIT', '10'))
 REBOOT_CONFIRM_RETRIES = int(get_setting('REBOOT_CONFIRM_RETRIES', '5'))
 
-RESIZE_WAIT = int(get_setting('RESIZE_WAIT', '300'))
-RESIZE_CONFIRM_WAIT = int(get_setting('RESIZE_CONFIRM_WAIT', '240'))
+RESIZE_WAIT = int(get_setting('RESIZE_WAIT', '600'))
+RESIZE_CONFIRM_WAIT = int(get_setting('RESIZE_CONFIRM_WAIT', '600'))
 
-SHELVE_WAIT = int(get_setting('SHELVE_WAIT', '300'))
+SHELVE_WAIT = int(get_setting('SHELVE_WAIT', '600'))
 
 ARCHIVE_WAIT = int(get_setting('ARCHIVE_WAIT', '18000'))
 ARCHIVE_POLL_WAIT = int(get_setting('ARCHIVE_POLL_WAIT', '60'))
