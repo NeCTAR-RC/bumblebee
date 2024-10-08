@@ -1,0 +1,229 @@
+// ARDC colours
+$ardc-blue:   #00A2C4;
+$ardc-pink:   #E51875;
+$ardc-yellow: #F8B20E;
+$ardc-purple: #8E489B;
+$ardc-grey:   #808080;
+$hass-orange: #f6861f;
+$people-navy: #29347b;
+$planet-green: #39833e;
+
+// Override bootstrap colours
+$dark: #000000;
+$blue: $ardc-blue;
+$pink: $ardc-pink;
+$yellow: $ardc-yellow;
+$orange: $hass-orange;
+$purple: $ardc-purple;
+$gray: $ardc-grey;
+$orange: $hass-orange;
+$navy: $people-navy;
+$green: $planet-green;
+
+$white:    #fff;
+$gray-100: #f5f5f5;
+$gray-200: #e5e5e5;
+$gray-300: #d8d8d8;
+$gray-400: #969696;
+$gray-500: #808080;
+$gray-600: #666666;
+$gray-700: #333333;
+$gray-800: #202020;
+$gray-900: #16161d;
+$black:     #000;
+
+$primary:       $purple;
+$secondary:     $gray;
+$success:       $green;
+$info:          darken($blue, 2%); //lighten($blue, 5%);
+$warning:       darken($orange, 7%); //lighten($orange, 5%);
+$danger:        darken($pink, 7%); //lighten($pink, 2%);
+$light:         $gray-100;
+$dark:          $gray-900;
+
+$component-active-color:    $black;
+$component-active-bg:       $yellow;
+
+$body-bg:                   $white;
+$body-color:                $gray-900;
+
+// The contrast ratio to reach against white, to determine if color changes from "light" to "dark". Acceptable values for WCAG 2.0 are 3, 4.5 and 7.
+// See https://www.w3.org/TR/WCAG20/#visual-audio-contrast-contrast
+$min-contrast-ratio:   3;
+//$component-active-bg: $ardc-purple;
+
+// Link Styles
+$link-color:                        $primary;
+$link-decoration:                   underline;
+$link-hover-color:                  $dark;
+$link-hover-decoration:             underline;
+
+// Fonts
+$font-family-sans-serif:        'Figtree', sans-serif;
+$font-family-base:              'Figtree', sans-serif;
+$font-size-base:                1rem;
+$font-size-sm:                  $font-size-base * .875;
+$font-size-lg:                  $font-size-base * 1.25;
+$headings-font-weight:          600;
+$headings-color:                $dark;
+$h1-font-size:                  $font-size-base * 2;
+$h2-font-size:                  $font-size-base * 1.8;
+$h3-font-size:                  $font-size-base * 1.3;
+$h4-font-size:                  $font-size-base * 1.2;
+$h5-font-size:                  $font-size-base * 1.1;
+$h6-font-size:                  $font-size-base;
+$text-muted:                    $gray-600 !default;
+
+// Navbar styles
+$navbar-padding-y:                  0;
+$navbar-nav-link-padding-x:         0;
+$nav-link-padding-y:                0.5rem;
+$nav-link-padding-x:                1rem;
+$nav-link-font-size:                16px;
+$nav-link-font-weight:              400;
+$nav-link-color:                    $link-color;
+$nav-link-hover-color:              $link-hover-color;
+$nav-link-transition:               color .15s ease-in-out, background-color .15s ease-in-out, border-color .15s ease-in-out;
+$nav-link-disabled-color:           $gray-600;
+$navbar-brand-font-size:            16px;
+$navbar-brand-padding-y:            0;
+$navbar-light-color:                rgba(32 ,32 ,32 , .8);
+$navbar-light-hover-color:          rgba($black, 1);
+$navbar-light-active-color:         rgba($black, .9);
+$navbar-light-disabled-color:       rgba($black, .3);
+$navbar-light-toggler-icon-bg:      url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'><path stroke='#{$navbar-light-color}' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/></svg>");
+$navbar-light-toggler-border-color: rgba($black, .1);
+$nav-pills-link-active-color:       $white;
+$nav-pills-link-active-bg:          $info;
+
+// Bootstrap shadows
+$enable-shadows: false;
+
+// Spacing
+$spacer: 1.25rem;
+$grid-gutter-width:           1.5rem;
+
+// Borders
+$border-width:                1px;
+$border-color:                $gray-300;
+
+$border-radius:               .25rem;
+$border-radius-sm:            .2rem;
+$border-radius-lg:            .3rem;
+$border-radius-pill:          50rem;
+
+// Breadcrumbs
+$breadcrumb-font-size:              11px;
+$breadcrumb-padding-y:              5px;
+$breadcrumb-padding-x:              5px;
+$breadcrumb-item-padding-x:         .5rem;
+$breadcrumb-margin-bottom:          55px;
+$breadcrumb-bg:                     #F8F7FC;
+$breadcrumb-divider-color:          $dark;
+$breadcrumb-active-color:           $dark;
+$breadcrumb-divider:                quote(">");
+$breadcrumb-border-radius:          5px;
+
+// Buttons + Forms
+$form-text-font-style:                  normal;
+$form-text-font-weight:                 400;
+$form-text-color:                       $text-muted;
+
+$form-label-margin-bottom:              .5rem;
+$form-label-font-size:                  16px;
+$form-label-font-weight:                700;
+// $form-label-color:                      null;
+
+$input-padding-y:                       .625rem;
+$input-padding-x:                       .625rem;
+$input-padding-y-sm:                    .375rem;
+$input-padding-x-sm:                    .375rem;
+$input-padding-y-lg:                    .875rem;
+$input-padding-x-lg:                    .875rem;
+
+$input-border-radius:                   0;
+$input-border-radius-sm:                0;
+$input-border-radius-lg:                0;
+
+$input-focus-border-color:      tint-color($component-active-bg, 50%);
+$input-btn-focus-box-shadow:    0 0 0 2px rgba($yellow, 0.5);
+$input-btn-focus-width:         .25rem;
+$input-btn-focus-color-opacity: .25;
+$input-btn-focus-color:         $orange;
+$input-btn-focus-blur:          0;
+
+$input-btn-padding-y:         .625rem;
+$input-btn-padding-x:         1.75rem;
+
+$input-btn-padding-y-sm:      .375rem;
+$input-btn-padding-x-sm:      1.25rem;
+$input-btn-font-size-sm:      $font-size-sm;
+
+$input-btn-padding-y-lg:      .875rem;
+$input-btn-padding-x-lg:      2rem;
+$input-btn-font-size-lg:      $font-size-lg;
+
+$input-btn-border-width:      $border-width;
+
+// Buttons
+$btn-font-weight:             700;
+$btn-active-box-shadow:       null;
+$btn-focus-box-shadow:        $input-btn-focus-box-shadow;
+
+$btn-link-color:              $dark;
+$btn-link-hover-color:        $dark;
+
+// Allows for customizing button radius independently from global border radius
+$btn-border-radius:           $border-radius;
+$btn-border-radius-sm:        $border-radius-sm;
+$btn-border-radius-lg:        $border-radius-lg;
+
+$btn-transition:              all .3s ease-in-out 0s;
+
+// Cards
+$card-spacer-y:                     $spacer;
+$card-spacer-x:                     $spacer;
+$card-title-spacer-y:               $spacer * .5;
+$card-border-width:                 $border-width;
+$card-border-radius:                0;
+$card-border-color:                 #e5e5e5;
+$card-color:                        $dark;
+
+// Alerts
+$alert-border-radius:           0;
+$alert-link-font-weight:        600;
+
+// Accordion
+$accordion-padding-y:                     1.125rem;
+$accordion-padding-x:                     0;
+$accordion-color:                         #4d4d4d;
+$accordion-bg:                            $body-bg;
+$accordion-border-width:                  $border-width;
+$accordion-border-color:                  $gray-200;
+$accordion-border-radius:                 0;
+
+$accordion-body-padding-y:                $accordion-padding-y;
+$accordion-body-padding-x:                $accordion-padding-x;
+
+$accordion-button-padding-y:              $accordion-padding-y;
+$accordion-button-padding-x:              $accordion-padding-x;
+$accordion-button-color:                  $accordion-color;
+$accordion-button-bg:                     $accordion-bg;
+$accordion-transition:                    $btn-transition, border-radius .15s ease;
+$accordion-button-active-bg:              tint-color($component-active-bg, 90%);
+$accordion-button-active-color:           shade-color($primary, 10%);
+
+$accordion-button-focus-border-color:     $input-focus-border-color;
+$accordion-button-focus-box-shadow:       $btn-focus-box-shadow;
+
+$accordion-icon-width:                    1.25rem;
+$accordion-icon-color:                    $accordion-color;
+$accordion-icon-active-color:             $accordion-button-active-color;
+$accordion-icon-transition:               transform .2s ease-in-out;
+$accordion-icon-transform:                rotate(-180deg);
+
+$accordion-button-icon:         url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='#{$accordion-icon-color}'><path fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/></svg>") !default;
+$accordion-button-active-icon:  url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='#{$accordion-icon-active-color}'><path fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/></svg>") !default;
+
+// Modals
+$modal-content-border-radius:       0;

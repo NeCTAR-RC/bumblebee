@@ -7,7 +7,7 @@
     <img src="{{ desktop_type.logo }}" class="d-xl-none w-50" />
     <img src="{{ desktop_type.logo }}" class="d-none d-xl-inline-block w-50 mb-1" />
     <div>
-      <a href="{% url 'desktop_details' desktop_name=desktop_type.id %}" class="btn btn-link mt-auto">View Details <i class="fas fa-arrow-right"></i></a>
+      <a href="{% url 'desktop_details' desktop_name=desktop_type.id %}" class="btn btn-link mt-auto">View Details</a>
     </div>
     <table class="table my-1 my-md-2 my-lg-3 d-none d-sm-table"> 
       <thead>
@@ -44,28 +44,28 @@
   {% if buttons_to_display %}
   <div class="desktop-buttons text-center">
     <a class="btn btn-success" href="{{ what_to_show.url }}" target="_blank">
-      Open Desktop <i class="fas fa-arrow-right"></i>
+      Open Desktop <i class="fas fa-chevron-right"></i>
     </a>
     <div class="mt-2">
       {% block buttons %}
       {% endblock buttons %}
       {% if "REBOOT_BUTTON" in buttons_to_display %}
-      <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#{{ app_name }}-{{ desktop_type.id }}-reboot-modal">
+      <button type="button" class="btn btn-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#{{ app_name }}-{{ desktop_type.id }}-reboot-modal">
         Reboot
       </button>
       {% endif %}
       {% if "SHELVE_BUTTON" in buttons_to_display %}
-      <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#{{ app_name }}-{{ desktop_type.id }}-shelve-modal">
+      <button type="button" class="btn btn-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#{{ app_name }}-{{ desktop_type.id }}-shelve-modal">
         Shelve
       </button>
       {% endif %}
       {% if "EXTEND_BUTTON" in buttons_to_display %}
-      <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#{{ app_name }}-{{ desktop_type.id }}-extend-modal">
+      <button type="button" class="btn btn-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#{{ app_name }}-{{ desktop_type.id }}-extend-modal">
         Extend
       </button>
       {% endif %}
       {% if "BOOST_BUTTON" in buttons_to_display %}
-      <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#{{ app_name }}-{{ desktop_type.id }}-supersize-modal">
+      <button type="button" class="btn btn-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#{{ app_name }}-{{ desktop_type.id }}-supersize-modal">
         Boost
       </button>
       {% endif %}
@@ -89,7 +89,7 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body text-center">
-        <video autoplay loop muted playsinline class="ratio ratio-16x9 mb-1">
+        <video autoplay loop muted playsinline class="ratio ratio-16x9 w-50 mx-auto mb-1">
             <source src="{% static 'videos/action-reboot.webm' %}" type="video/webm">
             <img src="{% static 'img/action-reboot.gif' %}" class="img-fluid" />
         </video>
@@ -122,7 +122,7 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body text-center">
-        <video autoplay loop muted playsinline class="ratio ratio-16x9 mb-3">
+        <video autoplay loop muted playsinline class="ratio ratio-16x9 w-50 mx-auto mb-3">
           <source src="{% static 'videos/action-shelve.webm' %}" type="video/webm">
           <img src="{% static 'img/action-shelve.gif' %}" class="img-fluid" />
         </video>
@@ -150,7 +150,7 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body text-center">
-        <video autoplay loop muted playsinline class="ratio ratio-16x9 mb-3">
+        <video autoplay loop muted playsinline class="ratio ratio-16x9 w-50 mx-auto mb-3">
           <source src="{% static 'videos/action-extend-time.webm' %}" type="video/webm">
           <img src="{% static 'img/action-extend-time.gif' %}" class="img-fluid" />
         </video>
@@ -177,7 +177,7 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body text-center">
-        <video autoplay loop muted playsinline class="ratio ratio-16x9 mb-4">
+        <video autoplay loop muted playsinline class="ratio ratio-16x9 w-50 mx-auto mb-4">
           <source src="{% static 'videos/action-delete.webm' %}" type="video/webm">
           <img src="{% static 'img/action-delete.gif' %}" class="img-fluid" />
         </video>
@@ -202,7 +202,7 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body text-center">
-        <video autoplay loop muted playsinline class="ratio ratio-16x9 mb-1">
+        <video autoplay loop muted playsinline class="ratio ratio-16x9 w-50 mx-auto mb-1">
           <source src="{% static 'videos/action-boost.webm' %}" type="video/webm">
           <img src="{% static 'img/action-boost.gif' %}" class="img-fluid" />
         </video>

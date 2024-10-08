@@ -11,7 +11,10 @@
 {% endblock breadcrumb %}
 
 <div class="container py-5">
-{% block form_title %}Apply for a new Workspace{% endblock%}
+{% block form_title %}
+    <h1 class="page-title">New Workspace</h1>
+    <h2 class="page-subtitle">To get started with the Virtual Desktop Service, create a workspace by providing some information about your research project.</h2>
+{% endblock%}
 
 {% block form_submit_url %}{% url 'new_project' %}{% endblock %}
 </div>

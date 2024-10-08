@@ -1,19 +1,24 @@
 {% extends 'common/base.html' %}
 
 {% block content %}
-  <header class="desktop-header bg-white shadow-sm">
+  <header class="desktop-header">
     <div class="container pt-5 pb-3 position-relative">
-      <a href="{{ request.META.HTTP_REFERER }}" class="btn btn-link position-absolute top-0 mt-2"><i class="fas fa-arrow-left"></i> Back</a>
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item"><a href="{% url 'index' %}">Desktop Home</a></li>
+          <li class="breadcrumb-item active" aria-current="page">{{ desktop_type.name }}</li>
+        </ol>
+      </nav>
       <div class="d-flex">
         <div class="desktop-logo flex-grow-1">
-          <img src="{{ desktop_type.logo }}" width="360" />
+          <img src="{{ desktop_type.logo }}" alt="{{ desktop_type.name }}" width="360" />
         </div>
         <div class="desktop-header-button d-none d-sm-inline-block align-self-center">
           {% if launch_allowed %}
-            <button class="btn btn-success" title="Launch {{ desktop_type.name }}" data-bs-toggle="modal" data-bs-target="#{{ app_name }}-{{ desktop_type.id }}-launch-modal">Create Desktop <i class="fas fa-plus"></i>
+            <button class="btn btn-success" title="Launch {{ desktop_type.name }}" data-bs-toggle="modal" data-bs-target="#{{ app_name }}-{{ desktop_type.id }}-launch-modal"><i class="fas fa-plus"></i> Create Desktop</button>
           {% else %}
             <span class="d-inline-block disabled" tabindex="0" data-bs-toggle="popover" data-bs-trigger="hover focus" data-bs-content="You already have a Virtual Desktop.">
-              <button class="btn btn-success" disabled title="Launch {{ desktop_type.name }}">Create Desktop <i class="fas fa-plus"></i>
+              <button class="btn btn-success" disabled title="Launch {{ desktop_type.name }}">Create Desktop</button>
             </span>
           {% endif %}
         </div>
@@ -73,14 +78,14 @@
         </div>     
         <div class="row mb-5">
           <div class="col-lg-12 col-xl-10 offset-xl-1">
-            <div class="card shadow">
+            <div class="card bg-light">
               <div class="card-body px-lg-5">
-                <h2 class="text-center mt-3 mb-5">This desktop is great for...</h2>
+                <h2 class="text-center mt-3 mb-4">This desktop is great for...</h2>
                 <ul class="fa-ul mb-4">
                   {% for highlight in desktop_type.details.highlights %}
                     <li class="h5">
                       <span class="fa-li"><i class="fas fa-check-circle text-success"></i></span>
-                      <span class="text-secondary">{{ highlight }}</span>
+                      <span>{{ highlight }}</span>
                     </li>
                   {% endfor %}
                 </ul>
@@ -92,12 +97,12 @@
           <div class="col-12 text-center">
             {% if launch_allowed %}
             <h3 class="mb-4">Would you like to create this desktop?</h3>
-            <button class="btn btn-outline-success mb-4" title="Launch {{ desktop_type.name }}"
+            <button class="btn btn-success btn-sm mb-4" title="Launch {{ desktop_type.name }}"
                     data-bs-toggle="modal"
                     data-bs-target="#{{ app_name }}-{{ desktop_type.id }}-launch-modal">
-              Create {{ desktop_type.name }} Desktop <i class="fas fa-plus"></i>
+              <i class="fas fa-plus"></i> Create {{ desktop_type.name }} Desktop
             </button>
-            <h3>Or explore <a href="{% url 'index' %}#desktop-library">other desktops.</a></h3>
+            <h5>Or explore <a href="{% url 'index' %}#desktop-library">other desktops.</a></h5>
             {% else %}
             <!-- Sorry.  Only one desktop permitted at a time -->
             {% endif %}
