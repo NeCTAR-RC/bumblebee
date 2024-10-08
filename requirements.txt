@@ -22,6 +22,7 @@ django_compressor
 django-libsass
 Pillow
 python-freshdesk
+taynacclient>=1.3.0
 django-health-check
 django-prometheus
 PyYAML

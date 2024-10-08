@@ -332,7 +332,7 @@ FRESHDESK_KEY = get_setting('FRESHDESK_KEY')
 FRESHDESK_GROUP_ID = get_setting('FRESHDESK_GROUP_ID')
 FRESHDESK_EMAIL_CONFIG_ID = get_setting('FRESHDESK_EMAIL_CONFIG_ID')
 
-EMAIL_BACKEND = 'researcher_workspace.utils.freshdesk.FreshdeskEmailBackend'
+EMAIL_BACKEND = 'researcher_workspace.utils.taynac.TaynacEmailBackend'
 
 # Basic auth username/password for Prometheus metrics endpoint /metrics
 METRICS_USERNAME = get_setting('METRICS_USERNAME', 'metrics')

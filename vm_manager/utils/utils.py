@@ -7,6 +7,7 @@ from keystoneauth1 import session
 from keystoneclient import client as keystone_client
 from nectarallocationclient import client as allocation_client
 from novaclient import client as nova_client
+from taynacclient import client as taynac_client
 
 from django.conf import settings
 from django.utils.crypto import get_random_string
@@ -52,6 +53,7 @@ class Nectar(object):
         self.keystone = keystone_client.Client('3', session=sess)
         self.glance = glance_client.Client('2', session=sess)
         self.cinder = cinder_client.Client('3', session=sess)
+        self.taynac = taynac_client.Client('1', session=sess)
 
 
 def get_nectar():
