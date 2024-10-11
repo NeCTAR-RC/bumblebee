@@ -48,7 +48,7 @@ class RebootVMTests(VMFunctionTestBase):
             f"Performing {REBOOT_SOFT} reboot on {fake_instance}")
 
         updated_status = VMStatus.objects.get(pk=fake_status.pk)
-        self.assertEqual(33, updated_status.status_progress)
+        self.assertEqual(30, updated_status.status_progress)
         self.assertIsNotNone(updated_status.status_message)
         updated_volume = Volume.objects.get(pk=fake_vol.pk)
         self.assertIsNotNone(updated_volume.rebooted_at)
@@ -86,7 +86,7 @@ class RebootVMTests(VMFunctionTestBase):
         ])
 
         updated_status = VMStatus.objects.get(pk=fake_status.pk)
-        self.assertEqual(33, updated_status.status_progress)
+        self.assertEqual(30, updated_status.status_progress)
         self.assertIsNotNone(updated_status.status_message)
         updated_volume = Volume.objects.get(pk=fake_vol.pk)
         self.assertIsNotNone(updated_volume.rebooted_at)
@@ -180,7 +180,7 @@ class RebootVMTests(VMFunctionTestBase):
         mock_logger.error.assert_not_called()
 
         updated_status = VMStatus.objects.get(pk=fake_status.pk)
-        self.assertEqual(66, updated_status.status_progress)
+        self.assertEqual(45, updated_status.status_progress)
         self.assertIsNotNone(updated_status.status_message)
 
     @patch('vm_manager.utils.utils.Nectar', new=FakeNectar)

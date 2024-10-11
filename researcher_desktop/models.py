@@ -57,6 +57,11 @@ class DesktopType(models.Model):
     family = models.CharField(default="linux", max_length=32,
                               help_text="Selects a cloud-config template;"
                               "e.g. 'linux' or 'windows'")
+    # This is added to the LAUNCH_WAIT, REBOOT_WAIT and RESIZE_WAIT
+    # settings to give actual wait times when launching (etc) desktop.
+    launch_wait_extra = models.IntegerField(default=0,
+                                            help_text="Extra launch wait "
+                                            "time in seconds")
 
     objects = DesktopTypeManager()
 

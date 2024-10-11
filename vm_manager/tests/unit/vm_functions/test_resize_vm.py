@@ -228,7 +228,7 @@ class ResizeVMTests(VMFunctionTestBase):
             fake_instance, big_flavor_id, VM_SUPERSIZED, after,
             self.FEATURE)
         vm_status = VMStatus.objects.get(pk=fake_vm_status.pk)
-        self.assertEqual(33, vm_status.status_progress)
+        self.assertEqual(30, vm_status.status_progress)
 
     @patch('vm_manager.utils.utils.Nectar', new=FakeNectar)
     @patch('vm_manager.vm_functions.resize_vm.django_rq')
@@ -309,7 +309,7 @@ class ResizeVMTests(VMFunctionTestBase):
             fake_instance.id)
         mock_scheduler.enqueue_in.assert_not_called()
         vm_status = VMStatus.objects.get(pk=fake_vm_status.pk)
-        self.assertEqual(66, vm_status.status_progress)
+        self.assertEqual(45, vm_status.status_progress)
         resize = Resize.objects.get(pk=fake_resize.pk)
         self.assertIsNotNone(resize.reverted)
 
@@ -475,7 +475,7 @@ class ResizeVMTests(VMFunctionTestBase):
         mock_scheduler.enqueue_in.assert_not_called()
         vm_status = VMStatus.objects.get(pk=fake_vm_status.pk)
         self.assertEqual(VM_WAITING, vm_status.status)
-        self.assertEqual(66, vm_status.status_progress)
+        self.assertEqual(45, vm_status.status_progress)
         resize = Resize.objects.get(pk=fake_resize.pk)
         self.assertIsNone(resize.reverted)
 
@@ -509,7 +509,7 @@ class ResizeVMTests(VMFunctionTestBase):
         mock_scheduler.enqueue_in.assert_not_called()
         vm_status = VMStatus.objects.get(pk=fake_vm_status.pk)
         self.assertEqual(VM_WAITING, vm_status.status)
-        self.assertEqual(66, vm_status.status_progress)
+        self.assertEqual(45, vm_status.status_progress)
         resize = Resize.objects.get(pk=fake_resize.pk)
         self.assertIsNotNone(resize.reverted)
 

@@ -97,7 +97,7 @@ def _create_volume(user, desktop_type, zone):
 
     vm_status = VMStatus.objects.get_latest_vm_status(user, desktop_type)
     if vm_status:
-        vm_status.status_progress = 25
+        vm_status.status_progress = 15
         vm_status.status_message = 'Creating volume'
         vm_status.save()
 
@@ -177,7 +177,7 @@ def wait_to_create_instance(user, desktop_type, volume, start_time):
         instance = _create_instance(user, desktop_type, volume)
         vm_status = VMStatus.objects.get_latest_vm_status(user, desktop_type)
         vm_status.instance = instance
-        vm_status.status_progress = 50
+        vm_status.status_progress = 30
         if volume.shelved_at:
             vm_status.status_message = 'Unshelving instance'
         else:
@@ -309,7 +309,7 @@ def wait_for_instance_active(user, desktop_type, instance, start_time):
         logger.info(f"Instance {instance.id} is now {ACTIVE}")
         vm_status = VMStatus.objects.get_vm_status_by_instance(
             instance, desktop_type.feature)
-        vm_status.status_progress = 75
+        vm_status.status_progress = 45
         vm_status.status_message = 'Instance launched; waiting for boot'
         vm_status.save()
         instance.set_expires(

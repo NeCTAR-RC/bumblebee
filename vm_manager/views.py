@@ -86,10 +86,11 @@ def launch_vm(user, desktop_type, zone) -> str:
 
     if res := desktop_limit_check(user, desktop_type, log=True):
         return res
+    launch_time = settings.LAUNCH_WAIT + desktop_type.launch_wait_extra
     vm_status = VMStatus(
         user=user, requesting_feature=desktop_type.feature,
         operating_system=desktop_type.id, status=VM_CREATING,
-        wait_time=after_time(settings.LAUNCH_WAIT),
+        wait_time=after_time(launch_time),
         status_progress=0, status_message="Starting desktop creation",
         status_done="has been created"
     )
@@ -182,11 +183,12 @@ def unshelve_vm(user, desktop_type) -> str:
     zone = AvailabilityZone.objects.get(
         name=vm_status.instance.boot_volume.zone)
 
+    launch_time = settings.LAUNCH_WAIT + desktop_type.launch_wait_extra
     vm_status = VMStatus(user=user,
                          requesting_feature=desktop_type.feature,
                          operating_system=desktop_type.id,
                          status=VM_CREATING,
-                         wait_time=after_time(settings.LAUNCH_WAIT),
+                         wait_time=after_time(launch_time),
                          status_progress=0,
                          status_message="Starting desktop unshelve",
                          status_done="has been unshelved")
@@ -234,7 +236,9 @@ def reboot_vm(user, vm_id, reboot_level, requesting_feature) -> str:
             vm_id=vm_id)
     target_status = vm_status.status
     vm_status.status = VM_WAITING
-    vm_status.wait_time = after_time(settings.REBOOT_WAIT)
+    desktop_type = get_desktop_type(vm_status.operating_system)
+    reboot_time = settings.REBOOT_WAIT + desktop_type.launch_wait_extra
+    vm_status.wait_time = after_time(reboot_time)
     vm_status.status_progress = 0
     vm_status.status_message = "Starting desktop reboot"
     vm_status.status_done = "has been rebooted"
@@ -260,9 +264,9 @@ def supersize_vm(user, vm_id, requesting_feature) -> str:
             vm_id=vm_id)
 
     desktop_type = get_desktop_type(vm_status.operating_system)
-
     vm_status.status = VM_RESIZING
-    vm_status.wait_time = after_time(settings.RESIZE_WAIT)
+    resize_time = settings.RESIZE_WAIT + desktop_type.launch_wait_extra
+    vm_status.wait_time = after_time(resize_time)
     vm_status.status_progress = 0
     vm_status.status_message = "Starting desktop boost"
     vm_status.status_done = "has been boosted"
@@ -290,7 +294,8 @@ def downsize_vm(user, vm_id, requesting_feature) -> str:
     desktop_type = get_desktop_type(vm_status.operating_system)
 
     vm_status.status = VM_RESIZING
-    vm_status.wait_time = after_time(settings.RESIZE_WAIT)
+    resize_time = settings.RESIZE_WAIT + desktop_type.launch_wait_extra
+    vm_status.wait_time = after_time(resize_time)
     vm_status.status_progress = 0
     vm_status.status_message = "Starting desktop downsize"
     vm_status.status_done = "has been downsized"
