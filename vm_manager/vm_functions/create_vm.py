@@ -73,6 +73,11 @@ def _create_volume(user, desktop_type, zone):
             volume.error("Cinder volume missing")
             return None
 
+        if volume.error_flag:
+            logger.error(f"Volume {volume} has error flag set. "
+                         "Needs manual cleanup.")
+            return None
+
         vm_status = VMStatus.objects.get_vm_status_by_volume(
             volume, requesting_feature)
         if vm_status.status == VM_SHELVED:

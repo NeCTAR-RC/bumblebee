@@ -117,11 +117,9 @@ class CloudResource(models.Model):
 class VolumeManager(models.Manager):
     def get_volume(self, user, desktop_type):
         try:
-            volume = self.get(user=user, operating_system=desktop_type.id,
-                              requesting_feature=desktop_type.feature,
-                              deleted=None, marked_for_deletion=None,
-                              error_flag=None)
-            return volume
+            return self.get(user=user, operating_system=desktop_type.id,
+                            requesting_feature=desktop_type.feature,
+                            deleted=None, marked_for_deletion=None)
         except Volume.DoesNotExist:
             return None
         except Volume.MultipleObjectsReturned as e:
