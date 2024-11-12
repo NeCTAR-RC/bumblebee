@@ -60,12 +60,14 @@
             <ul>
               <li>{{ desktop_type.default_flavor.vcpus }} VCPUs</li>
               <li>{{ desktop_type.default_flavor.ram }} GB RAM</li>
-	    </ul>
+            </ul>
+            {% if desktop_type.is_resizable %}
             <h6>BOOST SIZE</h6>
             <ul>
               <li>{{ desktop_type.big_flavor.vcpus }} VCPUs</li>
               <li>{{ desktop_type.big_flavor.ram }} GB RAM</li>
-	    </ul>
+            </ul>
+            {% endif %}
             {% if desktop_type.details.features %}
               <h6>FEATURES</h6>
               <ul>
@@ -75,7 +77,7 @@
               <ul>
             {% endif %}
           </div>
-        </div>     
+        </div>
         <div class="row mb-5">
           <div class="col-lg-12 col-xl-10 offset-xl-1">
             <div class="card bg-light">
