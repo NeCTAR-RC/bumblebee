@@ -76,6 +76,11 @@ class DesktopType(models.Model):
     def big_flavor(self):
         return self._flavor_map[self.big_flavor_name]
 
+    @property
+    def is_resizable(self):
+        return (self.big_flavor_name
+                and self.big_flavor_name != self.default_flavor_name)
+
     @cached_property
     def _flavor_map(self):
         res = {}

@@ -19,13 +19,15 @@ logger = logging.getLogger(__name__)
 
 def render_modules(request):
     modules = []
-    for desktop_type in desktop_types():
-        buttons = [REBOOT_BUTTON, SHELVE_BUTTON, DELETE_BUTTON, BOOST_BUTTON,
-                   DOWNSIZE_BUTTON, EXTEND_BUTTON, EXTEND_BOOST_BUTTON,
-                   UNSHELVE_BUTTON]
+    for dt in desktop_types():
+        buttons = [REBOOT_BUTTON, SHELVE_BUTTON, DELETE_BUTTON,
+                   EXTEND_BUTTON, UNSHELVE_BUTTON]
+        # If desktop is resizable, include the boost-related buttons
+        if dt.is_resizable:
+            buttons = buttons + [BOOST_BUTTON,
+                   DOWNSIZE_BUTTON, EXTEND_BOOST_BUTTON]
         modules.append(
-            vm_man_views.render_vm(
-                request, request.user, desktop_type, buttons)
+            vm_man_views.render_vm(request, request.user, dt, buttons)
         )
     return modules
 

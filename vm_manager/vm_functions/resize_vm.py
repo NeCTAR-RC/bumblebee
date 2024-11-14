@@ -21,6 +21,10 @@ utc = timezone.utc
 
 
 def supersize_vm_worker(instance, desktop_type) -> str:
+    if not desktop_type.is_resizable:
+        logger.error(f"{desktop_type.id} is not resizable")
+        return WF_FAIL
+
     logger.info(f"About to supersize {desktop_type.id} instance "
                 f"for user {instance.user.username} to "
                 f"flavor {desktop_type.big_flavor_name}")
@@ -35,6 +39,10 @@ def supersize_vm_worker(instance, desktop_type) -> str:
 
 
 def downsize_vm_worker(instance, desktop_type) -> str:
+    if not desktop_type.is_resizable:
+        logger.error(f"{desktop_type.id} is not resizable")
+        return WF_FAIL
+
     logger.info(f"About to downsize {desktop_type.id} instance "
                 f"for user {instance.user.username} to "
                 f"flavor {desktop_type.default_flavor_name}")
