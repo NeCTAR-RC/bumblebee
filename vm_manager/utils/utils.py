@@ -79,7 +79,7 @@ class FlavorDetails(object):
     def __init__(self, flavor):
         self.id = flavor.id
         self.name = flavor.name
-        self.ram = int(flavor.ram) / 1024
+        self.ram = int(flavor.ram) // 1024
         self.disk = flavor.disk
         self.vcpus = flavor.vcpus
 
