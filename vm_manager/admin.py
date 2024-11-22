@@ -302,7 +302,7 @@ class VMStatusAdmin(admin.ModelAdmin):
                 # elsewhere.
                 obj.status = NO_VM
                 obj.save()
-            self.message_user(request, "VM Status set to {obj.status}")
+            self.message_user(request, f"VM Status set to {obj.status}")
             return HttpResponseRedirect(".")
         return super().response_change(request, obj)
 
