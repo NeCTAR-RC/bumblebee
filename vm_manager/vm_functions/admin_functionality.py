@@ -171,19 +171,19 @@ def admin_repair_instance_error(request, instance):
 def admin_check_vmstatus(request, vmstatus):
     rep = _Reporter(request)
     instance = vmstatus.instance
-    volume = instance.boot_volume
-    n = get_nectar()
-    latest_vmstatus = VMStatus.objects.filter(instance=instance) \
-                                      .latest("created")
-
     if not vmstatus.instance:
         rep.error(f"VMStatus {vmstatus.id} has no instance")
         return
 
-    if not vmstatus.instance.boot_volume:
-        rep.error(f"VMStatus {vmstatus.id} has has an instance "
+    volume = instance.boot_volume
+    if not volume:
+        rep.error(f"VMStatus {vmstatus.id} has an instance "
                   f"({vmstatus.instance.id}) with no boot volume")
         return
+
+    n = get_nectar()
+    latest_vmstatus = VMStatus.objects.filter(instance=instance) \
+                                      .latest("created")
 
     if vmstatus.id != latest_vmstatus.id:
         rep.error(f"VMStatus {vmstatus.id} for "
