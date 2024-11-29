@@ -3,13 +3,17 @@ from django.db.models import Count, EmailField, ExpressionWrapper, \
 
 from prometheus_client.core import GaugeMetricFamily
 
+from researcher_workspace import models as researcher_workspace_models
+from researcher_workspace import settings
 from vm_manager import models as vm_manager_models
 
 
 class BumblebeeMetricsCollector(object):
     def collect(self):
         volumes = vm_manager_models.Volume.objects.all()
-
+        all_users = researcher_workspace_models.User.objects.all()
+        exclusions = [u.get_username() for u in all_users if u.is_superuser] \
+            + settings.EXCLUDE_FROM_USAGE
         for dimension in ['created', 'running', 'shelved']:
 
             name = f"bumblebee_desktops_{dimension}"
@@ -21,8 +25,12 @@ class BumblebeeMetricsCollector(object):
             elif dimension == 'shelved':
                 qs = volumes.filter(deleted=None).exclude(shelved_at=None)
 
+            # filter out super-user and monitoring desktops
+            qs = qs.exclude(user__username__in=exclusions)
+
             # bumblebee_desktops_*_total
-            yield GaugeMetricFamily(f"{name}_total", desc, value=qs.count())
+            yield GaugeMetricFamily(f"{name}_total", desc,
+                                    value=qs.count() if qs else 0)
 
             # bumblebee_desktops_*_by_type
             g = GaugeMetricFamily(

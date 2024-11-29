@@ -49,6 +49,10 @@ ADMINS = [
 
 MANAGERS = ADMINS
 
+# Exclude desktops created by these users (+ super-users) from the
+# desktop usage counts reported by Prometheus
+EXCLUDE_FROM_USAGE = get_setting('EXCLUDE_FROM_USAGE', '').split(',')
+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = bool(strtobool(get_setting('DEBUG', 'False')))
 
