@@ -60,14 +60,14 @@
             <ul>
               <li>{{ desktop_type.default_flavor.vcpus }} VCPUs</li>
               <li>{{ desktop_type.default_flavor.ram }} GB RAM</li>
-              <li>{{ desktop_type.default_flavor.disk }} GB Disk Space</li>
+              <li>{{ desktop_type.volume_size }} GB Disk Space</li>
             </ul>
             {% if desktop_type.is_resizable %}
             <h6>BOOST SIZE</h6>
             <ul>
               <li>{{ desktop_type.big_flavor.vcpus }} VCPUs</li>
               <li>{{ desktop_type.big_flavor.ram }} GB RAM</li>
-              <li>{{ desktop_type.big_flavor.disk }} GB Disk Space</li>
+              <li>{{ desktop_type.volume_size }} GB Disk Space</li>
             </ul>
             {% endif %}
             {% if desktop_type.details.features %}
