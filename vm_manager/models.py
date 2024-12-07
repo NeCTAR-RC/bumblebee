@@ -352,6 +352,8 @@ class Instance(CloudResource):
             ('create-drive-path', 'true'),
             ('enable-font-smoothing', 'true'),
             ('enable-wallpaper', 'true'),
+            ('enable-full-window-drag', 'true'),
+            ('enable-desktop-composition', 'true'),
         ]
 
         # This object will be created by the auth backend.
