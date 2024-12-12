@@ -134,7 +134,8 @@ class ResourceAdmin(admin.ModelAdmin, Expirable):
                    ('error_message', DropdownFilter),
                    AutocompleteFilterFactory('User', 'user'),
                    'marked_for_deletion']
-    readonly_fields = ['id', 'created', 'expiration_link']
+    readonly_fields = ['id', 'created', 'user', 'expiration',
+                       'expiration_link']
     ordering = ('-created',)
     actions = [set_expiry, clear_expiry]
 
@@ -160,7 +161,7 @@ class InstanceAdmin(ResourceAdmin):
         admin_archive_instances, admin_delete_shelved_instances,
         admin_repair_instance_errors]
     readonly_fields = ResourceAdmin.readonly_fields + [
-        "boot_volume_fields"]
+        "boot_volume_fields", "guac_connection", "boot_volume"]
 
     list_display = ResourceAdmin.list_display + (
         'ip_address',
@@ -213,6 +214,8 @@ class VolumeAdmin(ResourceAdmin):
         admin_archive_shelved_volumes, admin_delete_shelved_volumes,
         admin_repair_volume_errors]
     inlines = (InstanceInline,)
+    readonly_fields = ResourceAdmin.readonly_fields + [
+        "requesting_feature"]
 
     list_display = ResourceAdmin.list_display + (
         'operating_system',
@@ -239,7 +242,8 @@ class ResizeAdmin(admin.ModelAdmin, Expirable):
         'instance__deleted', 'requested',
         AutocompleteFilterFactory('User', 'instance__user')]
 
-    readonly_fields = ('requested', 'expiration_link')
+    readonly_fields = ('requested', 'expiration_link', 'instance',
+                       'expiration')
     ordering = ('-requested',)
     actions = [set_expiry, clear_expiry, admin_downsize_resizes]
     list_display = (
@@ -262,7 +266,8 @@ class VMStatusAdmin(admin.ModelAdmin):
         'created', 'requesting_feature', 'operating_system',
         'status', 'instance__deleted',
         AutocompleteFilterFactory('User', 'user')]
-    readonly_fields = ('created', 'id')
+    readonly_fields = ('created', 'id', 'instance', 'user',
+                       'requesting_feature')
     ordering = ('-created',)
     actions = ResourceAdmin.actions + [admin_check_vmstatuses]
 
