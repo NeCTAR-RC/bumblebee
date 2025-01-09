@@ -47,8 +47,8 @@ class Char32UUIDField(models.UUIDField):
 
 
 class User(AbstractUser):
-    sub = Char32UUIDField(null=True, unique=True)
-    date_agreed_terms = models.DateTimeField(null=True)
+    sub = Char32UUIDField(blank=True, null=True, unique=True)
+    date_agreed_terms = models.DateTimeField(blank=True, null=True)
     terms_version = models.IntegerField(default=0)
 
 
