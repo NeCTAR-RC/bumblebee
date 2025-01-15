@@ -133,6 +133,10 @@ is required for Bumblebee and Guacamole. It has to be presented under the same
 name/address to both the client (browser) and the server parts for the authN
 and authZ to succeed.
 
+(There is a non-OIDC mode that is used for testing.  This is enabled by passing
+the USE_OIDC=False environment variable to the bumblebee server.  However this
+is not suitable for general production use.  One reason is that only 'staff'
+accounts are able to login via the login form.)
 
 ## Quick start
 
@@ -234,7 +238,12 @@ to `VM_Okay`, and Bumblebee will think it's fine.
 
 ## Selenium tests
 
-The selenium tests are intended to be run in a fully configured bumblebee
+(This section covers the selenium UI tests in the Bumblebee codebase.
+There are more extensive tests in the bumblebee-stormbee project that are
+designed to be run as "tempest" style tests against Nectar's production
+and test installations.)
+
+These selenium tests are intended to be run in a fully configured bumblebee
 development environment with the redis service, rqscheduler and rqworker
 already running.  You will need to install Firefox and some additional
 dependencies.
@@ -290,3 +299,4 @@ chromedriver for your installed Firefox.  The driver will be cached
 for a day.
 
 When you are done, you can kill the Xvfb process.
+
