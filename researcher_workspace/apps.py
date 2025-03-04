@@ -43,5 +43,8 @@ class ResearcherWorkspaceConfig(AppConfig):
         if not migration_executed:
             connection_created.connect(connection_callback)
 
-        from researcher_workspace.health import DesktopStatus
-        plugin_dir.register(DesktopStatus)
+        # Register the Bumblebee custom health checks
+        from researcher_workspace import health
+        plugin_dir.register(health.DesktopStatus)
+        plugin_dir.register(health.InstanceStatus)
+        plugin_dir.register(health.VolumeStatus)
