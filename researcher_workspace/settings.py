@@ -252,6 +252,9 @@ LOGGING = {
             'class': 'django.utils.log.AdminEmailHandler',
             'include_html': True,
         },
+        'null': {
+            'class': 'logging.NullHandler',
+        },
     },
     'loggers': {
         '': {
@@ -266,6 +269,10 @@ LOGGING = {
         'vm_manager': {
             'handlers': ['console'],
             'level': 'DEBUG',
+            'propagate': False,
+        },
+        'health-check': {
+            'handlers': ['null'],
             'propagate': False,
         },
     }
