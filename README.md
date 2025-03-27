@@ -102,20 +102,20 @@ that is compatible with Nectar's production environment.)
   them anymore.
 * Earlier versions of Django are end-of-life.
 
-Bumblebee relies on OpenStack Keystone, Nova, Cinder and Neutron to carry out its
-VM-related activites. Setting up of an OpenStack environment is beyond the
+Bumblebee relies on OpenStack Keystone, Nova, Cinder and Neutron to carry out
+its VM-related activites. Setting up of an OpenStack environment is beyond the
 scope of this humble README but we invite users to evaluate one of the
 deployment projects. Docs for those are available for example for the Yoga
 release [here](https://docs.openstack.org/yoga/deploy/). Please use the linked
 webpage to navigate to the current release as needed.
 
-Bumblebee expects to have a set of OpenStack application credentials set for
+Bumblebee uses a single OpenStack application credentials for
 interacting with the OpenStack APIs. When launching desktops, it will look for
 a volume with a given name and provision a clone of it, which is then used as
 the boot source for a VM instance, provisioned on a defined private network.
 
-Bumblebee uses Guacamole to connect to remote virtual desktops. Guacamole has to
-have access to the instance network to connect to it via RDP port 3389.
+Bumblebee uses Guacamole to connect to remote virtual desktops. Guacamole has
+to have access to the instance network to connect to it via RDP port 3389.
 Thus, all of routing, security groups and firewall settings must allow this.
 
 The instance's image has to have RDP installed and configured to launch at
@@ -133,10 +133,10 @@ is required for Bumblebee and Guacamole. It has to be presented under the same
 name/address to both the client (browser) and the server parts for the authN
 and authZ to succeed.
 
-(There is a non-OIDC mode that is used for testing.  This is enabled by passing
+There is a non-OIDC mode that is used for testing.  This is enabled by passing
 the USE_OIDC=False environment variable to the bumblebee server.  However this
 is not suitable for general production use.  One reason is that only 'staff'
-accounts are able to login via the login form.)
+accounts are able to login via the login form.
 
 ## Quick start
 
