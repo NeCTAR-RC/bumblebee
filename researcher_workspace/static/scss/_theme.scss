@@ -159,7 +159,7 @@ ul.list-bullet {
     margin-left: 10px;
     vertical-align: initial;
     text-rendering: auto;
-    font-family: "Font Awesome 5 Free";
+    font-family: "Font Awesome 6 Free";
     content: "\f054";
     font-weight: 900;
     -webkit-font-smoothing: antialiased;
@@ -177,8 +177,56 @@ ul.list-bullet {
       margin-left: 12px;
       vertical-align: initial;
       text-rendering: auto;
-      font-family: "Font Awesome 5 Free";
+      font-family: "Font Awesome 6 Free";
       content: "\f054";
+      font-weight: 900;
+      -webkit-font-smoothing: antialiased;
+    }
+  }
+}
+
+.btn-back {
+  color: $dark;
+  font-weight: 600;
+  text-decoration: none;
+  position: relative;
+  padding: 0;
+  display: inline-block;
+  &:after {
+    content: "";
+    position: absolute;
+    bottom: -1px;
+    left: 20px;
+    height: 1px;
+    width: 0;
+    background-color: #8e489b;
+    transition: all 0.3s ease-in-out 0s;
+  }
+  &:before {
+    color: $blue;
+    margin-right: 10px;
+    vertical-align: initial;
+    text-rendering: auto;
+    font-family: "Font Awesome 6 Free";
+    content: "\f053";
+    font-weight: 900;
+    -webkit-font-smoothing: antialiased;
+    transition: all 0.15s ease-in-out 0s;
+  }
+  &:hover {
+    color: $dark;
+    font-weight: 600;
+    text-decoration: none;
+    &:after {
+      width: calc(100% - 20px);
+    }
+    &:before {
+      color: $purple;
+      margin-right: 12px;
+      vertical-align: initial;
+      text-rendering: auto;
+      font-family: "Font Awesome 6 Free";
+      content: "\f053";
       font-weight: 900;
       -webkit-font-smoothing: antialiased;
     }
@@ -204,7 +252,7 @@ ul.list-bullet {
       margin-left: 10px;
       vertical-align: top;
       text-rendering: auto;
-      font-family: "Font Awesome 5 Free";
+      font-family: "Font Awesome 6 Free";
       content: "\f054";
       font-weight: 900;
       -webkit-font-smoothing: antialiased;
@@ -231,7 +279,7 @@ ul.list-bullet {
       margin-left: 10px;
       vertical-align: top;
       text-rendering: auto;
-      font-family: "Font Awesome 5 Free";
+      font-family: "Font Awesome 6 Free";
       content: "\f054";
       font-weight: 900;
       -webkit-font-smoothing: antialiased;
@@ -306,7 +354,7 @@ ul.list-bullet {
           margin-left: 10px;
           vertical-align: initial;
           text-rendering: auto;
-          font-family: "Font Awesome 5 Free";
+          font-family: "Font Awesome 6 Free";
           content: "\f054";
           font-weight: 900;
           -webkit-font-smoothing: antialiased;
@@ -326,7 +374,7 @@ ul.list-bullet {
             margin-left: 12px;
             vertical-align: initial;
             text-rendering: auto;
-            font-family: "Font Awesome 5 Free";
+            font-family: "Font Awesome 6 Free";
             content: "\f054";
             font-weight: 900;
             -webkit-font-smoothing: antialiased;
@@ -437,7 +485,7 @@ ul.list-bullet {
     color: inherit;
     transition: background-color 0.3s ease-in-out 0s;
     &:after {
-      font-family: "Font Awesome 5 Free";
+      font-family: "Font Awesome 6 Free";
       content: "\f054";
       font-weight: 900;
       font-size: 18px;
@@ -636,7 +684,7 @@ nav {
           // vertical-align: middle;
           // border: none;
           // text-rendering: auto;
-          // font-family: "Font Awesome 5 Free";
+          // font-family: "Font Awesome 6 Free";
           // content: "\f078";
           // font-weight: 900;
           // -webkit-font-smoothing: antialiased;
@@ -792,9 +840,18 @@ section.banner-with-search {
   color: #494949;
   padding-top: 20px;
   .footer-logos {
-    img {
-      margin-bottom: 26px;
-      max-width: 100%;
+    display: flex;
+    align-items: end;
+    margin-bottom: 26px;
+    a {
+      display: inline-block;
+      img {
+        width: 100%;
+        max-width: 176px;
+      }
+      &:first-child {
+        margin-right: 10px;
+      }
     }
   }
   .footer-image-description {
@@ -808,12 +865,12 @@ section.banner-with-search {
     margin: 0 0 15px;
     text-transform: uppercase;
     font-weight: 600;
-    @include media-breakpoint-down(sm) {
+    @include media-breakpoint-down(md) {
       margin-top: 30px;
     }
   } 
   .footer-links {
-    @include media-breakpoint-up(md) {
+    @include media-breakpoint-up(lg) {
       padding-left: 7rem;
     }
   }

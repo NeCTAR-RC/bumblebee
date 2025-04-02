@@ -47,7 +47,7 @@
                           <a class="nav-link" href="https://ardc.edu.au/contact-us/" target="_blank">Contact Us</a>
                       </li>
                       <li class="nav-item d-flex align-items-center">
-                          <a class="nav-icon icon-twitter ms-2" href="https://twitter.com/ARDC_AU" target="_blank"><i class="fab fa-twitter"></i></a>
+                          <a class="nav-icon icon-twitter" href="https://twitter.com/ARDC_AU"><i class="fab fa-x-twitter"></i></a>
                           <a class="nav-icon icon-linkedin ms-2" href="https://www.linkedin.com/company/australian-research-data-commons/" target="_blank"><i class="fab fa-linkedin-in"></i></a>
                           <a class="nav-icon icon-youtube ms-2" href="https://www.youtube.com/c/ARDC_AU" target="_blank"><i class="fab fa-youtube"></i></a>
                           <a class="nav-icon icon-contact ms-2" href="https://ardc.edu.au/contact-us" target="_blank"><i class="fa fa-envelope"></i></a>
@@ -86,7 +86,7 @@
                         <li class="nav-item {% active_link 'help' %}">
                           <a class="nav-link" href="{% url 'help' %}">Help</a>
                         </li>
-                        <li class="nav-item dropdown ms-auto">
+                        <li class="nav-item dropdown ms-lg-auto">
                           <a href="#" class="nav-link nav-cta" id="dropdownUser1" data-bs-toggle="dropdown" aria-expanded="false">
                             {{ user.email }}
                           </a>
@@ -111,7 +111,7 @@
                         </li>
                       
                       {% else %}
-                        <li class="nav-item ms-auto">
+                        <li class="nav-item ms-lg-auto">
                           <a class="nav-link nav-cta" href="{% url 'login' %}" role="button">Sign In</a>
                         </li>
                       {% endif %}
@@ -151,17 +151,28 @@
       <div class="footer-row">
           <div class="container">
               <div class="row">
-                  <div class="col-12 col-md-4 footer-logos">
-                      <a href="https://www.education.gov.au/ncris">
-                          <img id="ncris-logo" src="{% static 'img/ncris-logo.png' %}" alt="National Collaborative Research Infrastructure Strategy">
-                      </a>
+                  <div class="col-12 col-md-6 col-lg-4">
+                      <div class="footer-logos">
+                          <div class="footer-logo-ncris">
+                              <a href="https://www.education.gov.au/ncris">
+                                  <img id="ncris-logo" src="{% static 'img/ncris-logo.svg' %}"
+                                      width="176" height="127"alt="National Collaborative Research Infrastructure Strategy">
+                              </a>
+                          </div>
+                          <div class="footer-logo-ardc">
+                              <a href="https://ardc.edu.au/">
+                                  <img id="ardc-logo" src="{% static 'img/ardc-logo.svg' %}"
+                                      width="176" height="57" alt="Australian Research Data Commons">
+                              </a>
+                          </div>
+                      </div>
                       <p class="footer-image-description">The Australian Research Data Commons is enabled by NCRIS.</p>
                   </div>
-                  <div class="col-12 col-md-4">
+                  <div class="col-12 col-md-6 col-lg-4">
                       <!-- Include ARDC newsletter sign up form -->
                       {% include "common/_ardc_subscribe.html" %}
                   </div>
-                  <div class="col-12 col-md-4 footer-links">
+                  <div class="col-12 col-md-6 col-lg-4 footer-links">
                       <h4 class="footer-heading">Quick Links</h4>
                       <ul class="footer-list list-bullet">
                         <li><a href="{% url 'terms' %}" title="Nectar Cloud Terms and Conditions">Terms of Service</a></li>

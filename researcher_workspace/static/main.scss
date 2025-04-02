@@ -111,6 +111,43 @@ span.disabled {
 section.welcome {
   width:  100%;
   overflow: hidden;
+  .banner-title {
+    line-height: 1.2;
+    font-size: 35px;
+    font-weight: 700;
+    margin-top: 0;
+    margin-bottom: 15px;
+    padding-right: 30px;
+  }
+  .banner-subtitle {
+    font-size: 20px;
+    margin-top: 0;
+    margin-bottom: 1.625rem;
+    font-weight: 600;
+    line-height: 1.2;
+    color: rgba(32, 32, 32, 0.8);
+  }
+  #welcome-text {
+    margin-top: 5vw;
+    margin-bottom: 15px;
+    .banner-title {
+      line-height: 1.2;
+      font-size: 35px;
+      font-weight: 700;
+      margin-top: 0;
+      margin-bottom: 15px;
+      padding-right: 30px;
+    }
+
+    .banner-subtitle {
+      font-size: 20px;
+      margin-top: 0;
+      margin-bottom: 1.625rem;
+      font-weight: 600;
+      line-height: 1.2;
+      color: rgba(32, 32, 32, 0.8);
+    }
+  }
   #welcome-bg {
     position:  relative;
     bottom:  0;

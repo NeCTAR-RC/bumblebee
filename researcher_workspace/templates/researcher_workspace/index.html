@@ -3,15 +3,13 @@
 {% block content %}
     <section class="welcome">
         <div class="container">
-            <div class="row pt-5">
-                <div class="col-sm-12 col-lg-10 offset-lg-1 col-xl-8 offset-xl-2 text-center">
-                    <h1 class="display-5 my-4">Welcome to the <br /><span class="fw-bold">ARDC Nectar Research Cloud<br />Virtual Desktop Service</span></h1>
-                    <h4 class="text-secondary">The <em>Virtual Desktop Service</em> is a service of the <a href="https://ardc.edu.au/">Australian Research Data Commons (ARDC)</a> and utilises the ARDC Nectar Research Cloud.</h4>
-                    <h4 class="text-secondary">The Virtual Desktop Service and the desktops that it provides are only to be used for research and research training purposes.</h4>
-                    <p class="mb-5">The Australian Research Data Commons (ARDC) is enabled by the National Collaborative Research Infrastructure Strategy Program (NCRIS).</p>
+			<div class="row">
+                <div id="welcome-text" class="col-sm-12 col-lg-10 offset-lg-1 col-xl-8 offset-xl-2 text-center">
+                    <h1 class="banner-title">ARDC Virtual Desktop Service</h1>
+                    <p class="banner-subtitle">The ARDC Virtual Desktop Service is a service of the <a href="https://ardc.edu.au/">Australian Research Data Commons (ARDC)</a> and utilises the ARDC Nectar Research Cloud. This service and the desktops it provides must only to be used for research and research training purposes. By signing into this service, you accept the <a href="{% url 'terms' %}">Terms and Conditions</a>.</p>
                     <p>
-                        <a role="button" class="btn btn-primary btn-lg" href="{% url 'login' %}">Sign in to launch a desktop</a>
-                        <a role="button" class="btn btn-lg btn-secondary" href="{% url 'about' %}">Learn more</a>
+                        <a role="button" class="btn btn-primary" href="{% url 'login' %}">Sign in to launch a desktop</a>
+                        <a role="button" class="btn btn-outline-primary" href="{% url 'about' %}">Learn more</a>
                     </p>
                 </div>
             </div>
