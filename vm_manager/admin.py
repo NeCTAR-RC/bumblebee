@@ -129,10 +129,39 @@ class Expirable(object):
     expiration_link.short_description = 'expiration'
 
 
+class ErrorStatusFilter(admin.SimpleListFilter):
+    title = "error status"
+    parameter_name = "error_status"
+
+    def lookups(self, request, model_admin):
+        return [
+            ("error", "in error (live)"),
+            ("deleted", "in error (deleted)"),
+            ("all", "in error (all)"),
+        ]
+
+    def queryset(self, request, queryset):
+        if self.value() == "error":
+            return queryset.filter(
+                error_flag__isnull=False,
+                deleted__isnull=True,
+            )
+        if self.value() == "deleted":
+            return queryset.filter(
+                error_flag__isnull=False,
+                deleted__isnull=False,
+            )
+        if self.value() == "all":
+            return queryset.filter(
+                error_flag__isnull=False,
+            )
+
+
 class ResourceAdmin(admin.ModelAdmin, Expirable):
     list_filter = ['created', 'deleted', 'error_flag',
                    ('error_message', DropdownFilter),
                    AutocompleteFilterFactory('User', 'user'),
+                   ErrorStatusFilter,
                    'marked_for_deletion']
     readonly_fields = ['id', 'created', 'user', 'expiration',
                        'expiration_link']
