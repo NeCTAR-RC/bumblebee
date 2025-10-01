@@ -1,5 +1,3 @@
-import pdb
-
 import csv
 from datetime import datetime, timezone
 from dateutil.relativedelta import relativedelta
@@ -385,7 +383,6 @@ def help(request):
                 # Handle uploaded file
                 screenshot = request.FILES.get('screenshot')
                 if screenshot:
-                    pdb.set_trace()
                     ticket_payload['attachments'] = [
                         screenshot.temporary_file_path()]
 
