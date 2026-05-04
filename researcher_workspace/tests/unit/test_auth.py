@@ -123,6 +123,7 @@ class OIDCAuthBackendTestCase(TestCase):
         """
         get_json_mock = Mock()
         get_json_mock.json.return_value = user_data
+        get_json_mock.headers = {'content-type': 'application/json'}
         request_mock.get.return_value = get_json_mock
         post_mock = MagicMock(status_code=200)
         post_mock.json = MagicMock(return_value={})
