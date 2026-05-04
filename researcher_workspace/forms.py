@@ -10,31 +10,11 @@ TIMEZONE_CHOICES = [(tz, tz) for tz in common_timezones]
 
 
 class SpanForm(forms.Form):
+    template_name_span = "researcher_workspace/forms/span.html"
+
     def as_span(self):
         "Return this form rendered as HTML <span>s."
-
-        return self._html_output(
-            normal_row='<span%(html_class_attr)s>%(label)s '
-            '%(field)s%(help_text)s</span>',
-            error_row='%s',
-            row_ender='</span>',
-            help_text_html='<span class="helptext">%s</span>',
-            errors_on_separate_row=True,
-        )
-
-
-class DivModelForm(forms.ModelForm):
-    def as_div(self):
-        "Return this form rendered as HTML <div>s."
-
-        return self._html_output(
-            normal_row='<div%(html_class_attr)s>%(label)s '
-            '%(help_text)s%(field)s</div>',
-            error_row='%s',
-            row_ender='</div>',
-            help_text_html='<div class="small">%s</div>',
-            errors_on_separate_row=True,
-        )
+        return self.render(self.template_name_span)
 
 
 class UserSearchForm(SpanForm):
