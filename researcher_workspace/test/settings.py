@@ -24,8 +24,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/2.2/howto/deployment/checklist/
 
-ADMINS = [('Andy', 'andy@example.com'),
-          ('Stephen', 'stephen@example.com')]
+ADMINS = []
 
 MANAGERS = ADMINS
 
