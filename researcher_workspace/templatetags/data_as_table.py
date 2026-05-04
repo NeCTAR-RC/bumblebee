@@ -1,16 +1,15 @@
-import collections
+import collections.abc
+
 from django import template
 from django.template.defaultfilters import safe
-
-import six
 
 register = template.Library()
 
 
 def iterable(arg):
     return (
-        isinstance(arg, collections.Iterable)
-        and not isinstance(arg, six.string_types)
+        isinstance(arg, collections.abc.Iterable)
+        and not isinstance(arg, str)
     )
 
 
