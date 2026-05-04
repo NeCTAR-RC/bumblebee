@@ -23,7 +23,7 @@ django-libsass
 Pillow
 python-freshdesk
 taynacclient>=1.3.0
-django-health-check
+django-health-check==3.20.0
 django-prometheus
 PyYAML
 django-admin-list-filter-dropdown
