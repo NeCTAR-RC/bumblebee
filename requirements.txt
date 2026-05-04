@@ -29,3 +29,4 @@ PyYAML
 django-admin-list-filter-dropdown
 django-admin-searchable-dropdown
 pytz
+passlib
