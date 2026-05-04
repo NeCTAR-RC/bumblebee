@@ -42,7 +42,7 @@ class CreateVMTests(VMFunctionTestBase):
         self.assertIsNone(result)
 
         mock_create.assert_called_once_with(self.user, self.UBUNTU, self.zone)
-        mock_rq.get_scheduler.called_once_with('default')
+        mock_rq.get_scheduler.assert_called_once_with('default')
         mock_scheduler.enqueue_in.assert_called_once_with(
             timedelta(seconds=5), wait_to_create_instance,
             self.user, self.UBUNTU, fake_volume, now)
@@ -217,7 +217,7 @@ class CreateVMTests(VMFunctionTestBase):
         fake.cinder.volumes.get.assert_called_with(
             volume_id=fake_volume.id)
         mock_create_instance.assert_not_called()
-        mock_rq.get_scheduler.called_once_with('default')
+        mock_rq.get_scheduler.assert_called_once_with('default')
         mock_scheduler.enqueue_in.assert_called_once_with(
             timedelta(seconds=5), wait_to_create_instance,
             self.user, self.UBUNTU, fake_volume, start)
@@ -498,7 +498,7 @@ class CreateVMTests(VMFunctionTestBase):
         wait_for_instance_active(self.user, self.UBUNTU, fake_instance, start)
 
         fake.nova.servers.get.assert_called_with(fake_instance.id)
-        mock_rq.get_scheduler.called_once_with('default')
+        mock_rq.get_scheduler.assert_called_once_with('default')
         mock_scheduler.enqueue_in.assert_called_once_with(
             timedelta(seconds=5), wait_for_instance_active,
             self.user, self.UBUNTU, fake_instance, start)
