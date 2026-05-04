@@ -175,7 +175,7 @@ def wait_to_create_instance(user, desktop_type, volume, start_time):
     n = get_nectar()
     now = datetime.now(utc)
     openstack_volume = n.cinder.volumes.get(volume_id=volume.id)
-    logger.info(f"Volume created in {now-start_time}s; "
+    logger.info(f"Volume created in {now - start_time}s; "
                 f"volume status is {openstack_volume.status}")
 
     if openstack_volume.status == VOLUME_AVAILABLE:

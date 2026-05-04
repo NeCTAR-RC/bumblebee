@@ -117,13 +117,13 @@ class ProfileInline(admin.StackedInline):
             url = reverse('admin:researcher_workspace_arowhitelist_change',
                           args=(whitelist.id,))
             return format_html(
-                f"{ whitelist } <a class='button' href='{url}'>Edit</a>")
+                f"{whitelist} <a class='button' href='{url}'>Edit</a>")
         else:
             url = reverse('admin:researcher_workspace_arowhitelist_add')
             return format_html(
                 f"{instance.user.username} is not ARO whitelisted "
                 f"<a class='button' href='{url}?username="
-                f"{instance.user.username }'>Add user to AROWhitelist</a>")
+                f"{instance.user.username}'>Add user to AROWhitelist</a>")
 
 
 class CustomUserAdmin(UserAdmin):
