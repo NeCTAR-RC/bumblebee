@@ -1,3 +1,4 @@
 factory_boy
 selenium>=4.0
 webdriver-manager
+coverage
