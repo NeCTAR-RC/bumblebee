@@ -21,6 +21,7 @@ from django.http import HttpResponse, HttpResponseRedirect, Http404, \
 from django.shortcuts import render
 from django.urls import reverse
 from django.utils.html import format_html
+from django.utils.safestring import mark_safe
 from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
 
 from researcher_desktop.utils.utils import get_desktop_type, \
@@ -235,7 +236,7 @@ def on_login(sender, user, request, **kwargs):
             and hasattr(request.user, 'get_full_name')):
         logger.info('User %s has logged in', request.user.get_full_name())
         messages.info(request, format_html(
-            f'Welcome <strong>{request.user.first_name}</strong>'))
+            'Welcome <strong>{}</strong>', request.user.first_name))
 
 
 def logout(request):
@@ -250,7 +251,7 @@ def on_logout(sender, user, request, **kwargs):
     if (getattr(request, 'user', None)
             and hasattr(request.user, 'get_full_name')):
         messages.info(request, format_html(
-            f'Goodbye <strong>{request.user.first_name}</strong>'))
+            'Goodbye <strong>{}</strong>', request.user.first_name))
         logger.info('User %s has logged out', request.user.get_full_name())
 
 
@@ -264,7 +265,7 @@ def home(request):
     if (hasattr(settings, 'GENERAL_WARNING_MESSAGE')
             and bool(settings.GENERAL_WARNING_MESSAGE)):
         messages.warning(
-            request, format_html(settings.GENERAL_WARNING_MESSAGE))
+            request, mark_safe(settings.GENERAL_WARNING_MESSAGE))
 
     # Get user's Project(s)
     project_id = request.POST.get('project', None)
@@ -499,14 +500,15 @@ def new_project(request):
             if settings.AUTO_APPROVE_WORKSPACES:
                 my_project.accept(auto_approved=True)
                 messages.success(request, format_html(
-                    f'Your workspace <strong>{my_project.title}</strong> '
-                    'has been created and auto-approved.'))
+                    'Your workspace <strong>{}</strong> '
+                    'has been created and auto-approved.', my_project.title))
             else:
                 _notify_managers_to_review_project(my_project, "created")
                 messages.success(request, format_html(
-                    f'Your workspace <strong>{my_project.title}</strong> '
+                    'Your workspace <strong>{}</strong> '
                     'has been created. '
-                    'You may start using it once it has been approved.'))
+                    'You may start using it once it has been approved.',
+                    my_project.title))
             return HttpResponseRedirect(reverse('home'))
     else:
         form = ProjectForm()
@@ -543,8 +545,8 @@ def project_edit(request, project_id):
             if project.ARO_approval is None:
                 _notify_managers_to_review_project(project, "updated")
             messages.success(request, format_html(
-                f'Your project <strong>{project.title}</strong> '
-                'has been edited successfully.'))
+                'Your project <strong>{}</strong> '
+                'has been edited successfully.', project.title))
             return HttpResponseRedirect(reverse('home'))
     else:
         project = Project.objects.get_project_by_untrusted_project_id(
@@ -563,8 +565,7 @@ def profile(request):
         form = ProfileForm(request.POST, instance=profile)
         if form.is_valid():
             form.save()
-            messages.success(request, format_html(
-                'Your profile has been updated.'))
+            messages.success(request, 'Your profile has been updated.')
             return HttpResponseRedirect(reverse('home'))
     else:
         form = ProfileForm(instance=profile)

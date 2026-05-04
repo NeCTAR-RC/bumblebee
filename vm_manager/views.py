@@ -466,13 +466,15 @@ def render_vm(request, user, desktop_type, buttons):
                 "resized to the default size" if state == VM_SUPERSIZED
                 else "shelved" if state == VM_OKAY else "deleted")
             messages.info(request, format_html(
-                f'Your {desktop_type.name} desktop is set to be '
-                f'{action} {naturaltime(expiration.expires)}'))
+                'Your {} desktop is set to be {} {}',
+                desktop_type.name, action,
+                naturaltime(expiration.expires)))
 
         # Display 'toast' for last completed workflow, then clear it
         if vm_status.status_done:
             messages.info(request, format_html(
-                f'Your {desktop_type.name} desktop {vm_status.status_done}'))
+                'Your {} desktop {}',
+                desktop_type.name, vm_status.status_done))
             vm_status.status_done = None
             vm_status.save()
 
