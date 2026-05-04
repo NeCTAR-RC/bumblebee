@@ -103,7 +103,6 @@ ROOT_URLCONF = 'researcher_workspace.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR, 'researcher_workspace', 'templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -211,9 +210,7 @@ STATICFILES_FINDERS = (
 STATIC_ROOT = 'static'
 STATIC_URL = '/static/'
 
-STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, "researcher_workspace/static"),
-]
+STATICFILES_DIRS = []
 
 COMPRESS_PRECOMPILERS = (
     ('text/x-scss', 'django_libsass.SassCompiler'),

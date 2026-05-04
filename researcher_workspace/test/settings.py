@@ -48,7 +48,6 @@ INSTALLED_APPS = [
     'guacamole',
     'researcher_workspace',
     'mathfilters',
-#    'django_rq',
     'researcher_desktop',
 ]
 
@@ -68,8 +67,7 @@ ROOT_URLCONF = 'researcher_workspace.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR, 'templates'),
-                 os.path.join(BASE_DIR, 'test', 'templates')],
+        'DIRS': [os.path.join(BASE_DIR, 'test', 'templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -156,9 +154,7 @@ STATICFILES_FINDERS = (
     'compressor.finders.CompressorFinder',
 )
 
-STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, "researcher_workspace/static"),
-]
+STATICFILES_DIRS = []
 
 COMPRESS_PRECOMPILERS = (
     ('text/x-scss', 'django_libsass.SassCompiler'),
