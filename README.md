@@ -22,7 +22,7 @@ features that have been implemented are:
 * Audio redirection
 * Configurable time limits and reminder notifications
 * Boost support for temporarily resizing a desktop to a larger flavor
-* Linux support, but Windows support is planned in a future release (Q4 2023)
+* Linux and Windows support
 
 
 ## How it works
