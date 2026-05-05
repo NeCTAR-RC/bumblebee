@@ -20,29 +20,35 @@ users:
   shell: /bin/bash
   sudo: 'ALL=(ALL) NOPASSWD:ALL'
 
-phone_home:
-  url: {{ phone_home_url }}
-  post:
-  - instance_id
-  tries: 10
-
 write_files:
-- path: /etc/systemd/system/bumblebee-phone-home.service
+- path: /usr/local/bin/vds-phone-home.sh
+  permissions: '0755'
+  owner: root:root
+  content: |
+    #!/bin/bash
+    INSTANCE_ID=$(curl -s http://169.254.169.254/openstack/latest/meta_data.json | jq -r .uuid)
+    if [ -z "$INSTANCE_ID" ] || [ "$INSTANCE_ID" == "null" ]; then
+        echo "Error: Could not retrieve Instance ID" >&2
+        exit 1
+    fi
+    curl -s --retry 10 -d "instance_id=${INSTANCE_ID}" {{ phone_home_url }}
+- path: /etc/systemd/system/vds-phone-home.service
   content: |
     [Unit]
-    Description=Bumblebee Phone Home
+    Description=Virtual Desktop Service Phone Home
     After=network-online.target cloud-init.service rc-local.service
     Wants=network-online.target cloud-init.service
-    
+
     [Service]
     Type=oneshot
-    ExecStart=/usr/bin/curl -s --retry 10 -d instance_id={% verbatim %}{{ ds.meta_data.instance_id }}{% endverbatim %} {{ phone_home_url }}
+    ExecStart=/usr/local/bin/vds-phone-home.sh
     RemainAfterExit=yes
     KillMode=process
     StandardOutput=journal+console
-    
+
     [Install]
     WantedBy=multi-user.target
 
 runcmd:
-  - systemctl enable bumblebee-phone-home.service
+  - systemctl daemon-reload
+  - systemctl enable --now vds-phone-home.service
