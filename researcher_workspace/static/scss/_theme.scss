@@ -560,6 +560,18 @@ ul.list-bullet {
   }
 }
 
+.alert-primary {
+  color: #161616;
+  background-color: #F8F7FC;
+  border-color: #8E489B;
+}
+
+.alert-info {
+  color: #161616;
+  background-color: #F8F7FC;
+  border-color: #8E489B;
+}
+
 .accordion {
   .accordion-item {
     border: none;
@@ -575,6 +587,11 @@ ul.list-bullet {
       border-bottom: $gray-200 solid 1px;
     }
   }
+}
+
+#navbar {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  margin-bottom: -1px;
 }
 
 nav {

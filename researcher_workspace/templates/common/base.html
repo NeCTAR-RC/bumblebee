@@ -47,7 +47,6 @@
                           <a class="nav-link" href="https://ardc.edu.au/contact-us/" target="_blank">Contact Us</a>
                       </li>
                       <li class="nav-item d-flex align-items-center">
-                          <a class="nav-icon icon-twitter" href="https://twitter.com/ARDC_AU"><i class="fab fa-x-twitter"></i></a>
                           <a class="nav-icon icon-linkedin ms-2" href="https://www.linkedin.com/company/australian-research-data-commons/" target="_blank"><i class="fab fa-linkedin-in"></i></a>
                           <a class="nav-icon icon-youtube ms-2" href="https://www.youtube.com/c/ARDC_AU" target="_blank"><i class="fab fa-youtube"></i></a>
                           <a class="nav-icon icon-contact ms-2" href="https://ardc.edu.au/contact-us" target="_blank"><i class="fa fa-envelope"></i></a>
@@ -120,8 +119,15 @@
           </div>
       </nav>
     </section>
-
     <main role="main" class="main">
+      <div class="container-fluid px-0">
+        <div class="alert alert-primary mb-0 rounded-0 border-0">
+          <div class="container d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-2 py-2">
+            <span><strong>2026 ARDC Annual Survey is now open.</strong> Please take a few minutes to provide your input. The survey closes COB Friday 29 May 2026.</span>
+            <a class="btn btn-primary btn-sm" href="https://bit.ly/2026-ardc-survey" target="_blank" rel="noopener noreferrer">Take Survey Now</a>
+          </div>
+        </div>
+      </div>
       {% if user.is_authenticated %}
         {# only show the warning header if the user is a super user. #}
         {% if user.is_superuser %}
@@ -151,7 +157,7 @@
       <div class="footer-row">
           <div class="container">
               <div class="row">
-                  <div class="col-12 col-md-6 col-lg-4">
+                  <div class="col-12 col-md-4">
                       <div class="footer-logos">
                           <div class="footer-logo-ncris">
                               <a href="https://www.education.gov.au/ncris">
@@ -168,11 +174,12 @@
                       </div>
                       <p class="footer-image-description">The Australian Research Data Commons is enabled by NCRIS.</p>
                   </div>
-                  <div class="col-12 col-md-6 col-lg-4">
-                      <!-- Include ARDC newsletter sign up form -->
-                      {% include "common/_ardc_subscribe.html" %}
+                  <div class="col-12 col-md-4">
+                      <h4 class="footer-heading">ARDC CONNECT NEWSLETTER</h4> 
+                      <p>Subscribe to the ARDC Connect Newsletter to keep up-to-date with the latest digital research news, events, resources, career opportunities and more.</p>
+                      <a href="https://ardc.edu.au/news-and-events/subscribe/" target="_blank" title="opens a new window" class="btn btn-primary">Subscribe <i class="fa fa-external-link"></i></a>
                   </div>
-                  <div class="col-12 col-md-6 col-lg-4 footer-links">
+                  <div class="col-12 col-md-4 footer-links">
                       <h4 class="footer-heading">Quick Links</h4>
                       <ul class="footer-list list-bullet">
                         <li><a href="{% url 'terms' %}" title="Nectar Cloud Terms and Conditions">Terms of Service</a></li>
