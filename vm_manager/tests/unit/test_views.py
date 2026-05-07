@@ -3,7 +3,7 @@ from unittest.mock import Mock, patch, call
 import uuid
 
 from django.conf import settings
-from django.http import Http404
+from django.http import Http404, HttpResponse
 from django.test import TestCase
 
 from researcher_workspace.tests.factories import UserFactory
@@ -894,17 +894,14 @@ class VMManagerViewTests(TestCase):
         # Bumblebee's involvement.)
         self.build_existing_vm(VM_OKAY)
         fake_request = Fake(POST={'instance_id': self.instance.id})
-        self.assertEqual(
-            f"Unexpected phone home for {self.instance}. "
-            f"VM_status is {self.vm_status}",
-            phone_home(fake_request, self.FEATURE))
+        response = phone_home(fake_request, self.FEATURE)
+        self.assertEqual(400, response.status_code)
 
         # Normal phone home
         self.build_existing_vm(VM_WAITING)
         fake_request = Fake(POST={'instance_id': self.instance.id})
-        self.assertEqual(
-            f"Phone home for {self.instance} - success!",
-            phone_home(fake_request, self.FEATURE))
+        response = phone_home(fake_request, self.FEATURE)
+        self.assertEqual(200, response.status_code)
         volume = Volume.objects.get(pk=self.volume.pk)
         vm_status = VMStatus.objects.get(pk=self.vm_status.pk)
         self.assertTrue(volume.ready)
@@ -915,9 +912,8 @@ class VMManagerViewTests(TestCase):
         self.build_existing_vm(VM_WAITING)
         resize = ResizeFactory.create(instance=self.instance)
         fake_request = Fake(POST={'instance_id': self.instance.id})
-        self.assertEqual(
-            f"Phone home for {self.instance} - success!",
-            phone_home(fake_request, self.FEATURE))
+        response = phone_home(fake_request, self.FEATURE)
+        self.assertEqual(200, response.status_code)
         volume = Volume.objects.get(pk=self.volume.pk)
         vm_status = VMStatus.objects.get(pk=self.vm_status.pk)
         self.assertTrue(volume.ready)
@@ -928,9 +924,8 @@ class VMManagerViewTests(TestCase):
         self.build_existing_vm(VM_WAITING)
         resize = ResizeFactory.create(instance=self.instance, reverted=now)
         fake_request = Fake(POST={'instance_id': self.instance.id})
-        self.assertEqual(
-            f"Phone home for {self.instance} - success!",
-            phone_home(fake_request, self.FEATURE))
+        response = phone_home(fake_request, self.FEATURE)
+        self.assertEqual(200, response.status_code)
         volume = Volume.objects.get(pk=self.volume.pk)
         vm_status = VMStatus.objects.get(pk=self.vm_status.pk)
         self.assertTrue(volume.ready)
@@ -942,9 +937,8 @@ class VMManagerViewTests(TestCase):
         resize = ResizeFactory.create(instance=self.instance, reverted=now)
         resize.set_expires(now, EXP_EXPIRING)
         fake_request = Fake(POST={'instance_id': self.instance.id})
-        self.assertEqual(
-            f"Phone home for {self.instance} - success!",
-            phone_home(fake_request, self.FEATURE))
+        response = phone_home(fake_request, self.FEATURE)
+        self.assertEqual(200, response.status_code)
         volume = Volume.objects.get(pk=self.volume.pk)
         vm_status = VMStatus.objects.get(pk=self.vm_status.pk)
         self.assertTrue(volume.ready)
@@ -958,9 +952,8 @@ class VMManagerViewTests(TestCase):
         # Late phone home
         self.build_existing_vm(VM_ERROR)
         fake_request = Fake(POST={'instance_id': self.instance.id})
-        self.assertEqual(
-            f"Phone home for {self.instance} - success!",
-            phone_home(fake_request, self.FEATURE))
+        response = phone_home(fake_request, self.FEATURE)
+        self.assertEqual(200, response.status_code)
 
     @patch('vm_manager.views.datetime')
     def test_rd_report_for_user(self, mock_datetime):

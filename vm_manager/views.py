@@ -8,7 +8,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.contrib import messages
 from django.forms.models import model_to_dict
-from django.http import Http404
+from django.http import Http404, HttpResponse, HttpResponseBadRequest
 from django.template import loader
 from django.utils.html import format_html
 from django.views.decorators.csrf import csrf_exempt
@@ -572,7 +572,7 @@ def phone_home(request, requesting_feature):
             result = (f"Unexpected phone home for {instance}. "
                       f"VM_status is {vm_status}")
             logger.error(result)
-            return result
+            return HttpResponseBadRequest("Error")
 
     volume = instance.boot_volume
     volume.ready = True
@@ -592,7 +592,7 @@ def phone_home(request, requesting_feature):
     outcome = "success" if status in (VM_OKAY, VM_SUPERSIZED) else "failed"
     result = f"Phone home for {instance} - {outcome}!"
     logger.info(result)
-    return result
+    return HttpResponse("OK")
 
 
 def rd_report_for_user(user, desktop_type_ids, requesting_feature):
