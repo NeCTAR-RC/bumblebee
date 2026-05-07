@@ -26,9 +26,10 @@ write_files:
   owner: root:root
   content: |
     #!/bin/bash
-    INSTANCE_ID=$(curl -s http://169.254.169.254/openstack/latest/meta_data.json | jq -r .uuid)
-    if [ -z "$INSTANCE_ID" ] || [ "$INSTANCE_ID" == "null" ]; then
-        echo "Error: Could not retrieve Instance ID" >&2
+    METADATA=$(curl -s http://169.254.169.254/openstack/latest/meta_data.json)
+    INSTANCE_ID=$(echo "$METADATA" | grep -oP '"uuid":\s*"\K[^"]+')
+    if [ -z "$INSTANCE_ID" ]; then
+        echo "Error: Could not retrieve instance_id from metadata service." >&2
         exit 1
     fi
     curl -s --retry 10 -d "instance_id=${INSTANCE_ID}" {{ phone_home_url }}
