@@ -143,15 +143,41 @@ DATABASES = {
 # Redis queue
 REDIS_HOST = get_setting('REDIS_HOST', 'localhost')
 REDIS_PORT = get_setting('REDIS_PORT', '6379')
-REDIS_URL = f'redis://{REDIS_HOST}:{REDIS_PORT}'
-RQ_QUEUES = {
-    'default': {
-        'HOST': REDIS_HOST,
-        'PORT': REDIS_PORT,
-        'DB': 0,
-        'DEFAULT_TIMEOUT': 360,
-    },
-}
+
+# Optional Redis Sentinel.  Set REDIS_SENTINELS to a comma-separated list of
+# 'host:port' entries to discover the Redis master via Sentinel rather than
+# connecting directly to REDIS_HOST:REDIS_PORT.  REDIS_MASTER_NAME names the
+# master service registered with Sentinel.
+REDIS_SENTINELS = get_setting('REDIS_SENTINELS')
+REDIS_MASTER_NAME = get_setting('REDIS_MASTER_NAME', 'mymaster')
+
+if REDIS_SENTINELS:
+    SENTINELS = [
+        (host, int(port))
+        for host, port in (s.split(':') for s in REDIS_SENTINELS.split(','))
+    ]
+    RQ_QUEUES = {
+        'default': {
+            'SENTINELS': SENTINELS,
+            'MASTER_NAME': REDIS_MASTER_NAME,
+            'DB': 0,
+            'DEFAULT_TIMEOUT': 360,
+        },
+    }
+    # health_check.contrib.redis uses redis.from_url(), which doesn't
+    # understand Sentinel; point it at the first Sentinel so we still verify
+    # that the Sentinel cluster is reachable (Sentinels respond to PING).
+    REDIS_URL = f'redis://{SENTINELS[0][0]}:{SENTINELS[0][1]}'
+else:
+    REDIS_URL = f'redis://{REDIS_HOST}:{REDIS_PORT}'
+    RQ_QUEUES = {
+        'default': {
+            'HOST': REDIS_HOST,
+            'PORT': REDIS_PORT,
+            'DB': 0,
+            'DEFAULT_TIMEOUT': 360,
+        },
+    }
 
 
 # OpenStack config
