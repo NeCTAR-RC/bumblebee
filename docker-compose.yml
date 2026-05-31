@@ -91,7 +91,7 @@ services:
     - .:/app
 
   mariadb:
-    image: mariadb:11.3.2
+    image: mariadb:11.8.8
     environment:
       MARIADB_ROOT_PASSWORD: toor
     ports:
