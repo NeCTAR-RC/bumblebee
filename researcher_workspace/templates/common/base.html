@@ -120,14 +120,6 @@
       </nav>
     </section>
     <main role="main" class="main">
-      <div class="container-fluid px-0">
-        <div class="alert alert-primary mb-0 rounded-0 border-0">
-          <div class="container d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-2 py-2">
-            <span><strong>2026 ARDC Annual Survey is now open.</strong> Please take a few minutes to provide your input. The survey closes COB Friday 29 May 2026.</span>
-            <a class="btn btn-primary btn-sm" href="https://bit.ly/2026-ardc-survey" target="_blank" rel="noopener noreferrer">Take Survey Now</a>
-          </div>
-        </div>
-      </div>
       {% if user.is_authenticated %}
         {# only show the warning header if the user is a super user. #}
         {% if user.is_superuser %}
