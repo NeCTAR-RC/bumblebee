@@ -1,4 +1,4 @@
-FROM debian:trixie
+FROM debian:trixie-20260518
 
 ADD requirements.txt /app/requirements.txt
 
