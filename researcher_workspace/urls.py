@@ -3,9 +3,18 @@ from django.contrib import admin
 from django.urls import path, include
 from django.views.generic.base import RedirectView
 
+from health_check import Cache, Database, Storage
+from health_check.views import HealthCheckView
 from mozilla_django_oidc import views as oidc_views
 
 from . import views
+from .health import DesktopStatus, InstanceStatus, VolumeStatus
+
+
+class BumblebeeHealthCheckView(HealthCheckView):
+    checks = [Cache, Database, Storage,
+              DesktopStatus, InstanceStatus, VolumeStatus]
+
 
 app_name = 'researcher_workspace'
 
@@ -38,7 +47,8 @@ urlpatterns = [
     path('report/', views.report, name='report'),
     path('learn/', views.learn, name='learn'),
     path('login/fail/', views.login_fail, name='login_fail'),
-    path('healthcheck/status', include('health_check.urls')),
+    path('healthcheck/status',
+         BumblebeeHealthCheckView.as_view(), name='health_check'),
     path('healthcheck/', views.healthcheck, name='healthcheck')
 ]
 

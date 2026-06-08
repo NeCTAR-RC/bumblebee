@@ -11,7 +11,7 @@ from researcher_workspace.health import (
     DesktopStatus, InstanceStatus, VolumeStatus,
 )
 from researcher_workspace.tests.factories import FeatureFactory, UserFactory
-from vm_manager.constants import VM_ERROR, VM_OKAY
+from vm_manager.constants import VM_ERROR
 from vm_manager.tests.factories import (
     InstanceFactory, VMStatusFactory, VolumeFactory,
 )
@@ -41,23 +41,17 @@ class HealthCheckTests(TestCase):
             return VolumeFactory.create(**params)
 
     def test_desktop_status_no_errors(self):
-        check = DesktopStatus()
-        # no errors at all
-        check.check_status()
-        self.assertEqual("DesktopStatus", check.identifier())
+        DesktopStatus().run()
 
     def test_desktop_status_with_errors(self):
         VMStatusFactory.create(
             user=self.user, requesting_feature=self.feature,
             operating_system='ubuntu', status=VM_ERROR)
-        check = DesktopStatus()
         with self.assertRaises(ServiceWarning):
-            check.check_status()
+            DesktopStatus().run()
 
     def test_instance_status_no_errors(self):
-        check = InstanceStatus()
-        check.check_status()
-        self.assertEqual("InstanceStatus", check.identifier())
+        InstanceStatus().run()
 
     def test_instance_status_with_errors(self):
         volume = self._make_volume()
@@ -67,17 +61,13 @@ class HealthCheckTests(TestCase):
             boot_volume=volume,
             error_flag=datetime.now(utc),
         )
-        check = InstanceStatus()
         with self.assertRaises(ServiceWarning):
-            check.check_status()
+            InstanceStatus().run()
 
     def test_volume_status_no_errors(self):
-        check = VolumeStatus()
-        check.check_status()
-        self.assertEqual("VolumeStatus", check.identifier())
+        VolumeStatus().run()
 
     def test_volume_status_with_errors(self):
         self._make_volume(error_flag=datetime.now(utc))
-        check = VolumeStatus()
         with self.assertRaises(ServiceWarning):
-            check.check_status()
+            VolumeStatus().run()

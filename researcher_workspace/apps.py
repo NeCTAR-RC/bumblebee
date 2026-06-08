@@ -1,7 +1,6 @@
 from django.apps import AppConfig
 from django.db.backends.signals import connection_created
 from django.db.models.signals import post_migrate
-from health_check.plugins import plugin_dir
 from prometheus_client import REGISTRY
 
 
@@ -42,9 +41,3 @@ class ResearcherWorkspaceConfig(AppConfig):
 
         if not migration_executed:
             connection_created.connect(connection_callback)
-
-        # Register the Bumblebee custom health checks
-        from researcher_workspace import health
-        plugin_dir.register(health.DesktopStatus)
-        plugin_dir.register(health.InstanceStatus)
-        plugin_dir.register(health.VolumeStatus)

@@ -73,14 +73,10 @@ INSTALLED_APPS = [
     'mathfilters',
     'django_rq',
     'researcher_desktop',
-    'health_check',
-    'health_check.db',
-    'health_check.cache',
-    'health_check.contrib.migrations',
-    'health_check.contrib.redis',
     'django_prometheus',
     'django_admin_listfilter_dropdown',
     'admin_searchable_dropdown',
+    'health_check',
 ]
 
 MIDDLEWARE = [
