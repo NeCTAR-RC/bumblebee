@@ -1,6 +1,5 @@
 #cloud-config
 
-hostname: {{ hostname }}
 timezone: {{ timezone }}
 
 users:
@@ -9,62 +8,30 @@ users:
   gecos: VDI User
   groups:
   - Administrators
+- name: nectar
+  gecos: Nectar Admin
+  groups:
+  - Administrators
+  ssh_authorized_keys:
+  - cert-authority ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCyknK7S2h0A/j6V5McOKXZUC9ClPzdAcZVr6LFwmEJ8hammBWkRyIIV0LQLy9W6YtxFeqJNV5ey4H4KMH3AKD+oU3trNs3c/XEK+6+OCT+Cr9Wu7TIAP7IfSaXa3BkLeZ+2Qrxzd67SaTizKNWfvtVnWnzFslKB0YQAnUIOIigRnGPGbtBuJ1SIwtC0WUREFdOfoSDvc1NpWMBBoydezkP94ZcIrktkMLD0dGeoRGMRVXKHKO+NjpjBrGUiqaloRPktKO/7Mp6ZHSE/vmUBQlZGPjQKGCkN+uUWFvKORrAYfPKUrcxQJ2+YsDJwdpCgCWV4XMnzpyw4h3J+n8KEGer Nectar-service-instance-CA
 
 write_files:
-- path: C:\ProgramData\Nectar\phone_home_startup.ps1
+- path: C:\ProgramData\Nectar\scripts\90-phone_home.ps1
   content: |
-    $ErrorActionPreference = "Continue"
-    $path = "$ENV:systemRoot\System32\GroupPolicy\Machine\Scripts\Startup"
-    if (-not (Test-Path $path)) {
-        New-Item -path $path -itemType Directory
-    }
-    # Add script to Group Policy through the Registry
-    'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Group Policy\Scripts\Startup\0\0',
-    'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Group Policy\State\Machine\Scripts\Startup\0\0' |
-      ForEach-Object {
-        if (-not (Test-Path $_)) {
-            New-Item -path $_ -force
-        }
-      }
-    'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Group Policy\Scripts\Startup\0',
-    'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Group Policy\State\Machine\Scripts\Startup\0' |
-      ForEach-Object {
-        New-ItemProperty -path "$_" -name DisplayName -propertyType String -value "Local Group Policy"
-        New-ItemProperty -path "$_" -name FileSysPath -propertyType String -value "$ENV:systemRoot\System32\GroupPolicy\Machine"
-        New-ItemProperty -path "$_" -name GPO-ID -propertyType String -value "LocalGPO"
-        New-ItemProperty -path "$_" -name GPOName -propertyType String -value "Local Group Policy"
-        New-ItemProperty -path "$_" -name PSScriptOrder -propertyType DWord -value 2
-        New-ItemProperty -path "$_" -name SOM-ID -propertyType String -value "Local"
-      }
-    'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Group Policy\Scripts\Startup\0\0',
-    'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Group Policy\State\Machine\Scripts\Startup\0\0' |
-      ForEach-Object {
-        New-ItemProperty -path "$_" -name Script -propertyType String -value 'C:\ProgramData\Nectar\phone_home.ps1'
-        New-ItemProperty -path "$_" -name Parameters -propertyType String -value ''
-        New-ItemProperty -path "$_" -name IsPowershell -propertyType DWord -value 1
-        New-ItemProperty -path "$_" -name ExecTime -propertyType QWord -value 0
-      }
-- path: C:\ProgramData\Nectar\phone_home.ps1
-  content: |
-    $ErrorActionPreference = "Continue"
-    function Custom-Log ($m) {
-        $msg = "$(Get-Date -Format o): $m"
-        Write-Host "$msg"
-        $msg | Out-File -Append -FilePath "C:\ProgramData\Nectar\phone_home.log"
+    . "$env:ProgramData\Nectar\lib.ps1"
+    Log "Starting Virtual Desktop phone home..."
+    for ($i = 1; $i -le 5; $i++) {
         try {
-            $port = new-Object System.IO.Ports.SerialPort COM1,9600,None,8,one
-            $port.open()
-            $port.WriteLine($msg)
-            $port.Close()
+            $metadata = Invoke-WebRequest -Uri http://169.254.169.254/openstack/latest/meta_data.json -UseBasicParsing | ConvertFrom-Json
+            $result = Invoke-WebRequest -Uri {{ phone_home_url }} -Method POST -Body @{instance_id=$metadata.uuid} -UseBasicParsing
+            Log "Phone home result: $($result.StatusCode) $($result.Content)"
+            break
         }
         catch {
-            Write-Host "Can't log to console: $_"
+            Log "Phone home failure (attempt $i): $($_.Exception.Message) $($_.ErrorDetails.Message)"
+            Start-Sleep -Seconds 10
         }
     }
-    Custom-Log "Starting Nectar Phone Home"
-    $metadata = Invoke-WebRequest -Uri http://169.254.169.254/openstack/latest/meta_data.json -UseBasicParsing | ConvertFrom-Json
-    $result = Invoke-WebRequest -Uri {{ phone_home_url }} -Method POST -Body @{instance_id=$metadata.uuid} -UseBasicParsing
-    Custom-Log "$result"
 
 runcmd:
-  - powershell.exe -windowstyle hidden -file C:\ProgramData\Nectar\phone_home_startup.ps1
+  - powershell.exe -Command "New-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System' -Name LocalAccountTokenFilterPolicy -Value 1 -PropertyType DWord -Force"
