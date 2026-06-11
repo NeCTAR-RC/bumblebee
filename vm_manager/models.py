@@ -201,7 +201,7 @@ class InstanceManager(models.Manager):
             qs = qs.filter(
                 boot_volume__operating_system=desktop_type.id,
                 boot_volume__requesting_feature=desktop_type.feature)
-        return [i for i in qs if i.get_status != MISSING]
+        return [i for i in qs if i.get_status() != MISSING]
 
     def get_instance(self, user, desktop_type):
         try:

@@ -13,7 +13,7 @@ from guacamole.tests.factories import GuacamoleConnectionFactory
 from vm_manager.tests.factories import InstanceFactory, VolumeFactory, \
     ResizeFactory, VMStatusFactory
 from vm_manager.tests.fakes import Fake, FakeNectar
-from vm_manager.constants import ERROR
+from vm_manager.constants import ACTIVE, ERROR, MISSING
 from vm_manager.utils.utils import get_nectar
 
 from vm_manager.models import Instance, Volume, Resize, VMStatus, \
@@ -397,7 +397,13 @@ class InstanceModelTests(VMManagerModelTestBase):
             "Got a vm that is marked for deletion "
             f"- vm_id: {id}, called by {self.user}")
 
+    @patch('vm_manager.utils.utils.Nectar', new=FakeNectar)
     def test_get_live_instances(self):
+        from novaclient import exceptions as nova_exceptions
+        fake = get_nectar()
+        fake.nova.servers.get.side_effect = None
+        fake.nova.servers.get.return_value = Fake(status=ACTIVE)
+
         self.assertEqual([],
                          Instance.objects.get_live_instances(self.user, None))
 
@@ -433,6 +439,12 @@ class InstanceModelTests(VMManagerModelTestBase):
             [fake_instance3],
             Instance.objects.get_live_instances(self.user,
                                                 desktop_type2))
+
+        fake.nova.servers.get.side_effect = nova_exceptions.NotFound(404)
+        self.assertEqual(
+            [],
+            Instance.objects.get_live_instances(self.user, desktop_type2))
+        fake.nova.servers.get.side_effect = None
 
 
 class ResizeModelTests(VMManagerModelTestBase):
