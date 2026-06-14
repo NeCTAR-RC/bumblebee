@@ -9,7 +9,8 @@ from django.conf import settings
 from django.template.loader import render_to_string
 from django.urls import reverse
 
-from vm_manager.constants import NO_VM, VM_SHELVED, VOLUME_AVAILABLE, ACTIVE
+from vm_manager.constants import NO_VM, VM_SHELVED, VM_WAITING, \
+    VOLUME_AVAILABLE, ACTIVE
 from vm_manager.utils.expiry import InstanceExpiryPolicy
 from vm_manager.utils.utils import get_nectar, generate_server_name, \
     generate_hostname, generate_password
@@ -24,6 +25,12 @@ logger = logging.getLogger(__name__)
 utc = timezone.utc
 
 
+def _fail_vm_status(user, desktop_type, message):
+    vm_status = VMStatus.objects.get_latest_vm_status(user, desktop_type)
+    if vm_status and vm_status.status == VM_WAITING:
+        vm_status.error(message)
+
+
 def launch_vm_worker(user, desktop_type, zone):
     desktop_id = desktop_type.id
     logger.info(f'Launching {desktop_id} VM for {user.username}')
@@ -35,6 +42,7 @@ def launch_vm_worker(user, desktop_type, zone):
         if vm_status.status != NO_VM:
             msg = f"A {desktop_id} VM for {user} already exists"
             logger.error(msg)
+            _fail_vm_status(user, desktop_type, msg)
             raise RuntimeWarning(msg)
 
     volume = _create_volume(user, desktop_type, zone)
@@ -45,6 +53,10 @@ def launch_vm_worker(user, desktop_type, zone):
                              datetime.now(utc))
         logger.info(f'{desktop_id} VM creation scheduled '
                     f'for {user.username}')
+    else:
+        _fail_vm_status(
+            user, desktop_type,
+            f"Unable to create or retrieve volume for {desktop_id}.")
 
 
 def _create_volume(user, desktop_type, zone):

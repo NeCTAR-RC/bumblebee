@@ -17,7 +17,7 @@ from vm_manager.tests.fakes import Fake, FakeNectar
 from vm_manager.constants import ACTIVE, SHUTDOWN, BUILD, REBUILD, \
     REBOOT, RESCUE, REBOOT_SOFT, VM_OKAY, VM_DELETED, VM_WAITING, \
     VM_CREATING, VM_RESIZING, NO_VM, VM_SHELVED, VM_MISSING, VM_ERROR, \
-    VM_SHUTDOWN, VM_SUPERSIZED, ALL_VM_STATES, \
+    VM_SHUTDOWN, VM_SUPERSIZED, ALL_VM_STATES, MISSING, \
     CLOUD_INIT_STARTED, CLOUD_INIT_FINISHED, SCRIPT_OKAY, \
     EXTEND_BUTTON, EXTEND_BOOST_BUTTON, BOOST_BUTTON
 
@@ -31,7 +31,7 @@ from vm_manager.views import launch_vm_worker, delete_vm_worker, \
 
 from vm_manager.views import launch_vm, delete_vm, shelve_vm, unshelve_vm, \
     reboot_vm, supersize_vm, downsize_vm, get_vm_state, render_vm, notify_vm, \
-    phone_home, rd_report_for_user, delete_shelved_vm
+    phone_home, rd_report_for_user, delete_shelved_vm, _check_launch_blocked
 
 utc = timezone.utc
 
@@ -122,6 +122,67 @@ class VMManagerViewTests(TestCase):
         mock_queue.enqueue.assert_called_once_with(
             launch_vm_worker, user=self.user, desktop_type=self.UBUNTU,
             zone=self.zone)
+
+    @patch('vm_manager.views.django_rq')
+    def test_launch_vm_blocked_volume_error_flag(self, mock_rq):
+        self.build_existing_vm(NO_VM)
+        now = datetime.now(utc)
+        self.instance.deleted = now
+        self.instance.save()
+        self.volume.error_flag = now
+        self.volume.save()
+
+        result = launch_vm(self.user, self.UBUNTU, self.zone)
+
+        self.assertIn("error flag", result)
+        self.assertIn("manual cleanup", result)
+        mock_rq.get_queue.assert_not_called()
+
+    @patch('vm_manager.models.Instance.get_status', return_value=MISSING)
+    @patch('vm_manager.views.django_rq')
+    def test_launch_vm_blocked_inconsistent_instance(self, mock_rq,
+                                                     mock_status):
+        # Simulate a Nova-MISSING instance (get_status → MISSING) so that
+        # desktop_limit_check skips it, but the DB record is still non-deleted.
+        self.build_existing_vm(NO_VM)
+
+        result = launch_vm(self.user, self.UBUNTU, self.zone)
+
+        self.assertIn("not deleted", result)
+        self.assertIn("manual cleanup", result)
+        mock_rq.get_queue.assert_not_called()
+
+    def test_check_launch_blocked_clean(self):
+        self.assertIsNone(_check_launch_blocked(self.user, self.UBUNTU))
+
+    def test_check_launch_blocked_volume_error_flag(self):
+        self.build_existing_vm(NO_VM)
+        now = datetime.now(utc)
+        self.instance.deleted = now
+        self.instance.save()
+        self.volume.error_flag = now
+        self.volume.save()
+
+        result = _check_launch_blocked(self.user, self.UBUNTU)
+        self.assertIsNotNone(result)
+        self.assertIn("error flag", result)
+
+    def test_check_launch_blocked_inconsistent_instance(self):
+        self.build_existing_vm(NO_VM)
+
+        result = _check_launch_blocked(self.user, self.UBUNTU)
+        self.assertIsNotNone(result)
+        self.assertIn("not deleted", result)
+
+    def test_check_launch_blocked_shelved_instance_is_ok(self):
+        # Shelved desktops have a deleted instance; the volume remains.
+        # This should not block launch via unshelve.
+        self.build_existing_vm(VM_SHELVED)
+        now = datetime.now(utc)
+        self.instance.deleted = now
+        self.instance.save()
+
+        self.assertIsNone(_check_launch_blocked(self.user, self.UBUNTU))
 
     @patch('vm_manager.views.django_rq')
     def test_delete_vm_inconsistent(self, mock_rq):

@@ -14,12 +14,13 @@ from vm_manager.tests.fakes import FakeServer, FakeVolume, FakeNectar
 from vm_manager.tests.factories import VMStatusFactory
 from vm_manager.tests.unit.vm_functions.base import VMFunctionTestBase
 
-from vm_manager.constants import VM_OKAY, VM_SHELVED, NO_VM, \
+from vm_manager.constants import VM_OKAY, VM_SHELVED, NO_VM, VM_ERROR, \
     VM_WAITING, VOLUME_AVAILABLE, VOLUME_IN_USE
 from vm_manager.models import VMStatus, Volume, Instance
 from vm_manager.vm_functions.create_vm import launch_vm_worker, \
     wait_to_create_instance, _create_volume, _create_instance, \
-    wait_for_instance_active, _get_source_volume_id, extend_instance
+    wait_for_instance_active, _get_source_volume_id, extend_instance, \
+    _fail_vm_status
 from vm_manager.utils.utils import get_nectar
 
 utc = timezone.utc
@@ -53,6 +54,12 @@ class CreateVMTests(VMFunctionTestBase):
         mock_scheduler = Mock()
         mock_rq.get_scheduler.return_value = mock_scheduler
         fake_volume, _, _ = self.build_fake_vol_inst_status()
+        # Simulate the VM_CREATING VMStatus that launch_vm() would have created
+        launching_status = VMStatusFactory.create(
+            user=self.user,
+            operating_system=self.UBUNTU.id,
+            requesting_feature=self.UBUNTU.feature,
+            status=VM_WAITING)
         mock_create.return_value = fake_volume
 
         with self.assertRaises(RuntimeWarning) as cm:
@@ -64,6 +71,8 @@ class CreateVMTests(VMFunctionTestBase):
         mock_create.assert_not_called()
         mock_rq.get_scheduler.assert_not_called()
         mock_scheduler.enqueue_in.assert_not_called()
+        launching_status.refresh_from_db()
+        self.assertEqual(VM_ERROR, launching_status.status)
 
     @patch('vm_manager.vm_functions.create_vm._create_volume')
     @patch('vm_manager.vm_functions.create_vm.django_rq')
@@ -71,6 +80,12 @@ class CreateVMTests(VMFunctionTestBase):
         mock_scheduler = Mock()
         mock_rq.get_scheduler.return_value = mock_scheduler
         self.build_fake_volume()
+        # Simulate the VM_CREATING VMStatus that launch_vm() would have created
+        launching_status = VMStatusFactory.create(
+            user=self.user,
+            operating_system=self.UBUNTU.id,
+            requesting_feature=self.UBUNTU.feature,
+            status=VM_WAITING)
         mock_create.return_value = None
 
         launch_vm_worker(self.user, self.UBUNTU, self.zone)
@@ -78,6 +93,8 @@ class CreateVMTests(VMFunctionTestBase):
         mock_create.assert_called_once_with(self.user, self.UBUNTU, self.zone)
         mock_rq.get_scheduler.assert_not_called()
         mock_scheduler.enqueue_in.assert_not_called()
+        launching_status.refresh_from_db()
+        self.assertEqual(VM_ERROR, launching_status.status)
 
     @patch('vm_manager.vm_functions.create_vm._create_volume')
     @patch('vm_manager.vm_functions.create_vm.django_rq')

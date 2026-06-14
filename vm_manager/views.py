@@ -67,6 +67,41 @@ def _wrong_state_message(action, user, feature=None, desktop_type=None,
     return message
 
 
+def _check_launch_blocked(user, desktop_type) -> str:
+    """Return an error message if DB state would block a successful launch.
+
+    Checks two conditions that require manual cleanup before a new desktop
+    can be launched:
+    1. A non-deleted volume that has an error flag set.
+    2. A VMStatus showing No_VM whose instance record is still not deleted
+       (inconsistent state after a failed delete or crash).
+    """
+    volume = Volume.objects.get_volume(user, desktop_type)
+    if volume and volume.error_flag:
+        message = (
+            f"Cinder volume for {volume} has an error flag set. "
+            "Needs manual cleanup.")
+        logger.error(message)
+        return message
+
+    inconsistent = VMStatus.objects.filter(
+        user=user,
+        operating_system=desktop_type.id,
+        requesting_feature=desktop_type.feature,
+        status=NO_VM,
+        instance__isnull=False,
+        instance__deleted=None)
+    if inconsistent.exists():
+        vm_status = inconsistent.first()
+        message = (
+            f"Instance {vm_status.instance.id} for {desktop_type.id} is not "
+            f"deleted but a {NO_VM} VMStatus exists. Needs manual cleanup.")
+        logger.error(message)
+        return message
+
+    return None
+
+
 def desktop_limit_check(user, desktop_type, log=False) -> str:
     # Policy on number of simultaneous desktops: one per user.  As it is
     # designed the UI shouldn't give the user the option of creating more
@@ -85,6 +120,8 @@ def launch_vm(user, desktop_type, zone) -> str:
     # TODO(SC) - the handling of race conditions (below) is dodgy
 
     if res := desktop_limit_check(user, desktop_type, log=True):
+        return res
+    if res := _check_launch_blocked(user, desktop_type):
         return res
     launch_time = settings.LAUNCH_WAIT + desktop_type.launch_wait_extra
     vm_status = VMStatus(
