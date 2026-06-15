@@ -185,15 +185,18 @@ class CreateVMTests(VMFunctionTestBase):
 
     @patch('vm_manager.vm_functions.create_vm.django_rq')
     @patch('vm_manager.vm_functions.create_vm._create_instance')
+    @patch('vm_manager.models.get_nectar')
     @patch('vm_manager.vm_functions.create_vm.get_nectar')
-    def test_wait_to_create_timeout(self, mock_get, mock_create_instance,
-                                    mock_rq):
+    def test_wait_to_create_timeout(self, mock_get, mock_get_2,
+                                    mock_create_instance, mock_rq):
         fake = FakeNectar()
         fake_volume, _, fake_status = self.build_fake_vol_inst_status()
         fake.cinder.volumes.get.return_value = FakeVolume(
             volume_id=fake_volume.id,
             status=VOLUME_IN_USE)
+        fake.cinder.messages.list.return_value = []
         mock_get.return_value = fake
+        mock_get_2.return_value = fake
 
         with self.assertRaises(TimeoutError) as cm:
             time = (datetime.now(utc)
@@ -216,15 +219,20 @@ class CreateVMTests(VMFunctionTestBase):
 
     @patch('vm_manager.vm_functions.create_vm.django_rq')
     @patch('vm_manager.vm_functions.create_vm._create_instance')
+    @patch('vm_manager.models.get_nectar')
     @patch('vm_manager.vm_functions.create_vm.get_nectar')
-    def test_wait_to_create_volume_error(self, mock_get, mock_create_instance,
-                                         mock_rq):
+    def test_wait_to_create_volume_error(self, mock_get, mock_get_2,
+                                         mock_create_instance, mock_rq):
         fake = FakeNectar()
         fake_volume, _, fake_status = self.build_fake_vol_inst_status()
         fake.cinder.volumes.get.return_value = FakeVolume(
             volume_id=fake_volume.id,
             status=VOLUME_ERROR)
+        # The Cinder messages API reports why the volume creation failed.
+        fake.cinder.messages.list.return_value = [
+            Mock(user_message="No valid host was found")]
         mock_get.return_value = fake
+        mock_get_2.return_value = fake
 
         # Even with plenty of time left, a volume in the Cinder error state
         # should fail fast rather than poll until the timeout.
@@ -236,12 +244,14 @@ class CreateVMTests(VMFunctionTestBase):
         fake.cinder.volumes.get.assert_called_with(volume_id=fake_volume.id)
         mock_create_instance.assert_not_called()
 
+        # The OpenStack fault is captured in the status fields.
+        expected = "Volume creation failed: No valid host was found"
         updated_status = VMStatus.objects.get(pk=fake_status.pk)
         self.assertEqual(VM_ERROR, updated_status.status)
+        self.assertEqual(expected, updated_status.status_message)
 
         updated_volume = Volume.objects.get(id=fake_volume.id)
-        self.assertEqual("Volume creation failed",
-                         updated_volume.error_message)
+        self.assertEqual(expected, updated_volume.error_message)
         self.assertIsNotNone(updated_volume.error_flag)
         # Fail fast: no further polling scheduled.
         mock_rq.get_scheduler.assert_not_called()
@@ -516,10 +526,13 @@ class CreateVMTests(VMFunctionTestBase):
         mock_get.return_value = fake
         mock_get_2.return_value = fake
 
-        time = (datetime.now(utc)
-                - timedelta(seconds=settings.VOLUME_CREATION_WAIT + 1))
-        wait_for_instance_active(
-            self.user, self.UBUNTU, fake_instance, time)
+        with self.assertRaises(TimeoutError) as cm:
+            time = (datetime.now(utc)
+                    - timedelta(seconds=settings.INSTANCE_LAUNCH_WAIT + 1))
+            wait_for_instance_active(
+                self.user, self.UBUNTU, fake_instance, time)
+        self.assertEqual("Instance took too long to launch",
+                         str(cm.exception))
 
         fake.nova.servers.get.assert_called_with(fake_instance.id)
         updated_status = VMStatus.objects.get(pk=fake_status.pk)
@@ -528,6 +541,37 @@ class CreateVMTests(VMFunctionTestBase):
         self.assertEqual("Instance took too long to launch",
                          updated_instance.error_message)
         self.assertIsNotNone(updated_instance.error_flag)
+        mock_rq.get_scheduler.assert_not_called()
+
+    @patch('vm_manager.vm_functions.create_vm.django_rq')
+    @patch('vm_manager.vm_functions.create_vm.get_nectar')
+    @patch('vm_manager.models.get_nectar')
+    def test_wait_for_active_error(self, mock_get_2, mock_get, mock_rq):
+        fake = FakeNectar()
+        _, fake_instance, fake_status = self.build_fake_vol_inst_status()
+        # Instance in the Nova error state, with a fault explaining why.
+        fake.nova.servers.get.return_value = FakeServer(
+            id=fake_instance.id, status='ERROR',
+            fault={'message': 'No valid host was found'})
+        mock_get.return_value = fake
+        mock_get_2.return_value = fake
+
+        # Plenty of time left, but an errored instance should fail fast.
+        with self.assertRaises(RuntimeError) as cm:
+            start = datetime.now(utc) - timedelta(seconds=5)
+            wait_for_instance_active(
+                self.user, self.UBUNTU, fake_instance, start)
+        self.assertEqual("Instance launch failed", str(cm.exception))
+
+        # The OpenStack fault is captured in the status fields.
+        expected = "Instance launch failed: No valid host was found"
+        updated_status = VMStatus.objects.get(pk=fake_status.pk)
+        self.assertEqual(VM_ERROR, updated_status.status)
+        self.assertEqual(expected, updated_status.status_message)
+        updated_instance = Instance.objects.get(id=fake_instance.id)
+        self.assertEqual(expected, updated_instance.error_message)
+        self.assertIsNotNone(updated_instance.error_flag)
+        # Fail fast: no further polling scheduled.
         mock_rq.get_scheduler.assert_not_called()
 
     @patch('vm_manager.vm_functions.create_vm.django_rq')

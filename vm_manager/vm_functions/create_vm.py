@@ -10,7 +10,7 @@ from django.template.loader import render_to_string
 from django.urls import reverse
 
 from vm_manager.constants import NO_VM, VM_SHELVED, VM_WAITING, VM_ERROR, \
-    VOLUME_AVAILABLE, VOLUME_ERROR, ACTIVE
+    VOLUME_AVAILABLE, VOLUME_ERROR, ACTIVE, INSTANCE_ERROR
 from vm_manager.utils.expiry import InstanceExpiryPolicy
 from vm_manager.utils.utils import get_nectar, generate_server_name, \
     generate_hostname, generate_password
@@ -237,16 +237,20 @@ def _fail_volume_creation(user, desktop_type, volume, openstack_status,
 
     Sets the user's VMStatus to the error state (it has no instance yet, so
     it renders as VM_Missing -> 'contact support') and flags the volume as
-    errored.  The caller raises so rqworker logs the job failure.
+    errored.  Any OpenStack fault reported for the volume is appended so it
+    is captured in the status fields rather than a bare generic message.
+    The caller raises so rqworker logs the job failure.
     """
+    fault = volume.get_fault()
+    detail = f"{msg}: {fault}" if fault else msg
     logger.error(f"{msg}: user:{user} desktop_id:{desktop_type.id} "
                  f"volume:{volume} volume.status:{openstack_status} "
-                 f"start_time:{start_time} datetime.now:{now}")
+                 f"fault:{fault} start_time:{start_time} datetime.now:{now}")
     vm_status = VMStatus.objects.get_latest_vm_status(user, desktop_type)
     vm_status.status = VM_ERROR
-    vm_status.status_message = msg
+    vm_status.status_message = detail
     vm_status.save()
-    volume.error(msg)
+    volume.error(detail)
 
 
 def _create_instance(user, desktop_type, volume):
@@ -338,7 +342,8 @@ def _create_instance(user, desktop_type, volume):
 
 def wait_for_instance_active(user, desktop_type, instance, start_time):
     now = datetime.now(utc)
-    if instance.check_active_status():
+    status = instance.get_status()
+    if status == ACTIVE:
         logger.info(f"Instance {instance.id} is now {ACTIVE}")
         vm_status = VMStatus.objects.get_vm_status_by_instance(
             instance, desktop_type.feature)
@@ -347,22 +352,45 @@ def wait_for_instance_active(user, desktop_type, instance, start_time):
         vm_status.save()
         instance.set_expires(
             InstanceExpiryPolicy().initial_expiry(now=instance.created))
+
+    elif status == INSTANCE_ERROR:
+        # The instance has gone into the terminal Nova error state, so there
+        # is no point waiting for the full timeout; fail fast.
+        msg = "Instance launch failed"
+        _fail_instance_launch(user, desktop_type, instance, status,
+                              start_time, now, msg)
+        raise RuntimeError(msg)
+
     elif (now - start_time > timedelta(seconds=settings.INSTANCE_LAUNCH_WAIT)):
-        logger.error(f"Instance took too long to launch: user:{user} "
-                     f"desktop:{desktop_type.id} instance:{instance} "
-                     f"instance.status:{instance.get_status()} "
-                     f"start_time:{start_time} "
-                     f"datetime.now:{now}")
         msg = "Instance took too long to launch"
-        vm_status = VMStatus.objects.get_latest_vm_status(user, desktop_type)
-        vm_status.status = VM_ERROR
-        vm_status.status_message = msg
-        vm_status.save()
-        instance.error(msg)
+        _fail_instance_launch(user, desktop_type, instance, status,
+                              start_time, now, msg)
+        raise TimeoutError(msg)
+
     else:
         scheduler = django_rq.get_scheduler('default')
         scheduler.enqueue_in(timedelta(seconds=5), wait_for_instance_active,
                              user, desktop_type, instance, start_time)
+
+
+def _fail_instance_launch(user, desktop_type, instance, openstack_status,
+                          start_time, now, msg):
+    """Record a failed instance launch and surface it to the user.
+
+    Sets the user's VMStatus to the error state and flags the instance as
+    errored.  Any OpenStack fault reported for the instance is appended so
+    it is captured in the status fields rather than a bare generic message.
+    """
+    fault = instance.get_fault()
+    detail = f"{msg}: {fault}" if fault else msg
+    logger.error(f"{msg}: user:{user} desktop:{desktop_type.id} "
+                 f"instance:{instance} instance.status:{openstack_status} "
+                 f"fault:{fault} start_time:{start_time} datetime.now:{now}")
+    vm_status = VMStatus.objects.get_latest_vm_status(user, desktop_type)
+    vm_status.status = VM_ERROR
+    vm_status.status_message = detail
+    vm_status.save()
+    instance.error(detail)
 
 
 # TODO(SC) - Analyse for possible race conditions with create/delete

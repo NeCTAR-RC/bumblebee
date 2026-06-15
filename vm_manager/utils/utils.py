@@ -52,7 +52,13 @@ class Nectar(object):
         self.allocation = allocation_client.Client('1', session=sess)
         self.keystone = keystone_client.Client('3', session=sess)
         self.glance = glance_client.Client('2', session=sess)
-        self.cinder = cinder_client.Client('3', session=sess)
+        # Microversion 3.5 gives us the volume messages API (listing with
+        # filters), which is how Cinder surfaces user-facing failure reasons
+        # (see Volume.get_fault).  cinderclient requires an explicit version
+        # rather than '3.latest', and microversions are backwards
+        # compatible, so this does not change the behaviour of existing
+        # calls.
+        self.cinder = cinder_client.Client('3.5', session=sess)
         self.taynac = taynac_client.Client('1', session=sess)
 
 

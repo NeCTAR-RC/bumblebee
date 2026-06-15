@@ -161,6 +161,27 @@ class Volume(CloudResource):
                                   stage=stage,
                                   expiration_field='backup_expiration')
 
+    def get_fault(self):
+        """Return the latest Cinder user message for this volume, if any.
+
+        Cinder does not expose a fault on the volume resource, but it
+        records user-facing messages (e.g. why an asynchronous volume
+        creation failed) via the messages API.  Returns None if none are
+        available or the lookup fails for any reason; capturing the fault
+        must never break the error handling that calls it.
+        """
+        n = get_nectar()
+        try:
+            messages = n.cinder.messages.list(
+                search_opts={'resource_uuid': self.id},
+                sort='created_at:desc')
+            if messages:
+                return messages[0].user_message
+        except Exception as e:
+            logger.warning(
+                f"Could not retrieve Cinder messages for {self}: {e}")
+        return None
+
     def save(self, *args, **kwargs):
         if not self.hostname_id:
             hostname_id = _create_hostname_id()
@@ -388,6 +409,23 @@ class Instance(CloudResource):
             return instance_result.status
         except nova_exceptions.NotFound:
             return MISSING
+
+    def get_fault(self):
+        """Return the Nova fault message for this instance, if any.
+
+        Nova populates a 'fault' on a server that is in the ERROR state,
+        describing why it failed.  Returns None if the server is missing,
+        has no fault, or cannot be reached.
+        """
+        n = get_nectar()
+        try:
+            instance_result = n.nova.servers.get(self.id)
+        except nova_exceptions.NotFound:
+            return None
+        fault = getattr(instance_result, 'fault', None)
+        if fault:
+            return fault.get('message')
+        return None
 
     def check_active_status(self):
         return self.get_status() == ACTIVE

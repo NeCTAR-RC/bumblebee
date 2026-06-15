@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from unittest.mock import patch
+from unittest.mock import patch, Mock
 import uuid
 
 from django.http import Http404
@@ -125,6 +125,28 @@ class VolumeModelTests(VMManagerModelTestBase):
         volume.set_expires(None)
         self.assertIsNone(volume.expiration)
 
+    @patch('vm_manager.utils.utils.Nectar', new=FakeNectar)
+    def test_get_fault(self):
+        fake = get_nectar()
+        volume = self.make_volume()
+
+        # No Cinder messages for the volume -> None
+        fake.cinder.messages.list.return_value = []
+        self.assertIsNone(volume.get_fault())
+        fake.cinder.messages.list.assert_called_with(
+            search_opts={'resource_uuid': volume.id},
+            sort='created_at:desc')
+
+        # A message present -> its user_message
+        fake.cinder.messages.list.return_value = [
+            Mock(user_message='No valid host was found')]
+        self.assertEqual('No valid host was found', volume.get_fault())
+
+        # Any lookup error is swallowed -> None (best effort)
+        fake.cinder.messages.list.side_effect = Exception("boom")
+        self.assertIsNone(volume.get_fault())
+        fake.cinder.messages.list.side_effect = None
+
 
 class InstanceModelTests(VMManagerModelTestBase):
 
@@ -179,6 +201,32 @@ class InstanceModelTests(VMManagerModelTestBase):
 
         fake.nova.servers.get.assert_called_once_with(fake_instance.id)
         self.assertEqual('testing', status)
+
+    @patch('vm_manager.utils.utils.Nectar', new=FakeNectar)
+    def test_get_fault(self):
+        from novaclient import exceptions as nova_exceptions
+        fake = get_nectar()
+        fake.nova.servers.get.reset_mock()
+        fake.nova.servers.get.side_effect = None
+
+        fake_volume = self.make_volume()
+        fake_instance = InstanceFactory.create(
+            id=uuid.uuid4(), user=self.user, boot_volume=fake_volume)
+
+        # A server with no fault (e.g. still building) -> None
+        fake.nova.servers.get.return_value = Fake(status=ACTIVE)
+        self.assertIsNone(fake_instance.get_fault())
+
+        # A server in error with a fault -> the fault message
+        fake.nova.servers.get.return_value = Fake(
+            status='ERROR', fault={'message': 'No valid host was found'})
+        self.assertEqual('No valid host was found',
+                         fake_instance.get_fault())
+
+        # A missing server -> None
+        fake.nova.servers.get.side_effect = nova_exceptions.NotFound(404)
+        self.assertIsNone(fake_instance.get_fault())
+        fake.nova.servers.get.side_effect = None
 
     def test_create_guac_connection(self):
         fake_volume = self.make_volume()
