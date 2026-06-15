@@ -9,8 +9,8 @@ from django.conf import settings
 from django.template.loader import render_to_string
 from django.urls import reverse
 
-from vm_manager.constants import NO_VM, VM_SHELVED, VM_WAITING, \
-    VOLUME_AVAILABLE, ACTIVE
+from vm_manager.constants import NO_VM, VM_SHELVED, VM_WAITING, VM_ERROR, \
+    VOLUME_AVAILABLE, VOLUME_ERROR, ACTIVE
 from vm_manager.utils.expiry import InstanceExpiryPolicy
 from vm_manager.utils.utils import get_nectar, generate_server_name, \
     generate_hostname, generate_password
@@ -211,25 +211,42 @@ def wait_to_create_instance(user, desktop_type, volume, start_time):
                              user, desktop_type, instance,
                              datetime.now(utc))
 
+    elif openstack_volume.status == VOLUME_ERROR:
+        # The volume has gone into the terminal Cinder error state, so there
+        # is no point waiting for the full timeout; fail fast.
+        msg = "Volume creation failed"
+        _fail_volume_creation(user, desktop_type, volume,
+                              openstack_volume.status, start_time, now, msg)
+        raise RuntimeError(msg)
+
     elif (now - start_time > timedelta(seconds=settings.VOLUME_CREATION_WAIT)):
-        logger.error(f"Volume took too long to create: user:{user} "
-                     f"desktop_id:{desktop_type.id} volume:{volume} "
-                     f"volume.status:{openstack_volume.status} "
-                     f"start_time:{start_time} "
-                     f"datetime.now:{now}")
         msg = "Volume took too long to create"
-        vm_status = VMStatus.objects.get_latest_vm_status(user, desktop_type)
-        vm_status.status = NO_VM
-        vm_status.status_message = msg
-        vm_status.save()
-        volume.error(msg)
-        volume.save()
+        _fail_volume_creation(user, desktop_type, volume,
+                              openstack_volume.status, start_time, now, msg)
         raise TimeoutError(msg)
 
     else:
         scheduler = django_rq.get_scheduler('default')
         scheduler.enqueue_in(timedelta(seconds=5), wait_to_create_instance,
                              user, desktop_type, volume, start_time)
+
+
+def _fail_volume_creation(user, desktop_type, volume, openstack_status,
+                          start_time, now, msg):
+    """Record a failed volume creation and surface it to the user.
+
+    Sets the user's VMStatus to the error state (it has no instance yet, so
+    it renders as VM_Missing -> 'contact support') and flags the volume as
+    errored.  The caller raises so rqworker logs the job failure.
+    """
+    logger.error(f"{msg}: user:{user} desktop_id:{desktop_type.id} "
+                 f"volume:{volume} volume.status:{openstack_status} "
+                 f"start_time:{start_time} datetime.now:{now}")
+    vm_status = VMStatus.objects.get_latest_vm_status(user, desktop_type)
+    vm_status.status = VM_ERROR
+    vm_status.status_message = msg
+    vm_status.save()
+    volume.error(msg)
 
 
 def _create_instance(user, desktop_type, volume):
@@ -338,7 +355,7 @@ def wait_for_instance_active(user, desktop_type, instance, start_time):
                      f"datetime.now:{now}")
         msg = "Instance took too long to launch"
         vm_status = VMStatus.objects.get_latest_vm_status(user, desktop_type)
-        vm_status.status = NO_VM
+        vm_status.status = VM_ERROR
         vm_status.status_message = msg
         vm_status.save()
         instance.error(msg)

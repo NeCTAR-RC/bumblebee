@@ -15,7 +15,7 @@ from vm_manager.tests.factories import VMStatusFactory
 from vm_manager.tests.unit.vm_functions.base import VMFunctionTestBase
 
 from vm_manager.constants import VM_OKAY, VM_SHELVED, NO_VM, VM_ERROR, \
-    VM_WAITING, VOLUME_AVAILABLE, VOLUME_IN_USE
+    VM_WAITING, VOLUME_AVAILABLE, VOLUME_IN_USE, VOLUME_ERROR
 from vm_manager.models import VMStatus, Volume, Instance
 from vm_manager.vm_functions.create_vm import launch_vm_worker, \
     wait_to_create_instance, _create_volume, _create_instance, \
@@ -205,13 +205,45 @@ class CreateVMTests(VMFunctionTestBase):
         mock_create_instance.assert_not_called()
 
         updated_status = VMStatus.objects.get(pk=fake_status.pk)
-        self.assertEqual(NO_VM, updated_status.status)
+        self.assertEqual(VM_ERROR, updated_status.status)
         self.assertEqual(0, updated_status.status_progress)
 
         updated_volume = Volume.objects.get(id=fake_volume.id)
         self.assertEqual("Volume took too long to create",
                          updated_volume.error_message)
         self.assertIsNotNone(updated_volume.error_flag)
+        mock_rq.get_scheduler.assert_not_called()
+
+    @patch('vm_manager.vm_functions.create_vm.django_rq')
+    @patch('vm_manager.vm_functions.create_vm._create_instance')
+    @patch('vm_manager.vm_functions.create_vm.get_nectar')
+    def test_wait_to_create_volume_error(self, mock_get, mock_create_instance,
+                                         mock_rq):
+        fake = FakeNectar()
+        fake_volume, _, fake_status = self.build_fake_vol_inst_status()
+        fake.cinder.volumes.get.return_value = FakeVolume(
+            volume_id=fake_volume.id,
+            status=VOLUME_ERROR)
+        mock_get.return_value = fake
+
+        # Even with plenty of time left, a volume in the Cinder error state
+        # should fail fast rather than poll until the timeout.
+        with self.assertRaises(RuntimeError) as cm:
+            start = datetime.now(utc) - timedelta(seconds=5)
+            wait_to_create_instance(self.user, self.UBUNTU, fake_volume, start)
+        self.assertEqual("Volume creation failed", str(cm.exception))
+
+        fake.cinder.volumes.get.assert_called_with(volume_id=fake_volume.id)
+        mock_create_instance.assert_not_called()
+
+        updated_status = VMStatus.objects.get(pk=fake_status.pk)
+        self.assertEqual(VM_ERROR, updated_status.status)
+
+        updated_volume = Volume.objects.get(id=fake_volume.id)
+        self.assertEqual("Volume creation failed",
+                         updated_volume.error_message)
+        self.assertIsNotNone(updated_volume.error_flag)
+        # Fail fast: no further polling scheduled.
         mock_rq.get_scheduler.assert_not_called()
 
     @patch('vm_manager.vm_functions.create_vm.django_rq')
@@ -491,7 +523,7 @@ class CreateVMTests(VMFunctionTestBase):
 
         fake.nova.servers.get.assert_called_with(fake_instance.id)
         updated_status = VMStatus.objects.get(pk=fake_status.pk)
-        self.assertEqual(NO_VM, updated_status.status)
+        self.assertEqual(VM_ERROR, updated_status.status)
         updated_instance = Instance.objects.get(id=fake_instance.id)
         self.assertEqual("Instance took too long to launch",
                          updated_instance.error_message)

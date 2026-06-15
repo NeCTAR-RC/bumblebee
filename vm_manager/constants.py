@@ -26,6 +26,7 @@ VOLUME_AVAILABLE = "available"
 VOLUME_IN_USE = "in-use"
 VOLUME_CREATING = "creating"
 VOLUME_MAINTENANCE = "maintenance"
+VOLUME_ERROR = "error"
 
 BACKUP_AVAILABLE = "available"
 BACKUP_CREATING = "creating"

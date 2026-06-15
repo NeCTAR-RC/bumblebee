@@ -102,6 +102,42 @@ def _check_launch_blocked(user, desktop_type) -> str:
     return None
 
 
+def _error_vm_status_qs(user, desktop_type):
+    """The standalone (instance-less) error VMStatuses for a desktop.
+
+    These are created by _make_error_vm_status() to give the user feedback
+    when a launch is blocked.  They have no instance, so they render as
+    VM_Missing ('contact support') rather than offering a delete action.
+    """
+    return VMStatus.objects.filter(
+        user=user,
+        operating_system=desktop_type.id,
+        requesting_feature=desktop_type.feature,
+        status=VM_ERROR,
+        instance__isnull=True)
+
+
+def _make_error_vm_status(user, desktop_type, message):
+    """Surface a blocked launch to the user via a VMStatus in the error state.
+
+    Without an instance the status renders as VM_Missing ('contact support'),
+    which matches the 'needs manual cleanup' nature of the blocking states.
+    Reuses an existing standalone error status to avoid accumulating records
+    on repeated attempts.
+    """
+    vm_status = _error_vm_status_qs(user, desktop_type).first()
+    if not vm_status:
+        vm_status = VMStatus(
+            user=user, requesting_feature=desktop_type.feature,
+            operating_system=desktop_type.id)
+    vm_status.status = VM_ERROR
+    vm_status.instance = None
+    vm_status.status_progress = 0
+    vm_status.status_message = message
+    vm_status.save()
+    return vm_status
+
+
 def desktop_limit_check(user, desktop_type, log=False) -> str:
     # Policy on number of simultaneous desktops: one per user.  As it is
     # designed the UI shouldn't give the user the option of creating more
@@ -122,7 +158,16 @@ def launch_vm(user, desktop_type, zone) -> str:
     if res := desktop_limit_check(user, desktop_type, log=True):
         return res
     if res := _check_launch_blocked(user, desktop_type):
+        # Give the user feedback via a VMStatus in the error state rather
+        # than failing silently.
+        _make_error_vm_status(user, desktop_type, res)
         return res
+
+    # The block (if any) has cleared, so discard any error VMStatus left
+    # behind by an earlier blocked attempt.  Otherwise it would trip the
+    # race-condition check below and prevent this legitimate launch.
+    _error_vm_status_qs(user, desktop_type).delete()
+
     launch_time = settings.LAUNCH_WAIT + desktop_type.launch_wait_extra
     vm_status = VMStatus(
         user=user, requesting_feature=desktop_type.feature,

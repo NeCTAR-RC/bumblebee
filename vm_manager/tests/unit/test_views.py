@@ -137,6 +137,13 @@ class VMManagerViewTests(TestCase):
         self.assertIn("error flag", result)
         self.assertIn("manual cleanup", result)
         mock_rq.get_queue.assert_not_called()
+        # The user gets feedback: an instance-less VMStatus in the error
+        # state (renders as VM_Missing -> 'contact support').
+        vm_status = VMStatus.objects.get_latest_vm_status(
+            self.user, self.UBUNTU)
+        self.assertEqual(VM_ERROR, vm_status.status)
+        self.assertIsNone(vm_status.instance)
+        self.assertEqual(result, vm_status.status_message)
 
     @patch('vm_manager.models.Instance.get_status', return_value=MISSING)
     @patch('vm_manager.views.django_rq')
@@ -151,6 +158,51 @@ class VMManagerViewTests(TestCase):
         self.assertIn("not deleted", result)
         self.assertIn("manual cleanup", result)
         mock_rq.get_queue.assert_not_called()
+        vm_status = VMStatus.objects.get_latest_vm_status(
+            self.user, self.UBUNTU)
+        self.assertEqual(VM_ERROR, vm_status.status)
+        self.assertIsNone(vm_status.instance)
+
+    @patch('vm_manager.views.django_rq')
+    def test_launch_vm_blocked_reuses_error_status(self, mock_rq):
+        self.build_existing_vm(NO_VM)
+        now = datetime.now(utc)
+        self.instance.deleted = now
+        self.instance.save()
+        self.volume.error_flag = now
+        self.volume.save()
+
+        launch_vm(self.user, self.UBUNTU, self.zone)
+        first = VMStatus.objects.get_latest_vm_status(self.user, self.UBUNTU)
+        launch_vm(self.user, self.UBUNTU, self.zone)
+
+        # Repeated blocked attempts reuse the one error status, no pile-up.
+        error_statuses = VMStatus.objects.filter(
+            user=self.user, operating_system=self.UBUNTU.id,
+            status=VM_ERROR, instance__isnull=True)
+        self.assertEqual(1, error_statuses.count())
+        self.assertEqual(first.id, error_statuses.first().id)
+        mock_rq.get_queue.assert_not_called()
+
+    @patch('vm_manager.views.django_rq')
+    def test_launch_vm_clears_stale_error_status(self, mock_rq):
+        mock_queue = Mock()
+        mock_rq.get_queue.return_value = mock_queue
+        # A standalone error status left behind by an earlier blocked launch.
+        stale = VMStatusFactory.create(
+            user=self.user, operating_system=self.UBUNTU.id,
+            requesting_feature=self.FEATURE, status=VM_ERROR)
+
+        # No volume/instance now, so the block has cleared and launch proceeds.
+        self.assertEqual(
+            f"Status of {self.UBUNTU} for {self.user} is {VM_WAITING}",
+            launch_vm(self.user, self.UBUNTU, self.zone))
+
+        self.assertFalse(VMStatus.objects.filter(id=stale.id).exists())
+        vm_status = VMStatus.objects.get_latest_vm_status(
+            self.user, self.UBUNTU)
+        self.assertEqual(VM_CREATING, vm_status.status)
+        mock_queue.enqueue.assert_called_once()
 
     def test_check_launch_blocked_clean(self):
         self.assertIsNone(_check_launch_blocked(self.user, self.UBUNTU))
