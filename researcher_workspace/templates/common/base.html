@@ -144,71 +144,41 @@
 
     </main>
 
+    
     <!-- ARDC footer -->
-    <footer id="ardc-footer" role="contentinfo">
-      <div class="footer-row">
-          <div class="container">
-              <div class="row">
-                  <div class="col-12 col-md-4">
-                      <div class="footer-logos">
-                          <div class="footer-logo-ncris">
-                              <a href="https://www.education.gov.au/ncris">
-                                  <img id="ncris-logo" src="{% static 'img/ncris-logo.svg' %}"
-                                      width="176" height="127"alt="National Collaborative Research Infrastructure Strategy">
-                              </a>
-                          </div>
-                          <div class="footer-logo-ardc">
-                              <a href="https://ardc.edu.au/">
-                                  <img id="ardc-logo" src="{% static 'img/ardc-logo.svg' %}"
-                                      width="176" height="57" alt="Australian Research Data Commons">
-                              </a>
-                          </div>
-                      </div>
-                      <p class="footer-image-description">The Australian Research Data Commons is enabled by NCRIS.</p>
-                  </div>
-                  <div class="col-12 col-md-4">
-                      <h4 class="footer-heading">ARDC CONNECT NEWSLETTER</h4> 
-                      <p>Subscribe to the ARDC Connect Newsletter to keep up-to-date with the latest digital research news, events, resources, career opportunities and more.</p>
-                      <a href="https://ardc.edu.au/news-and-events/subscribe/" target="_blank" title="opens a new window" class="btn btn-primary">Subscribe <i class="fa fa-external-link"></i></a>
-                  </div>
-                  <div class="col-12 col-md-4 footer-links">
-                      <h4 class="footer-heading">Quick Links</h4>
-                      <ul class="footer-list list-bullet">
-                        <li><a href="{% url 'terms' %}" title="Nectar Cloud Terms and Conditions">Terms of Service</a></li>
-                        <li><a href="https://ardc.edu.au/privacy-policy/" target="_blank" title="Privacy Policy">Privacy Policy</a></li>
-                        <li><a href="https://support.ehelp.edu.au/support/home" title="Nectar Support Centre">Nectar Support Centre</a></li>
-                        <li><a href="https://status.rc.nectar.org.au/" target="_blank" title="Nectar Cloud Status Site">Nectar Status</a></li>
-                        <li><a href="https://tutorials.rc.nectar.org.au/" target="_blank" title="Nectar Cloud Tutorials">Nectar Tutorials</a></li>
-                        <li><a href="https://ardc.edu.au/" target="_blank" title="ARDC Website">ARDC Website</a></li>
-                        <li><a href="https://ardc.edu.au/contact-us/" target="_blank" title="Contact ARDC">Contact ARDC</a></li>
-                    </ul>
-                  </div>
-              </div>
-          </div>
-      </div>
-      <div class="footer-row bg-light">
-          <div class="container">
-              <div class="row footer-acknowledgement">
-                  <p>We acknowledge and celebrate the First Australians on whose traditional lands we live and work, and we pay our respects to Elders past, present and emerging.</p>
-              </div>
-          </div>
-      </div>
-      <div class="footer-row">
-          <div class="container">
-              <div class="footer-copyright d-flex flex-wrap align-items-center">
-                  <span class="copyright">Copyright © <script type="text/javascript">document.write( new Date().getFullYear() );</script> ARDC. <a href="https://www.acnc.gov.au/charity/charities/eca273f3-f5be-e911-a98a-000d3ad02a61/profile" target="_blank" rel="noopener noreferrer">ACN 633 798 857 <i class="fa fa-external-link-alt" aria-hidden="true"></i></a></span>
-                  <a href="https://ardc.edu.au/terms-and-conditions/" target="_blank" class="footer-link" rel="noopener noreferrer"><span class="disclaimer">Terms and Conditions</span></a>
-                  <a href="https://ardc.edu.au/privacy-policy/" target="_blank" class="footer-link" rel="noopener noreferrer"><span class="privacy">Privacy Policy</span></a>
-                  <a href="https://ardc.edu.au/accessibility-statement-for-ardc/" target="_blank" class="footer-link" rel="noopener noreferrer"><span class="accessibility">Accessibility Statement</span></a>
-              </div>
-          </div>
-      </div>
-    </footer>
+    <ardc-footer
+      class="ardc-footer ardc-custom-component"
+      data-content-width="normal"
+      style="opacity: 0;"
+      data-show-ardc-logo
+    >
+      <ul id="quick-links">
+        <li><a href="https://dashboard.rc.nectar.org.au/" title="Nectar Research Cloud Dashboard">Nectar Dashboard</a></li>
+        <li><a href="https://dashboard.rc.nectar.org.au/terms" title="Read the Nectar Cloud Terms and Conditions">Terms of Service</a></li>
+        <li><a href="https://support.ehelp.edu.au/" title="Visit the Nectar Support Centre">Nectar Support</a></li>
+        <li><a href="https://status.rc.nectar.org.au/" target="_blank" title="Nectar Cloud Status Site">Nectar System Status</a></li>
+        <li><a href="https://tutorials.rc.nectar.org.au/" target="_blank" title="Learn with Nectar Cloud Tutorials">Nectar Tutorials</a></li>
+        <li><a href="https://ardc.edu.au/services/ardc-nectar-research-cloud/" target="_blank" title="Learn About the ARDC Nectar Research Cloud">About Nectar</a></li>
+        <li><a href="https://ardc.edu.au/" target="_blank" title="Explore the ARDC Website">ARDC Website</a></li>
+      </ul>
+      <ul id="legal-links">
+        <li><a href="https://ardc.edu.au/terms-and-conditions/">Terms &amp; Conditions</a></li>
+        <li><a href="https://ardc.edu.au/privacy-policy/">Privacy Policy</a></li>
+        <li><a href="https://ardc.edu.au/accessibility-statement-for-ardc/">Accessibility Statement</a></li>
+      </ul>
+      <a href="https://www.acnc.gov.au/charity/charities/eca273f3-f5be-e911-a98a-000d3ad02a61/profile"
+        id="ardc-footer-acn">ACN 633 798 857</a>
+    </ardc-footer>
 
     <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
     <script src="{% static 'js/main.js' %}"></script>
     {% block script %}
     {% endblock script %}
     <!-- Running on: {% get_setting "IMAGE_ID" %} -->
+    <script
+      src="https://ardc.edu.au/wp-content/plugins/ardc-custom-web-components/dist/loaders/footer.min.js"
+      defer
+      data-no-optimize
+    ></script>
   </body>
 </html>
