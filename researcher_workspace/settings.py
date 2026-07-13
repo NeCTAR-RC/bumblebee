@@ -18,6 +18,7 @@ from django.contrib.messages import constants as messages
 
 from django.urls import reverse_lazy
 
+from researcher_workspace import sentry
 from researcher_workspace.utils import secret_key
 
 # Stuff can happen from this point that is useful for deployer, need to get a
@@ -375,6 +376,17 @@ GENERAL_WARNING_MESSAGE = get_setting('GENERAL_WARNING_MESSAGE')
 ENVIRONMENT_NAME = get_setting('ENVIRONMENT_NAME')
 ENVIRONMENT_COLOR = get_setting('ENVIRONMENT_COLOR')
 
+# GlitchTip/Sentry compatible DSN. When set (via the SENTRY_DSN
+# environment variable or local_settings.py), unhandled exceptions
+# and ERROR level log messages are reported. See
+# researcher_workspace/sentry.py; sentry.setup() is called at the
+# end of this file, after local_settings.py has been applied.
+SENTRY_DSN = get_setting('SENTRY_DSN')
+
+# Environment name reported with each Sentry event, e.g. production
+# or testing.
+SENTRY_ENVIRONMENT = get_setting('SENTRY_ENVIRONMENT')
+
 # Values that need to be set in local_settings.py
 SECRET_KEY = get_setting('SECRET_KEY', 'secret')
 
@@ -495,4 +507,9 @@ OIDC_OP_JWKS_ENDPOINT = f'{OIDC_SERVER_URL}/certs'
 if DEBUG:
     MESSAGE_LEVEL = message_constants.DEBUG
     EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+# Enable GlitchTip/Sentry error reporting now that local_settings.py
+# has had a chance to set SENTRY_DSN. A no-op when no DSN is
+# configured.
+sentry.setup(SENTRY_DSN, SENTRY_ENVIRONMENT)
 

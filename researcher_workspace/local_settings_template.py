@@ -25,6 +25,12 @@ SECRET_KEY = ""  # ¡Change!
 # List of people who are emailed when web app encounters an error
 ADMINS = ""  # ¡Change!
 
+# Report unhandled exceptions and ERROR level log messages to a
+# GlitchTip (or Sentry) instance. Reporting is disabled when no DSN
+# is set.
+# SENTRY_DSN = 'https://<key>@glitchtip.example.com/1'
+# SENTRY_ENVIRONMENT = 'production'
+
 ### OpenStack Settings ###
 
 # OpenStack credentials to use for this application

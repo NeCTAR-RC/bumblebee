@@ -12,6 +12,12 @@ OIDC_CLAIM_GROUPS_KEY=groups
 # Friendly name for the current environment.
 ENVIRONMENT_NAME=development
 
+# Report unhandled exceptions and ERROR level log messages to a
+# GlitchTip (or Sentry) instance. Reporting is disabled when no DSN
+# is set.
+#SENTRY_DSN=
+#SENTRY_ENVIRONMENT=development
+
 # Names/addresses under which Bumblebee is accessible. Comma-separated.
 ALLOWED_HOSTS="*"
 
