@@ -77,7 +77,44 @@ INSTALLED_APPS = [
     'django_admin_listfilter_dropdown',
     'admin_searchable_dropdown',
     'health_check',
+    'rest_framework',
+    'rest_framework.authtoken',
+    'django_filters',
+    'drf_spectacular',
+    'api',
 ]
+
+# REST API (machine-to-machine; consumed by admin scripts and services)
+# Locked down by default: every endpoint requires a staff user unless a
+# view explicitly opts out.  Throttling is not enabled because all
+# callers are trusted staff/service accounts; add
+# DEFAULT_THROTTLE_CLASSES here if the API is ever opened to end users.
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        # ServiceTokenAuthentication must come first: it claims only
+        # 'svc-' prefixed keys and passes everything else through.
+        'api.authentication.ServiceTokenAuthentication',
+        'rest_framework.authentication.TokenAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAdminUser',
+    ],
+    'DEFAULT_PAGINATION_CLASS': 'api.pagination.StandardPagination',
+    'PAGE_SIZE': 50,
+    'DEFAULT_FILTER_BACKENDS': [
+        'django_filters.rest_framework.DjangoFilterBackend',
+        'rest_framework.filters.SearchFilter',
+        'rest_framework.filters.OrderingFilter',
+    ],
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+}
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': f'{NAME} API',
+    'VERSION': '1.0.0',
+    'SERVE_PERMISSIONS': ['rest_framework.permissions.IsAdminUser'],
+}
 
 MIDDLEWARE = [
     'django_prometheus.middleware.PrometheusBeforeMiddleware',

@@ -25,6 +25,9 @@ python-freshdesk
 taynacclient>=1.3.0
 django-health-check==4.4.2
 django-prometheus
+djangorestframework
+django-filter
+drf-spectacular
 PyYAML
 django-admin-list-filter-dropdown
 django-admin-searchable-dropdown

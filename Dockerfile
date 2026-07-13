@@ -11,6 +11,7 @@ RUN set -ex \
     && apt-get purge -y --auto-remove build-essential \
     && rm -rf /var/lib/apt/lists/*
 
+ADD api /app/api
 ADD guacamole /app/guacamole
 ADD researcher_desktop /app/researcher_desktop
 ADD researcher_workspace /app/researcher_workspace

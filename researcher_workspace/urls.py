@@ -22,6 +22,7 @@ urlpatterns = [
     path('', views.index, name='index'),
     path('', include('django_prometheus.urls')),
     path('home/', views.home, name='home'),
+    path('api/', include('api.urls')),
     path('vm_manager/', include('vm_manager.urls')),
     path('researcher_desktop/', include('researcher_desktop.urls')),
     path('desktop/<str:desktop_name>',

@@ -23,6 +23,7 @@ features that have been implemented are:
 * Configurable time limits and reminder notifications
 * Boost support for temporarily resizing a desktop to a larger flavor
 * Linux and Windows support
+* REST API for querying users and desktops (see [api/README.md](api/README.md))
 
 
 ## How it works
