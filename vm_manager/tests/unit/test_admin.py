@@ -124,6 +124,18 @@ class AdminActionsTests(_AdminBaseSetup):
         admin_repair_volume_errors(None, self.request, [volume])
         self.assertTrue(any(m.called for m in mocks))
 
+    def test_admin_repair_volume_errors_marked(self, *mocks):
+        # Volumes marked for deletion are still passed to the repair
+        # function; only deleted ones are skipped.
+        volume = self._make_volume(marked_for_deletion=datetime.now(utc))
+        admin_repair_volume_errors(None, self.request, [volume])
+        self.assertTrue(any(m.called for m in mocks))
+
+    def test_admin_repair_volume_errors_deleted(self, *mocks):
+        volume = self._make_volume(deleted=datetime.now(utc))
+        admin_repair_volume_errors(None, self.request, [volume])
+        self.assertFalse(any(m.called for m in mocks))
+
     def test_admin_delete_shelved_volumes(self, *mocks):
         volume = self._make_volume(shelved_at=datetime.now(utc))
         admin_delete_shelved_volumes(None, self.request, [volume])
@@ -152,6 +164,23 @@ class AdminActionsTests(_AdminBaseSetup):
         instance = self._make_instance(volume=volume)
         admin_repair_instance_errors(None, self.request, [instance])
         self.assertTrue(any(m.called for m in mocks))
+
+    def test_admin_repair_instance_errors_marked(self, *mocks):
+        # Instances marked for deletion (e.g. by error(gone=True) or
+        # a delete workflow that died) are still passed to the repair
+        # function; only deleted ones are skipped.
+        volume = self._make_volume()
+        instance = self._make_instance(
+            volume=volume, marked_for_deletion=datetime.now(utc))
+        admin_repair_instance_errors(None, self.request, [instance])
+        self.assertTrue(any(m.called for m in mocks))
+
+    def test_admin_repair_instance_errors_deleted(self, *mocks):
+        volume = self._make_volume()
+        instance = self._make_instance(
+            volume=volume, deleted=datetime.now(utc))
+        admin_repair_instance_errors(None, self.request, [instance])
+        self.assertFalse(any(m.called for m in mocks))
 
     def test_admin_check_vmstatuses(self, *mocks):
         volume = self._make_volume()

@@ -855,3 +855,172 @@ class AdminVMTests(VMFunctionTestBase):
         self.assertEqual(NO_VM, vmstatus.status)
         resize = Resize.objects.get(pk=fake_resize.pk)
         self.assertIsNotNone(resize.reverted)
+
+    @patch('vm_manager.vm_functions.admin_functionality._Reporter')
+    @patch('vm_manager.vm_functions.admin_functionality.get_nectar')
+    def test_admins_check_repair_volume_marked_still_exists(
+            self, mock_get, mock_reporter_class):
+        # A volume marked for deletion whose Cinder volume still exists
+        # must not be repaired: the deletion needs to be completed.
+        fake_volume, fake_instance, fake_vmstatus = \
+            self.build_fake_vol_inst_status(
+                ip_address='10.0.0.99', status=NO_VM)
+        fake_volume.error("Cheezeburger")
+        fake_volume.set_marked_for_deletion()
+        fake = FakeNectar()
+        fake.cinder.volumes.get.return_value = FakeVolume(
+            id=fake_volume.id, status=VOLUME_AVAILABLE)
+        mock_get.return_value = fake
+        mock_request = Mock()
+        fake_reporter = self._setup_fake_reporter(mock_reporter_class)
+
+        self.assertEqual(False,
+                         admin_repair_volume_error(mock_request, fake_volume))
+
+        fake_reporter.error.assert_called_once_with(
+            f"Cinder volume {fake_volume.id} still exists but is marked "
+            "for deletion. Use the admin delete actions to complete "
+            "the deletion.")
+        fake_reporter.repair.assert_not_called()
+        volume = Volume.objects.get(pk=fake_volume.pk)
+        self.assertIsNotNone(volume.error_flag)
+        self.assertIsNotNone(volume.error_message)
+        self.assertIsNone(volume.deleted)
+
+    @patch('vm_manager.vm_functions.admin_functionality._Reporter')
+    @patch('vm_manager.vm_functions.admin_functionality.get_nectar')
+    def test_admins_check_repair_volume_marked_missing(
+            self, mock_get, mock_reporter_class):
+        # A volume marked for deletion whose Cinder volume is gone
+        # is reconciled by recording the deletion.
+        fake_volume, fake_instance, fake_vmstatus = \
+            self.build_fake_vol_inst_status(
+                ip_address='10.0.0.99', status=NO_VM)
+        fake_volume.error("Cheezeburger")
+        fake_volume.set_marked_for_deletion()
+        fake = FakeNectar()
+        fake.cinder.volumes.get.side_effect = \
+            cinderclient.exceptions.NotFound(404)
+        mock_get.return_value = fake
+        mock_request = Mock()
+        fake_reporter = self._setup_fake_reporter(mock_reporter_class)
+
+        self.assertEqual(True,
+                         admin_repair_volume_error(mock_request, fake_volume))
+
+        fake_reporter.error.assert_not_called()
+        fake_reporter.repair.assert_called_once_with(
+            f"Cinder volume {fake_volume.id} is missing. "
+            "Recording desktop as deleted.")
+        volume = Volume.objects.get(pk=fake_volume.pk)
+        self.assertIsNotNone(volume.deleted)
+
+    @patch('vm_manager.vm_functions.admin_functionality._Reporter')
+    @patch('vm_manager.vm_functions.admin_functionality.get_nectar')
+    def test_admins_check_repair_instance_marked_still_exists(
+            self, mock_get, mock_reporter_class):
+        # An instance marked for deletion whose Nova server still
+        # exists must not be repaired: the deletion needs to be
+        # completed (manually if the server is in ERROR).
+        fake_volume, fake_instance, fake_vmstatus = \
+            self.build_fake_vol_inst_status(
+                ip_address='10.0.0.99', status=NO_VM)
+        fake_instance.error("Cheezeburger")
+        fake_instance.set_marked_for_deletion()
+        fake = FakeNectar()
+        fake.nova.servers.get.return_value = FakeServer(
+            id=fake_instance.id, status='ERROR')
+        mock_get.return_value = fake
+        mock_request = Mock()
+        fake_reporter = self._setup_fake_reporter(mock_reporter_class)
+
+        self.assertEqual(False,
+                         admin_repair_instance_error(mock_request,
+                                                     fake_instance))
+
+        fake_reporter.error.assert_called_once_with(
+            f"Nova instance {fake_instance.id} still exists (state "
+            "ERROR) but is marked for deletion. Use the "
+            "admin delete actions to complete the deletion.")
+        fake_reporter.repair.assert_not_called()
+        instance = Instance.objects.get(pk=fake_instance.pk)
+        self.assertIsNotNone(instance.error_flag)
+        self.assertIsNone(instance.deleted)
+
+    @patch('vm_manager.vm_functions.admin_functionality._Reporter')
+    @patch('vm_manager.vm_functions.admin_functionality.get_nectar')
+    def test_admins_check_repair_instance_missing_volume_marked(
+            self, mock_get, mock_reporter_class):
+        # A deletion workflow died after the Nova server was deleted
+        # but before the volume was disposed of.  The repair records
+        # the instance as deleted but leaves the volume for the admin
+        # delete actions.
+        fake_volume, fake_instance, fake_vmstatus = \
+            self.build_fake_vol_inst_status(
+                ip_address='10.0.0.99', status=NO_VM)
+        fake_instance.error("Cheezeburger")
+        fake_instance.set_marked_for_deletion()
+        fake_volume.error("Cheezeburger")
+        fake_volume.set_marked_for_deletion()
+        fake = FakeNectar()
+        fake.nova.servers.get.side_effect = \
+            novaclient.exceptions.NotFound(404)
+        mock_get.return_value = fake
+        mock_request = Mock()
+        fake_reporter = self._setup_fake_reporter(mock_reporter_class)
+
+        self.assertTrue(admin_repair_instance_error(
+            mock_request, fake_instance))
+
+        fake_reporter.error.assert_not_called()
+        fake_reporter.repair.assert_has_calls([
+            call(f"Volume {fake_volume.id} is still marked for "
+                 "deletion. Use the admin delete actions to "
+                 "complete the deletion."),
+            call(f"Recording instance {fake_instance.id} as deleted.")])
+        fake.cinder.volumes.get.assert_not_called()
+
+        volume = Volume.objects.get(pk=fake_volume.pk)
+        self.assertIsNone(volume.deleted)
+        self.assertIsNone(volume.shelved_at)
+        instance = Instance.objects.get(pk=fake_instance.pk)
+        self.assertIsNotNone(instance.deleted)
+        vmstatus = VMStatus.objects.get(pk=fake_vmstatus.pk)
+        self.assertEqual(NO_VM, vmstatus.status)
+
+    @patch('vm_manager.vm_functions.admin_functionality._Reporter')
+    @patch('vm_manager.vm_functions.admin_functionality.get_nectar')
+    def test_admins_check_repair_instance_marked_missing_autoshelve(
+            self, mock_get, mock_reporter_class):
+        # An instance marked for deletion by error(gone=True) whose
+        # Nova server is gone, with an unmarked healthy volume (e.g.
+        # the server was deleted out-of-band), is recorded as shelved
+        # so the user can unshelve their data.
+        fake_volume, fake_instance, fake_vmstatus = \
+            self.build_fake_vol_inst_status(
+                ip_address='10.0.0.99', status=VM_ERROR)
+        fake_instance.error("Nova instance is missing", gone=True)
+        fake = FakeNectar()
+        fake.nova.servers.get.side_effect = \
+            novaclient.exceptions.NotFound(404)
+        fake.cinder.volumes.get.return_value = FakeVolume(
+            id=fake_volume.id, status=VOLUME_AVAILABLE)
+        mock_get.return_value = fake
+        mock_request = Mock()
+        fake_reporter = self._setup_fake_reporter(mock_reporter_class)
+
+        self.assertTrue(admin_repair_instance_error(
+            mock_request, fake_instance))
+
+        fake_reporter.error.assert_not_called()
+        fake_reporter.repair.assert_has_calls([
+            call(f"Nova instance {fake_instance.id} missing. "
+                 "Recording desktop as shelved.")])
+
+        volume = Volume.objects.get(pk=fake_volume.pk)
+        self.assertIsNone(volume.deleted)
+        self.assertIsNotNone(volume.shelved_at)
+        instance = Instance.objects.get(pk=fake_instance.pk)
+        self.assertIsNotNone(instance.deleted)
+        vmstatus = VMStatus.objects.get(pk=fake_vmstatus.pk)
+        self.assertEqual(VM_SHELVED, vmstatus.status)

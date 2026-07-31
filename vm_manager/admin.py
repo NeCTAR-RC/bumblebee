@@ -59,7 +59,7 @@ def admin_archive_instances(modelAdmin, request, queryset):
 
 def admin_repair_volume_errors(modelAdmin, request, queryset):
     for volume in queryset:
-        if not volume.marked_for_deletion and not volume.deleted:
+        if not volume.deleted:
             admin_repair_volume_error(request, volume)
 
 
@@ -89,7 +89,7 @@ def admin_delete_shelved_instances(modelAdmin, request, queryset):
 
 def admin_repair_instance_errors(modelAdmin, request, queryset):
     for instance in queryset:
-        if not instance.marked_for_deletion and not instance.deleted:
+        if not instance.deleted:
             admin_repair_instance_error(request, instance)
 
 

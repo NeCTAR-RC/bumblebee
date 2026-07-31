@@ -83,6 +83,12 @@ def admin_repair_volume_error(
     n = get_nectar()
     try:
         status = n.cinder.volumes.get(volume.id).status
+        if volume.marked_for_deletion:
+            rep.error(
+                f"Cinder volume {volume.id} still exists but is marked "
+                "for deletion. Use the admin delete actions to complete "
+                "the deletion.")
+            return False
         if status not in expected_states:
             rep.error(
                 f"Cinder volume {volume.id} is in unexpected "
@@ -117,6 +123,11 @@ def admin_repair_instance_error(request, instance):
                       f"deleted volume {volume.id}. "
                       "Manual cleanup required.")
             return False
+        elif instance.marked_for_deletion:
+            rep.error(f"Nova instance {instance.id} still exists (state "
+                      f"{status}) but is marked for deletion. Use the "
+                      "admin delete actions to complete the deletion.")
+            return False
         elif not admin_repair_volume_error(
                 request, volume, rep, expected_states=[VOLUME_IN_USE]):
             rep.error(f"Volume error for instance {instance.id} "
@@ -129,7 +140,15 @@ def admin_repair_instance_error(request, instance):
                     f"state {status}. Manual cleanup required.")
                 return False
     except novaclient.exceptions.NotFound:
-        if not admin_repair_volume_error(
+        if volume.marked_for_deletion and not volume.deleted:
+            # A deletion workflow died after the Nova instance went
+            # away but before the volume was disposed of.  Deleting
+            # the volume is not a repair: leave it to the admin
+            # delete actions.
+            rep.repair(f"Volume {volume.id} is still marked for "
+                       "deletion. Use the admin delete actions to "
+                       "complete the deletion.")
+        elif not admin_repair_volume_error(
                 request, volume, rep, expected_states=[VOLUME_AVAILABLE]):
             rep.error(f"Volume error for instance {instance.id} "
                       "must be dealt with first.")
@@ -143,7 +162,7 @@ def admin_repair_instance_error(request, instance):
             rep.repair(f"Reverting resize for instance {instance.id}.")
             resize.reverted = now
             resize.save()
-        if not volume.deleted:
+        if not volume.deleted and not volume.marked_for_deletion:
             rep.repair(f"Nova instance {instance.id} missing. "
                        "Recording desktop as shelved.")
             volume.shelved_at = now
