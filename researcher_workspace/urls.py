@@ -15,6 +15,14 @@ class BumblebeeHealthCheckView(HealthCheckView):
     checks = [Cache, Database, Storage,
               DesktopStatus, InstanceStatus, VolumeStatus]
 
+    async def get(self, request, *args, **kwargs):
+        # Failing checks are reported in the response body, which
+        # check_bumblebee.py in Nagios parses; don't also return a 500,
+        # which monitoring would treat as the app being down.
+        response = await super().get(request, *args, **kwargs)
+        response.status_code = 200
+        return response
+
 
 app_name = 'researcher_workspace'
 

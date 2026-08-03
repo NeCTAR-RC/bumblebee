@@ -3,6 +3,7 @@ from unittest.mock import patch
 import uuid
 
 from django.test import TestCase
+from django.urls import reverse
 
 from health_check.exceptions import ServiceWarning
 
@@ -71,3 +72,21 @@ class HealthCheckTests(TestCase):
         self._make_volume(error_flag=datetime.now(utc))
         with self.assertRaises(ServiceWarning):
             VolumeStatus().run()
+
+
+class HealthCheckViewTests(TestCase):
+
+    def test_health_check_no_errors(self):
+        response = self.client.get(
+            reverse('health_check'), {'format': 'json'})
+        self.assertEqual(200, response.status_code)
+
+    def test_health_check_with_errors_returns_200(self):
+        with patch.object(
+                DesktopStatus, 'run',
+                side_effect=ServiceWarning('3 desktops in ERROR state')):
+            response = self.client.get(
+                reverse('health_check'), {'format': 'json'})
+        self.assertEqual(200, response.status_code)
+        self.assertIn('desktops in ERROR state',
+                      response.json()['DesktopStatus()'])
