@@ -3,7 +3,7 @@ from django.contrib import admin
 from django.urls import path, include
 from django.views.generic.base import RedirectView
 
-from health_check import Cache, Database, Storage
+from health_check import Cache, Database
 from health_check.views import HealthCheckView
 from mozilla_django_oidc import views as oidc_views
 
@@ -12,7 +12,7 @@ from .health import DesktopStatus, InstanceStatus, VolumeStatus
 
 
 class BumblebeeHealthCheckView(HealthCheckView):
-    checks = [Cache, Database, Storage,
+    checks = [Cache, Database,
               DesktopStatus, InstanceStatus, VolumeStatus]
 
     async def get(self, request, *args, **kwargs):
