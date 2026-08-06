@@ -59,6 +59,18 @@ class ServiceTokenTests(APITestCase):
         self.token.refresh_from_db()
         self.assertIsNotNone(self.token.last_used)
 
+    def test_service_token_write_denied(self):
+        # Service tokens are read-only principals: unsafe methods are
+        # rejected by permission (403), not just by the read-only
+        # viewsets (405).
+        self.authenticate()
+        for url in ('api:user-list', 'api:desktop-list',
+                    'api:volume-list', 'api:instance-list',
+                    'api:vmstatus-list', 'api:resize-list'):
+            response = self.client.post(reverse(url), {})
+            self.assertEqual(status.HTTP_403_FORBIDDEN,
+                             response.status_code, url)
+
     def test_non_service_key_falls_through(self):
         # A non 'svc-' key must not be claimed by service token auth;
         # it falls through to user token auth and fails there.

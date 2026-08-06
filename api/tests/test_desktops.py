@@ -38,7 +38,7 @@ class DesktopAPITests(APITestCase):
         self.assertEqual(1, response.data['count'])
         desktop = response.data['results'][0]
         expected = {'id', 'user', 'desktop_type', 'status', 'zone',
-                    'instance_id', 'created'}
+                    'instance_id', 'volume_id', 'created'}
         self.assertEqual(expected, set(desktop.keys()))
         self.assertEqual(self.user.username, desktop['user'])
         self.assertEqual('ubuntu', desktop['desktop_type'])
@@ -46,6 +46,8 @@ class DesktopAPITests(APITestCase):
         self.assertEqual('QRIScloud', desktop['zone'])
         self.assertEqual(str(vm_status.instance.id),
                          desktop['instance_id'])
+        self.assertEqual(str(vm_status.instance.boot_volume.id),
+                         desktop['volume_id'])
 
     def test_only_latest_per_user_and_type(self):
         make_desktop(self.user, 'ubuntu', self.feature, status=VM_OKAY)

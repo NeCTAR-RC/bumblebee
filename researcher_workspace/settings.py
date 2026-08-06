@@ -100,6 +100,9 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAdminUser',
+        # Service tokens are read-only principals, regardless of what
+        # methods a view might allow.
+        'api.permissions.ServiceTokensReadOnly',
     ],
     'DEFAULT_PAGINATION_CLASS': 'api.pagination.StandardPagination',
     'PAGE_SIZE': 50,

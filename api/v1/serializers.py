@@ -2,7 +2,7 @@ from rest_framework import serializers
 
 from researcher_workspace.models import User
 from vm_manager.constants import NO_VM
-from vm_manager.models import VMStatus
+from vm_manager.models import Instance, Resize, Volume, VMStatus
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -61,19 +61,124 @@ class DesktopSerializer(serializers.ModelSerializer):
     user = serializers.CharField(source='user.username')
     desktop_type = serializers.CharField(source='operating_system')
     instance_id = serializers.SerializerMethodField()
+    volume_id = serializers.SerializerMethodField()
     zone = serializers.SerializerMethodField()
 
     class Meta:
         model = VMStatus
         fields = ('id', 'user', 'desktop_type', 'status', 'zone',
-                  'instance_id', 'created')
+                  'instance_id', 'volume_id', 'created')
 
     def get_instance_id(self, vm_status):
         return (str(vm_status.instance.id)
                 if vm_status.instance else None)
+
+    def get_volume_id(self, vm_status):
+        instance = vm_status.instance
+        if instance and instance.boot_volume:
+            return str(instance.boot_volume.id)
+        return None
 
     def get_zone(self, vm_status):
         instance = vm_status.instance
         if instance and instance.boot_volume:
             return instance.boot_volume.zone
         return None
+
+
+class VolumeSerializer(serializers.ModelSerializer):
+    """A Volume record.  Its id IS the Cinder volume UUID.
+
+    The boot volume holds all of a desktop's user data, so this is
+    the record that matters for data-safety decisions.  Note that
+    error_flag is often set by propagation from a VMStatus error and
+    does not necessarily mean the Cinder volume itself is bad.
+    """
+
+    user = serializers.CharField(source='user.username')
+    desktop_type = serializers.CharField(source='operating_system')
+    expires = serializers.SerializerMethodField()
+    backup_expires = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Volume
+        fields = ('id', 'user', 'desktop_type', 'zone', 'image', 'flavor',
+                  'hostname_id', 'created', 'ready', 'checked_in',
+                  'shelved_at', 'archived_at', 'rebooted_at', 'backup_id',
+                  'expires', 'backup_expires', 'marked_for_deletion',
+                  'deleted', 'error_flag', 'error_message')
+
+    def get_expires(self, volume):
+        return volume.get_expires()
+
+    def get_backup_expires(self, volume):
+        expiration = volume.backup_expiration
+        return expiration.expires if expiration else None
+
+
+class InstanceSerializer(serializers.ModelSerializer):
+    """An Instance record.  Its id IS the Nova server UUID.
+
+    Instances are disposable (shelving deletes the server and keeps
+    the boot volume).  The VM's local login credentials are
+    deliberately not exposed.
+    """
+
+    user = serializers.CharField(source='user.username')
+    boot_volume_id = serializers.SerializerMethodField()
+    expires = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Instance
+        fields = ('id', 'user', 'boot_volume_id', 'ip_address', 'created',
+                  'expires', 'marked_for_deletion', 'deleted',
+                  'error_flag', 'error_message')
+
+    def get_boot_volume_id(self, instance):
+        return str(instance.boot_volume.id) if instance.boot_volume else None
+
+    def get_expires(self, instance):
+        return instance.get_expires()
+
+
+class VMStatusSerializer(serializers.ModelSerializer):
+    """A VMStatus record: one workflow state for a desktop.
+
+    Unlike /desktops/ (which reports only the latest record per user
+    and desktop type), this is the full status history.
+    """
+
+    user = serializers.CharField(source='user.username')
+    desktop_type = serializers.CharField(source='operating_system')
+    instance_id = serializers.SerializerMethodField()
+
+    class Meta:
+        model = VMStatus
+        fields = ('id', 'user', 'desktop_type', 'status',
+                  'status_progress', 'status_message', 'instance_id',
+                  'created', 'wait_time')
+
+    def get_instance_id(self, vm_status):
+        return (str(vm_status.instance.id)
+                if vm_status.instance else None)
+
+
+class ResizeSerializer(serializers.ModelSerializer):
+    """A Resize (boost) record for an instance.
+
+    A resize with reverted unset on a deleted or downsized desktop is
+    the marker for manual cleanup ('revert the unreverted Resize').
+    """
+
+    instance_id = serializers.SerializerMethodField()
+    expires = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Resize
+        fields = ('id', 'instance_id', 'requested', 'reverted', 'expires')
+
+    def get_instance_id(self, resize):
+        return str(resize.instance.id) if resize.instance else None
+
+    def get_expires(self, resize):
+        return resize.get_expires()

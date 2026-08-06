@@ -6,7 +6,7 @@ from api.v1 import filters
 from api.v1 import serializers
 from researcher_workspace.models import User
 from vm_manager.constants import NO_VM
-from vm_manager.models import VMStatus
+from vm_manager.models import Instance, Resize, Volume, VMStatus
 
 
 class UserViewSet(viewsets.ReadOnlyModelViewSet):
@@ -66,3 +66,70 @@ class DesktopViewSet(viewsets.ReadOnlyModelViewSet):
                 .exclude(status=NO_VM)
                 .select_related('user', 'instance__boot_volume')
                 .order_by('-created'))
+
+
+class VolumeViewSet(viewsets.ReadOnlyModelViewSet):
+    """Read-only access to Volume records.  Staff only.
+
+    A Volume row tracks the Cinder boot volume holding all of a
+    desktop's user data; its id IS the Cinder volume UUID.  Rows are
+    kept when a desktop is deleted ('deleted' is set instead), so
+    this is the full history.  Example - current error records:
+    /api/v1/volumes/?error=true&deleted=false
+    """
+
+    queryset = (Volume.objects.all()
+                .select_related('user', 'expiration', 'backup_expiration')
+                .order_by('-created'))
+    serializer_class = serializers.VolumeSerializer
+    filterset_class = filters.VolumeFilter
+    ordering_fields = ['created', 'user__username', 'zone', 'error_flag']
+
+
+class InstanceViewSet(viewsets.ReadOnlyModelViewSet):
+    """Read-only access to Instance records.  Staff only.
+
+    An Instance row tracks a Nova server; its id IS the Nova server
+    UUID.  Rows are kept when the server is deleted ('deleted' is set
+    instead), so this is the full history.  Example - current error
+    records: /api/v1/instances/?error=true&deleted=false
+    """
+
+    queryset = (Instance.objects.all()
+                .select_related('user', 'boot_volume', 'expiration')
+                .order_by('-created'))
+    serializer_class = serializers.InstanceSerializer
+    filterset_class = filters.InstanceFilter
+    ordering_fields = ['created', 'user__username', 'error_flag']
+
+
+class VMStatusViewSet(viewsets.ReadOnlyModelViewSet):
+    """Read-only access to the VMStatus history.  Staff only.
+
+    Every workflow state ever recorded, newest first - unlike
+    /desktops/, which reports only the latest per user and desktop
+    type.  Example - a desktop's workflow history:
+    /api/v1/vmstatuses/?instance=<uuid>
+    """
+
+    queryset = (VMStatus.objects.all()
+                .select_related('user', 'instance')
+                .order_by('-created'))
+    serializer_class = serializers.VMStatusSerializer
+    filterset_class = filters.VMStatusFilter
+    ordering_fields = ['created', 'user__username', 'status']
+
+
+class ResizeViewSet(viewsets.ReadOnlyModelViewSet):
+    """Read-only access to Resize (boost) records.  Staff only.
+
+    Example - unreverted resizes (candidates for manual cleanup after
+    a failed downsize or delete):  /api/v1/resizes/?reverted=false
+    """
+
+    queryset = (Resize.objects.all()
+                .select_related('instance', 'expiration')
+                .order_by('-requested'))
+    serializer_class = serializers.ResizeSerializer
+    filterset_class = filters.ResizeFilter
+    ordering_fields = ['requested', 'reverted']
