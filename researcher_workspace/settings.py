@@ -472,22 +472,26 @@ REBOOT_CONFIRM_RETRIES = int(get_setting('REBOOT_CONFIRM_RETRIES', '5'))
 RESIZE_WAIT = int(get_setting('RESIZE_WAIT', '600'))
 RESIZE_CONFIRM_WAIT = int(get_setting('RESIZE_CONFIRM_WAIT', '600'))
 
-SHELVE_WAIT = int(get_setting('SHELVE_WAIT', '600'))
+# Deadline for the whole shelve workflow; see the poll settings below.
+SHELVE_WAIT = int(get_setting('SHELVE_WAIT', '900'))
 
 ARCHIVE_WAIT = int(get_setting('ARCHIVE_WAIT', '18000'))
 ARCHIVE_POLL_WAIT = int(get_setting('ARCHIVE_POLL_WAIT', '60'))
 
-# These are used both when shelving and outright deleting a desktop
-# The former is synchronous, so we can't make the WAIT * RETRIES too long.
+# These are used both when shelving and outright deleting a desktop.
+# During a shelve the desktop page treats SHELVE_WAIT as the deadline for
+# the whole workflow, so the combined SHUTOFF and DELETED poll budgets
+# (plus rq scheduler latency, ~25% on top of the nominal waits) must stay
+# under SHELVE_WAIT or slow shelves get errored as "not ready at timeout".
 INSTANCE_POLL_DELETED_WAIT = \
     int(get_setting('INSTANCE_POLL_DELETED_WAIT', '10'))
 INSTANCE_POLL_DELETED_RETRIES = \
-    int(get_setting('INSTANCE_POLL_DELETED_RETRIES', '20'))
+    int(get_setting('INSTANCE_POLL_DELETED_RETRIES', '29'))
 
 INSTANCE_POLL_SHUTOFF_WAIT = \
     int(get_setting('INSTANCE_POLL_SHUTOFF_WAIT', '10'))
 INSTANCE_POLL_SHUTOFF_RETRIES = \
-    int(get_setting('INSTANCE_POLL_SHUTOFF_RETRIES', '5'))
+    int(get_setting('INSTANCE_POLL_SHUTOFF_RETRIES', '11'))
 BACKUP_POLL_DELETED_WAIT = \
     int(get_setting('BACKUP_POLL_DELETED_WAIT', '30'))
 BACKUP_POLL_DELETED_RETRIES = \
