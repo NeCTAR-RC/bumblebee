@@ -8,4 +8,4 @@ else
 fi
 
 echo "** Starting expirer **"
-django-admin cronjob --archive --shelve --downsize --delete-archives $EXPIRER_OPTS
+django-admin cronjob --archive --shelve --downsize --delete-archives --cleanup $EXPIRER_OPTS

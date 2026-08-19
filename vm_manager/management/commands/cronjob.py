@@ -3,6 +3,7 @@ import logging
 from django.core.management.base import BaseCommand
 
 from researcher_desktop.utils.utils import desktops_feature
+from vm_manager.utils.cleanup import cleanup_stuck_terminations
 from vm_manager.utils.expirer import VolumeExpirer, InstanceExpirer, \
     ResizeExpirer, ArchiveExpirer
 
@@ -21,6 +22,8 @@ class Command(BaseCommand):
                             help='Run the archive job')
         parser.add_argument('--delete-archives', action='store_true',
                             help='Run the archive deletion job')
+        parser.add_argument('--cleanup', action='store_true',
+                            help='Run the stuck termination cleanup job')
         parser.add_argument('--dry-run', action='store_true',
                             help='Only count the affected objects')
         parser.add_argument('--verbose', action='store_true',
@@ -40,6 +43,8 @@ class Command(BaseCommand):
             self.archive_job()
         if options['delete_archives']:
             self.delete_archives_job()
+        if options['cleanup']:
+            self.cleanup_job()
 
     def downsize_job(self):
         feature = desktops_feature()
@@ -68,3 +73,8 @@ class Command(BaseCommand):
         expirer = ArchiveExpirer(dry_run=self.dry_run, verbose=self.verbose)
         counts = expirer.run(feature)
         logger.info(f"Archive deletion counts: {counts}")
+
+    def cleanup_job(self):
+        logger.info("Starting stuck termination cleanup")
+        counts = cleanup_stuck_terminations(dry_run=self.dry_run)
+        logger.info("Stuck termination cleanup counts: %s", counts)

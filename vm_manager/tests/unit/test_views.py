@@ -226,6 +226,16 @@ class VMManagerViewTests(TestCase):
         self.assertIsNotNone(result)
         self.assertIn("not deleted", result)
 
+    def test_check_launch_blocked_delete_in_progress_is_ok(self):
+        # A delete workflow that is still running (or reconciling after
+        # an error) has marked the instance and volume for deletion.
+        # This should not block launching a new desktop alongside it.
+        self.build_existing_vm(NO_VM)
+        self.instance.set_marked_for_deletion()
+        self.volume.set_marked_for_deletion()
+
+        self.assertIsNone(_check_launch_blocked(self.user, self.UBUNTU))
+
     def test_check_launch_blocked_shelved_instance_is_ok(self):
         # Shelved desktops have a deleted instance; the volume remains.
         # This should not block launch via unshelve.

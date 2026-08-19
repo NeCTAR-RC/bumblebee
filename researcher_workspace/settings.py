@@ -475,6 +475,13 @@ RESIZE_CONFIRM_WAIT = int(get_setting('RESIZE_CONFIRM_WAIT', '600'))
 # Deadline for the whole shelve workflow; see the poll settings below.
 SHELVE_WAIT = int(get_setting('SHELVE_WAIT', '900'))
 
+# The termination cleanup job (cronjob --cleanup) only touches instances
+# that were marked for deletion at least this many seconds ago.  It must
+# exceed the worst-case runtime of a live shelve or delete workflow
+# (the SHUTOFF and DELETED poll budgets below plus rq scheduler latency)
+# so the job never acts on a workflow that is still in flight.
+TERMINATION_CLEANUP_AGE = int(get_setting('TERMINATION_CLEANUP_AGE', '900'))
+
 ARCHIVE_WAIT = int(get_setting('ARCHIVE_WAIT', '18000'))
 ARCHIVE_POLL_WAIT = int(get_setting('ARCHIVE_POLL_WAIT', '60'))
 

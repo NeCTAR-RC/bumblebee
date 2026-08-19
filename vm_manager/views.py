@@ -73,8 +73,13 @@ def _check_launch_blocked(user, desktop_type) -> str:
     Checks two conditions that require manual cleanup before a new desktop
     can be launched:
     1. A non-deleted volume that has an error flag set.
-    2. A VMStatus showing No_VM whose instance record is still not deleted
-       (inconsistent state after a failed delete or crash).
+    2. A VMStatus showing No_VM whose instance record is neither deleted
+       nor marked for deletion (inconsistent state after a crash).
+
+    An instance that is marked for deletion does not block: its delete
+    workflow (including the slow reconciliation phase after an error) still
+    owns it, and the model queries exclude marked-for-deletion resources,
+    so a new desktop can be launched safely alongside it.
     """
     volume = Volume.objects.get_volume(user, desktop_type)
     if volume and volume.error_flag:
@@ -90,7 +95,8 @@ def _check_launch_blocked(user, desktop_type) -> str:
         requesting_feature=desktop_type.feature,
         status=NO_VM,
         instance__isnull=False,
-        instance__deleted=None)
+        instance__deleted=None,
+        instance__marked_for_deletion=None)
     if inconsistent.exists():
         vm_status = inconsistent.first()
         message = (
