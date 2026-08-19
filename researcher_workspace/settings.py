@@ -423,15 +423,6 @@ if SITE_URL and SITE_URL.startswith('https'):
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
 
-try:
-    from researcher_workspace.local_settings import *  # noqa
-    logger.info('Imported local setting')
-except ImportError:
-    pass
-
-COMPRESS_ENABLED = get_setting('COMPRESS_ENABLED', not DEBUG)
-COMPRESS_OFFLINE = get_setting('COMPRESS_OFFLINE', not DEBUG)
-
 # Expiry policy constants.  The values are (integer) days.
 # - The 'expiry' is the initial expiry period.
 # - The 'extension' is the (max) period added by the 'extend' button.
@@ -516,6 +507,19 @@ VOLUME_POLL_AVAILABLE_RETRIES = \
 
 VOLUME_CREATION_WAIT = int(get_setting('VOLUME_CREATION_WAIT', '180'))
 INSTANCE_LAUNCH_WAIT = int(get_setting('INSTANCE_LAUNCH_WAIT', '180'))
+
+# NOTE: define new plain settings above this import so that
+# local_settings.py can override them.  Only settings that depend on
+# values local_settings.py may override (e.g. DEBUG, OIDC_SERVER_URL,
+# SENTRY_DSN) belong below it.
+try:
+    from researcher_workspace.local_settings import *  # noqa
+    logger.info('Imported local setting')
+except ImportError:
+    pass
+
+COMPRESS_ENABLED = get_setting('COMPRESS_ENABLED', not DEBUG)
+COMPRESS_OFFLINE = get_setting('COMPRESS_OFFLINE', not DEBUG)
 
 # OpenID Connect settings
 OIDC_OP_AUTHORIZATION_ENDPOINT = f'{OIDC_SERVER_URL}/auth'
