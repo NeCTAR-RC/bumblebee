@@ -12,7 +12,7 @@ from vm_manager.tests.fakes import Fake, FakeServer, FakeNectar
 from vm_manager.tests.unit.vm_functions.base import VMFunctionTestBase
 
 from vm_manager.constants import ACTIVE, SHUTDOWN, RESCUE, \
-    VOLUME_AVAILABLE, VM_WAITING, VM_SHELVED, NO_VM, \
+    VOLUME_AVAILABLE, VOLUME_IN_USE, VM_WAITING, VM_SHELVED, NO_VM, \
     BACKUP_CREATING, BACKUP_AVAILABLE, \
     WF_RETRY, WF_SUCCESS, WF_CONTINUE
 from guacamole.models import GuacamoleConnection
@@ -635,6 +635,60 @@ class ArchiveVMTests(VMFunctionTestBase):
         vm_status = VMStatus.objects.get(pk=fake_vm_status.pk)
         self.assertEqual(VM_SHELVED, vm_status.status)
         mock_rq.get_scheduler.assert_not_called()
+
+    @patch('vm_manager.vm_functions.delete_vm.django_rq')
+    @patch('vm_manager.vm_functions.delete_vm.get_nectar')
+    @patch('vm_manager.vm_functions.delete_vm.logger')
+    def test_archive_volume_worker_waits_for_available(
+            self, mock_logger, mock_get, mock_rq):
+        # A volume still detaching from a just-deleted instance is
+        # polled until it becomes available.
+        mock_scheduler = Mock()
+        mock_rq.get_scheduler.return_value = mock_scheduler
+        fake_volume, _, fake_vm_status = self.build_fake_vol_inst_status(
+            status=VM_SHELVED)
+
+        fake_nectar = FakeNectar()
+        fake_nectar.cinder.volumes.get.return_value = Fake(
+            status=VOLUME_IN_USE)
+        mock_get.return_value = fake_nectar
+
+        self.assertEqual(
+            WF_CONTINUE, archive_volume_worker(fake_volume, self.FEATURE))
+        fake_nectar.cinder.backups.create.assert_not_called()
+        mock_rq.get_scheduler.assert_called_once_with('default')
+        mock_scheduler.enqueue_in.assert_called_once_with(
+            timedelta(seconds=settings.VOLUME_POLL_AVAILABLE_WAIT),
+            archive_volume_worker, fake_volume, self.FEATURE,
+            settings.VOLUME_POLL_AVAILABLE_RETRIES - 1)
+        volume = Volume.objects.get(pk=fake_volume.pk)
+        self.assertIsNone(volume.error_flag)
+
+    @patch('vm_manager.vm_functions.delete_vm.django_rq')
+    @patch('vm_manager.vm_functions.delete_vm.get_nectar')
+    @patch('vm_manager.vm_functions.delete_vm.logger')
+    def test_archive_volume_worker_available_timeout(
+            self, mock_logger, mock_get, mock_rq):
+        # The volume never becomes available: give up.
+        mock_scheduler = Mock()
+        mock_rq.get_scheduler.return_value = mock_scheduler
+        fake_volume, _, fake_vm_status = self.build_fake_vol_inst_status(
+            status=VM_SHELVED)
+
+        fake_nectar = FakeNectar()
+        fake_nectar.cinder.volumes.get.return_value = Fake(
+            status=VOLUME_IN_USE)
+        mock_get.return_value = fake_nectar
+
+        self.assertEqual(
+            WF_RETRY,
+            archive_volume_worker(fake_volume, self.FEATURE, retries=0))
+        fake_nectar.cinder.backups.create.assert_not_called()
+        mock_scheduler.enqueue_in.assert_not_called()
+        volume = Volume.objects.get(pk=fake_volume.pk)
+        self.assertEqual(
+            "Ran out of retries waiting for volume to become available",
+            volume.error_message)
 
     @patch('vm_manager.vm_functions.delete_vm.django_rq')
     @patch('vm_manager.vm_functions.delete_vm.logger')

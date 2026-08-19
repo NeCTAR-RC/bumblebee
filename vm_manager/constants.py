@@ -25,6 +25,7 @@ INSTANCE_ERROR = "ERROR"
 # python client library doesn't define constants for.
 VOLUME_AVAILABLE = "available"
 VOLUME_IN_USE = "in-use"
+VOLUME_DETACHING = "detaching"
 VOLUME_CREATING = "creating"
 VOLUME_MAINTENANCE = "maintenance"
 VOLUME_ERROR = "error"

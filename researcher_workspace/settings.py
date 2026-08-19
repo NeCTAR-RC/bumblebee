@@ -507,6 +507,12 @@ VOLUME_POLL_DELETED_WAIT = \
     int(get_setting('VOLUME_POLL_DELETED_WAIT', '30'))
 VOLUME_POLL_DELETED_RETRIES = \
     int(get_setting('VOLUME_POLL_DELETED_RETRIES', '5'))
+# Used by the archive workflow to wait for a volume to finish detaching
+# from a just-deleted instance before creating the backup.
+VOLUME_POLL_AVAILABLE_WAIT = \
+    int(get_setting('VOLUME_POLL_AVAILABLE_WAIT', '10'))
+VOLUME_POLL_AVAILABLE_RETRIES = \
+    int(get_setting('VOLUME_POLL_AVAILABLE_RETRIES', '12'))
 
 VOLUME_CREATION_WAIT = int(get_setting('VOLUME_CREATION_WAIT', '180'))
 INSTANCE_LAUNCH_WAIT = int(get_setting('INSTANCE_LAUNCH_WAIT', '180'))

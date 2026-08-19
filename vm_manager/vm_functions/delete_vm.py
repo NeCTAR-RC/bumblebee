@@ -8,7 +8,8 @@ import novaclient
 from django.conf import settings
 
 from vm_manager.constants import ACTIVE, SHUTDOWN, NO_VM, VM_SHELVED, \
-    VOLUME_AVAILABLE, BACKUP_CREATING, BACKUP_AVAILABLE, VM_WAITING, \
+    VOLUME_AVAILABLE, VOLUME_IN_USE, VOLUME_DETACHING, \
+    BACKUP_CREATING, BACKUP_AVAILABLE, VM_WAITING, \
     WF_RETRY, WF_SUCCESS, WF_FAIL, WF_CONTINUE
 from vm_manager.models import VMStatus, Expiration, \
     EXP_EXPIRING, EXP_EXPIRY_COMPLETED, \
@@ -294,7 +295,7 @@ def _end_delete(volume, wf_status):
     return wf_status
 
 
-def archive_volume_worker(volume, requesting_feature):
+def archive_volume_worker(volume, requesting_feature, retries=None):
     "Archive a volume by creating a Cinder backup then deleting the volume."
 
     # This "hides" the volume from the get_volume method allowing
@@ -305,10 +306,31 @@ def archive_volume_worker(volume, requesting_feature):
     n = get_nectar()
     try:
         cinder_volume = n.cinder.volumes.get(volume_id=volume.id)
-        if cinder_volume.status != VOLUME_AVAILABLE:
+        status = cinder_volume.status
+        if status in (VOLUME_IN_USE, VOLUME_DETACHING):
+            # The volume is still detaching from a just-deleted
+            # instance: wait for it to become available.
+            if retries is None:
+                retries = settings.VOLUME_POLL_AVAILABLE_RETRIES
+            if retries > 0:
+                logger.info("Waiting for %s to become available: "
+                            "Cinder status is %s", volume, status)
+                scheduler = django_rq.get_scheduler('default')
+                scheduler.enqueue_in(
+                    timedelta(seconds=settings.VOLUME_POLL_AVAILABLE_WAIT),
+                    archive_volume_worker, volume, requesting_feature,
+                    retries - 1)
+                return WF_CONTINUE
+            error_message = ("Ran out of retries waiting for volume "
+                             "to become available")
+            volume.error(error_message)
+            logger.error("%s: %s. Manual cleanup needed.",
+                         error_message, volume)
+            return _end_delete(volume, WF_RETRY)
+        if status != VOLUME_AVAILABLE:
             logger.error(
                 "Cannot archive volume with Cinder status "
-                f"{cinder_volume.status}: {volume}. Manual cleanup needed.")
+                f"{status}: {volume}. Manual cleanup needed.")
             return _end_delete(volume, WF_RETRY)
     except cinderclient.exceptions.NotFound:
         volume.error("Cinder volume missing.  Cannot be archived.")
