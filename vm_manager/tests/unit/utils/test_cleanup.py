@@ -103,10 +103,11 @@ class CleanupStuckTerminationsTests(VMFunctionTestBase):
         expiration = Expiration.objects.get(pk=instance.expiration.pk)
         self.assertEqual(EXP_EXPIRY_COMPLETED, expiration.stage)
 
+    @patch('vm_manager.utils.cleanup.archive_volume_worker')
     @patch('vm_manager.utils.cleanup.get_nectar')
-    def test_cleanup_completes_delete(self, mock_get_nectar):
+    def test_cleanup_completes_delete(self, mock_get_nectar, mock_archive):
         # The delete workflow errored: the instance is recorded as
-        # deleted, but the volume is left for the admin actions.
+        # deleted and the volume is archived.
         fake_nectar = FakeNectar()
         mock_get_nectar.return_value = fake_nectar
         fake_nectar.nova.servers.get = Mock()
@@ -126,10 +127,37 @@ class CleanupStuckTerminationsTests(VMFunctionTestBase):
         self.assertIsNotNone(instance.deleted)
         self.assertIsNone(instance.error_flag)
         volume = Volume.objects.get(pk=fake_volume.pk)
+        mock_archive.assert_called_once_with(
+            volume, volume.requesting_feature)
         self.assertIsNone(volume.shelved_at)
-        self.assertIsNone(volume.deleted)
         vm_status = VMStatus.objects.get(pk=fake_vm_status.pk)
         self.assertEqual(NO_VM, vm_status.status)
+
+    @patch('vm_manager.utils.cleanup.archive_volume_worker')
+    @patch('vm_manager.utils.cleanup.get_nectar')
+    def test_cleanup_delete_volume_already_deleted(
+            self, mock_get_nectar, mock_archive):
+        # The workflow died after the volume was already disposed of:
+        # nothing to archive.
+        fake_nectar = FakeNectar()
+        mock_get_nectar.return_value = fake_nectar
+        fake_nectar.nova.servers.get = Mock()
+        fake_nectar.nova.servers.get.side_effect = \
+            novaclient.exceptions.NotFound(code=42)
+
+        fake_volume, fake_instance, fake_vm_status = \
+            self.build_fake_vol_inst_status(
+                ip_address='10.0.0.99', status=NO_VM)
+        self._mark_stuck(fake_instance, volume=fake_volume)
+        fake_volume.deleted = datetime.now(utc)
+        fake_volume.save()
+
+        counts = cleanup_stuck_terminations()
+
+        self.assertEqual(1, counts['completed'])
+        instance = Instance.objects.get(pk=fake_instance.pk)
+        self.assertIsNotNone(instance.deleted)
+        mock_archive.assert_not_called()
 
     @patch('vm_manager.utils.cleanup.get_nectar')
     def test_cleanup_redeletes_shutoff(self, mock_get_nectar):

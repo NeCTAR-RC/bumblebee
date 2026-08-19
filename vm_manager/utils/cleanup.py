@@ -10,6 +10,7 @@ from vm_manager.models import Instance, VMStatus, Resize, Expiration, \
     EXP_EXPIRING, EXP_EXPIRY_FAILED_RETRYABLE, EXP_EXPIRY_COMPLETED
 from vm_manager.utils.expiry import VolumeExpiryPolicy
 from vm_manager.utils.utils import get_nectar
+from vm_manager.vm_functions.delete_vm import archive_volume_worker
 
 logger = logging.getLogger(__name__)
 
@@ -37,9 +38,10 @@ def cleanup_stuck_terminations(dry_run=False):
       after a clean shutdown;
     - anything else: leave it for manual cleanup, as the workflows do.
 
-    Volume disposal for a dead delete workflow is not attempted: whether
-    the volume was to be archived or deleted is not recorded, so that is
-    left to the admin delete/archive actions.
+    A dead delete workflow's volume is always archived: whether it was
+    to be archived or deleted is not recorded, and an unneeded backup
+    (which expires after BACKUP_LIFETIME days) is a safer failure mode
+    than deleting a volume that should have been kept.
 
     Returns a dict of counts of the actions taken.
     """
@@ -101,8 +103,7 @@ def _complete_termination(instance):
     The Nova instance is gone.  Mirrors the tail ends of the shelve and
     delete workflows (and the admin repair action): record the instance
     as deleted, revert any live resize, and either mark the volume as
-    shelved or leave a marked-for-deletion volume to the delete workflow
-    and admin actions.
+    shelved or archive a marked-for-deletion volume.
     """
     now = datetime.now(utc)
     volume = instance.boot_volume
@@ -120,13 +121,21 @@ def _complete_termination(instance):
     instance.save()
 
     if volume.deleted or volume.marked_for_deletion:
-        # A delete workflow owned this instance.  The volume still needs
-        # to be disposed of via the admin delete/archive actions.
-        logger.info("Recorded %s as deleted; %s is left for the admin "
-                    "delete/archive actions", instance, volume)
+        # A delete workflow owned this instance.
         if vm_status and vm_status.status != NO_VM:
             vm_status.status = NO_VM
             vm_status.save()
+        if volume.deleted:
+            logger.info("Recorded %s as deleted; %s is already deleted",
+                        instance, volume)
+        else:
+            # The workflow does not record whether the volume was to be
+            # archived or deleted, so always archive: an unneeded backup
+            # expires after BACKUP_LIFETIME days, whereas deleting a
+            # volume that should have been kept loses data.
+            logger.info("Recorded %s as deleted; archiving %s",
+                        instance, volume)
+            archive_volume_worker(volume, volume.requesting_feature)
     else:
         logger.info("Recorded %s as deleted and %s as shelved",
                     instance, volume)
