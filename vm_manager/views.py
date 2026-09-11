@@ -656,6 +656,17 @@ def phone_home(request, requesting_feature):
         if vm_status.status == VM_ERROR \
            and instance.check_active_status():
             logger.info(f"Handling a late phone_home event for {instance}")
+            # The instance is actually fine, so clear the error state that
+            # VMStatus.error() propagated to it and its boot volume - it
+            # was propagated as a side effect of the earlier check.
+            if instance.error_flag:
+                instance.error_flag = None
+                instance.error_message = None
+                instance.save()
+            if instance.boot_volume.error_flag:
+                instance.boot_volume.error_flag = None
+                instance.boot_volume.error_message = None
+                instance.boot_volume.save()
         else:
             result = (f"Unexpected phone home for {instance}. "
                       f"VM_status is {vm_status}")

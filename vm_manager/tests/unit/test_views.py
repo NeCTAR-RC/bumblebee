@@ -991,6 +991,7 @@ class VMManagerViewTests(TestCase):
         self.assertEqual(VM_ERROR, vm_status.status)
         self.assertEqual("Other Message", vm_status.instance.error_message)
 
+    @patch('vm_manager.utils.utils.Nectar', new=FakeNectar)
     @patch('vm_manager.views.logger')
     @patch('vm_manager.models.logger')
     @patch('vm_manager.views.generate_hostname')
@@ -1072,11 +1073,32 @@ class VMManagerViewTests(TestCase):
         self.assertEqual(EXP_EXPIRY_COMPLETED, expiration.stage)
         self.assertTrue(now < expiration.stage_date)
 
-        # Late phone home
+        # Late phone home: the reboot check gave up and error-flagged the
+        # instance and its volume, but the instance is actually ACTIVE.
+        # Those stale error flags should be cleared.
         self.build_existing_vm(VM_ERROR)
+        self.instance.error_flag = now
+        self.instance.error_message = \
+            f"Instance {self.instance.id} has not gone ACTIVE after reboot"
+        self.instance.save()
+        self.volume.error_flag = now
+        self.volume.error_message = self.instance.error_message
+        self.volume.save()
+
+        mock_server = Mock()
+        mock_server.status = ACTIVE
+        fake_nectar = get_nectar()
+        fake_nectar.nova.servers.get = Mock(return_value=mock_server)
+
         fake_request = Fake(POST={'instance_id': self.instance.id})
         response = phone_home(fake_request, self.FEATURE)
         self.assertEqual(200, response.status_code)
+        instance = Instance.objects.get(pk=self.instance.pk)
+        volume = Volume.objects.get(pk=self.volume.pk)
+        self.assertIsNone(instance.error_flag)
+        self.assertIsNone(instance.error_message)
+        self.assertIsNone(volume.error_flag)
+        self.assertIsNone(volume.error_message)
 
     @patch('vm_manager.views.datetime')
     def test_rd_report_for_user(self, mock_datetime):
