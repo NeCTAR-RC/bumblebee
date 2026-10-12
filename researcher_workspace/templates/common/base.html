@@ -180,5 +180,13 @@
       defer
       data-no-optimize
     ></script>
+    {% comment %}
+      Shared Nectar survey invitation (nectar-survey); its config decides when
+      a survey is open. Logged-in users only, hence the guard.
+    {% endcomment %}
+    {% if user.is_authenticated %}
+      <script type="module" src="https://survey.rc.nectar.org.au/nectar-survey.js"></script>
+      <nectar-survey service="ARDC Virtual Desktop Service"></nectar-survey>
+    {% endif %}
   </body>
 </html>
