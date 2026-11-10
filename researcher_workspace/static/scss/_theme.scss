@@ -56,23 +56,181 @@
   background-color: $orange !important;
 }
 
-/*** Theme elements ***/
+/*** Typography (ARDC Design System) ***/
 
-a:hover {
-  text-decoration-color: $blue;
+// Heading sizes are set in _variables.scss. Line heights follow the Design
+// System text styles (H1 44px, H2 36px, H3 32px, H4 28px, H5 26px).
+h1,
+.h1 {
+  line-height: 1.2222;
 }
 
-a.badge {
-  text-decoration: none;
-  &:hover {
-    color: unset;
+h2,
+.h2 {
+  line-height: 1.2857;
+}
+
+h3,
+.h3 {
+  line-height: 1.3333;
+}
+
+h4,
+.h4 {
+  line-height: 1.4;
+}
+
+h5,
+.h5 {
+  line-height: 1.4444;
+}
+
+h6,
+.h6 {
+  line-height: 1.5;
+}
+
+// Mobile sizes: H1 28/36, H2 24/32, H3 22/30. H4 and H5 do not change.
+@include media-breakpoint-down(md) {
+  h1,
+  .h1 {
+    font-size: 1.75rem;
+    line-height: 1.2857;
+  }
+
+  h2,
+  .h2 {
+    font-size: 1.5rem;
+    line-height: 1.3333;
+  }
+
+  h3,
+  .h3 {
+    font-size: 1.375rem;
+    line-height: 1.3636;
+  }
+}
+
+.blockquote {
+  font-weight: 600;
+  line-height: 1.4;
+  color: $purple;
+}
+
+// Text links in content are bold and underlined.
+main a:not([class]) {
+  font-weight: 700;
+}
+
+/*** Theme elements ***/
+
+main a:hover {
+  text-decoration-color: currentcolor;
+}
+
+// Keyboard focus is a 1.5px purple outline offset by 4px.
+.btn,
+.form-control,
+.form-select,
+.form-check-input,
+.page-link,
+.accordion-button,
+.nav-tabs .nav-link,
+.nav-pills .nav-link {
+  outline: 1.5px solid transparent;
+  outline-offset: 0;
+  transition: outline-offset 0.3s ease-in-out;
+  &:focus-visible {
+    outline-color: $purple;
+    outline-offset: 4px;
   }
 }
 
 form label {
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.25rem;
   font-size: 1rem;
   font-weight: 700;
+  color: $gray-700;
+}
+
+.form-control,
+.form-select {
+  &:hover:not(:disabled):not(:read-only):not(:focus) {
+    border-color: $purple;
+  }
+  &:read-only:not(select) {
+    border-color: $gray-200;
+  }
+}
+
+textarea.form-control {
+  min-height: 120px;
+}
+
+.form-check-label {
+  font-size: $font-size-sm;
+  line-height: 1.42857;
+}
+
+.form-check-input {
+  &:hover:not(:disabled) {
+    border-color: $purple;
+  }
+  &:disabled {
+    border-color: $gray-300;
+    & ~ .form-check-label {
+      color: $gray-300;
+    }
+  }
+  &.is-invalid {
+    border-color: $danger;
+    & ~ .form-check-label {
+      color: $danger;
+    }
+  }
+}
+
+.invalid-feedback,
+.valid-feedback {
+  font-size: $font-size-sm;
+  line-height: 1.42857;
+}
+
+.alert {
+  font-size: $font-size-sm;
+  line-height: 1.25rem;
+}
+
+.alert[class] {
+  --bs-alert-color: #{$gray-900};
+  --bs-alert-link-color: #{$gray-900};
+}
+
+.badge {
+  line-height: 1rem;
+  &.text-bg-light,
+  &.bg-light {
+    color: $gray-700 !important;
+    border: 0.5px solid $gray-200;
+    background-color: $gray-100 !important;
+  }
+}
+
+.table {
+  font-size: $font-size-sm;
+  line-height: 1.25rem;
+  > :not(caption) > * > * {
+    border-bottom-width: 1px;
+  }
+  thead th {
+    color: $gray-700;
+    border-bottom: 2px solid $gray-200;
+    vertical-align: middle;
+  }
+  tbody td {
+    color: $gray-900;
+    vertical-align: middle;
+  }
 }
 
 nav:has(.breadcrumb) {
@@ -98,52 +256,59 @@ ul.list-bullet {
   }
 }
 
-#mc_embed_signup input:focus {
-    color: $body-color;
-    background-color: $white;
-    border-color: $white;
-    outline: 0;
-    box-shadow: 0 0 0 2px rgba(248, 178, 14, 0.5);
-}
-
 /*** Theme components ***/
 
 .breadcrumb {
   padding-right: 15px;
+  line-height: 1rem;
   a {
-    color: $dark;
+    color: $gray-500;
     text-decoration: none;
-    &:hover {
+    &:hover,
+    &:focus-visible {
+      color: $purple;
       text-decoration: underline;
     }
+  }
+  .breadcrumb-item.active {
+    font-weight: 600;
   }
 }
 
 .page-title {
-    font-size: 35px;
-    line-height: 36px;
-    font-weight: 700;
-    margin-bottom: 20px;
+  // Same as .h1
+  margin-top: 0;
+  margin-bottom: 20px;
+  font-size: $h1-font-size;
+  font-weight: $headings-font-weight;
+  line-height: 1.2222;
+  color: $headings-color;
+  @include media-breakpoint-down(md) {
+    font-size: 1.75rem;
+    line-height: 1.2857;
+  }
 }
 
 .page-subtitle {
-    font-size: 18px;
-    line-height: 22px;
-    font-weight: 600;
-    margin-bottom: 20px;
-    color: rgba(32, 32, 32, .8);
+  font-size: 1.125rem;
+  line-height: 1.4444;
+  font-weight: 600;
+  margin-bottom: 20px;
+  color: $gray-700;
 }
 
 .btn {
-  letter-spacing: 0.5px;
+  letter-spacing: 0;
+  --bs-btn-focus-box-shadow: none;
 }
 
 .btn-link {
-  color: $dark;
-  font-weight: 600;
+  color: $gray-700;
+  font-weight: 700;
   text-decoration: none;
   position: relative;
   padding: 0;
+  display: inline-block;
   &:before {
     content: "";
     position: absolute;
@@ -151,23 +316,23 @@ ul.list-bullet {
     left: 0;
     height: 1px;
     width: 0;
-    background-color: #8e489b;
+    background-color: $purple;
     transition: all 0.3s ease-in-out 0s;
   }
   &:after {
-    color: $blue;
+    color: $purple;
     margin-left: 10px;
     vertical-align: initial;
     text-rendering: auto;
-    font-family: "Font Awesome 6 Free";
+    font-family: "Font Awesome 5 Free", "Font Awesome 6 Free";
     content: "\f054";
     font-weight: 900;
     -webkit-font-smoothing: antialiased;
     transition: all 0.15s ease-in-out 0s;
   }
   &:hover {
-    color: $dark;
-    font-weight: 600;
+    color: $purple;
+    font-weight: 700;
     text-decoration: none;
     &:before {
       width: calc(100% - 20px);
@@ -177,7 +342,7 @@ ul.list-bullet {
       margin-left: 12px;
       vertical-align: initial;
       text-rendering: auto;
-      font-family: "Font Awesome 6 Free";
+      font-family: "Font Awesome 5 Free", "Font Awesome 6 Free";
       content: "\f054";
       font-weight: 900;
       -webkit-font-smoothing: antialiased;
@@ -186,8 +351,8 @@ ul.list-bullet {
 }
 
 .btn-back {
-  color: $dark;
-  font-weight: 600;
+  color: $gray-700;
+  font-weight: 700;
   text-decoration: none;
   position: relative;
   padding: 0;
@@ -199,23 +364,23 @@ ul.list-bullet {
     left: 20px;
     height: 1px;
     width: 0;
-    background-color: #8e489b;
+    background-color: $purple;
     transition: all 0.3s ease-in-out 0s;
   }
   &:before {
-    color: $blue;
+    color: $purple;
     margin-right: 10px;
     vertical-align: initial;
     text-rendering: auto;
-    font-family: "Font Awesome 6 Free";
+    font-family: "Font Awesome 5 Free", "Font Awesome 6 Free";
     content: "\f053";
     font-weight: 900;
     -webkit-font-smoothing: antialiased;
     transition: all 0.15s ease-in-out 0s;
   }
   &:hover {
-    color: $dark;
-    font-weight: 600;
+    color: $purple;
+    font-weight: 700;
     text-decoration: none;
     &:after {
       width: calc(100% - 20px);
@@ -225,7 +390,7 @@ ul.list-bullet {
       margin-right: 12px;
       vertical-align: initial;
       text-rendering: auto;
-      font-family: "Font Awesome 6 Free";
+      font-family: "Font Awesome 5 Free", "Font Awesome 6 Free";
       content: "\f053";
       font-weight: 900;
       -webkit-font-smoothing: antialiased;
@@ -233,26 +398,51 @@ ul.list-bullet {
   }
 }
 
+.btn-square {
+  width: 44px;
+  height: 44px;
+  padding: 10px 0;
+}
+
+// Bootstrap 5.1 sets button colours directly, while 5.3 reads them from
+// --bs-btn-* custom properties. button-variant takes the same arguments in
+// both versions and writes whichever form the version uses, so this works
+// with either.
 .btn-primary {
-  color: $black;
-  background-color: $yellow;
-  border-color: $yellow;
+  @include button-variant(
+    $background: $yellow,
+    $border: $ardc-yellow-700,
+    $color: $gray-900,
+    $hover-background: $purple,
+    $hover-border: $purple,
+    $hover-color: $white,
+    $active-background: $ardc-purple-700,
+    $active-border: $ardc-purple-700,
+    $active-color: $white,
+    $disabled-background: $gray-200,
+    $disabled-border: $gray-200,
+    $disabled-color: $gray-500
+  );
+  // Focus is shown with the purple outline set above, not a box shadow.
+  .btn-check:focus + &,
+  &:focus,
+  &:active:focus,
+  &.active:focus {
+    box-shadow: none;
+  }
   &:after {
     content: "";
     opacity: 0;
     transition: all 0.15s ease-in-out 0s;
   }
   &:hover {
-    color: $white;
-    background-color: $purple;
-    border-color: $purple;
     &:after {
       opacity: 1;
       color: $white;
       margin-left: 10px;
       vertical-align: top;
       text-rendering: auto;
-      font-family: "Font Awesome 6 Free";
+      font-family: "Font Awesome 5 Free", "Font Awesome 6 Free";
       content: "\f054";
       font-weight: 900;
       -webkit-font-smoothing: antialiased;
@@ -260,26 +450,64 @@ ul.list-bullet {
   }
 }
 
+// button-outline-variant fills the background on hover, so it is not used.
+// The custom properties are for 5.3, whose pressed state selectors outrank
+// the direct colours below. 5.1 ignores them and uses the direct colours.
 .btn-outline-primary {
-  color: $dark;
-  background-color: $white;
-  border-color: $yellow;
+  --bs-btn-color: #{$gray-700};
+  --bs-btn-bg: transparent;
+  --bs-btn-border-color: #{$gray-500};
+  --bs-btn-hover-color: #{$purple};
+  --bs-btn-hover-bg: transparent;
+  --bs-btn-hover-border-color: #{$purple};
+  --bs-btn-active-color: #{$ardc-purple-700};
+  --bs-btn-active-bg: transparent;
+  --bs-btn-active-border-color: #{$ardc-purple-700};
+  --bs-btn-disabled-color: #{$gray-300};
+  --bs-btn-disabled-bg: transparent;
+  --bs-btn-disabled-border-color: #{$gray-300};
+  color: $gray-700;
+  background-color: transparent;
+  border-color: $gray-500;
+  &:hover,
+  .btn-check:focus + &,
+  &:focus {
+    color: $purple;
+    background-color: transparent;
+    border-color: $purple;
+    box-shadow: none;
+  }
+  .btn-check:checked + &,
+  .btn-check:active + &,
+  &:active,
+  &.active,
+  &.dropdown-toggle.show {
+    color: $ardc-purple-700;
+    background-color: transparent;
+    border-color: $ardc-purple-700;
+    &:focus {
+      box-shadow: none;
+    }
+  }
+  &:disabled,
+  &.disabled {
+    color: $gray-300;
+    background-color: transparent;
+    border-color: $gray-300;
+  }
   &:after {
     content: "";
     opacity: 0;
     transition: all 0.15s ease-in-out 0s;
   }
   &:hover {
-    color: $dark;
-    background-color: $white;
-    border-color: $purple;
     &:after {
       opacity: 1;
       color: $purple;
       margin-left: 10px;
       vertical-align: top;
       text-rendering: auto;
-      font-family: "Font Awesome 6 Free";
+      font-family: "Font Awesome 5 Free", "Font Awesome 6 Free";
       content: "\f054";
       font-weight: 900;
       -webkit-font-smoothing: antialiased;
@@ -294,33 +522,202 @@ ul.list-bullet {
   &:hover,
   &:active {
     color: $white;
-    background-color: darken($purple, 10%);
-    border-color: darken($purple, 10%);
+    background-color: $ardc-purple-700;
+    border-color: $ardc-purple-700;
   }
 }
 
-.btn-check:checked + .btn-light,
-.btn-check:checked + .btn-outline-light, 
-.btn-check:active + .btn-light,
-.btn-check:active + .btn-outline-light,
-.btn-light:active, 
-.btn-light.active,
-.btn-outline-light:active, 
-.btn-outline-light.active,
-.btn-light.dropdown-toggle.show,
-.btn-outline-light.dropdown-toggle.show {
-    color: #000;
-    background-color: $gray-200;
-    border-color: $gray-200;
+.btn.btn-remove {
+  padding: 0;
+  font-size: 18px;
+  line-height: 18px;
+  height: 30px;
+  width: 30px;
+  text-align: center;
+  border-radius: 4px;
+
+  @include media-breakpoint-down(md) {
+    width: auto;
+    padding: 4px 8px;
+    font-size: 14px;
+    line-height: 14px;
+    &::after {
+      content: " Remove";
+      margin-left: 0.25rem;
+    }
+  }
 }
 
 [class*="btn-outline"]:not(.btn-outline-dark):not(:hover) {
-  color: $dark !important;
+  color: $gray-700 !important;
+  &:disabled {
+    color: $gray-300 !important;
+    border-color: $gray-300;
+  }
+}
+
+/* Toast Notification Styles */
+#toast-container {
+  max-width: 350px;
+  position: fixed;
+  top: 180px; // Height of the sticky header + spacer margin
+  right: 20px;
+  z-index: 1050;
+  .toast {
+    width: 100%;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    margin-bottom: 0.75rem;
+
+    .toast-header {
+      border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+      padding: 0.75rem 1rem;
+      background-color: $white;
+      .toast-icon {
+        font-size: 1.1rem;
+        margin-right: 0.5rem;
+      }
+      .toast-title {
+        font-weight: 600;
+        font-size: 0.95rem;
+      }
+      .toast-time {
+        font-size: 0.8rem;
+        opacity: 0.8;
+      }
+      .btn-close {
+        font-size: 0.8rem;
+        padding: 0.25rem;
+      }
+    }
+
+    .toast-body {
+      font-size: 0.9rem;
+      line-height: 1.4;
+    }
+
+    // ARDC Theme Integration
+    &.bg-success-subtle {
+      background-color: rgba($success, 0.1);
+      border-color: rgba($success, 0.2);
+    }
+
+    &.bg-danger-subtle {
+      background-color: rgba($danger, 0.1);
+      border-color: rgba($danger, 0.2);
+    }
+
+    &.bg-warning-subtle {
+      background-color: rgba($warning, 0.1);
+      border-color: rgba($warning, 0.2);
+    }
+
+    &.bg-info-subtle {
+      background-color: rgba($info, 0.1);
+      border-color: rgba($info, 0.2);
+    }
+
+    // Border styling
+    &.border-success {
+      border-left: 4px solid $success;
+    }
+
+    &.border-danger {
+      border-left: 4px solid $danger;
+    }
+
+    &.border-warning {
+      border-left: 4px solid $warning;
+    }
+
+    &.border-info {
+      border-left: 4px solid $info;
+    }
+
+    // Animation enhancements
+    &.show {
+      animation: toastSlideIn 0.3s ease-out;
+    }
+
+    // Hover effects
+    &:hover {
+      box-shadow: 0 0.75rem 1.5rem rgba(0, 0, 0, 0.2);
+      transform: translateY(-1px);
+      transition: all 0.2s ease-in-out;
+    }
+  }
+}
+
+// Toast animations
+@keyframes toastSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+// Responsive adjustments
+@include media-breakpoint-between(sm, lg) {
+  #toast-container {
+    top: 95px !important; // Height of the sticky header + spacer margin
+  }
+}
+
+@include media-breakpoint-down(sm) {
+  #toast-container {
+    width: calc(100vw - 1rem);
+    max-width: 100%;
+    left: 0.5rem !important;
+    right: 0.5rem !important;
+    top: 120px !important; // Height of the sticky header + spacer margin
+  }
+}
+
+a.more-details {
+  padding-top: 10px;
+  padding-bottom: 10px;
+  &[aria-expanded="false"] {
+    &:before {
+      content: "Show more details";
+    }
+    &:after {
+      text-rendering: auto;
+      font-family: "Font Awesome 5 Free", "Font Awesome 6 Free";
+      content: "\f078";
+      font-weight: 900;
+      -webkit-font-smoothing: antialiased;
+    }
+  }
+  &[aria-expanded="true"] {
+    &:before {
+      content: "Show less details";
+    }
+    &:after {
+      text-rendering: auto;
+      font-family: "Font Awesome 5 Free", "Font Awesome 6 Free";
+      content: "\f077";
+      font-weight: 900;
+      -webkit-font-smoothing: antialiased;
+    }
+  }
 }
 
 .card {
+  .card-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    line-height: 1.4;
+    color: $gray-900;
+  }
   .card-body {
-    > p {
+    font-size: 14px;
+    p,
+    ol,
+    ul {
       font-size: 14px;
     }
     .card-link {
@@ -346,15 +743,15 @@ ul.list-bullet {
           left: 0;
           height: 1px;
           width: 0;
-          background-color: #8e489b;
+          background-color: $purple;
           transition: all 0.3s ease-in-out 0s;
         }
         &:after {
-          color: $blue;
+          color: $purple;
           margin-left: 10px;
           vertical-align: initial;
           text-rendering: auto;
-          font-family: "Font Awesome 6 Free";
+          font-family: "Font Awesome 5 Free", "Font Awesome 6 Free";
           content: "\f054";
           font-weight: 900;
           -webkit-font-smoothing: antialiased;
@@ -374,7 +771,7 @@ ul.list-bullet {
             margin-left: 12px;
             vertical-align: initial;
             text-rendering: auto;
-            font-family: "Font Awesome 6 Free";
+            font-family: "Font Awesome 5 Free", "Font Awesome 6 Free";
             content: "\f054";
             font-weight: 900;
             -webkit-font-smoothing: antialiased;
@@ -402,17 +799,13 @@ ul.list-bullet {
         left: 0;
         width: 100%;
         height: 100%;
-        background: linear-gradient(
-          0deg,
-          rgba(142, 72, 155, 0.3),
-          rgba(142, 72, 155, 0.3)
-        );
+        background: linear-gradient(0deg, rgba(142, 72, 155, 0.3), rgba(142, 72, 155, 0.3));
         opacity: 0;
         transition: all 0.3s ease-in-out 0s;
       }
     }
     &:hover {
-      background-color: #f3f3f3;
+      background-color: $gray-100;
       > .card-img-top {
         &:after {
           opacity: 1;
@@ -426,20 +819,24 @@ ul.list-bullet {
       transition: all 0.3s ease-in-out 0s;
       &:hover {
         background-color: $white !important;
-        border: 1px solid #b8b6c7 !important;
+        border: 1px solid $gray-300 !important;
       }
     }
   }
   .card-labels {
     display: flex;
-    justify-content: space-between;
     margin-bottom: 15px;
+    float: right;
+    span[data-bs-toggle="tooltip"] {
+      z-index: 2;
+      cursor: default;
+    }
     .badge-theme {
       font-size: 12px;
       line-height: 14px;
       text-transform: uppercase;
       font-weight: bold;
-      color: #767676;
+      color: $gray-700;
       padding-top: 5px;
       &:before {
         content: "";
@@ -466,56 +863,29 @@ ul.list-bullet {
         }
       }
     }
+    .badge-alert {
+      font-size: 12px;
+      line-height: 14px;
+      text-transform: uppercase;
+      font-weight: bold;
+      color: $gray-700;
+      padding-top: 5px;
+      margin-right: 10px;
+    }
     .badge-label {
-      padding: 5px 10px;
-      font-size: 14px;
-      line-height: 1;
-      background-color: $white;
-      border: $gray-200 solid 1px;
-    }
-    &:not(:has(.badge-theme)) {
-      float: right;
-    }
-  }
-  a.card-link-full {
-    padding: 26px 33px 26px 26px;
-    display: flex;
-    flex-direction: row;
-    text-decoration: none;
-    color: inherit;
-    transition: background-color 0.3s ease-in-out 0s;
-    &:after {
-      font-family: "Font Awesome 6 Free";
-      content: "\f054";
-      font-weight: 900;
-      font-size: 18px;
-      -webkit-font-smoothing: antialiased;
-      position: absolute;
-      top: 26px;
-      right: 26px;
-      color: $blue;
-      transition: all 0.3s ease-in-out 0s;
-    }
-    .card-icon {
-      width: 35%;
-      align-self: center;
-      margin-right: 26px;
-      @include media-breakpoint-between(sm, lg) {
-        display: none;
-      }
-    }
-    .card-inner {
-      p {
-        margin-bottom: 0;
-        color: rgba(32, 32, 32, .8);
-      }
-    }
-    &:hover {
+      padding: 6.5px 9.5px;
+      font-size: 12px;
+      font-weight: 600;
+      line-height: 16px;
+      color: $gray-700;
       background-color: $gray-100;
-      &:after {
-        color: $purple;
-        transform: translateX(5px);
-      }
+      border: $gray-200 solid 0.5px;
+      border-radius: $border-radius;
+      margin-left: auto;
+    }
+    &:has(.badge-theme),
+    &:has(.badge-alert) {
+      float: none;
     }
   }
 }
@@ -523,13 +893,14 @@ ul.list-bullet {
 .card.filter-panel {
   padding-top: 10px;
   margin-bottom: 40px;
+  min-height: 20px;
   position: relative;
   @include media-breakpoint-between(md, lg) {
     padding-top: 20px;
   }
   > .card-title {
     position: absolute;
-    background: #fff;
+    background: $body-bg;
     top: -12px;
     left: 0;
     margin: 0;
@@ -537,14 +908,54 @@ ul.list-bullet {
     font-size: 16px;
     line-height: 16px;
     font-weight: 700;
+    &:is(a) {
+      text-decoration: none;
+      width: 100%;
+      &:after {
+        float: right;
+        margin-left: 0.5rem;
+        vertical-align: middle;
+        border: none;
+        text-rendering: auto;
+        font-family: "Font Awesome 5 Free", "Font Awesome 6 Free";
+        font-weight: 900;
+        -webkit-font-smoothing: antialiased;
+      }
+      &:after {
+        content: "\f068";
+      }
+      &.collapsing:after {
+        content: "\f068";
+      }
+      &.collapsed:after {
+        content: "\2b";
+      }
+    }
   }
   .card-body {
     font-size: 14px;
     overflow-y: auto;
     height: auto;
-    min-height: 5rem;
+    min-height: 3rem;
     max-height: 20rem;
+    &.collapsing {
+      position: relative;
+      &:after {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: $body-bg;
+        opacity: 70%;
+        z-index: 1000;
+      }
+    }
     .filter-link {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
       .btn {
         text-align: left;
         padding: 0.375rem 1rem;
@@ -560,31 +971,58 @@ ul.list-bullet {
   }
 }
 
-.alert-primary {
-  color: #161616;
-  background-color: #F8F7FC;
-  border-color: #8E489B;
-}
-
-.alert-info {
-  color: #161616;
-  background-color: #F8F7FC;
-  border-color: #8E489B;
+.accordion-button {
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1.4;
+  &:not(.collapsed) {
+    box-shadow: none;
+  }
+  &:focus-visible:after {
+    border-radius: 4px;
+    outline: 1.5px solid $purple;
+  }
+  // The button outline would sit around the full-width trigger, so the
+  // Design System outlines the icon instead.
+  &:focus-visible {
+    outline: none;
+  }
 }
 
 .accordion {
+  // Items have a left bar and horizontal dividers, not a full border.
+  --bs-accordion-border-width: 0;
+  --bs-accordion-border-radius: 0;
+  --bs-accordion-inner-border-radius: 0;
   .accordion-item {
     border: none;
-    border-left: 5px solid $gray-200;
-    padding-left: 25px;
-    &:hover {
-      border-left: 5px solid $gray-800;
+    border-left: 0.375rem solid $gray-200;
+    padding-left: 2rem;
+    & + .accordion-item {
+      margin-top: -1px;
     }
     &:has(.show) {
-      border-left: 5px solid $primary;
+      border-left-color: $purple;
+      padding-bottom: 1rem;
+      .accordion-header {
+        border-top-color: transparent;
+      }
     }
     .accordion-header {
+      border-top: $gray-200 solid 1px;
       border-bottom: $gray-200 solid 1px;
+      padding-left: 0;
+      .accordion-button {
+        padding-left: 0;
+        padding-right: 0;
+        background-color: transparent;
+      }
+    }
+    .accordion-body {
+      padding-left: 0;
+      padding-right: 0;
+      padding-bottom: 0;
+      color: $gray-700;
     }
   }
 }
@@ -643,6 +1081,7 @@ nav {
   }
   &#navbar-bottom {
     background-color: #f3f3f3;
+    .container,
     .container-xl {
       @include media-breakpoint-down(lg) {
         padding: 0;
@@ -701,7 +1140,7 @@ nav {
           // vertical-align: middle;
           // border: none;
           // text-rendering: auto;
-          // font-family: "Font Awesome 6 Free";
+          // font-family: "Font Awesome 5 Free", "Font Awesome 6 Free";
           // content: "\f078";
           // font-weight: 900;
           // -webkit-font-smoothing: antialiased;
@@ -710,7 +1149,7 @@ nav {
           // content: "\f077";
         }
       }
-      .navbar-nav > .nav-item.dropdown {
+      .navbar-nav .nav-item.dropdown {
         // position: initial;
         .dropdown-menu {
           // width: 100%;
@@ -718,7 +1157,7 @@ nav {
           border: none;
           border-radius: 0;
           background-color: #f8f7fc;
-          .dropdown-item {
+          a.dropdown-item {
             color: $black;
             &:hover,
             &:active {
@@ -727,6 +1166,24 @@ nav {
             }
             @include media-breakpoint-down(lg) {
               padding: 8px 20px 8px 32px;
+            }
+          }
+        }
+        @include media-breakpoint-up(lg) {
+          .nav-avatar {
+            width: 2rem;
+            height: 2rem;
+            padding: 0;
+            margin: 1rem;
+            line-height: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background-color: #d8d8d8;
+            &:hover {
+              background-color: $purple;
+              color: #fff;
             }
           }
         }
@@ -739,47 +1196,50 @@ section.section {
   padding-top: 40px;
   padding-bottom: 40px;
 }
-
+section#main {
+  min-height: 50vh;
+}
 section.banner {
+  // Contain the content box margins so they show the banner background above
+  // and below the box, instead of collapsing out through the section.
+  display: flow-root;
+  &.banner-with-search {
+    margin-bottom: 100px;
+    @include media-breakpoint-down(sm) {
+      padding-top: 20px;
+    }
+  }
   .banner-content-box {
-    margin-top: 15vh;
-    margin-bottom: 10vh;
+    margin-top: 111px;
+    margin-bottom: 222px;
     padding: 40px;
     background: $white;
     .banner-title {
-      font-size: 35px;
-      font-weight: 700;
+      // Same as .h1
+      margin-top: 0;
       margin-bottom: 15px;
       padding-right: 30px;
-    }
-    .banner-subtitle {
-      font-size: 20px;
-      color: rgba(32, 32, 32, 0.8);
-    }
-  }
-}
-
-section.banner-with-search {
-  margin-bottom: 100px;
-  @include media-breakpoint-down(sm) {
-    padding-top: 20px;
-  }
-  .banner-search-box {
-    margin-bottom: -100px;
-    // height: 220px;
-    position: relative;
-    padding: 37px 40px;
-    // margin-bottom: -110px; // Half of height
-    background: $gray-200;
-    @include media-breakpoint-down(sm) {
-      padding: 15px 10px;
-    }
-    .input-group .btn {
-      @include media-breakpoint-down(sm) {
-        padding-left: 1rem;
-        padding-right: 1rem;
+      font-size: $h1-font-size;
+      font-weight: $headings-font-weight;
+      line-height: 1.2222;
+      color: $headings-color;
+      @include media-breakpoint-down(md) {
+        font-size: 1.75rem;
+        line-height: 1.2857;
       }
     }
+    .banner-subtitle {
+      font-size: 1.125rem;
+      line-height: 1.4444;
+      font-weight: 600;
+      color: $gray-700;
+    }
+  }
+  .banner-search-box {
+    position: relative;
+    padding: 37px 40px;
+    margin-bottom: -60px; // Half of height
+    background: $gray-200;
   }
 }
 
@@ -821,7 +1281,7 @@ section.banner-with-search {
 .bg-image {
   background-size: cover;
   background-repeat: no-repeat;
-  box-shadow: inset 0 0 0 1000px rgba(0, 0, 0, 0.3);
+  box-shadow: inset 0 0 0 1000px rgba(0, 0, 0, 0.5);
 }
 
 .view-panel {
@@ -830,24 +1290,157 @@ section.banner-with-search {
 }
 
 .pagination {
+  gap: 0.5rem;
   .page-item {
     .page-link {
-      margin: 10px;
-      width: 35px;
-      height: 35px;
-      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0;
+      min-width: 2.5rem;
+      height: 2.5rem;
+      padding: 0 0.5rem;
+      border: 1px solid transparent;
       background: none;
-      border-radius: 4px;
-      color: $black;
+      border-radius: $border-radius;
+      color: $gray-500;
+      font-size: $font-size-sm;
+      font-weight: 700;
+      line-height: 1.25rem;
       text-align: center;
-      &:hover {
-        color: darken($yellow, 10%);
+      text-decoration: none;
+      &:hover,
+      &:focus-visible {
+        color: $purple;
+        background: none;
       }
     }
     &.active {
       > .page-link {
         background-color: $yellow;
-        color: $black !important;
+        border-color: $ardc-yellow-700;
+        color: $gray-700;
+      }
+    }
+    &.disabled > .page-link {
+      color: $gray-300;
+      background: none;
+    }
+  }
+}
+
+.nav-tabs {
+  .nav-link {
+    position: relative;
+    padding: 0.75rem;
+    font-size: 1.125rem;
+    font-weight: 700;
+    line-height: 1.625rem;
+    color: $gray-900;
+    border-radius: $border-radius $border-radius 0 0;
+    &:hover {
+      background-color: $white;
+    }
+    &:focus-visible {
+      box-shadow: none;
+    }
+    &.active {
+      // 3px purple indicator on the selected tab
+      &:before {
+        content: "";
+        position: absolute;
+        top: -1px;
+        left: -1px;
+        right: -1px;
+        height: 3px;
+        border-radius: $border-radius $border-radius 0 0;
+        background-color: $purple;
+      }
+    }
+    &.disabled {
+      color: $gray-500;
+      cursor: not-allowed;
+    }
+  }
+}
+
+.nav-pills {
+  .nav-link {
+    &:focus-visible {
+      box-shadow: none;
+    }
+  }
+}
+
+#ardc-footer {
+  color: #494949;
+  padding-top: 20px;
+  .footer-logos {
+    display: flex;
+    align-items: end;
+    margin-bottom: 26px;
+    a {
+      display: inline-block;
+      padding: 0;
+      img {
+        width: 100%;
+        max-width: 176px;
+      }
+      &:first-child {
+        margin-right: 10px;
+      }
+    }
+  }
+  .footer-image-description {
+    font-size: 16px;
+    line-height: 16px;
+    width: 62%;
+  }
+  .footer-heading {
+    font-size: 18px;
+    line-height: 21px;
+    margin: 0 0 15px;
+    text-transform: uppercase;
+    font-weight: 600;
+    @include media-breakpoint-down(md) {
+      margin-top: 30px;
+    }
+  }
+  .footer-links {
+    @include media-breakpoint-up(md) {
+      padding-left: 7rem;
+    }
+  }
+  .footer-acknowledgement {
+    p {
+      margin: 17px 0;
+      color: #676767;
+      font-size: 16px;
+    }
+  }
+  .footer-copyright {
+    padding-top: 18px;
+    padding-bottom: 20px;
+    font-size: 13px;
+    font-weight: 400;
+    line-height: 14px;
+    color: rgba(32, 32, 32, 0.8);
+    .copyright {
+      margin-right: 10px;
+      i {
+        font-size: 10px;
+      }
+    }
+    a {
+      color: rgba(32, 32, 32, 0.8);
+      text-decoration: none;
+      &:hover {
+        color: $ardc-purple;
+      }
+      &.footer-link {
+        border-left: 1px solid rgba(32, 32, 32, 0.8);
+        padding-left: 19px;
+        padding-right: 19px;
       }
     }
   }
