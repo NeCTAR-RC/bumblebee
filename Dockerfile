@@ -18,10 +18,10 @@ ADD researcher_workspace /app/researcher_workspace
 ADD vm_manager /app/vm_manager
 
 WORKDIR /app
-ENV VIRTUAL_ENV /env
-ENV PATH /env/bin:$PATH
-ENV PYTHONPATH /app
-ENV DJANGO_SETTINGS_MODULE researcher_workspace.settings
+ENV VIRTUAL_ENV=/env
+ENV PATH=/env/bin:$PATH
+ENV PYTHONPATH=/app
+ENV DJANGO_SETTINGS_MODULE=researcher_workspace.settings
 
 COPY docker/docker-*.sh /
 COPY docker/apache.conf /etc/apache2/sites-available/000-default.conf
